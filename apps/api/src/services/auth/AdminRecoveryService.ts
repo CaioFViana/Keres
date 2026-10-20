@@ -155,7 +155,7 @@ export class AdminRecoveryService {
     // entry in the operation log, breaking the audit trail this method exists to maintain (the same
     // reasoning as the push in `SyncService.processAndRecordUpdates`).
     return withTransaction(async (tx) => {
-      await handler.update(adminUserId, storyId, update, current, tx);
+      await handler.update(update, current, { userId: adminUserId, storyId, database: tx });
       const restored = await handler.findById(id, tx);
 
       await syncService.appendOperationLog(

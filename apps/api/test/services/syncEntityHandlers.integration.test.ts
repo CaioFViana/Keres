@@ -51,7 +51,7 @@ async function seedWorld() {
 
 /** Creates a character through the handler itself and returns the resulting row. */
 async function createCharacter(id = newId(), name = 'Keres') {
-  await handler.create(USER_ID, STORY_ID, createUpdate(id, { name }));
+  await handler.create(createUpdate(id, { name }), { userId: USER_ID, storyId: STORY_ID });
   return handler.findByIdOrThrow(id);
 }
 
@@ -65,7 +65,10 @@ describe('create', () => {
   it('inserts the entity at version 1, under the story of the request', async () => {
     const id = newId();
 
-    await handler.create(USER_ID, STORY_ID, createUpdate(id, { name: 'Keres' }));
+    await handler.create(createUpdate(id, { name: 'Keres' }), {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     const row = await handler.findByIdOrThrow(id);
     expect(row).toMatchObject({
@@ -80,11 +83,10 @@ describe('create', () => {
   it('ignores a storyId the client tried to smuggle in the payload', async () => {
     const id = newId();
 
-    await handler.create(
-      USER_ID,
-      STORY_ID,
-      createUpdate(id, { name: 'Keres', storyId: 'historia-alheia' }),
-    );
+    await handler.create(createUpdate(id, { name: 'Keres', storyId: 'historia-alheia' }), {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     expect((await handler.findByIdOrThrow(id)).storyId).toBe(STORY_ID);
   });
@@ -92,23 +94,29 @@ describe('create', () => {
   it('ignores a version the client tried to set', async () => {
     const id = newId();
 
-    await handler.create(USER_ID, STORY_ID, createUpdate(id, { name: 'Keres', version: 99 }));
+    await handler.create(createUpdate(id, { name: 'Keres', version: 99 }), {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     expect((await handler.findByIdOrThrow(id)).version).toBe(1);
   });
 
   it('refuses to create the same entity twice', async () => {
     const id = newId();
-    await handler.create(USER_ID, STORY_ID, createUpdate(id, { name: 'Keres' }));
+    await handler.create(createUpdate(id, { name: 'Keres' }), {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     await expect(
-      handler.create(USER_ID, STORY_ID, createUpdate(id, { name: 'Keres' })),
+      handler.create(createUpdate(id, { name: 'Keres' }), { userId: USER_ID, storyId: STORY_ID }),
     ).rejects.toThrow(/already exists/);
   });
 
   it('rejects a payload the entity schema does not accept', async () => {
     await expect(
-      handler.create(USER_ID, STORY_ID, createUpdate(newId(), { name: '' })),
+      handler.create(createUpdate(newId(), { name: '' }), { userId: USER_ID, storyId: STORY_ID }),
     ).rejects.toThrow();
   });
 });
@@ -136,24 +144,20 @@ describe('update', () => {
   it('applies the change and bumps the version', async () => {
     const entity = await createCharacter();
 
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
-      entity,
-    );
+    await handler.update(updateUpdate(entity.id, { name: 'Nyx', version: 1 }), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     expect(await handler.findByIdOrThrow(entity.id)).toMatchObject({ name: 'Nyx', version: 2 });
   });
 
   it('leaves the fields the client did not send alone', async () => {
     const entity = await createCharacter();
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { title: 'A Deusa', version: 1 }),
-      entity,
-    );
+    await handler.update(updateUpdate(entity.id, { title: 'A Deusa', version: 1 }), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     expect(await handler.findByIdOrThrow(entity.id)).toMatchObject({
       name: 'Keres',
@@ -167,19 +171,16 @@ describe('update', () => {
    */
   it('refuses an edit built on a stale base version', async () => {
     const entity = await createCharacter();
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Primeiro', version: 1 }),
-      entity,
-    );
+    await handler.update(updateUpdate(entity.id, { name: 'Primeiro', version: 1 }), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const current = await handler.findByIdOrThrow(entity.id);
 
     const stale = handler.update(
-      USER_ID,
-      STORY_ID,
       updateUpdate(entity.id, { name: 'Segundo', version: 1 }),
       current,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     await expect(stale).rejects.toBeInstanceOf(SyncConflictError);
@@ -192,16 +193,17 @@ describe('update', () => {
 
   it('does not write anything when the version conflicts', async () => {
     const entity = await createCharacter();
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Primeiro', version: 1 }),
-      entity,
-    );
+    await handler.update(updateUpdate(entity.id, { name: 'Primeiro', version: 1 }), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const current = await handler.findByIdOrThrow(entity.id);
 
     await handler
-      .update(USER_ID, STORY_ID, updateUpdate(entity.id, { name: 'Segundo', version: 1 }), current)
+      .update(updateUpdate(entity.id, { name: 'Segundo', version: 1 }), current, {
+        userId: USER_ID,
+        storyId: STORY_ID,
+      })
       .catch(() => {});
 
     expect((await handler.findByIdOrThrow(entity.id)).name).toBe('Primeiro');
@@ -209,16 +211,17 @@ describe('update', () => {
 
   it('refuses an edit with no base version instead of last-write-wins', async () => {
     const entity = await createCharacter();
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Primeiro', version: 1 }),
-      entity,
-    );
+    await handler.update(updateUpdate(entity.id, { name: 'Primeiro', version: 1 }), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const current = await handler.findByIdOrThrow(entity.id);
 
     await expect(
-      handler.update(USER_ID, STORY_ID, updateUpdate(entity.id, { name: 'Sem base' }), current),
+      handler.update(updateUpdate(entity.id, { name: 'Sem base' }), current, {
+        userId: USER_ID,
+        storyId: STORY_ID,
+      }),
     ).rejects.toBeInstanceOf(SyncConflictError);
     expect((await handler.findByIdOrThrow(entity.id)).name).toBe('Primeiro');
   });
@@ -227,41 +230,42 @@ describe('update', () => {
     const entity = await createCharacter();
 
     await expect(
-      handler.update(
-        USER_ID,
-        STORY_ID,
-        updateUpdate(entity.id, { name: 'Nyx', version: 2 }),
-        entity,
-      ),
+      handler.update(updateUpdate(entity.id, { name: 'Nyx', version: 2 }), entity, {
+        userId: USER_ID,
+        storyId: STORY_ID,
+      }),
     ).rejects.toBeInstanceOf(SyncConflictError);
     expect((await handler.findByIdOrThrow(entity.id)).name).toBe('Keres');
   });
 
   it('refuses to edit an entity that was deleted on the server', async () => {
     const entity = await createCharacter();
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const deleted = await handler.findByIdOrThrow(entity.id);
 
-    const edit = handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Nyx', version: 2 }),
-      deleted,
-    );
+    const edit = handler.update(updateUpdate(entity.id, { name: 'Nyx', version: 2 }), deleted, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     await expect(edit).rejects.toMatchObject({ reason: 'deleted_on_server' });
   });
 
   it('restores a deleted entity when the client explicitly asks for it', async () => {
     const entity = await createCharacter();
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const deleted = await handler.findByIdOrThrow(entity.id);
 
     await handler.update(
-      USER_ID,
-      STORY_ID,
       updateUpdate(entity.id, { isDeleted: false, name: 'Keres', version: 2 }),
       deleted,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     expect(await handler.findByIdOrThrow(entity.id)).toMatchObject({
@@ -276,13 +280,12 @@ describe('update', () => {
     const operationTime = new Date(Date.now() - 60_000).toISOString();
 
     await handler.update(
-      USER_ID,
-      STORY_ID,
       {
         ...updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
         operationTime,
       } as UpdateStoryUpdate,
       entity,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     expect((await handler.findByIdOrThrow(entity.id)).updatedAt.toISOString()).toBe(operationTime);
@@ -297,13 +300,12 @@ describe('update', () => {
     const operationTime = new Date(Date.now() + 60_000).toISOString();
 
     await handler.update(
-      USER_ID,
-      STORY_ID,
       {
         ...updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
         operationTime,
       } as UpdateStoryUpdate,
       entity,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     const saved = await handler.findByIdOrThrow(entity.id);
@@ -315,13 +317,12 @@ describe('update', () => {
     const entity = await createCharacter();
 
     const edit = handler.update(
-      USER_ID,
-      STORY_ID,
       {
         ...updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
         operationTime: 'not-a-date',
       } as UpdateStoryUpdate,
       entity,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     await expect(edit).rejects.toMatchObject({ reason: 'validation' });
@@ -332,13 +333,12 @@ describe('update', () => {
     const operationTime = new Date(Date.now() + 500).toISOString();
 
     await handler.update(
-      USER_ID,
-      STORY_ID,
       {
         ...updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
         operationTime,
       } as UpdateStoryUpdate,
       entity,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     expect((await handler.findByIdOrThrow(entity.id)).name).toBe('Nyx');
@@ -349,7 +349,10 @@ describe('delete', () => {
   it('soft-deletes, keeping the row as a tombstone', async () => {
     const entity = await createCharacter();
 
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     const row = await handler.findByIdOrThrow(entity.id);
     expect(row).toMatchObject({ isDeleted: true, version: 2 });
@@ -359,26 +362,30 @@ describe('delete', () => {
   /** Resending the same deletion (a lost previous response) is not a conflict: it already took effect. */
   it('treats a repeated delete as a success', async () => {
     const entity = await createCharacter();
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const deleted = await handler.findByIdOrThrow(entity.id);
 
     await expect(
-      handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), deleted),
+      handler.delete(deleteUpdate(entity.id, 1), deleted, { userId: USER_ID, storyId: STORY_ID }),
     ).resolves.toBeUndefined();
     expect((await handler.findByIdOrThrow(entity.id)).version).toBe(2);
   });
 
   it('refuses a delete built on a stale version', async () => {
     const entity = await createCharacter();
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
-      entity,
-    );
+    await handler.update(updateUpdate(entity.id, { name: 'Nyx', version: 1 }), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const current = await handler.findByIdOrThrow(entity.id);
 
-    const stale = handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), current);
+    const stale = handler.delete(deleteUpdate(entity.id, 1), current, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
     expect((await handler.findByIdOrThrow(entity.id)).isDeleted).toBe(false);
@@ -416,7 +423,10 @@ describe('countForStoryIds', () => {
   it('does not count deleted rows against the plan limit', async () => {
     const entity = await createCharacter();
     await createCharacter(newId(), 'Nyx');
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     expect(await handler.countForStoryIds([STORY_ID])).toBe(1);
   });
@@ -437,7 +447,10 @@ describe('countForStoryIds', () => {
 describe('findDeleted', () => {
   it('lists tombstones with a display name the recovery screen can show', async () => {
     const entity = await createCharacter(newId(), 'Keres');
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     const deleted = await handler.findDeleted();
 
@@ -460,7 +473,10 @@ describe('findDeleted', () => {
 
   it('filters by story when asked', async () => {
     const entity = await createCharacter();
-    await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
+    await handler.delete(deleteUpdate(entity.id, 1), entity, {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
 
     expect(await handler.findDeleted(STORY_ID)).toHaveLength(1);
     expect(await handler.findDeleted('outra-historia')).toEqual([]);
@@ -477,16 +493,17 @@ describe('other entities inherit the same contract', () => {
     const tagHandler = new TagSyncHandler();
     const id = newId();
 
-    await tagHandler.create(USER_ID, STORY_ID, {
-      type: 'create',
-      entity: 'Tag',
-      id,
-      data: { name: 'Vilões' },
-    } as CreateStoryUpdate);
+    await tagHandler.create(
+      {
+        type: 'create',
+        entity: 'Tag',
+        id,
+        data: { name: 'Vilões' },
+      } as CreateStoryUpdate,
+      { userId: USER_ID, storyId: STORY_ID },
+    );
     const created = await tagHandler.findByIdOrThrow(id);
     await tagHandler.update(
-      USER_ID,
-      STORY_ID,
       {
         type: 'update',
         entity: 'Tag',
@@ -494,13 +511,13 @@ describe('other entities inherit the same contract', () => {
         changes: { name: 'Antagonistas', version: 1 },
       } as UpdateStoryUpdate,
       created,
+      { userId: USER_ID, storyId: STORY_ID },
     );
     const updated = await tagHandler.findByIdOrThrow(id);
     await tagHandler.delete(
-      USER_ID,
-      STORY_ID,
       { type: 'delete', entity: 'Tag', id, version: 2 } as DeleteStoryUpdate,
       updated,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     const row = await db.select().from(tags).where(eq(tags.id, id));
@@ -529,19 +546,21 @@ describe('other entities inherit the same contract', () => {
   ])('a %s reports a version conflict the same way', async (entity, build, data, changes) => {
     const entityHandler = build();
     const id = newId();
-    await entityHandler.create(USER_ID, STORY_ID, {
-      type: 'create',
-      entity,
-      id,
-      data,
-    } as CreateStoryUpdate);
+    await entityHandler.create(
+      {
+        type: 'create',
+        entity,
+        id,
+        data,
+      } as CreateStoryUpdate,
+      { userId: USER_ID, storyId: STORY_ID },
+    );
     const created = await entityHandler.findByIdOrThrow(id);
 
     const stale = entityHandler.update(
-      USER_ID,
-      STORY_ID,
       { type: 'update', entity, id, changes: { ...changes, version: 99 } } as UpdateStoryUpdate,
       created,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
@@ -562,26 +581,27 @@ describe('other entities inherit the same contract', () => {
   ])('a %s refuses an edit after it was deleted on the server', async (entity, build, data) => {
     const entityHandler = build();
     const id = newId();
-    await entityHandler.create(USER_ID, STORY_ID, {
-      type: 'create',
-      entity,
-      id,
-      data,
-    } as CreateStoryUpdate);
+    await entityHandler.create(
+      {
+        type: 'create',
+        entity,
+        id,
+        data,
+      } as CreateStoryUpdate,
+      { userId: USER_ID, storyId: STORY_ID },
+    );
     const created = await entityHandler.findByIdOrThrow(id);
     await entityHandler.delete(
-      USER_ID,
-      STORY_ID,
       { type: 'delete', entity, id, version: 1 } as DeleteStoryUpdate,
       created,
+      { userId: USER_ID, storyId: STORY_ID },
     );
     const deleted = await entityHandler.findByIdOrThrow(id);
 
     const edit = entityHandler.update(
-      USER_ID,
-      STORY_ID,
       { type: 'update', entity, id, changes: { title: 'Depois', version: 2 } } as UpdateStoryUpdate,
       deleted,
+      { userId: USER_ID, storyId: STORY_ID },
     );
 
     await expect(edit).rejects.toMatchObject({ reason: 'deleted_on_server' });
@@ -589,14 +609,20 @@ describe('other entities inherit the same contract', () => {
 
   it('keeps each entity type in its own table', async () => {
     const sharedId = newId();
-    await handler.create(USER_ID, STORY_ID, createUpdate(sharedId, { name: 'Keres' }));
+    await handler.create(createUpdate(sharedId, { name: 'Keres' }), {
+      userId: USER_ID,
+      storyId: STORY_ID,
+    });
     const tagHandler = new TagSyncHandler();
-    await tagHandler.create(USER_ID, STORY_ID, {
-      type: 'create',
-      entity: 'Tag',
-      id: sharedId,
-      data: { name: 'Vilões' },
-    } as CreateStoryUpdate);
+    await tagHandler.create(
+      {
+        type: 'create',
+        entity: 'Tag',
+        id: sharedId,
+        data: { name: 'Vilões' },
+      } as CreateStoryUpdate,
+      { userId: USER_ID, storyId: STORY_ID },
+    );
 
     expect((await db.select().from(characters).where(eq(characters.id, sharedId)))[0].name).toBe(
       'Keres',
@@ -665,9 +691,9 @@ describe('base handler defensive paths', () => {
     const probe = new ColumnProbeHandler({ storyIdColumnName: 'storyId' });
     const row = await createCharacter();
 
-    await expect(probe.delete(USER_ID, STORY_ID, deleteUpdate(row.id, 1), row)).rejects.toThrow(
-      /Delete not supported for entity Character/,
-    );
+    await expect(
+      probe.delete(deleteUpdate(row.id, 1), row, { userId: USER_ID, storyId: STORY_ID }),
+    ).rejects.toThrow(/Delete not supported for entity Character/);
   });
 
   it('reports a null deletion date when the entity tracks none', async () => {
@@ -699,10 +725,14 @@ describe('base handler defensive paths', () => {
     const row = await createCharacter();
 
     await expect(
-      handler.update(USER_ID, STORY_ID, updateUpdate(row.id, { name: 'x', version: 1 }), {
-        ...row,
-        version: 'corrupt',
-      } as never),
+      handler.update(
+        updateUpdate(row.id, { name: 'x', version: 1 }),
+        {
+          ...row,
+          version: 'corrupt',
+        } as never,
+        { userId: USER_ID, storyId: STORY_ID },
+      ),
     ).rejects.toThrow('Invalid persisted version for Character.');
   });
 
@@ -766,7 +796,7 @@ describe('base handler delete race', () => {
     await db.update(characters).set({ version: 2 }).where(eq(characters.id, row.id));
 
     await expect(
-      handler.delete(USER_ID, STORY_ID, deleteUpdate(row.id, 1), row),
+      handler.delete(deleteUpdate(row.id, 1), row, { userId: USER_ID, storyId: STORY_ID }),
     ).rejects.toMatchObject({ reason: 'version_conflict' });
   });
 });

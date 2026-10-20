@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateItemJourneyDataType,
   CreateStoryUpdate,
@@ -69,12 +69,8 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateItemJourneyDataType = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(
@@ -107,12 +103,11 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     const newItemId = validatedChanges.itemId ?? currentEntity.itemId;
@@ -135,16 +130,14 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

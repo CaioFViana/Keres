@@ -48,8 +48,6 @@ beforeEach(async () => {
   firstSceneId = newId();
   secondSceneId = newId();
   await new ChapterSyncHandler().create(
-    userId,
-    storyId,
     create('Chapter', chapterId, {
       name: 'Prólogo',
       index: 1,
@@ -57,10 +55,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new LocationSyncHandler().create(
-    userId,
-    storyId,
     create('Location', locationId, {
       name: 'Olímpo',
       description: null,
@@ -70,11 +67,10 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   const scenes = new SceneSyncHandler();
   await scenes.create(
-    userId,
-    storyId,
     create('Scene', firstSceneId, {
       chapterId,
       locationId,
@@ -90,10 +86,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await scenes.create(
-    userId,
-    storyId,
     create('Scene', secondSceneId, {
       chapterId,
       locationId,
@@ -109,6 +104,7 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
 });
 
@@ -126,8 +122,6 @@ describe('choice and inventory sync entity handlers', () => {
     const checkId = newId();
 
     await item.create(
-      userId,
-      storyId,
       create('Item', itemId, {
         characterOwnerId: null,
         name: 'Chave de ônix',
@@ -137,10 +131,9 @@ describe('choice and inventory sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
     await effect.create(
-      userId,
-      storyId,
       create('Effect', effectId, {
         entityType: 'Scene',
         entityId: firstSceneId,
@@ -148,25 +141,22 @@ describe('choice and inventory sync entity handlers', () => {
         itemId,
         triggerName: null,
       }),
+      { userId, storyId },
     );
     await choice.create(
-      userId,
-      storyId,
       create('Choice', choiceId, {
         sceneId: firstSceneId,
         nextSceneId: secondSceneId,
         text: 'Abrir o portão',
         notes: null,
       }),
+      { userId, storyId },
     );
     await group.create(
-      userId,
-      storyId,
       create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+      { userId, storyId },
     );
     await check.create(
-      userId,
-      storyId,
       create('ChoiceCheck', checkId, {
         groupId,
         mode: 'enable',
@@ -179,6 +169,7 @@ describe('choice and inventory sync entity handlers', () => {
         triggerName: null,
         triggerState: null,
       }),
+      { userId, storyId },
     );
 
     expect(await item.findByIdOrThrow(itemId)).toMatchObject({ name: 'Chave de ônix', version: 1 });
@@ -201,8 +192,6 @@ describe('choice and inventory sync entity handlers', () => {
 
     const currentChoice = await choice.findByIdOrThrow(choiceId);
     await choice.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Choice',
@@ -210,6 +199,7 @@ describe('choice and inventory sync entity handlers', () => {
         changes: { text: 'Usar a chave', version: 1 },
       } as UpdateStoryUpdate,
       currentChoice,
+      { userId, storyId },
     );
     expect(await choice.findByIdOrThrow(choiceId)).toMatchObject({
       text: 'Usar a chave',
@@ -225,7 +215,7 @@ describe('choice and inventory sync entity handlers', () => {
     ];
     for (const [entity, id, handler] of deletionCases) {
       const current = await handler.findByIdOrThrow(id);
-      await handler.delete(userId, storyId, remove(entity, id, current.version), current);
+      await handler.delete(remove(entity, id, current.version), current, { userId, storyId });
       expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true });
     }
   });
@@ -242,8 +232,6 @@ describe('choice and inventory sync entity handlers', () => {
     const current = await scenes.findByIdOrThrow(firstSceneId);
 
     const stale = scenes.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Scene',
@@ -251,6 +239,7 @@ describe('choice and inventory sync entity handlers', () => {
         changes: { name: 'Nome que não deveria gravar', version: 99 },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
@@ -261,20 +250,17 @@ describe('choice and inventory sync entity handlers', () => {
     const choice = new ChoiceSyncHandler();
     const choiceId = newId();
     await choice.create(
-      userId,
-      storyId,
       create('Choice', choiceId, {
         sceneId: firstSceneId,
         nextSceneId: secondSceneId,
         text: 'Abrir o portão',
         notes: null,
       }),
+      { userId, storyId },
     );
     const current = await choice.findByIdOrThrow(choiceId);
 
     const stale = choice.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Choice',
@@ -282,6 +268,7 @@ describe('choice and inventory sync entity handlers', () => {
         changes: { text: 'Texto que não deveria gravar', version: 99 },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
@@ -300,19 +287,16 @@ describe('choice and inventory sync entity handlers', () => {
 
     await expect(
       groups.create(
-        userId,
-        storyId,
         create('ChoiceCheckGroup', groupId, {
           choiceId: 'missing-choice',
           combinator: 'AND',
           order: 0,
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       checks.create(
-        userId,
-        storyId,
         create('ChoiceCheck', newId(), {
           groupId: 'missing-group',
           mode: 'enable',
@@ -325,12 +309,11 @@ describe('choice and inventory sync entity handlers', () => {
           triggerName: 'gate-open',
           triggerState: 'set',
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       effects.create(
-        userId,
-        storyId,
         create('Effect', newId(), {
           entityType: 'Scene',
           entityId: firstSceneId,
@@ -338,27 +321,24 @@ describe('choice and inventory sync entity handlers', () => {
           itemId: 'missing-item',
           triggerName: null,
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     await choice.create(
-      userId,
-      storyId,
       create('Choice', choiceId, {
         sceneId: firstSceneId,
         nextSceneId: secondSceneId,
         text: 'Continue',
         notes: null,
       }),
+      { userId, storyId },
     );
     await groups.create(
-      userId,
-      storyId,
       create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+      { userId, storyId },
     );
     await item.create(
-      userId,
-      storyId,
       create('Item', itemId, {
         characterOwnerId: null,
         name: 'Chave',
@@ -368,11 +348,10 @@ describe('choice and inventory sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
     const checkId = newId();
     await checks.create(
-      userId,
-      storyId,
       create('ChoiceCheck', checkId, {
         groupId,
         mode: 'enable',
@@ -385,11 +364,10 @@ describe('choice and inventory sync entity handlers', () => {
         triggerName: null,
         triggerState: null,
       }),
+      { userId, storyId },
     );
     const effectId = newId();
     await effects.create(
-      userId,
-      storyId,
       create('Effect', effectId, {
         entityType: 'Scene',
         entityId: firstSceneId,
@@ -397,12 +375,11 @@ describe('choice and inventory sync entity handlers', () => {
         itemId,
         triggerName: null,
       }),
+      { userId, storyId },
     );
 
     await expect(
       checks.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'ChoiceCheck',
@@ -410,12 +387,11 @@ describe('choice and inventory sync entity handlers', () => {
           changes: { itemId: 'missing-item', version: 1 },
         } as UpdateStoryUpdate,
         await checks.findByIdOrThrow(checkId),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       effects.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'Effect',
@@ -423,6 +399,7 @@ describe('choice and inventory sync entity handlers', () => {
           changes: { itemId: 'missing-item', version: 1 },
         } as UpdateStoryUpdate,
         await effects.findByIdOrThrow(effectId),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -435,23 +412,19 @@ describe('choice and inventory sync entity handlers', () => {
     const groupId = newId();
     const checkId = newId();
     await choice.create(
-      userId,
-      storyId,
       create('Choice', choiceId, {
         sceneId: firstSceneId,
         nextSceneId: secondSceneId,
         text: 'Continuar',
         notes: null,
       }),
+      { userId, storyId },
     );
     await groups.create(
-      userId,
-      storyId,
       create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+      { userId, storyId },
     );
     await checks.create(
-      userId,
-      storyId,
       create('ChoiceCheck', checkId, {
         groupId,
         mode: 'enable',
@@ -464,12 +437,11 @@ describe('choice and inventory sync entity handlers', () => {
         triggerName: null,
         triggerState: null,
       }),
+      { userId, storyId },
     );
     const groupCurrent = await groups.findByIdOrThrow(groupId);
     await expect(
       groups.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'ChoiceCheckGroup',
@@ -477,14 +449,13 @@ describe('choice and inventory sync entity handlers', () => {
           changes: { choiceId: 'missing-choice', version: groupCurrent.version },
         } as UpdateStoryUpdate,
         groupCurrent,
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     const checkCurrent = await checks.findByIdOrThrow(checkId);
     await expect(
       checks.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'ChoiceCheck',
@@ -492,6 +463,7 @@ describe('choice and inventory sync entity handlers', () => {
           changes: { sceneId: 'missing-scene', version: checkCurrent.version },
         } as UpdateStoryUpdate,
         checkCurrent,
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     expect(await checks.findByIdOrThrow(checkId)).toMatchObject({

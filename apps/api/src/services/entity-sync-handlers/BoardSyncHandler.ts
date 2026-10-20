@@ -1,8 +1,8 @@
 import type { CreateBoardDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateBoardDataSchema, PartialBoardSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { boards } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 /**
  * Boards arriving from a client.
@@ -24,12 +24,8 @@ export class BoardSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateBoardDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

@@ -54,14 +54,11 @@ beforeEach(async () => {
     version: 1,
     isDeleted: false,
   } as never);
-  await new CharacterSyncHandler().create(
+  await new CharacterSyncHandler().create(create('Character', characterId, { name: 'Keres' }), {
     userId,
     storyId,
-    create('Character', characterId, { name: 'Keres' }),
-  );
+  });
   await new LocationSyncHandler().create(
-    userId,
-    storyId,
     create('Location', locationId, {
       name: 'Olímpo',
       description: null,
@@ -71,6 +68,7 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
 });
 
@@ -81,8 +79,6 @@ describe('schema and see-also sync entity handlers', () => {
     const fieldId = newId();
     const valueId = newId();
     await fields.create(
-      userId,
-      storyId,
       create('StorySchemaField', fieldId, {
         entityType: 'Character',
         name: 'Origem',
@@ -93,22 +89,20 @@ describe('schema and see-also sync entity handlers', () => {
         defaultValue: null,
         order: 0,
       }),
+      { userId, storyId },
     );
     await values.create(
-      userId,
-      storyId,
       create('AttributeValue', valueId, {
         entityType: 'Character',
         entityId: characterId,
         fieldId,
         value: 'Submundo',
       }),
+      { userId, storyId },
     );
 
     const field = await fields.findByIdOrThrow(fieldId);
     await fields.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'StorySchemaField',
@@ -116,11 +110,10 @@ describe('schema and see-also sync entity handlers', () => {
         changes: { name: 'Origem divina', key: 'ignorado', version: 1 },
       } as UpdateStoryUpdate,
       field,
+      { userId, storyId },
     );
     const value = await values.findByIdOrThrow(valueId);
     await values.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'AttributeValue',
@@ -128,6 +121,7 @@ describe('schema and see-also sync entity handlers', () => {
         changes: { value: 'Olimpo', version: 1 },
       } as UpdateStoryUpdate,
       value,
+      { userId, storyId },
     );
     expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({
       name: 'Origem divina',
@@ -138,8 +132,8 @@ describe('schema and see-also sync entity handlers', () => {
 
     const updatedValue = await values.findByIdOrThrow(valueId);
     const updatedField = await fields.findByIdOrThrow(fieldId);
-    await values.delete(userId, storyId, remove('AttributeValue', valueId, 2), updatedValue);
-    await fields.delete(userId, storyId, remove('StorySchemaField', fieldId, 2), updatedField);
+    await values.delete(remove('AttributeValue', valueId, 2), updatedValue, { userId, storyId });
+    await fields.delete(remove('StorySchemaField', fieldId, 2), updatedField, { userId, storyId });
     expect(await values.findByIdOrThrow(valueId)).toMatchObject({ isDeleted: true });
     // The key stays: uniqueness holds among live fields only, so the tombstone blocks nothing.
     expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({ isDeleted: true, key: 'origem' });
@@ -149,8 +143,6 @@ describe('schema and see-also sync entity handlers', () => {
     const fields = new StorySchemaFieldSyncHandler();
     const fieldId = newId();
     await fields.create(
-      userId,
-      storyId,
       create('StorySchemaField', fieldId, {
         entityType: 'Character',
         name: 'Lar',
@@ -162,12 +154,11 @@ describe('schema and see-also sync entity handlers', () => {
         defaultValue: null,
         order: 0,
       }),
+      { userId, storyId },
     );
 
     const field = await fields.findByIdOrThrow(fieldId);
     await fields.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'StorySchemaField',
@@ -180,6 +171,7 @@ describe('schema and see-also sync entity handlers', () => {
         },
       } as UpdateStoryUpdate,
       field,
+      { userId, storyId },
     );
 
     expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({
@@ -197,14 +189,13 @@ describe('schema and see-also sync entity handlers', () => {
     const handler = new SeeAlsoRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      storyId,
       create('SeeAlsoRelation', id, {
         entityAType: 'Location',
         entityAId: locationId,
         entityBType: 'Character',
         entityBId: characterId,
       }),
+      { userId, storyId },
     );
     const created = await handler.findByIdOrThrow(id);
 
@@ -213,7 +204,7 @@ describe('schema and see-also sync entity handlers', () => {
       `${created.entityAType}:${created.entityAId}`,
       `${created.entityBType}:${created.entityBId}`,
     ]).toEqual([`Character:${characterId}`, `Location:${locationId}`].sort());
-    await handler.delete(userId, storyId, remove('SeeAlsoRelation', id, 1), created);
+    await handler.delete(remove('SeeAlsoRelation', id, 1), created, { userId, storyId });
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 2 });
   });
 
@@ -223,44 +214,39 @@ describe('schema and see-also sync entity handlers', () => {
 
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('SeeAlsoRelation', newId(), {
           entityAType: 'Character',
           entityAId: characterId,
           entityBType: 'Character',
           entityBId: characterId,
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/itself/i);
 
     await handler.create(
-      userId,
-      storyId,
       create('SeeAlsoRelation', relationId, {
         entityAType: 'Character',
         entityAId: characterId,
         entityBType: 'Location',
         entityBId: locationId,
       }),
+      { userId, storyId },
     );
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('SeeAlsoRelation', newId(), {
           entityAType: 'Location',
           entityAId: locationId,
           entityBType: 'Character',
           entityBId: characterId,
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already exists/i);
 
     await expect(
       handler.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'SeeAlsoRelation',
@@ -268,6 +254,7 @@ describe('schema and see-also sync entity handlers', () => {
           changes: { entityAId: locationId, version: 1 },
         } as UpdateStoryUpdate,
         await handler.findByIdOrThrow(relationId),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/cannot change the linked entities/i);
   });
@@ -276,35 +263,31 @@ describe('schema and see-also sync entity handlers', () => {
     const handler = new SeeAlsoRelationSyncHandler();
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('SeeAlsoRelation', newId(), {
           entityAType: 'Character',
           entityAId: characterId,
           entityBType: 'Location',
           entityBId: newId(),
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     const locations = new LocationSyncHandler();
     const current = await locations.findByIdOrThrow(locationId);
-    await locations.delete(
+    await locations.delete(remove('Location', locationId, current.version), current, {
       userId,
       storyId,
-      remove('Location', locationId, current.version),
-      current,
-    );
+    });
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('SeeAlsoRelation', newId(), {
           entityAType: 'Character',
           entityAId: characterId,
           entityBType: 'Location',
           entityBId: locationId,
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -349,14 +332,13 @@ describe('schema and see-also sync entity handlers', () => {
       ['Choice', choiceId],
     ] as const) {
       await handler.create(
-        userId,
-        storyId,
         create('SeeAlsoRelation', newId(), {
           entityAType: 'Character',
           entityAId: characterId,
           entityBType: type,
           entityBId: id,
         }),
+        { userId, storyId },
       );
     }
   });
@@ -378,14 +360,11 @@ describe('story-scoped polymorphic references', () => {
     } as never);
     const otherCharacterId = newId();
     await new CharacterSyncHandler().create(
-      userId,
-      otherStoryId,
       create('Character', otherCharacterId, { name: 'Nyx' }),
+      { userId, storyId: otherStoryId },
     );
     const otherFieldId = newId();
     await new StorySchemaFieldSyncHandler().create(
-      userId,
-      otherStoryId,
       create('StorySchemaField', otherFieldId, {
         entityType: 'Character',
         name: 'Origem',
@@ -396,6 +375,7 @@ describe('story-scoped polymorphic references', () => {
         defaultValue: null,
         order: 0,
       }),
+      { userId, storyId: otherStoryId },
     );
     return { otherStoryId, otherCharacterId, otherFieldId };
   }
@@ -403,8 +383,6 @@ describe('story-scoped polymorphic references', () => {
   async function seedField(entityType = 'Character') {
     const fieldId = newId();
     await new StorySchemaFieldSyncHandler().create(
-      userId,
-      storyId,
       create('StorySchemaField', fieldId, {
         entityType,
         name: 'Origem',
@@ -415,6 +393,7 @@ describe('story-scoped polymorphic references', () => {
         defaultValue: null,
         order: 0,
       }),
+      { userId, storyId },
     );
     return fieldId;
   }
@@ -433,13 +412,13 @@ describe('story-scoped polymorphic references', () => {
       });
 
     await expect(
-      values.create(userId, storyId, value(characterId, otherFieldId)),
+      values.create(value(characterId, otherFieldId), { userId, storyId }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
-      values.create(userId, storyId, value(otherCharacterId, ownField)),
+      values.create(value(otherCharacterId, ownField), { userId, storyId }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
-      values.create(userId, storyId, value(characterId, locationField)),
+      values.create(value(characterId, locationField), { userId, storyId }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
 
@@ -448,14 +427,13 @@ describe('story-scoped polymorphic references', () => {
     const fieldId = await seedField();
     const valueId = newId();
     await values.create(
-      userId,
-      storyId,
       create('AttributeValue', valueId, {
         entityType: 'Character',
         entityId: characterId,
         fieldId,
         value: 'Submundo',
       }),
+      { userId, storyId },
     );
     const repoint = {
       type: 'update',
@@ -464,7 +442,7 @@ describe('story-scoped polymorphic references', () => {
       changes: { value: 'Olimpo', entityId: locationId, fieldId: newId(), version: 1 },
     } as UpdateStoryUpdate;
 
-    await values.update(userId, storyId, repoint, await values.findByIdOrThrow(valueId));
+    await values.update(repoint, await values.findByIdOrThrow(valueId), { userId, storyId });
 
     expect(await values.findByIdOrThrow(valueId)).toMatchObject({
       entityId: characterId,

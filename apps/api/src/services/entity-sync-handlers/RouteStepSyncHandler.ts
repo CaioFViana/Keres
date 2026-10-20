@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateRouteStepDataType,
   CreateStoryUpdate,
@@ -69,7 +69,7 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
     if (choice && choice.sceneId !== sceneId)
       throw new SyncConflictError('validation', 'A RouteStep choice must leave the step scene.');
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
+  async create(update: CreateStoryUpdate, { storyId, database = db }: SyncWriteContext) {
     const data: CreateRouteStepDataType = this.createSchema.parse(update.data);
     await this.validate(storyId, data.routeId, data.sceneId, data.selectedChoiceId, database);
     if (await this.findById(update.id!, database))
@@ -86,12 +86,11 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
     });
   }
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ) {
+    const { storyId, database = db } = ctx;
     const changes = this.updateSchema.parse(update.changes);
     await this.validate(
       storyId,
@@ -100,15 +99,13 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
       changes.selectedChoiceId ?? current.selectedChoiceId,
       database,
     );
-    await super.update(userId, storyId, update, current, database);
+    await super.update(update, current, ctx);
   }
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ) {
-    await super.delete(userId, storyId, update, current, database);
+    await super.delete(update, current, ctx);
   }
 }

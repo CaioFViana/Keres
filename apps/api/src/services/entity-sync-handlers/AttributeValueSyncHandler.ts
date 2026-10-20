@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateAttributeValueDataType,
   CreateStoryUpdate,
@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateAttributeValueDataSchema, PartialAttributeValueSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { attributeValues, storySchemaFields } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
@@ -36,12 +36,8 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateAttributeValueDataType = this.createSchema.parse(update.data);
     const field = await database.query.storySchemaFields.findFirst({
       where: and(
@@ -95,22 +91,18 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

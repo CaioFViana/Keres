@@ -114,8 +114,6 @@ beforeEach(async () => {
     fx[`${prefix}scene2`] = secondSceneId;
     fx[`${prefix}char`] = characterId;
     await chapters.create(
-      userId,
-      story,
       create('Chapter', chapterId, {
         name: 'Prologo',
         index: 1,
@@ -123,10 +121,9 @@ beforeEach(async () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: story },
     );
     await locations.create(
-      userId,
-      story,
       create('Location', locationId, {
         name: 'Olimpo',
         description: null,
@@ -136,14 +133,13 @@ beforeEach(async () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: story },
     );
     for (const [id, name, index] of [
       [sceneId, 'Chegada', 1],
       [secondSceneId, 'Partida', 2],
     ] as const) {
       await scenes.create(
-        userId,
-        story,
         create('Scene', id, {
           chapterId,
           locationId,
@@ -159,45 +155,47 @@ beforeEach(async () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId: story },
       );
     }
-    await characters.create(userId, story, create('Character', characterId, { name: 'Keres' }));
+    await characters.create(create('Character', characterId, { name: 'Keres' }), {
+      userId,
+      storyId: story,
+    });
   }
   fx.Lchar2 = newId();
-  await characters.create(userId, linearStoryId, create('Character', fx.Lchar2, { name: 'Nyx' }));
+  await characters.create(create('Character', fx.Lchar2, { name: 'Nyx' }), {
+    userId,
+    storyId: linearStoryId,
+  });
 
   // Branching-only scaffolding: choice, check group, route, item.
   const choiceId = newId();
   fx.Bchoice = choiceId;
   await new ChoiceSyncHandler().create(
-    userId,
-    branchingStoryId,
     create('Choice', choiceId, {
       sceneId: fx.Bscene,
       nextSceneId: fx.Bscene2,
       text: 'Abrir o portao',
       notes: null,
     }),
+    { userId, storyId: branchingStoryId },
   );
   const groupId = newId();
   fx.Bgroup = groupId;
   await new ChoiceCheckGroupSyncHandler().create(
-    userId,
-    branchingStoryId,
     create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+    { userId, storyId: branchingStoryId },
   );
   const routeId = newId();
   fx.Broute = routeId;
-  await new RouteSyncHandler().create(
+  await new RouteSyncHandler().create(create('Route', routeId, { name: 'Train', details: null }), {
     userId,
-    branchingStoryId,
-    create('Route', routeId, { name: 'Train', details: null }),
-  );
+    storyId: branchingStoryId,
+  });
   const itemId = newId();
   fx.Bitem = itemId;
   await new ItemSyncHandler().create(
-    userId,
-    branchingStoryId,
     create('Item', itemId, {
       characterOwnerId: null,
       name: 'Chave',
@@ -207,42 +205,37 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId: branchingStoryId },
   );
 
   // Linear-only scaffolding: note, tag, gallery, stat, field, plot.
   const noteId = newId();
   fx.Lnote = noteId;
   await new NoteSyncHandler().create(
-    userId,
-    linearStoryId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId: linearStoryId },
   );
   const tagId = newId();
   fx.Ltag = tagId;
   await new TagSyncHandler().create(
-    userId,
-    linearStoryId,
     create('Tag', tagId, { name: 'Viloes', color: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId: linearStoryId },
   );
   const galleryId = newId();
   fx.Lgallery = galleryId;
-  await new GallerySyncHandler().create(
+  await new GallerySyncHandler().create(create('Gallery', galleryId, galleryData('a'.repeat(32))), {
     userId,
-    linearStoryId,
-    create('Gallery', galleryId, galleryData('a'.repeat(32))),
-  );
+    storyId: linearStoryId,
+  });
   const statId = newId();
   fx.Lstat = statId;
-  await new StatSyncHandler().create(
+  await new StatSyncHandler().create(create('Stat', statId, { name: 'Coragem' }), {
     userId,
-    linearStoryId,
-    create('Stat', statId, { name: 'Coragem' }),
-  );
+    storyId: linearStoryId,
+  });
   const fieldId = newId();
   fx.Lfield = fieldId;
   await new StorySchemaFieldSyncHandler().create(
-    userId,
-    linearStoryId,
     create('StorySchemaField', fieldId, {
       entityType: 'Character',
       name: 'Origem',
@@ -253,14 +246,14 @@ beforeEach(async () => {
       defaultValue: null,
       order: 0,
     }),
+    { userId, storyId: linearStoryId },
   );
   const plotId = newId();
   fx.Lplot = plotId;
-  await new PlotSyncHandler().create(
+  await new PlotSyncHandler().create(create('Plot', plotId, { name: 'Main plot', details: null }), {
     userId,
-    linearStoryId,
-    create('Plot', plotId, { name: 'Main plot', details: null }),
-  );
+    storyId: linearStoryId,
+  });
 });
 
 type Handler = SyncEntityHandler;
@@ -439,9 +432,9 @@ describe('duplicate sync creates', () => {
       const handler = build();
       const storyId = storyOf(storyKey);
       const id = newId();
-      await handler.create(userId, storyId, create(entity, id, data()));
+      await handler.create(create(entity, id, data()), { userId, storyId });
 
-      await expect(handler.create(userId, storyId, create(entity, id, data()))).rejects.toThrow(
+      await expect(handler.create(create(entity, id, data()), { userId, storyId })).rejects.toThrow(
         `Conflict: ${entity} with ID ${id} already exists.`,
       );
     },
@@ -450,10 +443,10 @@ describe('duplicate sync creates', () => {
   it('a Tag refuses a second live row with the same name', async () => {
     const handler = new TagSyncHandler();
     const data = () => ({ name: 'Herois', color: null, isFavorite: false, extraNotes: null });
-    await handler.create(userId, linearStoryId, create('Tag', newId(), data()));
+    await handler.create(create('Tag', newId(), data()), { userId, storyId: linearStoryId });
 
     await expect(
-      handler.create(userId, linearStoryId, create('Tag', newId(), data())),
+      handler.create(create('Tag', newId(), data()), { userId, storyId: linearStoryId }),
     ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
@@ -469,20 +462,20 @@ describe('duplicate sync creates', () => {
       isFavorite: false,
       extraNotes: null,
     });
-    await handler.create(userId, linearStoryId, create('Item', newId(), data()));
+    await handler.create(create('Item', newId(), data()), { userId, storyId: linearStoryId });
 
     await expect(
-      handler.create(userId, linearStoryId, create('Item', newId(), data())),
+      handler.create(create('Item', newId(), data()), { userId, storyId: linearStoryId }),
     ).resolves.toBeUndefined();
   });
 
   it('a Suggestion refuses a second live row with the same type and value', async () => {
     const handler = new SuggestionSyncHandler();
     const data = { type: 'character-name', value: 'Nyx' };
-    await handler.create(userId, linearStoryId, create('Suggestion', newId(), data));
+    await handler.create(create('Suggestion', newId(), data), { userId, storyId: linearStoryId });
 
     await expect(
-      handler.create(userId, linearStoryId, create('Suggestion', newId(), data)),
+      handler.create(create('Suggestion', newId(), data), { userId, storyId: linearStoryId }),
     ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
@@ -498,10 +491,16 @@ describe('duplicate sync creates', () => {
       defaultValue: null,
       order: 1,
     });
-    await handler.create(userId, linearStoryId, create('StorySchemaField', newId(), data()));
+    await handler.create(create('StorySchemaField', newId(), data()), {
+      userId,
+      storyId: linearStoryId,
+    });
 
     await expect(
-      handler.create(userId, linearStoryId, create('StorySchemaField', newId(), data())),
+      handler.create(create('StorySchemaField', newId(), data()), {
+        userId,
+        storyId: linearStoryId,
+      }),
     ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
@@ -513,20 +512,29 @@ describe('duplicate sync creates', () => {
       fieldId: fx.Lfield,
       value: 'Atenas',
     };
-    await handler.create(userId, linearStoryId, create('AttributeValue', newId(), data));
+    await handler.create(create('AttributeValue', newId(), data), {
+      userId,
+      storyId: linearStoryId,
+    });
 
     await expect(
-      handler.create(userId, linearStoryId, create('AttributeValue', newId(), data)),
+      handler.create(create('AttributeValue', newId(), data), { userId, storyId: linearStoryId }),
     ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
   it('a CharacterRelation refuses a second live relation for the same pair', async () => {
     const handler = new CharacterRelationSyncHandler();
     const data = { character1Id: fx.Lchar, character2Id: fx.Lchar2, relationType: 'siblings' };
-    await handler.create(userId, linearStoryId, create('CharacterRelation', newId(), data));
+    await handler.create(create('CharacterRelation', newId(), data), {
+      userId,
+      storyId: linearStoryId,
+    });
 
     await expect(
-      handler.create(userId, linearStoryId, create('CharacterRelation', newId(), data)),
+      handler.create(create('CharacterRelation', newId(), data), {
+        userId,
+        storyId: linearStoryId,
+      }),
     ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 });
@@ -536,13 +544,16 @@ describe('create-path reference validation', () => {
     const handler = new StorySyncHandler();
     const storyId = newId();
 
-    await handler.create(userId, storyId, {
-      type: 'create',
-      entity: 'Story',
-      id: storyId,
-      data: { title: 'Amanha', type: 'linear' },
-      operationTime: new Date(Date.now() + 60_000).toISOString(),
-    } as CreateStoryUpdate);
+    await handler.create(
+      {
+        type: 'create',
+        entity: 'Story',
+        id: storyId,
+        data: { title: 'Amanha', type: 'linear' },
+        operationTime: new Date(Date.now() + 60_000).toISOString(),
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
 
     const created = await handler.findById(storyId);
     expect(created).toBeDefined();
@@ -554,8 +565,6 @@ describe('create-path reference validation', () => {
     // check runs - the handler line is unreachable defense-in-depth, but the refusal is real.
     await expect(
       new StorySchemaFieldSyncHandler().create(
-        userId,
-        linearStoryId,
         create('StorySchemaField', newId(), {
           entityType: 'Character',
           name: 'Mentor',
@@ -566,6 +575,7 @@ describe('create-path reference validation', () => {
           defaultValue: null,
           order: 2,
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/target entity type/i);
   });
@@ -573,16 +583,13 @@ describe('create-path reference validation', () => {
   it('a Chapter links to an arc of its story and refuses one from nowhere', async () => {
     const chapters = new ChapterSyncHandler();
     const arcId = newId();
-    await new StoryArcSyncHandler().create(
+    await new StoryArcSyncHandler().create(create('StoryArc', arcId, { title: 'Ato I' }), {
       userId,
-      linearStoryId,
-      create('StoryArc', arcId, { title: 'Ato I' }),
-    );
+      storyId: linearStoryId,
+    });
 
     const linkedId = newId();
     await chapters.create(
-      userId,
-      linearStoryId,
       create('Chapter', linkedId, {
         name: 'Com arco',
         index: 3,
@@ -591,13 +598,12 @@ describe('create-path reference validation', () => {
         extraNotes: null,
         arcId,
       }),
+      { userId, storyId: linearStoryId },
     );
     expect((await chapters.findByIdOrThrow(linkedId)).arcId).toBe(arcId);
 
     await expect(
       chapters.create(
-        userId,
-        linearStoryId,
         create('Chapter', newId(), {
           name: 'Sem arco',
           index: 4,
@@ -606,6 +612,7 @@ describe('create-path reference validation', () => {
           extraNotes: null,
           arcId: newId(),
         }),
+        { userId, storyId: linearStoryId },
       ),
       // A missing arc is a missing reference: deleted, or still on its way from the device.
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
@@ -614,9 +621,8 @@ describe('create-path reference validation', () => {
   it('a PlotScene refuses to link when the story itself is gone', async () => {
     await expect(
       new PlotSceneSyncHandler().create(
-        userId,
-        newId(),
         create('PlotScene', newId(), { plotId: fx.Lplot, sceneId: fx.Lscene, note: 'X' }),
+        { userId, storyId: newId() },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -625,26 +631,24 @@ describe('create-path reference validation', () => {
     const handler = new ChoiceSyncHandler();
     await expect(
       handler.create(
-        userId,
-        branchingStoryId,
         create('Choice', newId(), {
           sceneId: newId(),
           nextSceneId: fx.Bscene2,
           text: 'Nada',
           notes: null,
         }),
+        { userId, storyId: branchingStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       handler.create(
-        userId,
-        branchingStoryId,
         create('Choice', newId(), {
           sceneId: fx.Bscene,
           nextSceneId: newId(),
           text: 'Nada',
           notes: null,
         }),
+        { userId, storyId: branchingStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -659,14 +663,13 @@ describe('create-path reference validation', () => {
   ])('a RouteStep refuses a missing %s', async (_which, ids) => {
     await expect(
       new RouteStepSyncHandler().create(
-        userId,
-        branchingStoryId,
         create('RouteStep', newId(), {
           routeId: (ids.routeId as () => string)(),
           position: 1,
           sceneId: (ids.sceneId as () => string)(),
           selectedChoiceId: (ids.selectedChoiceId as () => string | null)(),
         }),
+        { userId, storyId: branchingStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -678,8 +681,6 @@ describe('create-path reference validation', () => {
   ])('an ItemJourney refuses a missing %s', async (_which, ids) => {
     await expect(
       new ItemJourneySyncHandler().create(
-        userId,
-        branchingStoryId,
         create('ItemJourney', newId(), {
           itemId: (ids.itemId as () => string)(),
           sceneId: (ids.sceneId as () => string)(),
@@ -687,6 +688,7 @@ describe('create-path reference validation', () => {
           newState: 'perdida',
           extraNotes: null,
         }),
+        { userId, storyId: branchingStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -694,8 +696,6 @@ describe('create-path reference validation', () => {
   it('an Item refuses an owner that does not belong to the story', async () => {
     await expect(
       new ItemSyncHandler().create(
-        userId,
-        linearStoryId,
         create('Item', newId(), {
           characterOwnerId: newId(),
           name: 'Adaga',
@@ -705,6 +705,7 @@ describe('create-path reference validation', () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -712,13 +713,12 @@ describe('create-path reference validation', () => {
   it('a Gallery refuses a media type the application could not display', async () => {
     await expect(
       new GallerySyncHandler().create(
-        userId,
-        linearStoryId,
         create('Gallery', newId(), {
           ...galleryData('c'.repeat(32)),
           mediaType: 'image',
           mimeType: 'application/x-unsupported',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/unsupported media MIME type/i);
   });
@@ -726,8 +726,6 @@ describe('create-path reference validation', () => {
   it('a Comment refuses a create under another user identity', async () => {
     await expect(
       new CommentSyncHandler().create(
-        userId,
-        linearStoryId,
         create('Comment', newId(), {
           entityType: 'Character',
           entityId: fx.Lchar,
@@ -739,6 +737,7 @@ describe('create-path reference validation', () => {
           commentText: 'Falsificado',
           criticality: 2,
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
   });
@@ -747,35 +746,32 @@ describe('create-path reference validation', () => {
     const handler = new TagRelationSyncHandler();
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('TagRelation', newId(), {
           tagId: fx.Ltag,
           relationId: fx.Lchar,
           relationType: 'Starship',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/Unknown relationType/i);
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('TagRelation', newId(), {
           tagId: newId(),
           relationId: fx.Lchar,
           relationType: 'Character',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('TagRelation', newId(), {
           tagId: fx.Ltag,
           relationId: newId(),
           relationType: 'Character',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -784,24 +780,22 @@ describe('create-path reference validation', () => {
     const handler = new GalleryRelationSyncHandler();
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('GalleryRelation', newId(), {
           galleryId: newId(),
           ownerId: fx.Lchar,
           ownerType: 'Character',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'not_found' });
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('GalleryRelation', newId(), {
           galleryId: fx.Lgallery,
           ownerId: newId(),
           ownerType: 'Character',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'not_found' });
   });
@@ -811,13 +805,12 @@ describe('create-path reference validation', () => {
     async (relationType) => {
       await expect(
         new NoteRelationSyncHandler().create(
-          userId,
-          linearStoryId,
           create('NoteRelation', newId(), {
             noteId: fx.Lnote,
             relationId: newId(),
             relationType,
           }),
+          { userId, storyId: linearStoryId },
         ),
       ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     },
@@ -827,13 +820,12 @@ describe('create-path reference validation', () => {
     // Both endpoints missing: the sorted pair still checks character 1 first.
     await expect(
       new CharacterRelationSyncHandler().create(
-        userId,
-        linearStoryId,
         create('CharacterRelation', newId(), {
           character1Id: newId(),
           character2Id: newId(),
           relationType: 'siblings',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -841,13 +833,12 @@ describe('create-path reference validation', () => {
   it('a CharacterRelation refuses a missing second character', async () => {
     await expect(
       new CharacterRelationSyncHandler().create(
-        userId,
-        linearStoryId,
         create('CharacterRelation', newId(), {
           character1Id: fx.Lchar,
           character2Id: newId(),
           relationType: 'siblings',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -855,13 +846,12 @@ describe('create-path reference validation', () => {
   it('a LocationRelation refuses a missing parent', async () => {
     await expect(
       new LocationRelationSyncHandler().create(
-        userId,
-        linearStoryId,
         create('LocationRelation', newId(), {
           locationAId: newId(),
           locationBId: fx.Llocation,
           relationType: 'contains',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });

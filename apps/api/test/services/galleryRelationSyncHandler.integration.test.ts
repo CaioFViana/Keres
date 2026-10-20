@@ -56,8 +56,6 @@ beforeEach(async () => {
     isDeleted: false,
   } as never);
   await new ChapterSyncHandler().create(
-    userId,
-    storyId,
     create('Chapter', chapterId, {
       name: 'Prólogo',
       index: 1,
@@ -65,10 +63,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new LocationSyncHandler().create(
-    userId,
-    storyId,
     create('Location', locationId, {
       name: 'Olimpo',
       description: null,
@@ -78,15 +75,13 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
-  await new CharacterSyncHandler().create(
+  await new CharacterSyncHandler().create(create('Character', characterId, { name: 'Keres' }), {
     userId,
     storyId,
-    create('Character', characterId, { name: 'Keres' }),
-  );
+  });
   await new SceneSyncHandler().create(
-    userId,
-    storyId,
     create('Scene', sceneId, {
       chapterId,
       locationId,
@@ -102,10 +97,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new ItemSyncHandler().create(
-    userId,
-    storyId,
     create('Item', itemId, {
       characterOwnerId: characterId,
       name: 'Chave',
@@ -115,15 +109,13 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new NoteSyncHandler().create(
-    userId,
-    storyId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId },
   );
   await new WorldRuleSyncHandler().create(
-    userId,
-    storyId,
     create('WorldRule', worldRuleId, {
       title: 'A magia cobra um preço',
       description: null,
@@ -136,10 +128,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new GallerySyncHandler().create(
-    userId,
-    storyId,
     create('Gallery', galleryId, {
       mediaType: 'image',
       mimeType: 'image/png',
@@ -150,6 +141,7 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
 });
 
@@ -160,9 +152,8 @@ describe('gallery relation sync handler', () => {
       const handler = new GalleryRelationSyncHandler();
       const id = newId();
       await handler.create(
-        userId,
-        storyId,
         create('GalleryRelation', id, { galleryId, ownerId: owners[ownerType], ownerType }),
+        { userId, storyId },
       );
       expect(await handler.findByIdOrThrow(id)).toMatchObject({
         galleryId,
@@ -177,30 +168,26 @@ describe('gallery relation sync handler', () => {
     const handler = new GalleryRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      storyId,
       create('GalleryRelation', id, {
         galleryId,
         ownerId: owners.Character,
         ownerType: 'Character',
       }),
+      { userId, storyId },
     );
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('GalleryRelation', newId(), {
           galleryId,
           ownerId: owners.Character,
           ownerType: 'Character',
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already linked/i);
 
     const current = await handler.findByIdOrThrow(id);
     await handler.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'GalleryRelation',
@@ -208,6 +195,7 @@ describe('gallery relation sync handler', () => {
         changes: { ownerId: owners.Item, ownerType: 'Item', version: 1 },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       ownerId: owners.Item,

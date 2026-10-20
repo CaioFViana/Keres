@@ -54,8 +54,6 @@ beforeEach(async () => {
     isDeleted: false,
   } as never);
   await new ChapterSyncHandler().create(
-    userId,
-    storyId,
     create('Chapter', chapterId, {
       name: 'Prólogo',
       index: 1,
@@ -63,10 +61,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new LocationSyncHandler().create(
-    userId,
-    storyId,
     create('Location', locationId, {
       name: 'Olimpo',
       description: null,
@@ -76,15 +73,13 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
-  await new CharacterSyncHandler().create(
+  await new CharacterSyncHandler().create(create('Character', characterId, { name: 'Keres' }), {
     userId,
     storyId,
-    create('Character', characterId, { name: 'Keres' }),
-  );
+  });
   await new SceneSyncHandler().create(
-    userId,
-    storyId,
     create('Scene', sceneId, {
       chapterId,
       locationId,
@@ -100,21 +95,20 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new WorldRuleSyncHandler().create(
-    userId,
-    storyId,
     create('WorldRule', worldRuleId, {
       title: 'Nenhum mortal entra',
       description: null,
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new NoteSyncHandler().create(
-    userId,
-    storyId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId },
   );
   // Straight to the table: the Choice handler refuses linear stories, and the relation
   // validator only cares that the row exists - not how it got there.
@@ -140,9 +134,8 @@ describe('note relation sync handler', () => {
       const handler = new NoteRelationSyncHandler();
       const id = newId();
       await handler.create(
-        userId,
-        storyId,
         create('NoteRelation', id, { noteId, relationId: entities[relationType], relationType }),
+        { userId, storyId },
       );
       expect(await handler.findByIdOrThrow(id)).toMatchObject({
         noteId,
@@ -158,13 +151,12 @@ describe('note relation sync handler', () => {
 
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('NoteRelation', newId(), {
           noteId,
           relationId: newId(),
           relationType: 'Choice',
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -173,19 +165,16 @@ describe('note relation sync handler', () => {
     const handler = new NoteRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      storyId,
       create('NoteRelation', id, {
         noteId,
         relationId: entities.Character,
         relationType: 'Character',
       }),
+      { userId, storyId },
     );
     const current = await handler.findByIdOrThrow(id);
     await expect(
       handler.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'NoteRelation',
@@ -193,6 +182,7 @@ describe('note relation sync handler', () => {
           changes: { relationId: entities.Location, version: 1 },
         } as UpdateStoryUpdate,
         current,
+        { userId, storyId },
       ),
     ).rejects.toThrow(/Cannot change 'relationId'/i);
   });
@@ -201,13 +191,12 @@ describe('note relation sync handler', () => {
     const handler = new NoteRelationSyncHandler();
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('NoteRelation', newId(), {
           noteId: newId(),
           relationId: entities.Character,
           relationType: 'Character',
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
@@ -217,13 +206,12 @@ describe('note relation sync handler', () => {
       .where(eq(notes.id, noteId));
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('NoteRelation', newId(), {
           noteId,
           relationId: entities.Character,
           relationType: 'Character',
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -232,18 +220,17 @@ describe('note relation sync handler', () => {
     const handler = new NoteRelationSyncHandler();
     const firstId = newId();
     const data = { noteId, relationId: entities.Chapter, relationType: 'Chapter' as const };
-    await handler.create(userId, storyId, create('NoteRelation', firstId, data));
+    await handler.create(create('NoteRelation', firstId, data), { userId, storyId });
     await expect(
-      handler.create(userId, storyId, create('NoteRelation', newId(), data)),
+      handler.create(create('NoteRelation', newId(), data), { userId, storyId }),
     ).rejects.toThrow(/already exists/i);
 
     const current = await handler.findByIdOrThrow(firstId);
     await handler.delete(
-      userId,
-      storyId,
       { type: 'delete', entity: 'NoteRelation', id: firstId, version: current.version } as any,
       current,
+      { userId, storyId },
     );
-    await handler.create(userId, storyId, create('NoteRelation', newId(), data));
+    await handler.create(create('NoteRelation', newId(), data), { userId, storyId });
   });
 });

@@ -52,8 +52,6 @@ beforeEach(async () => {
   sceneId = newId();
   itemId = newId();
   await new ChapterSyncHandler().create(
-    userId,
-    storyId,
     create('Chapter', chapterId, {
       name: 'Prólogo',
       index: 1,
@@ -61,10 +59,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new LocationSyncHandler().create(
-    userId,
-    storyId,
     create('Location', locationId, {
       name: 'Olímpo',
       description: null,
@@ -74,15 +71,13 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
-  await new CharacterSyncHandler().create(
+  await new CharacterSyncHandler().create(create('Character', characterId, { name: 'Keres' }), {
     userId,
     storyId,
-    create('Character', characterId, { name: 'Keres' }),
-  );
+  });
   await new SceneSyncHandler().create(
-    userId,
-    storyId,
     create('Scene', sceneId, {
       chapterId,
       locationId,
@@ -98,10 +93,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new ItemSyncHandler().create(
-    userId,
-    storyId,
     create('Item', itemId, {
       characterOwnerId: characterId,
       name: 'Chave de ônix',
@@ -111,6 +105,7 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
 });
 
@@ -121,8 +116,6 @@ describe('collaboration sync entity handlers', () => {
     const commentId = newId();
     const favoriteId = newId();
     await comments.create(
-      userId,
-      storyId,
       create('Comment', commentId, {
         entityType: 'Character',
         entityId: characterId,
@@ -134,17 +127,15 @@ describe('collaboration sync entity handlers', () => {
         commentText: 'Rever este nome',
         criticality: 2,
       }),
+      { userId, storyId },
     );
     await favorites.create(
-      userId,
-      storyId,
       create('Favorite', favoriteId, { userId, entityId: characterId, entityType: 'Character' }),
+      { userId, storyId },
     );
 
     const comment = await comments.findByIdOrThrow(commentId);
     await comments.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Comment',
@@ -152,6 +143,7 @@ describe('collaboration sync entity handlers', () => {
         changes: { commentText: 'Nome aprovado', version: 1 },
       } as UpdateStoryUpdate,
       comment,
+      { userId, storyId },
     );
     expect(await comments.findByIdOrThrow(commentId)).toMatchObject({
       commentText: 'Nome aprovado',
@@ -164,9 +156,9 @@ describe('collaboration sync entity handlers', () => {
     });
 
     const favorite = await favorites.findByIdOrThrow(favoriteId);
-    await favorites.delete(userId, storyId, remove('Favorite', favoriteId, 1), favorite);
+    await favorites.delete(remove('Favorite', favoriteId, 1), favorite, { userId, storyId });
     const updatedComment = await comments.findByIdOrThrow(commentId);
-    await comments.delete(userId, storyId, remove('Comment', commentId, 2), updatedComment);
+    await comments.delete(remove('Comment', commentId, 2), updatedComment, { userId, storyId });
     expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({ isDeleted: true });
     expect(await comments.findByIdOrThrow(commentId)).toMatchObject({ isDeleted: true });
   });
@@ -177,20 +169,16 @@ describe('collaboration sync entity handlers', () => {
     const characterSceneId = newId();
     const journeyId = newId();
     await characterScenes.create(
-      userId,
-      storyId,
       create('CharacterScene', characterSceneId, { characterId, sceneId }),
+      { userId, storyId },
     );
     await expect(
-      characterScenes.create(
+      characterScenes.create(create('CharacterScene', newId(), { characterId, sceneId }), {
         userId,
         storyId,
-        create('CharacterScene', newId(), { characterId, sceneId }),
-      ),
+      }),
     ).rejects.toThrow(/already exists/i);
     await journeys.create(
-      userId,
-      storyId,
       create('ItemJourney', journeyId, {
         itemId,
         sceneId,
@@ -198,6 +186,7 @@ describe('collaboration sync entity handlers', () => {
         newState: 'ativada',
         extraNotes: null,
       }),
+      { userId, storyId },
     );
 
     expect(await characterScenes.findByIdOrThrow(characterSceneId)).toMatchObject({
@@ -214,8 +203,6 @@ describe('collaboration sync entity handlers', () => {
 
     const journey = await journeys.findByIdOrThrow(journeyId);
     await journeys.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'ItemJourney',
@@ -223,6 +210,7 @@ describe('collaboration sync entity handlers', () => {
         changes: { newState: 'consumida', version: 1 },
       } as UpdateStoryUpdate,
       journey,
+      { userId, storyId },
     );
     expect(await journeys.findByIdOrThrow(journeyId)).toMatchObject({
       newState: 'consumida',
@@ -235,7 +223,7 @@ describe('collaboration sync entity handlers', () => {
     ];
     for (const [entity, id, handler, version] of deletionCases) {
       const current = await handler.findByIdOrThrow(id);
-      await handler.delete(userId, storyId, remove(entity, id, version), current);
+      await handler.delete(remove(entity, id, version), current, { userId, storyId });
       expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true });
     }
   });
@@ -243,31 +231,26 @@ describe('collaboration sync entity handlers', () => {
   it('rejects absent CharacterScene endpoints and validates a retarget before updating', async () => {
     const handler = new CharacterSceneSyncHandler();
     await expect(
-      handler.create(
+      handler.create(create('CharacterScene', newId(), { characterId: newId(), sceneId }), {
         userId,
         storyId,
-        create('CharacterScene', newId(), { characterId: newId(), sceneId }),
-      ),
+      }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
-      handler.create(
+      handler.create(create('CharacterScene', newId(), { characterId, sceneId: newId() }), {
         userId,
         storyId,
-        create('CharacterScene', newId(), { characterId, sceneId: newId() }),
-      ),
+      }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     const linkId = newId();
-    await handler.create(
+    await handler.create(create('CharacterScene', linkId, { characterId, sceneId }), {
       userId,
       storyId,
-      create('CharacterScene', linkId, { characterId, sceneId }),
-    );
+    });
     const current = await handler.findByIdOrThrow(linkId);
     await expect(
       handler.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'CharacterScene',
@@ -275,6 +258,7 @@ describe('collaboration sync entity handlers', () => {
           changes: { characterId: newId(), version: current.version },
         } as UpdateStoryUpdate,
         current,
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     expect(await handler.findByIdOrThrow(linkId)).toMatchObject({
@@ -297,31 +281,27 @@ describe('collaboration sync entity handlers', () => {
 
     await expect(
       favorites.create(
-        outsiderId,
-        storyId,
         create('Favorite', newId(), {
           userId,
           entityId: characterId,
           entityType: 'Character',
         }),
+        { userId: outsiderId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
 
     await favorites.create(
-      userId,
-      storyId,
       create('Favorite', favoriteId, {
         userId,
         entityId: characterId,
         entityType: 'Character',
       }),
+      { userId, storyId },
     );
     const favorite = await favorites.findByIdOrThrow(favoriteId);
 
     await expect(
       favorites.update(
-        outsiderId,
-        storyId,
         {
           type: 'update',
           entity: 'Favorite',
@@ -329,10 +309,14 @@ describe('collaboration sync entity handlers', () => {
           changes: { version: 1 },
         } as UpdateStoryUpdate,
         favorite,
+        { userId: outsiderId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
     await expect(
-      favorites.delete(outsiderId, storyId, remove('Favorite', favoriteId, 1), favorite),
+      favorites.delete(remove('Favorite', favoriteId, 1), favorite, {
+        userId: outsiderId,
+        storyId,
+      }),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
     expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({
       isDeleted: false,
@@ -344,18 +328,15 @@ describe('collaboration sync entity handlers', () => {
     const favorites = new FavoriteSyncHandler();
     const favoriteId = newId();
     await favorites.create(
-      userId,
-      storyId,
       create('Favorite', favoriteId, {
         userId,
         entityId: characterId,
         entityType: 'Character',
       }),
+      { userId, storyId },
     );
     const current = await favorites.findByIdOrThrow(favoriteId);
     await favorites.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Favorite',
@@ -369,6 +350,7 @@ describe('collaboration sync entity handlers', () => {
         },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
     expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({
       userId,
@@ -399,19 +381,16 @@ describe('collaboration sync entity handlers', () => {
     });
 
     await expect(
-      scenesHandler.create(userId, storyId, create('Scene', newId(), baseScene())),
+      scenesHandler.create(create('Scene', newId(), baseScene()), { userId, storyId }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       scenesHandler.create(
-        userId,
-        storyId,
         create('Scene', newId(), baseScene({ chapterId: null, locationId: newId() })),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
       scenesHandler.create(
-        userId,
-        storyId,
         create(
           'Scene',
           newId(),
@@ -421,15 +400,15 @@ describe('collaboration sync entity handlers', () => {
             calendarDateOverrideCalendarId: newId(),
           }),
         ),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     const noLocationId = newId();
-    await scenesHandler.create(
+    await scenesHandler.create(create('Scene', noLocationId, baseScene({ chapterId: null })), {
       userId,
       storyId,
-      create('Scene', noLocationId, baseScene({ chapterId: null })),
-    );
+    });
     expect(await scenesHandler.findByIdOrThrow(noLocationId)).toMatchObject({ locationId: null });
   });
 
@@ -458,11 +437,10 @@ describe('collaboration sync entity handlers', () => {
     });
     await db.update(scenes).set({ isFinish: true }).where(eq(scenes.id, sceneId));
 
-    await scenesHandler.create(
+    await scenesHandler.create(create('Scene', nextLinearId, sceneData(nextLinearId)), {
       userId,
       storyId,
-      create('Scene', nextLinearId, sceneData(nextLinearId)),
-    );
+    });
     expect(await scenesHandler.findByIdOrThrow(sceneId)).toMatchObject({ isFinish: true });
     expect(await scenesHandler.findByIdOrThrow(nextLinearId)).toMatchObject({
       isStart: true,
@@ -471,11 +449,10 @@ describe('collaboration sync entity handlers', () => {
 
     await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
     const branchSceneId = newId();
-    await scenesHandler.create(
+    await scenesHandler.create(create('Scene', branchSceneId, sceneData(branchSceneId)), {
       userId,
       storyId,
-      create('Scene', branchSceneId, sceneData(branchSceneId)),
-    );
+    });
     expect(await scenesHandler.findByIdOrThrow(nextLinearId)).toMatchObject({
       isStart: true,
       isFinish: true,

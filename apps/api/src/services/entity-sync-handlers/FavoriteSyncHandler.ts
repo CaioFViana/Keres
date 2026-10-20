@@ -1,8 +1,8 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
 import { and, count, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { favorites } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -42,12 +42,8 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { userId, storyId, database = db } = ctx;
     const data = this.createSchema.parse(update.data);
     if (data.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only create their own favorites.');
@@ -87,12 +83,11 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { userId } = ctx;
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only update their own favorites.');
     }
@@ -101,19 +96,18 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     delete changes.storyId;
     delete changes.entityId;
     delete changes.entityType;
-    await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
+    await super.update({ ...update, changes }, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { userId } = ctx;
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only remove their own favorites.');
     }
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

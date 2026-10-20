@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateStatDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateStatDataSchema, MAX_PRIMARY_STATS, PartialStatSchema } from '@keres/shared';
 import { and, count, eq, ne } from 'drizzle-orm';
@@ -50,12 +50,8 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateStatDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);
@@ -81,12 +77,11 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // It only costs a count when the secondary is being promoted.
@@ -94,6 +89,6 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
       await this.assertPrimaryLimit(storyId, update.id!, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 }

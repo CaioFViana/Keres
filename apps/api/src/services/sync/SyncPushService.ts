@@ -338,7 +338,7 @@ export class SyncPushService {
                 },
                 tx,
               );
-              await handler.create(userId, storyId, update as CreateStoryUpdate, tx);
+              await handler.create(update as CreateStoryUpdate, { userId, storyId, database: tx });
             }
           } else if (update.type === 'update') {
             if (!currentEntity) {
@@ -374,7 +374,11 @@ export class SyncPushService {
               );
             }
             await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
-            await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
+            await handler.update(update as UpdateStoryUpdate, currentEntity, {
+              userId,
+              storyId,
+              database: tx,
+            });
           } else if (update.type === 'delete') {
             if (!currentEntity || handler.isDeletedRow(currentEntity)) {
               // Deleting something the server does not have - or already tombstoned - is the
@@ -385,7 +389,7 @@ export class SyncPushService {
                 { ...policyContext, currentEntity },
                 update as DeleteStoryUpdate,
               );
-              await handler.delete(userId, storyId, deleteUpdate, currentEntity, tx);
+              await handler.delete(deleteUpdate, currentEntity, { userId, storyId, database: tx });
             }
           }
 

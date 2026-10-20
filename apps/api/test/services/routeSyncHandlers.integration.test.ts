@@ -78,16 +78,17 @@ describe('Route sync handlers', () => {
     const firstStepId = newId();
     const secondStepId = newId();
 
-    await routeHandler.create(userId, storyId, {
-      type: 'create',
-      entity: 'Route',
-      id: routeId,
-      data: { name: 'Train', details: null },
-    } as CreateStoryUpdate);
+    await routeHandler.create(
+      {
+        type: 'create',
+        entity: 'Route',
+        id: routeId,
+        data: { name: 'Train', details: null },
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
     const route = await routeHandler.findByIdOrThrow(routeId);
     await routeHandler.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Route',
@@ -95,24 +96,29 @@ describe('Route sync handlers', () => {
         changes: { name: 'Train ending', version: 1 },
       } as UpdateStoryUpdate,
       route,
+      { userId, storyId },
     );
 
-    await stepHandler.create(userId, storyId, {
-      type: 'create',
-      entity: 'RouteStep',
-      id: firstStepId,
-      data: { routeId, position: 1, sceneId: firstSceneId, selectedChoiceId: choiceId },
-    } as CreateStoryUpdate);
-    await stepHandler.create(userId, storyId, {
-      type: 'create',
-      entity: 'RouteStep',
-      id: secondStepId,
-      data: { routeId, position: 2, sceneId: secondSceneId, selectedChoiceId: null },
-    } as CreateStoryUpdate);
+    await stepHandler.create(
+      {
+        type: 'create',
+        entity: 'RouteStep',
+        id: firstStepId,
+        data: { routeId, position: 1, sceneId: firstSceneId, selectedChoiceId: choiceId },
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
+    await stepHandler.create(
+      {
+        type: 'create',
+        entity: 'RouteStep',
+        id: secondStepId,
+        data: { routeId, position: 2, sceneId: secondSceneId, selectedChoiceId: null },
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
     const secondStep = await stepHandler.findByIdOrThrow(secondStepId);
     await stepHandler.delete(
-      userId,
-      storyId,
       {
         type: 'delete',
         entity: 'RouteStep',
@@ -120,6 +126,7 @@ describe('Route sync handlers', () => {
         version: 1,
       } as DeleteStoryUpdate,
       secondStep,
+      { userId, storyId },
     );
 
     expect(await routeHandler.findByIdOrThrow(routeId)).toMatchObject({
@@ -134,47 +141,57 @@ describe('Route sync handlers', () => {
 
   it('rejects a step whose choice does not leave its scene', async () => {
     const routeId = newId();
-    await new RouteSyncHandler().create(userId, storyId, {
-      type: 'create',
-      entity: 'Route',
-      id: routeId,
-      data: { name: 'Bad path', details: null },
-    } as CreateStoryUpdate);
-    await expect(
-      new RouteStepSyncHandler().create(userId, storyId, {
+    await new RouteSyncHandler().create(
+      {
         type: 'create',
-        entity: 'RouteStep',
-        id: newId(),
-        data: { routeId, position: 1, sceneId: secondSceneId, selectedChoiceId: choiceId },
-      } as CreateStoryUpdate),
+        entity: 'Route',
+        id: routeId,
+        data: { name: 'Bad path', details: null },
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
+    await expect(
+      new RouteStepSyncHandler().create(
+        {
+          type: 'create',
+          entity: 'RouteStep',
+          id: newId(),
+          data: { routeId, position: 1, sceneId: secondSceneId, selectedChoiceId: choiceId },
+        } as CreateStoryUpdate,
+        { userId, storyId },
+      ),
     ).rejects.toMatchObject({ reason: 'validation' });
   });
 
   it('rejects route creation when the story is not branching', async () => {
     await db.update(stories).set({ type: 'linear' }).where(eq(stories.id, storyId));
     await expect(
-      new RouteSyncHandler().create(userId, storyId, {
-        type: 'create',
-        entity: 'Route',
-        id: newId(),
-        data: { name: 'No route', details: null },
-      } as CreateStoryUpdate),
+      new RouteSyncHandler().create(
+        {
+          type: 'create',
+          entity: 'Route',
+          id: newId(),
+          data: { name: 'No route', details: null },
+        } as CreateStoryUpdate,
+        { userId, storyId },
+      ),
     ).rejects.toMatchObject({ reason: 'validation' });
   });
 
   it('reports a version conflict instead of silently discarding a concurrent route edit', async () => {
     const handler = new RouteSyncHandler();
     const routeId = newId();
-    await handler.create(userId, storyId, {
-      type: 'create',
-      entity: 'Route',
-      id: routeId,
-      data: { name: 'Original', details: null },
-    } as CreateStoryUpdate);
+    await handler.create(
+      {
+        type: 'create',
+        entity: 'Route',
+        id: routeId,
+        data: { name: 'Original', details: null },
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
     const current = await handler.findByIdOrThrow(routeId);
     await handler.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Route',
@@ -182,12 +199,11 @@ describe('Route sync handlers', () => {
         changes: { name: 'Server edit', version: 1 },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
 
     await expect(
       handler.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'Route',
@@ -195,6 +211,7 @@ describe('Route sync handlers', () => {
           changes: { name: 'Offline edit', version: 1 },
         } as UpdateStoryUpdate,
         await handler.findByIdOrThrow(routeId),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({
       reason: 'version_conflict',

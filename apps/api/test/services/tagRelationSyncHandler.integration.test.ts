@@ -64,8 +64,6 @@ beforeEach(async () => {
     isDeleted: false,
   } as never);
   await new ChapterSyncHandler().create(
-    userId,
-    storyId,
     create('Chapter', chapterId, {
       name: 'Prólogo',
       index: 1,
@@ -73,10 +71,9 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new LocationSyncHandler().create(
-    userId,
-    storyId,
     create('Location', locationId, {
       name: 'Olimpo',
       description: null,
@@ -86,20 +83,18 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
-  await new CharacterSyncHandler().create(
+  await new CharacterSyncHandler().create(create('Character', characterId, { name: 'Keres' }), {
     userId,
     storyId,
-    create('Character', characterId, { name: 'Keres' }),
-  );
+  });
   const scenes = new SceneSyncHandler();
   for (const [id, name, index] of [
     [firstSceneId, 'Chegada', 1],
     [secondSceneId, 'Partida', 2],
   ] as const) {
     await scenes.create(
-      userId,
-      storyId,
       create('Scene', id, {
         chapterId,
         locationId,
@@ -115,11 +110,10 @@ beforeEach(async () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
   }
   await new ItemSyncHandler().create(
-    userId,
-    storyId,
     create('Item', itemId, {
       characterOwnerId: characterId,
       name: 'Chave',
@@ -129,15 +123,13 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new NoteSyncHandler().create(
-    userId,
-    storyId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId },
   );
   await new GallerySyncHandler().create(
-    userId,
-    storyId,
     create('Gallery', galleryId, {
       mediaType: 'image',
       mimeType: 'image/png',
@@ -148,31 +140,29 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new WorldRuleSyncHandler().create(
-    userId,
-    storyId,
     create('WorldRule', worldRuleId, {
       title: 'Nenhum mortal entra',
       description: null,
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId },
   );
   await new ChoiceSyncHandler().create(
-    userId,
-    storyId,
     create('Choice', choiceId, {
       sceneId: firstSceneId,
       nextSceneId: secondSceneId,
       text: 'Abrir o portão',
       notes: null,
     }),
+    { userId, storyId },
   );
   await new TagSyncHandler().create(
-    userId,
-    storyId,
     create('Tag', tagId, { name: 'Divindade', color: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId },
   );
 });
 
@@ -191,9 +181,8 @@ describe('tag relation sync handler', () => {
     const handler = new TagRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      storyId,
       create('TagRelation', id, { tagId, relationId: entities[relationType], relationType }),
+      { userId, storyId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       tagId,
@@ -206,23 +195,21 @@ describe('tag relation sync handler', () => {
   it('rejects an active duplicate tag relation', async () => {
     const handler = new TagRelationSyncHandler();
     await handler.create(
-      userId,
-      storyId,
       create('TagRelation', newId(), {
         tagId,
         relationId: entities.Character,
         relationType: 'Character',
       }),
+      { userId, storyId },
     );
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('TagRelation', newId(), {
           tagId,
           relationId: entities.Character,
           relationType: 'Character',
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already exists/i);
   });

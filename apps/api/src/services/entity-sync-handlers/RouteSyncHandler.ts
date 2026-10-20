@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateRouteDataType,
   CreateStoryUpdate,
@@ -30,7 +30,7 @@ export class RouteSyncHandler extends BaseSyncEntityHandler<
     if (!story || story.type !== 'branching')
       throw new SyncConflictError('validation', 'Routes are only available for branching stories.');
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
+  async create(update: CreateStoryUpdate, { storyId, database = db }: SyncWriteContext) {
     const data: CreateRouteDataType = this.createSchema.parse(update.data);
     await this.assertBranching(storyId, database);
     if (await this.findById(update.id!, database))
@@ -48,23 +48,21 @@ export class RouteSyncHandler extends BaseSyncEntityHandler<
     });
   }
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ) {
+    const { storyId, database = db } = ctx;
     await this.assertBranching(storyId, database);
-    await super.update(userId, storyId, update, current, database);
+    await super.update(update, current, ctx);
   }
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ) {
+    const { storyId, database = db } = ctx;
     await this.assertBranching(storyId, database);
-    await super.delete(userId, storyId, update, current, database);
+    await super.delete(update, current, ctx);
   }
 }

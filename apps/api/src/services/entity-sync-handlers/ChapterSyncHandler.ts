@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import type { CreateChapterDataType } from '@keres/shared/';
 import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
@@ -21,12 +21,8 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Validate incoming data against the create schema
     const validatedData: CreateChapterDataType = this.createSchema.parse(update.data);
     if (validatedData.arcId) {
@@ -51,18 +47,17 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Moving a chapter to another arc is held to the same check as creating it in one.
     const arcId = update.changes?.arcId;
     if (typeof arcId === 'string' && arcId.length > 0) {
       await this.assertArcInStory(arcId, storyId, database);
     }
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   private async assertArcInStory(

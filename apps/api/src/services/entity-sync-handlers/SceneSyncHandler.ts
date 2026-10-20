@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateSceneDataType,
   CreateStoryUpdate,
@@ -96,12 +96,8 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   // which records the flag each other scene loses as its own edit (SceneService). Every row an
   // operation changes has to be logged, or no other device ever learns of it.
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateSceneDataType = this.createSchema.parse(update.data);
 
     const currentScene = await this.findById(update.id!, database);
@@ -134,12 +130,11 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.chapterId !== undefined || validatedChanges.locationId !== undefined) {
@@ -165,18 +160,16 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     // used server time instead of the client's `operationTime` - a concurrent edit landed here
     // with no error and no conflict reported, just silently dropped (same bug already found
     // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
     // The client is now responsible for creating operations to re-index other scenes.
     // The API's role is simply to mark this specific scene as deleted.
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

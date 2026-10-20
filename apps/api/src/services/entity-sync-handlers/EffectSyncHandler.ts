@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateEffectDataSchema, PartialEffectSchema } from '@keres/shared';
 import { db, type CompatibleDb } from '@/db';
@@ -29,12 +29,8 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(storyId, validatedData.itemId, database);
@@ -68,28 +64,25 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.itemId !== undefined) {
       await this.validateRelatedEntities(storyId, validatedChanges.itemId, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

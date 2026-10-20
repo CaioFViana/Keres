@@ -34,32 +34,35 @@ describe('sync value comparison', () => {
   it('treats a resent board as identical regardless of JSON key order', async () => {
     const handler = new BoardSyncHandler();
     const id = newId();
-    await handler.create(userId, storyId, {
-      type: 'create',
-      entity: 'Board',
-      id,
-      data: {
-        name: 'Pins',
-        description: null,
-        content: {
-          nodes: [
-            { id: 'AAAAAAAA', kind: 'note', x: 10, y: 20, title: 'Pista', body: 'seguir' },
-            {
-              id: 'BBBBBBBB',
-              kind: 'entity',
-              x: 30,
-              y: 40,
-              entityType: 'Character',
-              entityId: 'char-1',
-              labelAtPin: 'Keres',
-            },
-          ],
-          edges: [
-            { id: 'CCCCCCCC', from: 'AAAAAAAA', to: 'BBBBBBBB', directed: true, label: null },
-          ],
+    await handler.create(
+      {
+        type: 'create',
+        entity: 'Board',
+        id,
+        data: {
+          name: 'Pins',
+          description: null,
+          content: {
+            nodes: [
+              { id: 'AAAAAAAA', kind: 'note', x: 10, y: 20, title: 'Pista', body: 'seguir' },
+              {
+                id: 'BBBBBBBB',
+                kind: 'entity',
+                x: 30,
+                y: 40,
+                entityType: 'Character',
+                entityId: 'char-1',
+                labelAtPin: 'Keres',
+              },
+            ],
+            edges: [
+              { id: 'CCCCCCCC', from: 'AAAAAAAA', to: 'BBBBBBBB', directed: true, label: null },
+            ],
+          },
         },
-      },
-    } as CreateStoryUpdate);
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
     const row = await handler.findByIdOrThrow(id);
 
     // Same document, every object written with its keys in a different order.
@@ -95,12 +98,15 @@ describe('sync value comparison', () => {
       nodes: [{ id: 'AAAAAAAA', kind: 'note', x: 10, y: 20, title: 'Pista', body: 'seguir' }],
       edges: [],
     };
-    await handler.create(userId, storyId, {
-      type: 'create',
-      entity: 'Board',
-      id,
-      data: { name: 'Pins', description: null, content },
-    } as CreateStoryUpdate);
+    await handler.create(
+      {
+        type: 'create',
+        entity: 'Board',
+        id,
+        data: { name: 'Pins', description: null, content },
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
     const row = await handler.findByIdOrThrow(id);
 
     expect(handler.createPayloadMatches(row, { name: 'Pins', content })).toBe(true);

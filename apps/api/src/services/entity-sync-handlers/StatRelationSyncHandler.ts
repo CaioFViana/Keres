@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateStatRelationDataType,
   CreateStoryUpdate,
@@ -103,12 +103,8 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateStatRelationDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);
@@ -148,12 +144,11 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
     const touchesKey =
       validatedChanges.characterId !== undefined ||
@@ -170,6 +165,6 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
       await this.assertNoDuplicateValue(storyId, characterId, modeId, statId, update.id!, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 }

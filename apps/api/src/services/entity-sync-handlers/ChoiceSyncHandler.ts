@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateChoiceDataType,
   CreateStoryUpdate,
@@ -69,12 +69,8 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     return story?.type === 'linear';
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Linear stories never have Choice rows - they're deleted on conversion to linear, and
     // only (re)created by converting to branching. See StoryService.convertStoryType.
     if (await this._isStoryLinear(storyId, database)) {
@@ -111,12 +107,11 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     // If story is linear, prevent direct updates of choices
     if (await this._isStoryLinear(storyId, database)) {
       throw new Error(
@@ -140,16 +135,15 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     // used server time instead of the client's `operationTime` - a concurrent edit landed here
     // with no error and no conflict reported, just silently dropped (same bug already found
     // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     // If story is linear, prevent direct deletion of choices
     if (await this._isStoryLinear(storyId, database)) {
       throw new Error(
@@ -157,6 +151,6 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

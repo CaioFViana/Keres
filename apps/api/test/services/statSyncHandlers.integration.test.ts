@@ -63,7 +63,7 @@ beforeEach(async () => {
     { id: characterId, storyId, name: 'Ilda' },
     { id: otherCharacterId, storyId, name: 'Bento' },
   ] as never);
-  await statHandler.create(userId, storyId, create('Stat', statId, { name: 'Coragem' }));
+  await statHandler.create(create('Stat', statId, { name: 'Coragem' }), { userId, storyId });
 });
 
 describe('Stat', () => {
@@ -75,47 +75,53 @@ describe('Stat', () => {
 
   it('refuses the thirteenth primary stat', async () => {
     for (let index = 1; index < MAX_PRIMARY_STATS; index += 1) {
-      await statHandler.create(userId, storyId, create('Stat', newId(), { name: `Stat ${index}` }));
+      await statHandler.create(create('Stat', newId(), { name: `Stat ${index}` }), {
+        userId,
+        storyId,
+      });
     }
 
     await expect(
-      statHandler.create(userId, storyId, create('Stat', newId(), { name: 'Excedente' })),
+      statHandler.create(create('Stat', newId(), { name: 'Excedente' }), { userId, storyId }),
     ).rejects.toThrow(SyncConflictError);
   });
 
   it('accepts secondary stats beyond the primary limit', async () => {
     for (let index = 1; index < MAX_PRIMARY_STATS; index += 1) {
-      await statHandler.create(userId, storyId, create('Stat', newId(), { name: `Stat ${index}` }));
+      await statHandler.create(create('Stat', newId(), { name: `Stat ${index}` }), {
+        userId,
+        storyId,
+      });
     }
     const secondaryId = newId();
 
-    await statHandler.create(
+    await statHandler.create(create('Stat', secondaryId, { name: 'Reputação', isPrimary: false }), {
       userId,
       storyId,
-      create('Stat', secondaryId, { name: 'Reputação', isPrimary: false }),
-    );
+    });
 
     expect((await statHandler.findByIdOrThrow(secondaryId)).isPrimary).toBe(false);
   });
 
   it('refuses to promote a secondary stat when the primaries are full', async () => {
     const secondaryId = newId();
-    await statHandler.create(
+    await statHandler.create(create('Stat', secondaryId, { name: 'Reputação', isPrimary: false }), {
       userId,
       storyId,
-      create('Stat', secondaryId, { name: 'Reputação', isPrimary: false }),
-    );
+    });
     for (let index = 1; index < MAX_PRIMARY_STATS; index += 1) {
-      await statHandler.create(userId, storyId, create('Stat', newId(), { name: `Stat ${index}` }));
+      await statHandler.create(create('Stat', newId(), { name: `Stat ${index}` }), {
+        userId,
+        storyId,
+      });
     }
     const current = await statHandler.findByIdOrThrow(secondaryId);
 
     await expect(
       statHandler.update(
-        userId,
-        storyId,
         change('Stat', secondaryId, { version: current.version, isPrimary: true }),
         current,
+        { userId, storyId },
       ),
     ).rejects.toThrow(SyncConflictError);
   });
@@ -126,16 +132,14 @@ describe('StatStrength', () => {
     const defaultTier = newId();
     const statTier = newId();
 
-    await strengthHandler.create(
+    await strengthHandler.create(create('StatStrength', defaultTier, { label: 'F', minValue: 0 }), {
       userId,
       storyId,
-      create('StatStrength', defaultTier, { label: 'F', minValue: 0 }),
-    );
+    });
     // The same floor, a different ladder: not a collision.
     await strengthHandler.create(
-      userId,
-      storyId,
       create('StatStrength', statTier, { statId, label: 'F', minValue: 0 }),
+      { userId, storyId },
     );
 
     expect((await strengthHandler.findByIdOrThrow(defaultTier)).statId).toBeNull();
@@ -143,33 +147,29 @@ describe('StatStrength', () => {
   });
 
   it('flags a repeated floor inside the story default ladder as a conflict', async () => {
-    await strengthHandler.create(
+    await strengthHandler.create(create('StatStrength', newId(), { label: 'F', minValue: 0 }), {
       userId,
       storyId,
-      create('StatStrength', newId(), { label: 'F', minValue: 0 }),
-    );
+    });
 
     await expect(
-      strengthHandler.create(
+      strengthHandler.create(create('StatStrength', newId(), { label: 'D', minValue: 0 }), {
         userId,
         storyId,
-        create('StatStrength', newId(), { label: 'D', minValue: 0 }),
-      ),
+      }),
     ).rejects.toThrow(SyncConflictError);
   });
 
   it('flags a repeated floor inside a stat ladder as a conflict', async () => {
     await strengthHandler.create(
-      userId,
-      storyId,
       create('StatStrength', newId(), { statId, label: 'C', minValue: 50 }),
+      { userId, storyId },
     );
 
     await expect(
       strengthHandler.create(
-        userId,
-        storyId,
         create('StatStrength', newId(), { statId, label: 'B', minValue: 50 }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already has a tier starting at 50/);
   });
@@ -177,23 +177,20 @@ describe('StatStrength', () => {
   it('flags an update that moves a tier onto an occupied floor', async () => {
     const movingId = newId();
     await strengthHandler.create(
-      userId,
-      storyId,
       create('StatStrength', newId(), { statId, label: 'F', minValue: 0 }),
+      { userId, storyId },
     );
     await strengthHandler.create(
-      userId,
-      storyId,
       create('StatStrength', movingId, { statId, label: 'C', minValue: 50 }),
+      { userId, storyId },
     );
     const current = await strengthHandler.findByIdOrThrow(movingId);
 
     await expect(
       strengthHandler.update(
-        userId,
-        storyId,
         change('StatStrength', movingId, { version: current.version, minValue: 0 }),
         current,
+        { userId, storyId },
       ),
     ).rejects.toThrow(SyncConflictError);
   });
@@ -201,9 +198,8 @@ describe('StatStrength', () => {
   it('refuses a tier pointing at a stat from another story', async () => {
     await expect(
       strengthHandler.create(
-        userId,
-        storyId,
         create('StatStrength', newId(), { statId: newId(), label: 'F', minValue: 0 }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(SyncConflictError);
   });
@@ -211,9 +207,8 @@ describe('StatStrength', () => {
   it('lets the same floor be reused after the tier is deleted', async () => {
     const firstId = newId();
     await strengthHandler.create(
-      userId,
-      storyId,
       create('StatStrength', firstId, { statId, label: 'F', minValue: 0 }),
+      { userId, storyId },
     );
     await db
       .update(statStrengths)
@@ -221,9 +216,8 @@ describe('StatStrength', () => {
       .where(eq(statStrengths.id, firstId));
 
     await strengthHandler.create(
-      userId,
-      storyId,
       create('StatStrength', newId(), { statId, label: 'E', minValue: 0 }),
+      { userId, storyId },
     );
 
     const alive = await db.select().from(statStrengths).where(eq(statStrengths.isDeleted, false));
@@ -234,21 +228,18 @@ describe('StatStrength', () => {
 describe('StatRelation', () => {
   it('stores the base value and a mode override side by side', async () => {
     const modeId = newId();
-    await modeHandler.create(
+    await modeHandler.create(create('Mode', modeId, { characterId, name: 'Desperta' }), {
       userId,
       storyId,
-      create('Mode', modeId, { characterId, name: 'Desperta' }),
-    );
+    });
 
     await valueHandler.create(
-      userId,
-      storyId,
       create('StatRelation', newId(), { characterId, statId, value: 120 }),
+      { userId, storyId },
     );
     await valueHandler.create(
-      userId,
-      storyId,
       create('StatRelation', newId(), { characterId, modeId, statId, value: 480 }),
+      { userId, storyId },
     );
 
     const rows = await db.select().from(statRelations).where(eq(statRelations.storyId, storyId));
@@ -259,33 +250,29 @@ describe('StatRelation', () => {
 
   it('flags a second value for the same character, mode and stat', async () => {
     await valueHandler.create(
-      userId,
-      storyId,
       create('StatRelation', newId(), { characterId, statId, value: 120 }),
+      { userId, storyId },
     );
 
     await expect(
-      valueHandler.create(
+      valueHandler.create(create('StatRelation', newId(), { characterId, statId, value: 300 }), {
         userId,
         storyId,
-        create('StatRelation', newId(), { characterId, statId, value: 300 }),
-      ),
+      }),
     ).rejects.toThrow(SyncConflictError);
   });
 
   it('refuses a value whose mode belongs to another character', async () => {
     const modeId = newId();
     await modeHandler.create(
-      userId,
-      storyId,
       create('Mode', modeId, { characterId: otherCharacterId, name: 'Desperto' }),
+      { userId, storyId },
     );
 
     await expect(
       valueHandler.create(
-        userId,
-        storyId,
         create('StatRelation', newId(), { characterId, modeId, statId, value: 10 }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/does not belong to character/);
   });
@@ -293,9 +280,8 @@ describe('StatRelation', () => {
   it('refuses a value for a stat that does not exist', async () => {
     await expect(
       valueHandler.create(
-        userId,
-        storyId,
         create('StatRelation', newId(), { characterId, statId: newId(), value: 10 }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(SyncConflictError);
   });
@@ -303,22 +289,20 @@ describe('StatRelation', () => {
   it('rejects missing characters and modes before writing a value', async () => {
     await expect(
       valueHandler.create(
-        userId,
-        storyId,
         create('StatRelation', newId(), { characterId: newId(), statId, value: 10 }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     await expect(
       valueHandler.create(
-        userId,
-        storyId,
         create('StatRelation', newId(), {
           characterId,
           modeId: newId(),
           statId,
           value: 10,
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -327,23 +311,20 @@ describe('StatRelation', () => {
     const currentId = newId();
     const conflictingId = newId();
     await valueHandler.create(
-      userId,
-      storyId,
       create('StatRelation', currentId, { characterId, statId, value: 10 }),
+      { userId, storyId },
     );
     await valueHandler.create(
-      userId,
-      storyId,
       create('StatRelation', conflictingId, { characterId: otherCharacterId, statId, value: 20 }),
+      { userId, storyId },
     );
     const current = await valueHandler.findByIdOrThrow(currentId);
 
     await expect(
       valueHandler.update(
-        userId,
-        storyId,
         change('StatRelation', currentId, { characterId: otherCharacterId, version: 1 }),
         current,
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'validation' });
     expect(await valueHandler.findByIdOrThrow(currentId)).toMatchObject({
@@ -355,21 +336,19 @@ describe('StatRelation', () => {
 
   it('allows a new value once the previous value for that exact key is tombstoned', async () => {
     const firstId = newId();
-    await valueHandler.create(
+    await valueHandler.create(create('StatRelation', firstId, { characterId, statId, value: 10 }), {
       userId,
       storyId,
-      create('StatRelation', firstId, { characterId, statId, value: 10 }),
-    );
+    });
     await db
       .update(statRelations)
       .set({ isDeleted: true, deletedAt: new Date() })
       .where(eq(statRelations.id, firstId));
 
-    await valueHandler.create(
+    await valueHandler.create(create('StatRelation', newId(), { characterId, statId, value: 30 }), {
       userId,
       storyId,
-      create('StatRelation', newId(), { characterId, statId, value: 30 }),
-    );
+    });
   });
 });
 
@@ -378,9 +357,8 @@ describe('Mode', () => {
     const modeId = newId();
 
     await modeHandler.create(
-      userId,
-      storyId,
       create('Mode', modeId, { characterId, name: 'Desperta', modeChanges: 'Fica mais rápida.' }),
+      { userId, storyId },
     );
 
     const rows = await db.select().from(modes).where(eq(modes.storyId, storyId));
@@ -393,11 +371,10 @@ describe('Mode', () => {
 
   it('refuses a mode for a character that does not exist', async () => {
     await expect(
-      modeHandler.create(
+      modeHandler.create(create('Mode', newId(), { characterId: newId(), name: 'Fantasma' }), {
         userId,
         storyId,
-        create('Mode', newId(), { characterId: newId(), name: 'Fantasma' }),
-      ),
+      }),
     ).rejects.toThrow(SyncConflictError);
   });
 
@@ -405,30 +382,27 @@ describe('Mode', () => {
     await db.update(stories).set({ statSystem: false }).where(eq(stories.id, storyId));
     const modeId = newId();
 
-    await modeHandler.create(
+    await modeHandler.create(create('Mode', modeId, { characterId, name: 'Ferida' }), {
       userId,
       storyId,
-      create('Mode', modeId, { characterId, name: 'Ferida' }),
-    );
+    });
 
     expect(await modeHandler.findByIdOrThrow(modeId)).toBeDefined();
   });
 
   it('does not let an update retarget a mode to a character that is absent or from another story', async () => {
     const modeId = newId();
-    await modeHandler.create(
+    await modeHandler.create(create('Mode', modeId, { characterId, name: 'Ferida' }), {
       userId,
       storyId,
-      create('Mode', modeId, { characterId, name: 'Ferida' }),
-    );
+    });
     const current = await modeHandler.findByIdOrThrow(modeId);
 
     await expect(
       modeHandler.update(
-        userId,
-        storyId,
         change('Mode', modeId, { characterId: newId(), version: current.version }),
         current,
+        { userId, storyId },
       ),
     ).rejects.toThrow(SyncConflictError);
     expect(await modeHandler.findByIdOrThrow(modeId)).toMatchObject({ characterId, version: 1 });
@@ -442,7 +416,10 @@ describe('stats belong to their story', () => {
       .set({ isDeleted: true, deletedAt: new Date() })
       .where(eq(stats.id, statId));
     for (let index = 0; index < MAX_PRIMARY_STATS; index += 1) {
-      await statHandler.create(userId, storyId, create('Stat', newId(), { name: `Stat ${index}` }));
+      await statHandler.create(create('Stat', newId(), { name: `Stat ${index}` }), {
+        userId,
+        storyId,
+      });
     }
 
     const alive = await db.select().from(stats).where(eq(stats.isDeleted, false));

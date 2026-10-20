@@ -25,6 +25,16 @@ import { syncValuesMatch } from './syncValueComparison';
  * creation rules and any entity-specific access policy exposed to SyncPushService.
  */
 
+/**
+ * Who is writing and into which story, for the handler methods that write. `database` is the transaction the
+ * push opened; without one a handler writes on the shared connection.
+ */
+export type SyncWriteContext = {
+  userId: string;
+  storyId: string;
+  database?: CompatibleDb;
+};
+
 /** Policy context supplied by the protocol coordinator, not by the database-backed entity itself. */
 export type SyncOperationPolicyContext = {
   userId: string;
@@ -145,25 +155,16 @@ export interface SyncEntityHandler {
     database?: CompatibleDb,
   ): Promise<SyncEntityRow | undefined>;
   findByIdOrThrow(id: string, database?: CompatibleDb): Promise<SyncEntityRow>;
-  create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database?: CompatibleDb,
-  ): Promise<void>;
+  create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void>;
   update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncEntityRow,
-    database?: CompatibleDb,
+    ctx: SyncWriteContext,
   ): Promise<void>;
   delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncEntityRow,
-    database?: CompatibleDb,
+    ctx: SyncWriteContext,
   ): Promise<void>;
   checkOwnership(entity: SyncEntityRow, userId: string): boolean;
   checkBelongsToStory(entity: SyncEntityRow, storyId: string): boolean;
@@ -385,20 +386,14 @@ export abstract class BaseSyncEntityHandler<
     return !!(entity as Record<string, unknown>)[this.isDeletedColumnName];
   }
 
-  abstract create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database?: CompatibleDb,
-  ): Promise<void>;
+  abstract create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void>;
 
   async update(
-    _userId: string,
-    _storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<CreateType>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { database = db } = ctx;
     // `isDeleted`/`deletedAt` are handled outside validation because they are not an ordinary field edit:
     // they are the *restoration* of a deleted entity. Extracting them before validating avoids depending on
     // every entity schema accepting those fields.
@@ -477,12 +472,11 @@ export abstract class BaseSyncEntityHandler<
   }
 
   async delete(
-    _userId: string,
-    _storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<CreateType>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { database = db } = ctx;
     if (!this.isDeletedColumnName || !this.deletedAtColumnName) {
       throw new Error(
         `Delete not supported for entity ${this.entityName}: missing isDeletedColumnName or deletedAtColumnName.`,

@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
@@ -10,7 +10,7 @@ import {
   PartialStorySchemaFieldSchema,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { storySchemaFields } from '@/db/schema';
 import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
@@ -29,12 +29,8 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateStorySchemaFieldDataType = this.createSchema.parse(update.data);
 
     const existingField = await database.query.storySchemaFields.findFirst({
@@ -80,11 +76,9 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
     // entityType and key are immutable after creation: AttributeValue references the field by fieldId (not
     // by key), so nothing would technically break, but changing the entity type or the key underneath
@@ -97,6 +91,6 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     delete changes.type;
     delete changes.targetEntityType;
 
-    await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
+    await super.update({ ...update, changes }, currentEntity, ctx);
   }
 }

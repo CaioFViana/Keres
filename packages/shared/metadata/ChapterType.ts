@@ -9,7 +9,7 @@
  * One table with a discriminator rather than two tables, because `Scene.chapterId` decides it: a
  * second kind of container would make that a polymorphic parent, and everything that walks
  * scene -> chapter (the timeline, the plot views, the presence matrix, the story graph, analysis,
- * the export) would have to learn about it. See `docs/events_feature_plan.md` section 3.2.
+ * the export) would have to learn about it. See `docs/finished_planning/events_feature_plan.md` section 3.2.
  *
  * The two kinds keep **separate index spaces**, because their indices mean different things: a
  * chapter's is narrative order, an event's is only the order the writer arranged the list in. Where

@@ -38,7 +38,7 @@ module.exports = {
   ],
   coverageReporters: ['text', 'lcov'],
   // A floor, not a target: set a little below what was measured so as to absorb fluctuation, and to rise
-  // along when coverage rises. See the ratchet rule in TESTING_PLAN.md.
+  // along when coverage rises. See the ratchet rule in docs/TESTING_ROADMAP.md §12.
   coverageThreshold: {
     global: coverageThresholds.client,
   },

@@ -5,10 +5,17 @@ The goal is a repository where every line that can break a writer's work is cove
 failure is **silent and destructive** is covered first, and the code whose failure is **loud and
 cosmetic** is covered last — or deliberately never.
 
-It supersedes [`docs/finished_planning/TESTING_PLAN.md`](docs/finished_planning/TESTING_PLAN.md),
-which is the archived plan that got the repository to its current state. That plan explicitly put
-React Native screens and admin pages **out of scope**. This roadmap reverses that decision, but only
-at Phases 4 and 5, and states the price openly (§9).
+It supersedes the first testing plan (since removed from the repository), which got the repository
+to its early-September state. That plan explicitly put React Native screens and admin pages **out of
+scope**. This roadmap reverses that decision, but only at Phases 4 and 5, and states the price openly (§9).
+
+> **Status (2026-10-20).** The numbers in §2, the phase targets in §12.1 and the checklist in §14 are the
+> September 2026 snapshot the plan was written from; they were not re-measured for 1.10.1. The ratchet
+> in §12 is the live part: the floors in `scripts/coverage-thresholds.json` today are, in lines:
+> client 90.3%, client sync core 95.7%, client sync handlers 97%, client story services 94.4%,
+> API combined 89.5%, API sync core 97%, API sync handlers 96.2%, API export/import 97%, shared 93.2%,
+> admin 96.8%, desktop 95.3%, site 96.2%, payments 80% (each kept 3 points under the measured
+> value). Re-measure with `bun run test:report` before relying on any figure below.
 
 ---
 
@@ -76,7 +83,7 @@ about `apps/client` is a roadmap about the wrong repository.
 
 This is not untested code — 13 test files exercise most of it — but the tests live in
 `apps/client/test/utils/` and count toward no coverage report at all, since the client's
-`collectCoverageFrom` is `src/**`. `storyGraphLayout.ts` alone is 895 lines of geometry with a real
+`collectCoverageFrom` is `src/**`. `packages/shared/graphs/story/storyGraphLayout.ts` alone is 895 lines of geometry with a real
 test suite that no threshold protects.
 
 **The true repository denominator is 26,893 lines and the true baseline is 44.9%**, not 46.9%.
@@ -139,14 +146,14 @@ of straight-line code. Line coverage therefore flatters it badly. The measured g
 
 | File | Lines | **Branches** | Branches missed |
 | --- | ---: | ---: | ---: |
-| `client/services/SyncEngineService.ts` | 72.1% | **51.4%** | **177 of 364** |
-| `client/services/EntityService.ts` | 61.2% | **39.4%** | **188 of 310** |
-| `api/services/SyncService.ts` | 78.0% | 66.2% | 69 of 204 |
-| `api/services/StoryExportImportService.ts` | 88.3% | 77.5% | 55 of 244 |
-| `api/services/entity-sync-handlers/BaseSyncEntityHandler.ts` | 87.0% | 74.7% | 24 of 95 |
-| `client/services/SyncConflictService.ts` | 92.9% | 73.4% | 34 of 128 |
-| `client/services/ConflictSummaryService.ts` | 82.2% | 79.3% | 19 of 92 |
-| `api/services/TierEnforcementService.ts` | 50.0% | **32.6%** | 29 of 43 |
+| `apps/client/src/services/sync/SyncEngineService.ts` | 72.1% | **51.4%** | **177 of 364** |
+| `apps/client/src/services/entity-solvers/EntityService.ts` | 61.2% | **39.4%** | **188 of 310** |
+| `apps/api/src/services/sync/SyncService.ts` | 78.0% | 66.2% | 69 of 204 |
+| `apps/api/src/services/stories/StoryExportImportService.ts` | 88.3% | 77.5% | 55 of 244 |
+| `apps/api/src/services/entity-sync-handlers/BaseSyncEntityHandler.ts` | 87.0% | 74.7% | 24 of 95 |
+| `apps/client/src/services/sync/SyncConflictService.ts` | 92.9% | 73.4% | 34 of 128 |
+| `apps/client/src/services/sync/ConflictSummaryService.ts` | 82.2% | 79.3% | 19 of 92 |
+| `apps/api/src/services/tiers/TierEnforcementService.ts` | 50.0% | **32.6%** | 29 of 43 |
 
 By group:
 
@@ -176,7 +183,7 @@ value:
 
 The original count came from grepping the literal strings, which missed nothing for `keep_local` and
 `keep_server` — those genuinely had no test asserting the value written to the row — but was wrong
-about `restore` and `discard`, both of which were already asserted in `SyncConflictService.test.ts`.
+about `restore` and `discard`, both of which were already asserted in `apps/client/test/services/sync/SyncConflictService.test.ts`.
 The behaviour behind all five was covered; what was missing was any assertion that the *recorded
 resolution* is the one the writer chose, which is what the review sheet and any later audit read
 back.
@@ -196,10 +203,10 @@ Nothing else in this roadmap is trustworthy until the denominator is.
       `locationGraphLayout`, `presenceMatrixLayout`, `presenceMatrixSvg`, `statLadder`,
       `statLadderBarLayout`, `statRadarLayout`, `statRadarSvg`, `storyGraphLayout`,
       `storyTimelineLayout`. All 12 import only from `@keres/shared/graphs/*` — verified, the move is
-      a rename plus a Jest→Vitest import swap. `statRanking.test.ts` and `statValues.test.ts` stay in
+      a rename plus a Jest→Vitest import swap. `apps/client/test/utils/stats/statRanking.test.ts` and `apps/client/test/utils/stats/statValues.test.ts` stay in
       the client: they test `src/utils/`.
-- [x] **Write the two missing graph suites**: `storyTimelineSvg.ts` (110 lines, 0%) and
-      `graphLayoutDirection.ts` (6 lines, 0%).
+- [x] **Write the two missing graph suites**: `packages/shared/graphs/timeline/storyTimelineSvg.ts` (110 lines, 0%) and
+      `packages/shared/graphs/common/graphLayoutDirection.ts` (6 lines, 0%).
 - [x] **Re-baseline `scripts/coverage-thresholds.json`** with
       `bun run coverage:update -- --rebaseline --project shared` once the move lands. The shared
       floor will move down in absolute terms and that is correct — it will finally be measuring
@@ -232,7 +239,7 @@ persist through the whole roadmap.
 
 ### 5.0 Phase 1A.0 — split the two files that cannot be tested as they are
 
-`SyncEngineService.ts` is **1,605 physical lines** and `EntityService.ts` is **1,219** — 2.7× and 2×
+`apps/client/src/services/sync/SyncEngineService.ts` is **1,605 physical lines** and `apps/client/src/services/entity-solvers/EntityService.ts` is **1,219** — 2.7× and 2×
 the 600-line ceiling that `test/architecture/layering.test.ts` enforces. Both are on the shrink-only
 allowlist, and they are also the two worst branch numbers in the repository. That is not a
 coincidence: `performSync` alone is a **384-line method** (lines 613–997), and a 384-line method is
@@ -246,22 +253,22 @@ in the file's own structure:
 | `sync/SyncScheduler` | `startSync`, `requestSync`, `runExclusiveSync`, `stopSync`, `performTrackedSync`, `waitForSyncIdle` | Already tested in isolation with `performSync` mocked — the test exists, the module does not. |
 | `sync/SyncPull` | the pull half of `performSync`, `protectRemoteUpdate`, `isOwnEchoedOperation`, `applyRemoteCreate`, `recordRemoteOperationLocally`, `reconcileRemoteUpdate`, `reconcileRemoteReorder` | The reconcile functions are pure decisions over `(local, remote, changedFields)` once separated from the loop. This is where the merge-vs-conflict branches live. |
 | `sync/SyncPush` | `pushPendingOperations`, `buildStoryUpdateFromLocalOp`, `getPushableOperations`, `getPendingOperationsByEntity`, `rebasePendingOperations`, `applyPushResult`, `deriveBaseVersion` | Batch slicing, OCC base derivation and `applied`/`conflicts` handling — testable against a fixture response with no network at all. |
-| `sync/StoryTransfer` | `fetchServerStoryPreviews`, `downloadAndImportStory`, `uploadNewStoryToServer` | ~200 lines that already have their own suite (`SyncEngineTransfer.test.ts`) and nothing to do with the cycle. |
+| `sync/StoryTransfer` | `fetchServerStoryPreviews`, `downloadAndImportStory`, `uploadNewStoryToServer` | ~200 lines that already have their own suite (`apps/client/test/services/SyncEngineTransfer.test.ts`) and nothing to do with the cycle. |
 
 `SyncEngineService` keeps the singleton, `configure`, `setDbInstance`, `reset` and handler
 registration, and orchestrates the four. Every extracted module drops off the ceiling allowlist —
 `toEqual` in the architecture test enforces that the names are removed, so the split is verified by
 the suite that already exists.
 
-Do the same for `EntityService.ts` (1,219 lines, 39.4% branches): `getEntityIdentifier` /
+Do the same for `apps/client/src/services/entity-solvers/EntityService.ts` (1,219 lines, 39.4% branches): `getEntityIdentifier` /
 `_resolveRelationEntityName` is a switch over every entity type and belongs in its own module beside
 `EntityNameBatchResolver`, which already solves the batch half of the same problem.
 
 - [x] Extract the sync scheduler, pull, push, media and story-transfer modules; allowlist entry for
-      `SyncEngineService.ts` removed.
-- [x] Extract the entity-name resolution from `EntityService.ts`; allowlist entry removed.
+      `apps/client/src/services/sync/SyncEngineService.ts` removed.
+- [x] Extract the entity-name resolution from `apps/client/src/services/entity-solvers/EntityService.ts`; allowlist entry removed.
 - [x] **Add a line ceiling to `apps/api/test/architecture/layering.test.ts`.** The client has one; the
-      API does not, and `StoryExportImportService.ts` (1,211 lines) and `SyncService.ts` (1,002) sit
+      API does not, and `apps/api/src/services/stories/StoryExportImportService.ts` (1,211 lines) and `apps/api/src/services/sync/SyncService.ts` (1,002) sit
       unguarded above it.
 
 ### 5.1 Phase 1A.1 — the conflict matrix
@@ -291,7 +298,7 @@ The cells that must not be skipped, because each one has burned somebody in a re
 - `deleted_on_server` + `discard` — the local edit is abandoned and must never be resent.
 - `version_conflict` + `merge` with disjoint `changedFields` — silent rebase, no user prompt.
 - `version_conflict` + `merge` where both sides wrote the **same value** — must not present as a
-  conflict at all (there is a regression test for this in `SyncEngineService.test.ts`; it needs to
+  conflict at all (there is a regression test for this in `apps/client/test/services/sync/SyncEngineService.test.ts`; it needs to
   survive the split).
 - `concurrent_edit` + `keep_local` — the local operation is rebased onto the server's version and
   goes out on the next cycle.
@@ -325,38 +332,38 @@ Client sync handlers below 85% lines today:
 
 | File | Lines | Coverage |
 | --- | ---: | ---: |
-| `StatClientSyncHandler.ts` | 36 | 16.7% |
-| `SuggestionClientSyncHandler.ts` | 16 | 18.8% |
-| `PlotSceneClientSyncHandler.ts` | 15 | 20.0% |
-| `PlotClientSyncHandler.ts` | 14 | 21.4% |
-| `LocationRelationClientSyncHandler.ts` | 66 | 51.5% |
-| `GalleryClientSyncHandler.ts` | 29 | 62.1% |
-| `GalleryRelationClientSyncHandler.ts` | 27 | 63.0% |
-| `ChoiceCheckClientSyncHandler.ts` | 28 | 75.0% |
-| `ChoiceCheckGroupClientSyncHandler.ts` | 28 | 75.0% |
-| `ItemJourneyClientSyncHandler.ts` | 28 | 75.0% |
+| `apps/client/src/services/entity-sync-handlers/StatClientSyncHandler.ts` | 36 | 16.7% |
+| `apps/client/src/services/entity-sync-handlers/SuggestionClientSyncHandler.ts` | 16 | 18.8% |
+| `apps/client/src/services/entity-sync-handlers/PlotSceneClientSyncHandler.ts` | 15 | 20.0% |
+| `apps/client/src/services/entity-sync-handlers/PlotClientSyncHandler.ts` | 14 | 21.4% |
+| `apps/client/src/services/entity-sync-handlers/LocationRelationClientSyncHandler.ts` | 66 | 51.5% |
+| `apps/client/src/services/entity-sync-handlers/GalleryClientSyncHandler.ts` | 29 | 62.1% |
+| `apps/client/src/services/entity-sync-handlers/GalleryRelationClientSyncHandler.ts` | 27 | 63.0% |
+| `apps/client/src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler.ts` | 28 | 75.0% |
+| `apps/client/src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler.ts` | 28 | 75.0% |
+| `apps/client/src/services/entity-sync-handlers/ItemJourneyClientSyncHandler.ts` | 28 | 75.0% |
 
 API sync handlers below 85% lines after the unit ∪ integration union:
 
 | File | Lines | Coverage |
 | --- | ---: | ---: |
-| `PlotSceneSyncHandler.ts` | 18 | 11.1% |
-| `PlotSyncHandler.ts` | 14 | 14.3% |
-| `FavoriteSyncHandler.ts` | 18 | 44.4% |
-| `ChoiceCheckSyncHandler.ts` | 27 | 51.9% |
-| `SeeAlsoRelationSyncHandler.ts` | 44 | 52.3% |
-| `ChoiceCheckGroupSyncHandler.ts` | 17 | 58.8% |
-| `CharacterSceneSyncHandler.ts` | 21 | 61.9% |
-| `StatRelationSyncHandler.ts` | 33 | 63.6% |
-| `StorySyncHandler.ts` | 55 | 63.6% |
-| `EffectSyncHandler.ts` | 17 | 64.7% |
-| `ModeSyncHandler.ts` | 15 | 66.7% |
-| `GallerySyncHandler.ts` | 27 | 70.4% |
-| `NoteRelationSyncHandler.ts` | 42 | 71.4% |
-| `SceneSyncHandler.ts` | 33 | 72.7% |
+| `apps/api/src/services/entity-sync-handlers/PlotSceneSyncHandler.ts` | 18 | 11.1% |
+| `apps/api/src/services/entity-sync-handlers/PlotSyncHandler.ts` | 14 | 14.3% |
+| `apps/api/src/services/entity-sync-handlers/FavoriteSyncHandler.ts` | 18 | 44.4% |
+| `apps/api/src/services/entity-sync-handlers/ChoiceCheckSyncHandler.ts` | 27 | 51.9% |
+| `apps/api/src/services/entity-sync-handlers/SeeAlsoRelationSyncHandler.ts` | 44 | 52.3% |
+| `apps/api/src/services/entity-sync-handlers/ChoiceCheckGroupSyncHandler.ts` | 17 | 58.8% |
+| `apps/api/src/services/entity-sync-handlers/CharacterSceneSyncHandler.ts` | 21 | 61.9% |
+| `apps/api/src/services/entity-sync-handlers/StatRelationSyncHandler.ts` | 33 | 63.6% |
+| `apps/api/src/services/entity-sync-handlers/StorySyncHandler.ts` | 55 | 63.6% |
+| `apps/api/src/services/entity-sync-handlers/EffectSyncHandler.ts` | 17 | 64.7% |
+| `apps/api/src/services/entity-sync-handlers/ModeSyncHandler.ts` | 15 | 66.7% |
+| `apps/api/src/services/entity-sync-handlers/GallerySyncHandler.ts` | 27 | 70.4% |
+| `apps/api/src/services/entity-sync-handlers/NoteRelationSyncHandler.ts` | 42 | 71.4% |
+| `apps/api/src/services/entity-sync-handlers/SceneSyncHandler.ts` | 33 | 72.7% |
 
 **Definition of done for Phase 1A:** the sync surface at ≥97% lines **and ≥90% branches**, every
-reachable cell of the conflict matrix has a test, `SyncEngineService.ts` and `EntityService.ts` are
+reachable cell of the conflict matrix has a test, `apps/client/src/services/sync/SyncEngineService.ts` and `apps/client/src/services/entity-solvers/EntityService.ts` are
 off the ceiling allowlist, and the per-directory floors of §12 are in place so none of it can slide
 back.
 
@@ -366,29 +373,29 @@ back.
 
 | File | Lines | Coverage |
 | --- | ---: | ---: |
-| `StatStrengthService.ts` | 63 | **0%** |
-| `StatService.ts` | 59 | **0%** |
-| `ModeService.ts` | 35 | **0%** |
-| `CharacterRelationService.ts` | 107 | 38.3% |
-| `CharacterSceneService.ts` | 72 | 51.4% |
-| `LocationService.ts` | 127 | 53.5% |
-| `CharacterService.ts` | 122 | 54.9% |
-| `NoteService.ts` | 109 | 55.0% |
-| `WorldRuleService.ts` | 111 | 59.5% |
-| `SceneService.ts` | 150 | 60.0% |
-| `ItemService.ts` | 78 | 62.8% |
-| `GlobalSearchService.ts` | 119 | 66.4% |
-| `ChoiceService.ts` | 74 | 70.3% |
-| `TagService.ts` | 79 | 73.4% |
-| `NoteRelationService.ts` | 67 | 74.6% |
-| `StorySchemaFieldService.ts` | 64 | 75.0% |
-| `GalleryService.ts` | 90 | 76.7% |
-| `CommentService.ts` | 45 | 77.8% |
-| `LocationRelationService.ts` | 79 | 79.7% |
+| `apps/client/src/services/storymanagement/choices-stats/StatStrengthService.ts` | 63 | **0%** |
+| `apps/client/src/services/storymanagement/choices-stats/StatService.ts` | 59 | **0%** |
+| `apps/client/src/services/storymanagement/entities/ModeService.ts` | 35 | **0%** |
+| `apps/client/src/services/storymanagement/relations/CharacterRelationService.ts` | 107 | 38.3% |
+| `apps/client/src/services/storymanagement/entities/CharacterSceneService.ts` | 72 | 51.4% |
+| `apps/client/src/services/storymanagement/entities/LocationService.ts` | 127 | 53.5% |
+| `apps/client/src/services/storymanagement/entities/CharacterService.ts` | 122 | 54.9% |
+| `apps/client/src/services/storymanagement/notes-tags-comments/NoteService.ts` | 109 | 55.0% |
+| `apps/client/src/services/storymanagement/entities/WorldRuleService.ts` | 111 | 59.5% |
+| `apps/client/src/services/storymanagement/scenes-chapters/SceneService.ts` | 150 | 60.0% |
+| `apps/client/src/services/storymanagement/entities/ItemService.ts` | 78 | 62.8% |
+| `apps/client/src/services/storymanagement/story-lifecycle/GlobalSearchService.ts` | 119 | 66.4% |
+| `apps/client/src/services/storymanagement/choices-stats/ChoiceService.ts` | 74 | 70.3% |
+| `apps/client/src/services/storymanagement/notes-tags-comments/TagService.ts` | 79 | 73.4% |
+| `apps/client/src/services/storymanagement/relations/NoteRelationService.ts` | 67 | 74.6% |
+| `apps/client/src/services/storymanagement/entities/StorySchemaFieldService.ts` | 64 | 75.0% |
+| `apps/client/src/services/storymanagement/media-music/GalleryService.ts` | 90 | 76.7% |
+| `apps/client/src/services/storymanagement/notes-tags-comments/CommentService.ts` | 45 | 77.8% |
+| `apps/client/src/services/storymanagement/relations/LocationRelationService.ts` | 79 | 79.7% |
 
-`ChapterService.ts` (109 lines) has since been taken from 56.0% to 96.3% — see §14.
+`apps/client/src/services/storymanagement/scenes-chapters/ChapterService.ts` (109 lines) has since been taken from 56.0% to 96.3% — see §14.
 
-These are the highest-value tests in the repository and the cheapest to write: `test/helpers/testDb.ts`
+These are the highest-value tests in the repository and the cheapest to write: `apps/client/test/helpers/testDb.ts`
 already gives a real SQLite database with the production migrations applied. The pattern exists in
 `test/services/` — 59 suites — so a new service suite is copy, adapt, assert.
 
@@ -407,9 +414,9 @@ What each suite must cover, beyond happy-path CRUD:
 
 | File | Lines | Coverage | Branches |
 | --- | ---: | ---: | ---: |
-| `api/StoryExportImportService.ts` | 410 | 88.3% | 77.5% |
-| `api/StoryPermissionService.ts` | 68 | 85.3% | 81.2% |
-| `api/TierEnforcementService.ts` | 48 | **50.0%** | **32.6%** |
+| `apps/api/src/services/stories/StoryExportImportService.ts` | 410 | 88.3% | 77.5% |
+| `apps/api/src/services/stories/StoryPermissionService.ts` | 68 | 85.3% | 81.2% |
+| `apps/api/src/services/tiers/TierEnforcementService.ts` | 48 | **50.0%** | **32.6%** |
 
 `StoryExportImportService` needs its refusal branches: a package of a future format version, a
 dangling reference, a failure mid-import leaving nothing behind, and the id remap for `ENTITY`
@@ -433,15 +440,15 @@ repository at ~51.4%.
 
 | File | Lines | Coverage |
 | --- | ---: | ---: |
-| `FriendshipApiService.ts` | 28 | 39.3% |
-| `PublicationApiService.ts` | 14 | 42.9% |
+| `apps/client/src/services/api/FriendshipApiService.ts` | 28 | 39.3% |
+| `apps/client/src/services/api/PublicationApiService.ts` | 14 | 42.9% |
 | `FriendshipService.ts` | 133 | 53.4% |
-| `UserApiService.ts` | 24 | 58.3% |
-| `webMediaStore.ts` | 96 | 72.9% |
-| `MediaFileService.ts` | 117 | 73.5% |
-| `ClientSettingsService.ts` | 17 | 76.5% |
-| `AuthTokenManager.ts` | 80 | 78.8% |
-| `ServerRealtimeService.ts` | 79 | 75.9% |
+| `apps/client/src/services/api/UserApiService.ts` | 24 | 58.3% |
+| `apps/client/src/services/platform-web/webMediaStore.ts` | 96 | 72.9% |
+| `apps/client/src/services/media/MediaFileService.ts` | 117 | 73.5% |
+| `apps/client/src/services/account/ClientSettingsService.ts` | 17 | 76.5% |
+| `apps/client/src/services/auth/AuthTokenManager.ts` | 80 | 78.8% |
+| `apps/client/src/services/servers/ServerRealtimeService.ts` | 79 | 75.9% |
 | `StoryPermissionService.ts` | 10 | 80.0% |
 
 `AuthTokenManager` and `TokenVault` already have the two tests that matter (a refresh landing on the
@@ -459,11 +466,11 @@ surface. `MediaFileService`/`webMediaStore` need the native-vs-web split covered
 | `src/modules/webSocket` | 13 | 38.5% |
 | `src/modules/public` | 88 | 81.8% |
 | `src/modules/auth` | 107 | 85.0% |
-| `UserService.ts` | 37 | 73.0% |
-| `AdminUserService.ts` | 65 | 86.2% |
-| `AdminRecoveryService.ts` | 67 | 86.6% |
-| `ApiLogService.ts` | 14 | 50.0% |
-| `MediaStorageConfigurationService.ts` | 23 | (unit 0%) |
+| `apps/api/src/services/accounts/UserService.ts` | 37 | 73.0% |
+| `apps/api/src/services/admin/AdminUserService.ts` | 65 | 86.2% |
+| `apps/api/src/services/auth/AdminRecoveryService.ts` | 67 | 86.6% |
+| `apps/api/src/services/compliance/ApiLogService.ts` | 14 | 50.0% |
+| `apps/api/src/services/media-storage/MediaStorageConfigurationService.ts` | 23 | (unit 0%) |
 
 Every protected route already has its 401/403 case; the gap is the **error branches** — a refused
 registration, a tier limit hit mid-request, a recovery code consumed twice, a storage backend that
@@ -479,21 +486,21 @@ answers with an error.
 
 | File | Lines | Coverage |
 | --- | ---: | ---: |
-| `hooks/useStoryPlots.ts` | 43 | **0%** |
-| `hooks/useStoryStats.ts` | 30 | **0%** |
-| `hooks/useHasRegisteredServer.ts` | 18 | **0%** |
-| `hooks/useChapterNames.ts` | 17 | **0%** |
-| `hooks/useOpenPresenceMatrixViewer.ts` | 9 | **0%** |
-| `hooks/useUserDisplayName.ts` | 59 | 55.9% |
-| `hooks/useSeeAlsoRelations.ts` | 51 | 66.7% |
-| `state/themeStore.ts` | 10 | **0%** |
-| `state/presenceMatrixViewerStore.ts` | 6 | **0%** |
-| `state/chapterStore.ts` | 19 | 10.5% |
-| `state/sceneStore.ts` | 19 | 10.5% |
-| `state/storyListStore.ts` | 17 | 11.8% |
+| `apps/client/src/screens/plots/useStoryPlots.ts` | 43 | **0%** |
+| `apps/client/src/hooks/story/useStoryStats.ts` | 30 | **0%** |
+| `useHasRegisteredServer.ts` (dead code, since removed) | 18 | **0%** |
+| `apps/client/src/hooks/chapter/useChapterNames.ts` | 17 | **0%** |
+| `apps/client/src/hooks/character/useOpenPresenceMatrixViewer.ts` | 9 | **0%** |
+| `apps/client/src/hooks/social/useUserDisplayName.ts` | 59 | 55.9% |
+| `apps/client/src/hooks/relations/useSeeAlsoRelations.ts` | 51 | 66.7% |
+| `apps/client/src/state/ui/themeStore.ts` | 10 | **0%** |
+| `apps/client/src/state/ui/presenceMatrixViewerStore.ts` | 6 | **0%** |
+| `apps/client/src/state/story/chapterStore.ts` | 19 | 10.5% |
+| `apps/client/src/state/story/sceneStore.ts` | 19 | 10.5% |
+| `apps/client/src/state/story/storyListStore.ts` | 17 | 11.8% |
 | `state/*Store.ts` (7 factory-built) | 3 each | 33.3% |
-| `navigation/MainSystemStack.tsx` | 148 | 65.5% |
-| `navigation/StorySelectionStack.tsx` | 67 | 67.2% |
+| `apps/client/src/navigation/stacks/MainSystemStacks.tsx` | 148 | 65.5% |
+| `apps/client/src/navigation/stacks/StorySelectionStack.tsx` | 67 | 67.2% |
 
 This phase is cheap and disproportionately useful: `renderHook` needs no rendering, 23 hook suites
 already exist as the pattern, and `useStoryPlots`/`useStoryStats` are the single query behind five
@@ -557,7 +564,7 @@ Phase 3 in priority.
 
 72 files, 7,373 lines, 0.6%. Target: **70%** — deliberately not 95%.
 
-This is 29% of the repository's lines and the reason the archived plan excluded it: a test asserting
+This is 29% of the repository's lines and the reason the first plan excluded it: a test asserting
 that a `<Text>` shows a string breaks on every layout change without ever catching a bug. That
 argument is still correct for *display* assertions. It is not correct for *behaviour*.
 
@@ -608,13 +615,13 @@ this roadmap's number. Revisit it after Phase 5 as a complement, not a substitut
 
 Named gaps worth a line each:
 
-- `api/src/db/index.ts` — 39 lines, 28.2%. The dialect selection between Postgres and libSQL.
-- `api/src/launcher/run.ts` — 78 lines, 46.2%; `launcher/io.ts` — 7 lines, 0%.
+- `apps/api/src/db/index.ts` — 39 lines, 28.2%. The dialect selection between Postgres and libSQL.
+- `apps/api/src/launcher/run.ts` — 78 lines, 46.2%; `apps/api/src/launcher/io.ts` — 7 lines, 0%.
 - `api/src/db/schema` — 44 files, 215 lines, 60.5%. Table definitions; most of the uncovered lines
   are relation callbacks never executed. A candidate for §11 exclusion rather than tests.
-- `client/src/theme/commonStyles.ts` — 80 lines, 10.0%. Style factories. Also an exclusion candidate.
-- `client/src/testing/sqliteWebSmokeProbe.ts` — 37 lines, 0%. Test-support code shipped in `src`.
-- `shared/utils/colorUtils.ts` — 29 lines, 58.6%; `shared/schemas/SyncSchemas.ts` — 24 lines, 79.2%.
+- `apps/client/src/theme/commonStyles.ts` — 80 lines, 10.0%. Style factories. Also an exclusion candidate.
+- `apps/client/src/testing/sqliteWebSmokeProbe.ts` — 37 lines, 0%. Test-support code shipped in `src`.
+- `packages/shared/utils/colorUtils.ts` — 29 lines, 58.6%; `packages/shared/schemas/sync/SyncSchemas.ts` — 24 lines, 79.2%.
 - `admin/src/showcase/api` — 39 lines, 0%.
 
 **Definition of done:** repository at ~85.1% (~85.3% with graphs measured).
@@ -624,7 +631,7 @@ Named gaps worth a line each:
 ## 10b. Skia port (2026-09) — covered outside the phases above
 
 The five pan/zoom canvases moved from `react-native-svg` to `@shopify/react-native-skia`
-(see `.agents/plans/2026-09-17-skia-port.md`), each with a focused suite that supersedes the
+(the Skia port, planned in September 2026), each with a focused suite that supersedes the
 `c31d4cfa` SVG assertions: `LocationGraphCanvas`, `CharacterRelationGraphCanvas`,
 `StoryGraphCanvas`, `BoardCanvasEdges` (rewritten), `LocationMapConnectionLayer` (rewritten),
 plus `SkiaEdgeCanvas` behavior asserted through each of them, `polygonPointsToPath`,
@@ -642,13 +649,13 @@ be re-argued, not a fact:
 
 | Excluded | Reason |
 | --- | --- |
-| `apps/client/src/db/migrations/**` | Generated from drizzle-kit SQL by `generate-indexes.ts`. `test/db/` already asserts they apply and produce the expected tables — covering the generated modules asserts the generator twice. |
-| `apps/client/src/exampleStories/content/**` | Static JSON. `ExampleStoryService.test.ts` validates structure, ids and referential integrity; line coverage of a data file means nothing. |
+| `apps/client/src/db/migrations/**` | Generated from drizzle-kit SQL by `apps/client/scripts/generate-indexes.ts`. `test/db/` already asserts they apply and produce the expected tables — covering the generated modules asserts the generator twice. |
+| `apps/client/src/exampleStories/content/**` | Static JSON. `apps/client/test/services/storymanagement/packs/ExampleStoryService.test.ts` validates structure, ids and referential integrity; line coverage of a data file means nothing. |
 | `apps/client/src/help/content/**`, `src/storyDevices/content/**` | Prose. Already reads 100% because importing the module executes it. Kept measured only because excluding it would cost more than it saves. |
 | `**/locales/*.json` | Audited by `scripts/verify-translations.ts`, which is the right tool. |
-| `src/main.tsx`, `src/launcher.ts`, `server.ts`, `boot.ts` entry points | One statement calling one function. Failure is immediate and total on every run. |
-| Generated registries (`help/generated`, `storyDevices/generated`, `db/migrations/index.ts`) | Same argument as the migrations. |
-| Style-only modules (`theme/commonStyles.ts`, `*Styles.ts`) | Assertion targets are pixel values with no behaviour. The exception is a style contract that has already regressed — `MultiSelectPill` — which earns a test by having failed. |
+| `src/main.tsx`, `apps/api/src/launcher.ts`, `server.ts`, `apps/api/src/boot.ts` entry points | One statement calling one function. Failure is immediate and total on every run. |
+| Generated registries (`help/generated`, `storyDevices/generated`, `apps/client/src/db/migrations/index.ts`) | Same argument as the migrations. |
+| Style-only modules (`apps/client/src/theme/commonStyles.ts`, `*Styles.ts`) | Assertion targets are pixel values with no behaviour. The exception is a style contract that has already regressed — `MultiSelectPill` — which earns a test by having failed. |
 | Drizzle relation callbacks in `db/schema/**` | Declarative wiring the ORM executes lazily; a wrong relation fails loudly on the first query, and the integration suite issues those queries. |
 
 Everything else that is uncovered is **debt with a phase number**, not an exclusion.
@@ -657,10 +664,10 @@ Everything else that is uncovered is **debt with a phase number**, not an exclus
 
 ## 12. The ratchet
 
-The rule from the archived plan stands and this roadmap depends on it:
+The rule from the first plan stands and this roadmap depends on it:
 
 - Floors live in `scripts/coverage-thresholds.json`, read by every Vitest config, the Jest config and
-  `test-report.ts`.
+  `scripts/test-report.ts`.
 - Each floor keeps a 3-point margin below the measured value.
 - `bun run coverage:update` recomputes the floors and **only raises them**.
 - Lowering requires `bun run coverage:update -- --rebaseline` and a sentence in the commit message
@@ -713,12 +720,12 @@ site 99.3%.
 
 The infrastructure is already in place; new suites should reuse it rather than invent.
 
-- **Client, anything touching the database:** `test/helpers/testDb.ts` — a real `better-sqlite3`
+- **Client, anything touching the database:** `apps/client/test/helpers/testDb.ts` — a real `better-sqlite3`
   instance running the production migrations, with the async-transaction shim already solved.
   Never mock the database.
 - **Client, module mocks:** `__esModule: true` and a self-sufficient factory that reads nothing from
   the file's scope. `jest.mock` is hoisted above `const` declarations; a factory referencing an outer
-  variable captures `undefined`. See `MediaSyncService.test.ts` and `TokenVault.test.ts`.
+  variable captures `undefined`. See `apps/client/test/services/media/MediaSyncService.test.ts` and `apps/client/test/services/auth/TokenVault.test.ts`.
 - **Client, hooks:** `renderHook` from RNTL 14 returns a **Promise** — `await` it, or `result` is
   `undefined` and every assertion fails with the same misleading message.
 - **Client, HTTP:** assign `axios.defaults.adapter`. Axios resolves the adapter per request and
@@ -726,7 +733,7 @@ The infrastructure is already in place; new suites should reuse it rather than i
   singleton with its interceptors intact. No module mock, no seam in the service.
 - **API, anything touching the database:** the integration helpers and the disposable Postgres.
   Unit tests that mock the ORM prove nothing about a query.
-- **API, Bun-only APIs in Node:** `test/helpers/bunShim.ts`.
+- **API, Bun-only APIs in Node:** `apps/api/test/helpers/bunShim.ts`.
 - **Architecture rules:** three suites already enforce layering, import boundaries and the 600-line
   file ceiling. A new violation is a test failure, not a review comment — extend those suites rather
   than writing a new guard.
@@ -738,22 +745,22 @@ The infrastructure is already in place; new suites should reuse it rather than i
 
 - [x] **Phase 0** — measurement: shared `graphs`/`rules` included, 13 test files moved, 2 missing
       graph suites written, thresholds re-baselined, API merged LCOV scripted.
-- [x] **Phase 1A.0** — split `SyncEngineService.ts` into scheduler / pull / push / transfer; split the
-      entity-name resolution out of `EntityService.ts`; both off the ceiling allowlist; API gains a
+- [x] **Phase 1A.0** — split `apps/client/src/services/sync/SyncEngineService.ts` into scheduler / pull / push / transfer; split the
+      entity-name resolution out of `apps/client/src/services/entity-solvers/EntityService.ts`; both off the ceiling allowlist; API gains a
       line ceiling of its own.
-- [x] **Phase 1A.0** — scoped floors wired into `coverage-check.ts`, CI and
-      `coverage-update.ts` (the API scopes use the unit/integration LCOV union).
+- [x] **Phase 1A.0** — scoped floors wired into `scripts/coverage-check.ts`, CI and
+      `scripts/coverage-update.ts` (the API scopes use the unit/integration LCOV union).
 - [ ] **Phase 1A.1** — every reachable cell of the conflict matrix tested. *Partly done:* all five
-      resolutions now assert the value they record, `SyncConflictService.ts` is at 100% lines /
+      resolutions now assert the value they record, `apps/client/src/services/sync/SyncConflictService.ts` is at 100% lines /
       100% branches (73 tests, incl. version-fallback chain, folded-conflict preservation,
       corrupt-row degradation and clone-board fallbacks), and the story-level reorder branches
       (chapters and `StorySchemaField`) are covered. The reason × resolution × operation-type
       matrix of §5.1 is still open.
-- [x] **Phase 1B (chapters)** — `ChapterService.ts` from 56% to **96.3% lines / 87.5% branches**,
+- [x] **Phase 1B (chapters)** — `apps/client/src/services/storymanagement/scenes-chapters/ChapterService.ts` from 56% to **96.3% lines / 87.5% branches**,
       including the renumbering invariants named in §5.3. Done ahead of the rest of 1B because the
-      Events feature edits exactly that code — see `docs/events_feature_plan.md` §12.
+      Events feature edits exactly that code — see `docs/finished_planning/events_feature_plan.md` §12.
 - [x] **Phase 1A.2** — pull, push and scheduler at ≥97% lines / **≥90% branches**. *Done:*
-      `SyncPull.ts` and `SyncPush.ts` at 100% lines / 100% branches; `SyncScheduler.ts` at 98.9% /
+      `apps/client/src/services/sync/SyncPull.ts` and `apps/client/src/services/sync/SyncPush.ts` at 100% lines / 100% branches; `apps/client/src/services/sync/SyncScheduler.ts` at 98.9% /
       93.8%, the 3 remaining branches being provably defensive-dead (the re-check `break`, the
       `cycleAbort` identity guard, the double-`finish` guard). Two vacuous conditions removed
       (`SyncPush` merge filter, `waitForIdle` unused default).

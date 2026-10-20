@@ -1,172 +1,171 @@
-# Estrutura narrativa: capítulos, cenas, eventos, âncoras, tramas, rotas e escolhas
+# Narrative structure: chapters, scenes, events, anchors, plots, routes and choices
 
-Este documento descreve como os objetos narrativos do Keres se conectam. Ele é uma referência de modelo e comportamento: os nomes podem mudar pelo Vocabulário da história, mas os tipos, ids, sincronização e regras abaixo continuam os mesmos.
+This document describes how Keres's narrative objects connect. It is a reference for the model and its behaviour: the names can change through the story's Vocabulary, but the types, ids, synchronization and rules below stay the same.
 
-## Visão geral
+## Overview
 
 ```text
 Story
-├── Chapter / Event (containers editoriais)
-│   ├── Scene (unidade narrativa e temporal)
-│   └── ChapterAnchor (quando o container acontece na linha do tempo)
-├── Plot ──< PlotScene >── Scene       (trama: participação N:N)
+├── Chapter / Event (editorial containers)
+│   ├── Scene (narrative and temporal unit)
+│   └── ChapterAnchor (when the container happens on the timeline)
+├── Plot ──< PlotScene >── Scene       (plot: N:N membership)
 └── [branching]
-    ├── Scene ── Choice ──> Scene      (grafo de leitura)
-    ├── ChoiceCheckGroup ─< ChoiceCheck (quando uma escolha está disponível)
-    ├── Scene / Choice ── Effect        (muda o estado da simulação)
-    └── Route ──< RouteStep              (um percurso autoral pelo grafo)
+    ├── Scene ── Choice ──> Scene      (reading graph)
+    ├── ChoiceCheckGroup ─< ChoiceCheck (when a choice is available)
+    ├── Scene / Choice ── Effect        (changes the simulation state)
+    └── Route ──< RouteStep              (an authored path through the graph)
 ```
 
-Uma mesma cena pode participar de um capítulo, de várias tramas, de uma rota e de várias escolhas. Essas relações respondem perguntas diferentes; nenhuma deve ser usada como substituta da outra.
+One scene can belong to a chapter, to several plots, to a route and to several choices. These relations answer different questions; none of them should stand in for another.
 
-## Os três eixos da história
+## The story's three axes
 
-Há três formas independentes de organizar a mesma narrativa.
+There are three independent ways to organize the same narrative.
 
-| Eixo | Pergunta que responde | Objetos principais |
+| Axis | Question it answers | Main objects |
 |---|---|---|
-| Editorial | “Em que ordem o autor apresenta isto?” | Chapter, Event e `index` de Scene |
-| Temporal | “Quando isto acontece no universo?” | gap, duration, data inicial, calendário, data fixa e ChapterAnchor |
-| Causal/de leitura | “Para onde o leitor pode ir?” | Choice, checks, effects e Route |
+| Editorial | "In what order does the author present this?" | Chapter, Event and the Scene `index` |
+| Temporal | "When does this happen in the universe?" | gap, duration, start date, calendar, fixed date and ChapterAnchor |
+| Causal / reading | "Where can the reader go?" | Choice, checks, effects and Route |
 
-Por exemplo, um flashback pode ser o quinto capítulo na ordem editorial, acontecer antes do primeiro capítulo na linha do tempo e estar acessível por uma escolha específica no grafo. Isto é válido e é justamente a razão de os eixos não compartilharem uma única “ordem”.
+For example, a flashback can be the fifth chapter in editorial order, happen before the first chapter on the timeline and be reachable through one specific choice in the graph. That is valid, and it is exactly why the axes do not share a single "order".
 
-## Chapter e Event
+## Chapter and Event
 
-`Chapter` e `Event` usam o mesmo container persistido, diferenciado por `type`:
+`Chapter` and `Event` use the same persisted container, told apart by `type`:
 
-- **Chapter** agrupa cenas e representa a organização editorial comum de uma história.
-- **Event** representa um acontecimento, período ou camada histórica que pode atravessar cenas ou existir apenas como contexto temporal.
+- **Chapter** groups scenes and stands for the ordinary editorial organization of a story.
+- **Event** stands for an occurrence, period or historical layer that can cut across scenes or exist only as temporal context.
 
-Cada tipo possui seu próprio espaço de índice. O índice dos capítulos forma a espinha editorial usada pela timeline linear; o de eventos serve para a organização do autor, não para afirmar uma cronologia universal. Cenas podem não ter capítulo: fragmentos, estudos e anotações narrativas não precisam ser forçados a um container.
+Each type has its own index space. The chapters' index forms the editorial spine used by the linear timeline; the events' index serves the author's organization and does not claim a universal chronology. Scenes may have no chapter: fragments, studies and narrative notes do not have to be forced into a container.
 
-Um capítulo ou evento pode existir sem âncora. Nesse caso ele não declara quando ocorre; continua sendo útil como estrutura editorial ou temática.
+A chapter or event can exist without an anchor. It then does not declare when it takes place, and remains useful as editorial or thematic structure.
 
-## Scene: a unidade fundamental
+## Scene: the fundamental unit
 
-Uma `Scene` é a menor unidade narrativa que o sistema mede. Ela pode ter:
+A `Scene` is the smallest narrative unit the system measures. It can have:
 
-- um Chapter opcional e um `index` dentro da organização editorial;
-- uma Location opcional;
-- `gap` + unidade: intervalo entre o fim da cena anterior na espinha e o início desta;
-- `duration` + unidade: quanto a própria cena dura;
-- uma data fixa opcional (`calendarDateOverride`), em coordenadas normalizadas, associada ao calendário gregoriano interno ou a um calendário customizado;
-- marcadores de início/fim e conteúdo descritivo.
+- an optional Chapter and an `index` within the editorial organization;
+- an optional Location;
+- `gap` + unit: the interval between the end of the previous scene on the spine and the start of this one;
+- `duration` + unit: how long the scene itself lasts;
+- an optional fixed date (`calendarDateOverride`), in normalized coordinates, tied to the internal Gregorian calendar or to a custom calendar;
+- start/end markers and descriptive content.
 
-Na história linear, cenas de capítulos consecutivos formam a **espinha temporal**: gap, início, duração e fim são calculados cumulativamente a partir da data/hora inicial da Story, caso ela exista. Uma Scene com data fixa é uma exceção explícita a essa interpretação relativa para aquela cena; o dado é guardado como coordenadas, não como texto de mês/era, para sobreviver a renomes de calendário.
+In a linear story, scenes of consecutive chapters form the **temporal spine**: gap, start, duration and end are computed cumulatively from the Story's initial date/time, when there is one. A Scene with a fixed date is an explicit exception to that relative reading for that scene; the value is stored as coordinates, not as month/era text, so that it survives calendar renames.
 
-`gap` não é uma data absoluta. Ele continua descrevendo o intervalo narrativo relativo. Datas, calendários e âncoras apenas oferecem maneiras de interpretar ou posicionar essa espinha.
+`gap` is not an absolute date. It keeps describing the relative narrative interval. Dates, calendars and anchors only offer ways to interpret or position that spine.
 
-Em uma história branching, o grafo de escolhas não inventa uma cronologia. As telas temporais usam a espinha editorial disponível; um autor não deve inferir que duas cenas em ramos diferentes ocorrem em sequência somente porque uma Choice aponta para a outra.
+In a branching story, the choice graph does not invent a chronology. The temporal screens use the editorial spine that is available; an author should not infer that two scenes on different branches happen in sequence just because a Choice points from one to the other.
 
-## ChapterAnchor: posicionar um container no tempo
+## ChapterAnchor: placing a container in time
 
-`ChapterAnchor` não ancora uma Scene. Ele ancora um Chapter ou Event a um ou mais trechos da espinha de cenas.
+`ChapterAnchor` does not anchor a Scene. It anchors a Chapter or Event to one or more stretches of the scene spine.
 
-Cada âncora define:
+Each anchor defines:
 
-- o container (`chapterId`);
-- um ponto inicial: Scene + posição `start`, `middle` ou `end`;
-- offset opcional, inclusive negativo, em uma unidade de tempo;
-- um ponto final opcional, com a mesma estrutura.
+- the container (`chapterId`);
+- a start point: Scene + position `start`, `middle` or `end`;
+- an optional offset, negative included, in a time unit;
+- an optional end point, with the same structure.
 
-Sem ponto final, o trecho permanece aberto e a duração é lida das cenas do próprio container. Com ponto final, ele declara um intervalo explícito. Um container que pausa e retorna pode ter vários trechos, ordenados por `order`; um trecho aberto não pode coexistir com outro do mesmo container, pois não haveria como saber onde separar seus conteúdos.
+Without an end point the stretch stays open and the duration is read from the container's own scenes. With an end point it declares an explicit interval. A container that pauses and resumes can have several stretches, ordered by `order`; an open stretch cannot coexist with another one of the same container, because there would be no way to tell where to split its contents.
 
-Use uma âncora para afirmar, por exemplo, “esta guerra começou 300 anos antes da Cena A” ou “este capítulo de flashback acontece entre o meio da Cena X e o fim da Cena Y”. Ela não reordena cenas, não altera uma Choice e não grava uma nova data nas cenas de referência.
+Use an anchor to state, for instance, "this war began 300 years before Scene A" or "this flashback chapter takes place between the middle of Scene X and the end of Scene Y". It does not reorder scenes, does not change a Choice and does not write a new date onto the reference scenes.
 
-## Plot e PlotScene: uma trama não é um percurso
+## Plot and PlotScene: a plot is not a path
 
-`Plot` é uma linha temática/narrativa: romance, conspiração, arco de personagem, mistério etc. Ela funciona tanto em histórias lineares quanto branching.
+`Plot` is a thematic/narrative line: a romance, a conspiracy, a character arc, a mystery and so on. It works in both linear and branching stories.
 
-Uma cena entra em uma trama por `PlotScene`, uma relação N:N com:
+A scene joins a plot through `PlotScene`, an N:N relation with:
 
 - `plotId`;
 - `sceneId`;
-- uma nota curta obrigatória que explica o papel daquela cena na trama.
+- a required short note explaining that scene's role in the plot.
 
-Uma cena pode pertencer a várias tramas e uma trama pode começar vazia. Em uma história linear a participação pode ser lida seguindo a ordem editorial; em branching, a interface apresenta a distribuição no grafo, sem fingir que existe uma única ordem de leitura.
+A scene can belong to several plots, and a plot can start empty. In a linear story the membership can be read by following the editorial order; in a branching one the interface shows the distribution over the graph, without pretending there is a single reading order.
 
-Uma Plot não escolhe transições, não limita Choices e não é uma Route. A Plot responde “do que esta cena trata nesta linha narrativa?”, e não “qual caminho o leitor percorreu?”.
+A Plot does not pick transitions, does not limit Choices and is not a Route. The Plot answers "what is this scene about in this narrative line?", not "which path did the reader take?".
 
-## Choice, checks e effects: o grafo branching
+## Choice, checks and effects: the branching graph
 
-Uma `Choice` é uma aresta explícita:
+A `Choice` is an explicit edge:
 
 ```text
-Scene de origem (sceneId) ── Choice: text ──> próxima Scene (nextSceneId)
+Source Scene (sceneId) ── Choice: text ──> next Scene (nextSceneId)
 ```
 
-Ela só existe em histórias branching. Histórias lineares avançam pela ordem das cenas, sem Choices explícitas.
+It exists only in branching stories. Linear stories advance by scene order, with no explicit Choices.
 
-### Disponibilidade de uma escolha
+### Availability of a choice
 
-Uma Choice pode ter grupos de condições (`ChoiceCheckGroup`).
+A Choice can have groups of conditions (`ChoiceCheckGroup`).
 
-- Dentro de um grupo, checks combinam por **AND** ou **OR**.
-- Entre grupos da mesma Choice, todos os grupos precisam passar (**AND**).
-- Um check em modo `enable` passa quando sua condição é verdadeira.
-- Um check em modo `block` passa quando sua condição é falsa; se ela se torna verdadeira, bloqueia a Choice.
+- Inside a group, checks combine with **AND** or **OR**.
+- Between groups of the same Choice, every group must pass (**AND**).
+- A check in `enable` mode passes when its condition is true.
+- A check in `block` mode passes when its condition is false; if the condition becomes true, it blocks the Choice.
 
-Os checks podem avaliar:
+Checks can evaluate:
 
-- quantidade de visitas a uma Scene;
-- presença/ausência de um Item no inventário simulado;
-- estado definido/indefinido de um trigger nomeado.
+- the number of visits to a Scene;
+- the presence/absence of an Item in the simulated inventory;
+- the set/unset state of a named trigger.
 
-`Effect` é o lado que escreve esse estado. Uma Scene ou Choice pode conceder/remover um Item ou definir/remover um trigger. Ao simular a história, entrar em uma cena registra a visita e aplica os effects da cena; escolher uma Choice aplica seus effects. Esse estado é transitório do Navigator ou Reader: não altera os dados da Story, itens reais ou triggers persistidos.
+`Effect` is the side that writes that state. A Scene or Choice can grant/remove an Item or set/unset a trigger. When the story is simulated, entering a scene records the visit and applies the scene's effects; picking a Choice applies its effects. That state is transient to the Navigator or Reader: it does not change the Story's data, real items or persisted triggers.
 
-## Route e RouteStep: um caminho autoral verificável
+## Route and RouteStep: a verifiable authored path
 
-Uma `Route` pertence apenas a uma história branching e representa um percurso possível que o autor quer nomear, revisar ou oferecer ao Reader. Não é save game, nem Plot.
+A `Route` belongs only to a branching story and stands for a possible path the author wants to name, review or offer to the Reader. It is neither a save game nor a Plot.
 
-`RouteStep` registra uma **visita**, não apenas uma Scene:
+`RouteStep` records a **visit**, not just a Scene:
 
-- `position` é contínua, de 1 até N;
-- `sceneId` é a cena visitada;
-- `selectedChoiceId` é a Choice tomada ao sair dela;
-- no último passo, `selectedChoiceId` é `null`.
+- `position` is continuous, from 1 to N;
+- `sceneId` is the visited scene;
+- `selectedChoiceId` is the Choice taken when leaving it;
+- on the last step, `selectedChoiceId` is `null`.
 
-Guardar passos em vez de uma lista de ids de cena torna loops inequívocos: uma rota pode visitar a mesma Scene mais de uma vez. A validação confirma que cada Choice existe, sai da cena do passo e chega à Scene do passo seguinte. Rotas inválidas não são apagadas automaticamente: continuam sendo intenção histórica do autor e são mostradas como precisando de revisão.
+Storing steps instead of a list of scene ids makes loops unambiguous: a route can visit the same Scene more than once. Validation confirms that each Choice exists, leaves the step's scene and arrives at the next step's Scene. Invalid routes are not deleted automatically: they remain the author's historical intent and are shown as needing review.
 
-O Story Navigator usa as mesmas regras de checks/effects para uma simulação superficial. O caminho visitado pode virar Route; o estado simulado de itens e triggers não é salvo na Route.
+The Story Navigator uses the same check/effect rules for a shallow simulation. The visited path can become a Route; the simulated state of items and triggers is not saved in the Route.
 
-## Exemplos práticos
+## Practical examples
 
-### História linear com flashback
+### Linear story with a flashback
 
-1. Capítulo “Retorno” é o capítulo 5 na ordem editorial.
-2. Suas cenas têm gaps/durations normais para a leitura.
-3. Um ChapterAnchor o posiciona 20 anos antes da Cena 1.
-4. A Plot “Origem do conflito” inclui duas cenas desse capítulo e uma cena do presente.
+1. The chapter "Return" is chapter 5 in editorial order.
+2. Its scenes have ordinary gaps/durations for reading.
+3. A ChapterAnchor places it 20 years before Scene 1.
+4. The Plot "Origin of the conflict" includes two scenes of that chapter and one present-day scene.
 
-O leitor continua vendo o flashback no ponto editorial escolhido. A timeline explica que ele ocorre antes; a Plot explica por que as três cenas pertencem ao mesmo arco.
+The reader still meets the flashback at the chosen editorial point. The timeline explains that it happens earlier; the Plot explains why the three scenes belong to the same arc.
 
-### História branching com rota
+### Branching story with a route
 
-1. Cena A tem Choices para B e C.
-2. A Choice A → B exige trigger `hasKey` definido.
-3. A cena anterior ou a própria Choice que encontra a chave possui effect `triggerSet(hasKey)`.
-4. A Route “Fuga pelo arquivo” registra A, a Choice A → B, B e assim por diante.
+1. Scene A has Choices to B and C.
+2. The Choice A → B requires the trigger `hasKey` to be set.
+3. The earlier scene, or the Choice that finds the key, has the effect `triggerSet(hasKey)`.
+4. The Route "Escape through the archive" records A, the Choice A → B, B and so on.
 
-Se a Choice mudar para apontar a D, a Route não é silenciosamente reescrita. A validação indica que ela não representa mais um caminho válido e o autor pode ajustá-la conscientemente.
+If the Choice is changed to point at D, the Route is not silently rewritten. Validation reports that it no longer represents a valid path, and the author can adjust it consciously.
 
-## Regras de escolha rápida
+## Quick-pick rules
 
-| Se você quer… | Use… |
+| If you want to… | Use… |
 |---|---|
-| Agrupar cenas como o leitor as encontra | Chapter |
-| Registrar um acontecimento/período que pode atravessar a história | Event |
-| Medir o que acontece e quanto tempo dura | Scene + gap/duration |
-| Dizer quando um capítulo ou evento ocorreu em relação à história | ChapterAnchor |
-| Mostrar o papel de uma cena em um arco temático | Plot + PlotScene |
-| Criar uma bifurcação de leitura | Choice |
-| Restringir uma Choice conforme estado narrativo | ChoiceCheckGroup + ChoiceCheck |
-| Alterar o estado usado por checks | Effect |
-| Declarar um caminho possível de ponta a ponta | Route + RouteStep |
+| Group scenes the way the reader meets them | Chapter |
+| Record an occurrence/period that can cut across the story | Event |
+| Measure what happens and how long it lasts | Scene + gap/duration |
+| Say when a chapter or event happened relative to the story | ChapterAnchor |
+| Show a scene's role in a thematic arc | Plot + PlotScene |
+| Create a reading fork | Choice |
+| Restrict a Choice by narrative state | ChoiceCheckGroup + ChoiceCheck |
+| Change the state that checks use | Effect |
+| Declare one possible path from end to end | Route + RouteStep |
 
-## Persistência e sincronização
+## Persistence and synchronization
 
-Todos os objetos deste documento são entidades sincronizáveis da Story. Eles participam de exportação e importação, operation log, tombstones e resolução de conflitos. Relações como `PlotScene`, `RouteStep`, `ChapterAnchor`, checks e effects não são detalhes descartáveis da interface: elas são dados autorais e precisam acompanhar a Story quando ela sai ou volta ao dispositivo.
+Every object in this document is a synchronizable entity of the Story. They take part in export and import, the operation log, tombstones and conflict resolution. Relations such as `PlotScene`, `RouteStep`, `ChapterAnchor`, checks and effects are not disposable interface details: they are authored data and must travel with the Story when it leaves or returns to the device.
 
-Para detalhes de checks e effects, consulte também [choice_mechanics.md](choice_mechanics.md). Para o fluxo de telas, consulte [screen_flow.md](screen_flow.md).
-
+For details on checks and effects, see also [choice_mechanics.md](choice_mechanics.md). For the screen flow, see [screen_flow.md](screen_flow.md).

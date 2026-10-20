@@ -56,8 +56,22 @@ The main table. It stores the story's general data (`title`, `type: 'linear' | '
 ### Characters
 No story exists without characters.
 
-### Chapters
-A collection of scenes. It does not mean chronological order, but "display order".
+### Chapters, Events and Chapter Anchors
+A collection of scenes. It does not mean chronological order, but "display order". The same container
+(`Chapter`) also serves as an **Event** (`type`): a period or occurrence with its own display index that is not part of
+the numbered narrative spine. `StoryArc` (below) groups chapters and events into one work. `ChapterAnchor`
+places a chapter or event on the scene spine (start/middle/end of a scene, with an offset). The three
+axes - editorial, temporal and causal - are described in [`narrative-structure.md`](narrative-structure.md).
+
+### Arcs (`StoryArc`)
+The Story is the universe; an Arc is one work inside it (a book, a film, an issue, a season, a campaign module).
+Each Arc has a `medium` (`generic`, `screenplay`, `comic`, `storyboard`, `campaign`: an output profile, never a data rule),
+an optional vocabulary, author, cover (`coverGalleryId`) and page format, and can be published on its own. Every story has a default
+Arc. Rationale and leftovers: [`finished_planning/arc_medium_plan.md`](finished_planning/arc_medium_plan.md).
+
+### Calendars (`StoryCalendar`)
+A story-owned custom calendar (months, eras, seasons, moons, negative years, time of day). Scenes and containers
+keep relative gaps or declare a calendar-coordinate override; the coordinate is stored independently of calendar labels.
 
 ### Scenes
 The fundamental narrative units.
@@ -89,6 +103,21 @@ General information about a place.
 ### Gallery / Gallery Relations
 `Gallery` is a media asset (image/video/audio) of the story, identified by a content hash. `GalleryRelation` is the N:N table that links a `Gallery` to any "owning" entity (`ownerId` + `ownerType`) - that is how the same image can illustrate a Character, a Location, a Note, etc., without the Gallery having to know in advance whom it belongs to.
 
+### Boards, Location Maps and Sketches
+- `Board`: a freeform spatial canvas (entity pins, free notes, arrows that are not story relations), saved as one JSON document.
+- `LocationMap`: a map over gallery image bases with positioned Location points, map-only markers and point-to-map navigation.
+- `Sketch`: a drawing (strokes and fills, no persisted bitmap) saved as one compact document and snapshotted to the Gallery
+  on demand. Format and decisions: [`finished_planning/sketch_canvas_plan.md`](finished_planning/sketch_canvas_plan.md).
+
+### Scene Pages (`ScenePage`)
+An ordered page of a comic or storyboard scene: exactly one of a `Sketch` or a Gallery image, plus the page's text and a
+`contain`/`cover` fit. A page outlives its image ("media removed") and stays out of the manuscript until replaced.
+
+### Songs and Scene Music (`Song`, `SceneMusic`)
+`Song` is a lead sheet (ChordPro subset lyrics, optional translation, melody in a closed ABC subset, key/tempo/meter).
+`SceneMusic` links a scene to exactly one of a `Song` or a Gallery item (audio or link), with a `role` (`in-world` or `score`), a cue
+and the sung `sections`. See [`finished_planning/ALBUM_MUSICAL_PLAN.md`](finished_planning/ALBUM_MUSICAL_PLAN.md).
+
 ### Relational tables
 
 #### Character X Scene (`CharacterScene`)
@@ -116,7 +145,7 @@ When `Story.statSystem` is on, `Stat` defines a measurable axis (for example, St
 `Comment` is a conversation attached to a field of a navigable entity, not merely a loose remark about the entity. It points at a native (`fieldKey`) or custom (`fieldId`) field, preserves the content/excerpt seen at the time and records the author and criticality. `SeeAlsoRelation` is a free reciprocal link between two compatible entities.
 
 ### Choices
-Represents the transitions between scenes in branching stories (CYOA) - `sceneId` (source) → `nextSceneId` (target) + `text`. See `docs/choice_mechanics.md` and `docs/dynamic_story_structure.md` for the full detail (linear stories never have explicit `Choice`s; navigation follows the scenes' `index`).
+Represents the transitions between scenes in branching stories (CYOA) - `sceneId` (source) → `nextSceneId` (target) + `text`. See [`choice_mechanics.md`](choice_mechanics.md) and [`narrative-structure.md`](narrative-structure.md) for the full detail (linear stories never have explicit `Choice`s; navigation follows the scenes' `index`).
 
 ### Routes / Route Steps
 `Route` is an authored possible traversal in a branching story. Its ordered `RouteStep` visits
@@ -128,8 +157,10 @@ path as a Route; it never persists simulated item or trigger state.
 ### Items / Item Journeys
 `Item` is an object in the story (a weapon, an artefact, ...). `ItemJourney` records an item's "journey" through the narrative: in which `sceneId` it changes, to what `newState`, and optionally changes owner (`newCharacterOwnerId`) - it is an item's possession/state history told scene by scene.
 
-### World Rules
-For example, who can do what? What is the balance of power?
+### World Rules / World Pieces
+`WorldRule` is the persisted entity behind the **World Pieces** feature: a `section` (rules, fauna, flora, mythology,
+people, knowledge and others) plus creator-owned types scoped to the section. Existing rules live in the **Rules** section
+([`finished_planning/WORLD_PIECES_PLAN.md`](finished_planning/WORLD_PIECES_PLAN.md)). For example, who can do what? What is the balance of power?
 
 E.g. Mana is required to cast spells.
 E.g. With elemental crystals, we can power machines to cast the same spells of that element.
@@ -162,7 +193,7 @@ The client includes a help catalogue in Portuguese and English, with local searc
 - **Favourites:** a story or element may be highlighted for filters and lists. In shared stories, the favourite's behaviour is defined in the story's settings.
 - **Comments:** collaborators and authorized readers may comment on a native or custom field of a navigable entity; each comment preserves the field's context and the comment list brings those conversations together.
 - **See also:** creates a free, reciprocal link between related elements, without replacing tags or notes.
-- **Branching stories:** choices may have checks (visits, items or flags) and effects (grant/take an item or turn a flag on/off). These features form the reader's state and are analysed alongside the story map.
+- **Branching stories:** choices may have checks (scene visits, items or named triggers) and effects (grant/take an item or set/unset a trigger). These features form the reader's state and are analysed alongside the story map.
 - **Plots:** Plots group overlapping scenes without altering narrative topology. Linear stories show matrix/coverage and a textual reader; branching stories show graph distribution and map highlights without claiming a single reading order. A scene may count towards more than one plot, so coverage percentages need not add up to 100%.
 - **Collaboration:** a story linked to a server may have collaborators; permissions and reader comments are configured in the story itself.
 
@@ -195,11 +226,40 @@ graph LR
     story --> favorites
     story --> effects
     story --> suggestions
+    story --> story_arcs
+    story --> story_calendars
+    story --> chapter_anchors
+    story --> routes
+    story --> route_steps
+    story --> boards
+    story --> location_maps
+    story --> sketches
+    story --> scene_pages
+    story --> songs
+    story --> scene_music
     story --> operation_log
     story -. immutable publication .-> story_publications
 
+    story_arcs --> chapters
     chapters --> scenes
+    chapters --> chapter_anchors
+    chapter_anchors -- start/end point --> scenes
     locations -- occurs on --> scenes
+
+    routes --> route_steps
+    route_steps --> scenes
+    route_steps -- selected --> choices
+
+    scenes --> scene_pages
+    scene_pages -- exactly one of --> sketches
+    scene_pages -- exactly one of --> gallery
+    scenes --> scene_music
+    scene_music -- exactly one of --> songs
+    scene_music -- exactly one of --> gallery
+
+    location_maps -- positions --> locations
+    location_maps -- image bases --> gallery
+    boards -- pins --> chapters/scenes/characters/locations/items/notes
 
     plots --> plot_scenes
     plot_scenes --> scenes
@@ -216,7 +276,7 @@ graph LR
 
     tags -- via tag_relations (polymorphic) --> chapters/scenes/characters/locations/items/notes/world_rules
     notes -- via note_relations (polymorphic) --> chapters/scenes/characters/locations/items/world_rules
-    gallery -- via gallery_relations (polymorphic) --> chapters/scenes/characters/locations/items/notes
+    gallery -- via gallery_relations (polymorphic) --> chapters/scenes/characters/locations/items/notes/world_rules/songs
 
     characters --> character_relations
     character_relations --> characters
@@ -259,6 +319,11 @@ graph LR
     api_logs[API logs]
     showcase_settings[Showcase settings]
     media_storage_settings[Media settings]
+    subscriptions[Subscriptions and payment ledger]
+    audit_events[Activity record]
+    access_records[Sign-in records]
+    messages[Messages]
+    evidence_holds[Evidence holds]
     showcase_entry[Story publication in the Showcase]
     publication[Published version]
     story_diagram[Story diagram]
@@ -266,6 +331,12 @@ graph LR
     users -- belongs to / receives limits --> tiers
     registration_settings -- default tier --> tiers
     users -- owns --> recovery_codes
+    users -- subscribes to --> subscriptions
+    subscriptions -- priced by --> tiers
+    users -- sends / receives --> messages
+    users -- appear in --> access_records
+    audit_events -- may reference --> users
+    evidence_holds -- keep a copy of reported --> story_diagram
 
     api_logs -- may reference --> users
     api_logs -- may reference --> story_diagram
@@ -282,6 +353,7 @@ graph LR
 
 ## 🔗 Architecture flow
 
+- **Other services:** `apps/payments` is the separate payment connector service, and `apps/verification` the separate age-verification service; both talk to the API through signed contracts ([`payment_connectors.md`](payment_connectors.md), [`age_verification.md`](age_verification.md)). `apps/admin` serves the admin panel and the public showcase; `apps/site` is the landing page.
 - **API** (`apps/api`)
   - Elysia (Bun) exposes REST/JSON routes.
   - Zod validates inputs/outputs.
@@ -352,16 +424,3 @@ JWT_SECRET_REFRESH="your_strong_jwt_secret_for_online_refresh"
 ROOT_ADMIN_USERNAME="root"
 ROOT_ADMIN_PASSWORD="password"
 ```
----
-
-## 🏗️ Milestones already completed
-
-This section was originally a list of next steps, written before any implementation. Every item below has already been completed - kept here only as a historical record of scope, not as pending work:
-
-- ~~Define migrations in `packages/db` (Drizzle).~~ Migrations live in `apps/api/src/db/` (Postgres) and `apps/client/src/db/` (local SQLite) - there is no `packages/db`.
-- ~~Create Zod contracts in `packages/shared`.~~
-- ~~Implement the base CRUD routes (users, stories, characters).~~ Full CRUD for every entity listed in the "Data structure" section, not just the original three.
-- ~~Develop the synchronization engine.~~ See `apps/api/src/services/entity-sync-handlers/` and `apps/client/src/services/sync/SyncEngineService.ts`/`entity-sync-handlers/`.
-- ~~Create a desktop app with integrated SQLite (Tauri/Electron).~~ Electron, packaging the client's web build (SQLite through expo-sqlite/OPFS, not a separate native binding) - see `docs/file_structure.md`.
-
-For the current state and work in progress, there is no roadmap maintained in this folder at the moment - consult the repository's commit/branch history.

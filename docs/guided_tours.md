@@ -18,7 +18,7 @@ how-to for adding the next one.
   It has its own three-step welcome instead (what Keres is, where things live by build, the
   name), shown whenever there is no profile; nothing is persisted. Its copy per build lives in
   `components/features/welcome/welcomeContent.ts`, and the build itself comes from
-  `utils/clientFlavor.ts`.
+  `utils/platform/clientFlavor.ts`.
 
 ## Adding a tour
 

@@ -34,7 +34,7 @@ import { createStoryService } from '@/src/services/storymanagement/story-lifecyc
  * through the per-entity services. That is what gives the feature its defining property: the import
  * path records **no operations at all**, so a story created from packs starts with an empty log and
  * is bootstrapped to a server whole, by the machinery that already exists. Applying a pack to an
- * existing story is deliberately impossible - see `docs/packs_feature_plan.md`.
+ * existing story is deliberately impossible - see `docs/finished_planning/packs_feature_plan.md`.
  */
 
 export interface PackSummary {

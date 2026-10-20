@@ -130,7 +130,7 @@ instead of an opaque sync conflict hours later.
   interactive screen and the exported SVG consume the same geometry and never disagree - and because they are
   shared, the site's showcase draws exactly the same charts.
 - **Screens**: `apps/client/src/screens/stats/` - list, form, ladder, comparison and ranking,
-  all under the "Stats" entry of the story menu (`navigation/StatsStack.tsx`).
+  all under the "Stats" entry of the story menu (`navigation/stacks/StatsStack.tsx`).
 - **On the character**: the panel on the detail (`components/features/stats/CharacterStatPanel`), and on the
   form the modes (`ModeManager`) and the values (`CharacterStatValuesEditor`) - the detail only
   displays, it never edits.

@@ -12,6 +12,8 @@ The `Choice` entity is fundamental for defining transitions between scenes in a 
 *   **`text`**: The text describing the choice (e.g. "Turn left into the forest").
 *   **`createdAt`, `updatedAt`**: Creation and last-update timestamps.
 
+A Choice can also carry availability conditions (`ChoiceCheckGroup` / `ChoiceCheck`: scene visits, items, named triggers) and consequences (`Effect`: grant/take an item, set/unset a trigger). Those, the authored `Route`/`RouteStep` paths and the Story Navigator are described in [`narrative-structure.md`](narrative-structure.md).
+
 In the current implementation, choices always connect **scenes** to one another. There is no smaller "moment" entity inside a scene that could be the source or target of a choice.
 
 ## 2. Story types and choice management

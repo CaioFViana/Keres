@@ -1,10 +1,11 @@
 # Keres feature inventory
 
 **Status:** code-grounded inventory (companion to `project_plan.md`)
-**Generated:** 2026-09-23, from a full read of the repository (6 parallel code
-readers + verification pass). The code is the source of truth; file pointers
-below are the evidence. When a feature changes, update the section here and,
-if it affects the data model or sync, `project_plan.md` too.
+**Generated:** 2026-09-23, from a full read of the repository. **Last updated:** 2026-10-20,
+for version 1.10.1 (counts, services, music, scene pages, per-work publishing, accounts).
+The code is the source of truth; file pointers below are the evidence. When a feature
+changes, update the section here and, if it affects the data model or sync,
+`project_plan.md` too.
 
 > Scope note: generated bundles (`dist/`, coverage HTML, vendored libs) were
 > excluded. Help/device/example/shipped-pack *content* files were counted and
@@ -19,13 +20,15 @@ branching narratives: characters, locations, scenes, plots, world rules, time,
 maps, boards and collaboration, with a self-hostable sync server, a public
 showcase, story packs and installable example stories. UI languages: **EN + PT**.
 
-Monorepo (`package.json`, v1.8.0, MPL-2.0):
+Monorepo (`package.json`, v1.10.1, MPL-2.0):
 
 | App | Stack | Delivers |
 | --- | --- | --- |
-| `apps/client` | React Native + Expo (Android/iOS/web), SQLite local-first | main app, 109 screens |
+| `apps/client` | React Native + Expo (Android/iOS/web), SQLite local-first | main app, 129 screens |
 | `apps/api` | Elysia (Bun), Drizzle over Postgres/SQLite, Zod | REST + sync + hosting |
 | `apps/admin` | React + Vite, dual build | admin panel (`/admin`) + showcase (`/showcase`) |
+| `apps/payments` | Bun service | separate payment connector (PayPal, Google Pay via Stripe, Play Billing) |
+| `apps/verification` | Bun service | separate age-verification service with a human review step |
 | `apps/desktop` | Electron 43, win/mac/linux (`electron-builder`) | desktop wrapper of the client web build |
 | `apps/site` | React + Vite + i18next | public landing page (GitHub Pages) |
 | `packages/shared` | TS entities + Zod + graphs + rules | common vocabulary for api/admin/client |
@@ -35,7 +38,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 ## 2. Stories
 
 - **Linear or branching** per story (`Story.type`), with **linear/branching
-  conversion** (`docs/choice_mechanics.md`, `dynamic_story_structure.md`).
+  conversion** (`docs/choice_mechanics.md`, `docs/narrative-structure.md`).
 - **Arcs**: a story is the universe and an arc is one *work* inside it (a book, a film,
   an issue, a season, a campaign module): default arc, `chapters.arcId`, drawer arc
   switcher; lists/timeline follow the filter, and a search says how many results it
@@ -47,11 +50,11 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   also on `Story`) and **page format** (`a5`, `comic-us`, `b5`, `wide`; `null` takes the
   medium's). The story form asks the medium of its first work. An arc can be released
   alone (manuscript and/or online reader, never the zip) under the tier ceiling
-  `maxPublishedArcs` (`docs/arc_medium_plan.md`).
+  `maxPublishedArcs` (`docs/finished_planning/arc_medium_plan.md`).
 - **Per-story vocabulary**: rename visible entity terms without duplicating the
   model (`customization/VocabularyScreen.tsx`).
 - **Appearance/theme**: per-story branding, light/dark palettes
-  (`customization/StoryAppearanceScreen.tsx`, `commonStyles.ts`,
+  (`story-settings/StorySettingsAppearanceScreen.tsx`, `commonStyles.ts`,
   `showcaseBranding`, `paletteVars.ts` → CSS `--story-*` vars).
 - **Story settings & dashboard & analysis**
   (`MainDashboardScreen`, `StorySettingsScreen`, `StoryAnalysisScreen`).
@@ -68,7 +71,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   the text that goes with it and a `contain`/`cover` fit. A page outlives its image
   ("media removed", offered a replacement, left out of manuscripts). Sync, export/import,
   clone, tier entity limit; `ScenePagesScreen`, entry on the scene detail.
-- **Music in scenes** (`Song`, `SceneMusic`; `ALBUM_MUSICAL_PLAN.md`): a scene has any number of
+- **Music in scenes** (`Song`, `SceneMusic`; `finished_planning/ALBUM_MUSICAL_PLAN.md`): a scene has any number of
   pieces of music, each a `Song` of the story or a Gallery medium (audio/link), `in-world`
   (someone sings it: its words may print) or `score` (never printed). A Song is a lead sheet in a
   ChordPro subset (chords, sections, `{chorus}` recall), optional translation, key/tempo/meter;
@@ -99,8 +102,8 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   2^31−1), relative gap or calendar-coordinate override
   (`sceneTimingInput.ts`, `StoryTimelineScreen`).
 - **Choices (branching)**: scene → scene transitions with **checks** (visits,
-  items, flags via `ChoiceCheckGroup`/`ChoiceCheck`) and **effects** (grant/take
-  item, toggle flag via `Effect`); detail/form/view screens + story map graph.
+  items, named triggers via `ChoiceCheckGroup`/`ChoiceCheck`) and **effects** (grant/take
+  item, set/unset a trigger via `Effect`); detail/form/view screens + story map graph.
 - **Routes**: authored traversals (`Route` + ordered `RouteStep` with exact
   choice taken; loops allowed); list/detail/form/steps/reader/timeline screens.
 - **Story Navigator**: in-memory choice simulation, save visited path as route
@@ -134,7 +137,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   **location graph** screen; **location maps** (§8).
 - **Items**: CRUD + **item journeys** (state/owner history scene by scene).
 - **World rules/pieces**: rules CRUD + world index; world pieces plan shipped
-  (`WORLD_PIECES_PLAN.md`).
+  (`finished_planning/WORLD_PIECES_PLAN.md`).
 - **Notes**: free writing, zero-or-more entity anchors via `NoteRelation`.
 - **Tags**: entity + polymorphic `TagRelation` to anything.
 - **Gallery**: content-hash media assets linked to any owner via
@@ -196,6 +199,19 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   and (if allowed) own comments; owner-only story fields enforced on both
   client and server.
 - **Server management + registration** screens; per-server sync protocol header.
+- **Terms and account deletion**: the app terms show on first install and the server's own
+  terms before sign-up (a copy stays saved with the server for offline reading; acceptance is
+  recorded server-side with the text hash). *Delete my account* asks the password, switches the
+  account off at once and erases personal data within 30 days; what the person wrote in other
+  people's stories stays, credited to a removed account. *Download my data* saves everything the
+  server holds about the account as one file. Retention and legal bases: `docs/data-governance.md`.
+- **Age verification**: an account on a server is 18+ and verified, by a separate service
+  (`required` mode) or by hand (`manual` mode); adults-only (+18) stories are gated on both
+  sides and the showcase shows them only to verified accounts that opted in
+  (`docs/age_verification.md`, `docs/age_verification_reviewer.md`).
+- **Plan ceilings** also cap comments per story (`maxCommentsPerStory`) and collaborators per
+  story (`maxContributorsPerStory`, counted against the story owner's plan, invitations
+  included).
 
 ## 10. Sync and offline-first
 
@@ -273,12 +289,12 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   GET/POST/DELETE, no sync/OCC): carry entity *shape* + extras, never values,
   media or choices; applied only at story creation with zero ops
   (`PackService`); v1→v2 content migration; browse/list/form screens.
-- **4 shipped packs**, EN+PT (`comic`, `novel-craft`, `tabletop-stats`,
+- **5 shipped packs**, EN+PT (`campaign`, `comic`, `novel-craft`, `tabletop-stats`,
   `three-act-skeleton`), incl. vocabulary seeds.
 
 ## 14. Learning content (EN+PT)
 
-- **Help centre**: **68 pages** in 9 sections (start/stories/elements/branching/
+- **Help centre**: **74 pages** in 9 sections (start/stories/elements/branching/
   annotate/preferences/accounts/sync/support), local search, task-based layout
   (What it is → What it is for → How to do it → What it affects + example +
   steps + seeAlso), per-route contextual help (all routes except 3 drawers),
@@ -292,9 +308,11 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 
 ## 15. Server, admin and ops
 
-- **API modules** (18 `*.route.ts`): `auth`, `sync`, `story` (+`publication`),
-  `storyPermission`, `friend`, `user`, `media`, `pack`, `public`, `websocket`,
-  `admin*` (users, tiers, registration, recovery, API logs, showcase).
+- **API modules** (32 `*.route.ts`): `auth` (+`authVerification`, `ageVerification`), `sync`,
+  `story` (+`publication`, `storyReport`, `storyInvitation`), `storyPermission`, `friend`,
+  `user`, `message`, `media`, `pack`, `payment`, `public` (+`publicLanding`, `publicReader`),
+  `webSocket`, and `admin*` (users, tiers, registration, recovery, API logs, showcase, stories,
+  messages, payments, activity, access records, evidence holds).
 - Hosts: landing page at `/` when enabled (else redirect to `/client/`,
   `/showcase` or Swagger), client web export at `/client` (COOP/COEP for
   SQLite WASM), `/admin`, `/showcase`, Swagger at `/swagger`; session cookie
@@ -302,8 +320,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 - **Admin panel**: user CRUD by tier, tiers (limits, sale pricing, order),
   registration settings (incl. currency), the messages inbox (what the site's contact form and users send to the administrators: filter by origin/read/archived, sort, search, reply inside the platform to a registered user, unread badge), recovery,
   API logs, the activity record (below), showcase/landing settings; generated favicon/logo/avatars
-  (`vite.keresIcon.ts`); audit remediation plan in
-  `finished_planning/ADMIN_AUDIT_REMEDIATION_PLAN.md`.
+  (`vite.keresIcon.ts`); light/dark theme with system preference and a manual toggle.
 - **Payment connectors** (`packages/shared/payments/PaymentConnector.ts`, see `docs/payment_connectors.md`): Keres sells plans only through a separate connector service - the official one is `apps/payments` (PayPal, Google Pay via Stripe, Play Billing); with none the server works as before and nothing about payments is shown anywhere. The connector returns a generic action (open a hosted page, follow instructions, or nothing) and the provider reports by signed `POST /api/payments/events`; no card or account detail crosses the contract or has a column. Keres keeps a subscription per user with the date up to which it is paid (a month paid on the 3rd lasts to the 3rd of the next; early payments extend from the end, late ones start from the payment), marks it `due` when the date passes unpaid (the plan stops being granted at the date itself, and the person falls back to the plan assigned to them, else the server's default - with neither, to no limits, which the server warns about; a free plan with every ceiling at 0 - zero is a valid ceiling and allows nothing, blank is unlimited - makes the server paid-only in practice, and the admin panel says so on the plans page, the plan form and Settings) and tells the connector once. Changing plan while time is left converts it by value (the old plan's price per day against the new one's), previewed in the app; an administrator can give a plan for 1-24 months, a payment of zero by the same rules, and cancel a person's renewal at the same time with a confirmation that they agreed. Admin **Payments** (read only): summary, subscriptions, ledger. Client: the plan on the server's screen with its ceilings and use, and below it the person's own stories there with their local entity count against `maxEntitiesPerStory` (warning colour from 90%, alert from 95%); plan dates (paid plans only, online only), a plan/interval/method screen with the payment followed to its end, stopping a renewal (for a method the connector marks `recurring: false`, such as PIX or boleto, the screen says to pay again before the date and offers "I won't renew" instead), and the setting **Warn when a payment is due** (once per period, never on a timer). Development against the official microservice uses `PLAY_MOCK=true` and the suite in `apps/payments/test`; the homologation checklist is in `apps/payments/README.md`. Methods carry a `flow` (`redirect` by default, `native` with a `store`): web and desktop offer only redirect methods, the Android app only the Play one (Play policy forbids web checkouts for digital goods in apps), and a server whose methods no device can run says they are unavailable. The app buys Play products with the store sheet (`expo-iap`, never Expo Go), the server relays the token at `POST /api/payments/play/verify` (the plan, price and product are the server's own; the app never holds `PLAY_ENDPOINT_SECRET`), checks the token with the service and grants the plan from the reported event, then finishes the purchase; unfinished purchases are reconciled on the plan screen. Tiers carry the Play product ids per period (admin tiers page; exposed on the public tier as catalog data) and whether web checkouts sell each period (on by default; a web checkout for a plan not sold on the web is refused, and the app offers only the methods selling the chosen plan).
 - **Orderly shutdown** (`shutdown.ts`): on `SIGINT`/`SIGTERM`/`SIGHUP` (and `SIGBREAK` on a Windows console) the server stops its periodic jobs, notes `system.server_stopped` in the activity record, stops taking connections and lets running requests finish (`SHUTDOWN_GRACE_MS`, 7 s by default), closes what is left, waits for the writes started in the background (activity record, technical log, sweeps - tracked by `utils/backgroundWork.ts`) and closes the database, then exits 0; a second signal ends it at once. An uncaught exception stops it the same way with code 1; an unhandled rejection is only logged. Login and password-recovery lockouts live in the database (`attempt_limits`) so a restart does not clear them. The desktop app holds its quit until the token-vault writes in flight have landed, and runs one instance per profile (`requestSingleInstanceLock`): a second launch leaves at once and the running one comes to the front.
 - **Activity record** (`audit_events`, admin page Activity): who did what to whom, from where and how it ended - sign-ins (failed ones by the name tried), accounts, friendships, messages (that they were sent, never what they say), story collaboration, publishing, every administrative change, administrators opening a user's message, refusals at the admin door, rate limiting and plan limits met. Made from the requests by a table of rules (`audit/requestAuditRules.ts`) so a new route is one line; never holds passwords, tokens, recovery codes or message text. The page shows a summary of the last hours (counts, failed sign-in addresses, events per day) with how the server is doing (version, uptime, database, memory, users, error logs), filters by area/outcome/action/user/date, a per-user view, CSV export (formula-safe) and a retention (`AUDIT_RETENTION_DAYS`, 365 by default, pruned daily).
@@ -338,15 +355,15 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 
 | Item | Count | Source |
 | --- | --- | --- |
-| Client screens (TSX in `screens/`) | 109 | counted 2026-09-23 (note: `CLIENT_SCREEN_INVENTORY.md` still says 98 — drift) |
-| API route files | 18 | `apps/api/src/modules/**/*.route.ts` |
-| Shared entities | 44 | `packages/shared/entities/*.ts` |
+| Client screens (TSX in `screens/`) | 129 | counted 2026-10-20 |
+| API route files | 32 | `apps/api/src/modules/**/*.route.ts` |
+| Shared entities | 46 | `packages/shared/entities/*.ts` |
 | Sync push / pull batch caps | 200 / 500 | `SyncSchemas.ts` (`MAX_SYNC_BATCH_SIZE`, `MAX_SYNC_PULL_BATCH`) |
-| Help pages × languages | 72 × EN+PT | `apps/client/src/content/help/catalog.ts` |
+| Help pages × languages | 74 × EN+PT | `apps/client/src/content/help/catalog.ts` |
 | Story-device entries × languages | 54 × EN+PT | `apps/client/src/content/story-devices/catalog.ts` |
 | Example stories × languages | 6 × EN+PT | `src/content/example-stories/generated/registry.ts` |
 | Shipped packs × languages | 5 × EN+PT | `src/content/shipped-packs/generated/registry.ts` |
-| Manuscript formats (+ client PDF) | docx/md/txt/html (+pdf) | `manuscriptContracts.ts`, `manuscriptPdf.ts` |
+| Manuscript formats | docx/md/txt/html/epub/pdf (+ Fountain for screenplays) | `manuscriptContracts.ts`, `packages/shared/manuscript` |
 | Kept publication versions | 5 | `publication.route.ts` |
 | Media transfers per sync cycle | 5 | `MediaSyncService.ts` |
 | Manuscript size cap | 50 MB (pictures included, judged before compiling) | `MAX_MANUSCRIPT_BYTES`, `manuscriptSize.ts` |
@@ -355,7 +372,8 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 
 ## Appendix B — deliberate non-goals (per `FEATURE_LANDSCAPE.md`)
 
-No long-form manuscript editor/compiler workflow, no playable game runtime or
-engine export, no real-time co-editing cursors, no series-level shared canon
+No long-form manuscript editor (word-count targets, draft history; the compiler to DOCX, EPUB,
+PDF and the online reader does exist), no game runtime or engine export (the online
+reader plays a branching story but is not a runtime), no real-time co-editing cursors, no series-level shared canon
 across stories (copy/import instead), no geographic region discovery/layers/
 controlled reveal on maps; the op log is sync infrastructure, not prose history.

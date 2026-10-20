@@ -1,79 +1,79 @@
-# Sketch v2 — prancheta de esboço (traços + preenchimentos, sem raster)
+# Sketch v2 — sketch board (strokes + fills, no raster)
 
-**Status:** implementado (Fases 1–5 de código); falta medir desempenho em aparelho (ver "Riscos em aberto").
-**Origem:** o v1 (commit `820ecc60`) era uma terceira variante de Board/Mapa: cada traço virava um
-`CanvasOverlay` selecionável, ferramenta momentânea, sem borracha nem balde, teto de 200 objetos.
-**Objetivo:** ferramenta básica e rica de esboço — pincel, borracha, balde, camadas, seleção/mover, tamanho de
-folha, export e Galeria — leve o bastante para guardar muitos, útil para roteiro e rascunho de quadrinhos.
+**Status:** implemented (code phases 1–5); performance on a real device is still to be measured (see "Open risks").
+**Origin:** v1 (commit `820ecc60`) was a third variant of Board/Map: each stroke became a selectable
+`CanvasOverlay`, a momentary tool, with no eraser or bucket and a cap of 200 objects.
+**Goal:** a basic yet rich sketching tool — brush, eraser, bucket, layers, select/move, sheet size,
+export and Gallery — light enough to hold many, and useful for scripts and comic roughs.
 
-## Decisões congeladas
+## Frozen decisions
 
-- **Sem bitmap persistido.** Cada camada guarda uma lista de *itens* (traços e preenchimentos) num único
-  string compacto dentro do JSON do sketch. O único PNG é o export que o usuário pede.
-- **Itens autocontidos e transformáveis.** A borracha é **geométrica** (corta o traço e o divide), nunca
-  `BlendMode.Clear`; por isso mover/escalar/girar um trecho do desenho é só aplicar uma matriz aos pontos.
-- **Balde = contorno vetorial.** O flood fill roda em memória sobre o que o usuário vê; o que se guarda são os
-  anéis (even-odd) da região, não pixels. Resultado idêntico em toda plataforma. Preenchimentos ficam num bloco
-  *abaixo dos traços* da camada (a linha sempre cobre a borda da cor).
-- **Objetos (texto, balão, carimbo) continuam vetoriais** e ficam sempre acima das camadas de desenho.
-- **Sem migração:** o v1 nunca saiu em release; o schema foi reescrito no lugar (sem `version`, sem compat).
-- Borracha corta traços na hora (geométrica) e preenchimentos ao levantar a caneta: o preenchimento é pintado numa máscara, o caminho é apagado e a região restante é rastreada de volta em anéis. Durante o gesto, o caminho aparece como um traço Clear sobre a camada.
-- Seleção por laço: modo "traços inteiros" (≥ 50% dentro) ou "cortar no laço". Preenchimentos sempre inteiros.
+- **No persisted bitmap.** Each layer holds a list of *items* (strokes and fills) in a single compact
+  string inside the sketch JSON. The only PNG is the export the user asks for.
+- **Self-contained, transformable items.** The eraser is **geometric** (it cuts the stroke and splits it), never
+  `BlendMode.Clear`; so moving/scaling/rotating part of the drawing is just applying a matrix to the points.
+- **Bucket = vector outline.** The flood fill runs in memory over what the user sees; what is stored are the
+  region's rings (even-odd), not pixels. The result is identical on every platform. Fills sit in a block
+  *below the strokes* of the layer (the line always covers the colour's edge).
+- **Objects (text, balloon, stamp) stay vector** and always sit above the drawing layers.
+- **No migration:** v1 never shipped in a release; the schema was rewritten in place (no `version`, no compat).
+- The eraser cuts strokes on the spot (geometric) and fills when the pen is lifted: the fill is painted onto a mask, the path is erased and the remaining region is traced back into rings. During the gesture, the path shows as a Clear stroke over the layer.
+- Lasso selection: "whole strokes" mode (≥ 50% inside) or "cut at the lasso". Fills are always whole.
 
-## Formato (`packages/shared/sketch/`)
+## Format (`packages/shared/sketch/`)
 
 ```
-layer.data = base64( deflate( bytes ) )          // '' = camada vazia
-bytes      = u8 fmt(1) | varint nItens | itens
-traço      = u8 0 | u8 pincel | rgb | alpha | varint tamanho*4 | varint n | n pontos (delta, zigzag, 1/4 px)
-preench.   = u8 1 | rgb | alpha | varint nAnéis | por anel: varint n | n pontos (delta)
+layer.data = base64( deflate( bytes ) )          // '' = empty layer
+bytes      = u8 fmt(1) | varint nItems | items
+stroke     = u8 0 | u8 brush | rgb | alpha | varint size*4 | varint n | n points (delta, zigzag, 1/4 px)
+fill       = u8 1 | rgb | alpha | varint nRings | per ring: varint n | n points (delta)
 ```
 
-- Pincéis: `pen`, `marker`, `highlighter` (traço sólido com opacidade; sem texturas, sem blend modes).
-- Tetos: itens/camada, pontos/traço, **bytes por sketch** (`MAX_SKETCH_TOTAL_DATA_LENGTH`) e um teto de bytes
-  *depois* de descomprimir (`MAX_SKETCH_LAYER_DECODED_BYTES`) contra bomba de descompressão no servidor.
-- O editor guarda os itens por referência (imutáveis): snapshots do histórico compartilham tudo, o histórico
-  tem 300 entradas e `doc !== savedDoc` é o dirty check (O(1)).
-- **Compactação no save:** itens degenerados saem e os traços são re-simplificados (só na cópia persistida;
-  o undo da sessão continua exato). A borracha geométrica já não deixa lixo, então não há "botão compactar".
-- Rascunho (WIP): grava só `content` codificado + `baseVersion`, com atraso de 1,2 s (a codificação é a parte
-  cara) e flush ao ir para background. Não há segunda cópia do sketch salvo.
+- Brushes: `pen`, `marker`, `highlighter` (solid stroke with opacity; no textures, no blend modes).
+- Caps: items/layer, points/stroke, **bytes per sketch** (`MAX_SKETCH_TOTAL_DATA_LENGTH`) and a cap on bytes
+  *after* decompression (`MAX_SKETCH_LAYER_DECODED_BYTES`) against a decompression bomb on the server.
+- The editor holds the items by reference (immutable): history snapshots share everything, the history
+  has 300 entries and `doc !== savedDoc` is the dirty check (O(1)).
+- **Compaction on save:** degenerate items are dropped and strokes are re-simplified (only in the persisted copy;
+  the session's undo stays exact). The geometric eraser already leaves no junk, so there is no "compact button".
+- Draft (WIP): stores only the encoded `content` + `baseVersion`, with a 1.2 s delay (encoding is the
+  expensive part) and a flush when the app goes to the background. There is no second copy of the saved sketch.
 
-## Experiência
+## Experience
 
-- Ferramenta fica **armada** (modo, não gesto). Um dedo desenha; dois dedos movem/ampliam/giram a visão; a
-  ferramenta mão devolve o dedo único à câmera.
-- Faixa de ferramentas rolável (mão, seleção, pincel, borracha, balde, conta-gotas, linha, retângulo,
-  elipse, texto, balão, carimbo | desfazer, refazer, camadas, folha) e faixa de opções contextual logo abaixo
-  (tipo de pincel, cor, tamanho, opacidade; tolerância e escopo do balde; ações da seleção).
-- Atalhos no computador: `B E G I V H L R O T`, `[` `]` (tamanho), `Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y`.
-- Camadas: ordenar, ocultar, bloquear, opacidade, duplicar, mesclar com a de baixo, limpar, apagar.
-- Folha: presets (A4, A5, quadrado, wide, webtoon) ou tamanho livre, orientação, fundo (papel, branco,
-  transparente). Mudar o tamanho nunca move o desenho.
-- Export: SVG (traços como paths), PNG (inclusive transparente) e "salvar na Galeria" (vincula a capa).
-- Avisos: camada oculta/bloqueada/cheia, sketch perto de 80% do limite e no limite.
+- The tool stays **armed** (a mode, not a gesture). One finger draws; two fingers move/zoom/rotate the view; the
+  hand tool gives the single finger back to the camera.
+- Scrollable tool strip (hand, selection, brush, eraser, bucket, eyedropper, line, rectangle,
+  ellipse, text, balloon, stamp | undo, redo, layers, sheet) and a contextual options strip right below
+  (brush type, colour, size, opacity; bucket tolerance and scope; selection actions).
+- Desktop shortcuts: `B E G I V H L R O T`, `[` `]` (size), `Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y`.
+- Layers: reorder, hide, lock, opacity, duplicate, merge down, clear, delete.
+- Sheet: presets (A4, A5, square, wide, webtoon) or a free size, orientation, background (paper, white,
+  transparent). Changing the size never moves the drawing.
+- Export: SVG (strokes as paths), PNG (transparent included) and "save to Gallery" (links the cover).
+- Warnings: hidden/locked/full layer, sketch near 80% of the limit and at the limit.
 
-## O que foi verificado e como
+## What was verified and how
 
-- Motor puro (`packages/shared`): codec (round-trip, bomba, truncado), geometria (alisamento com cantos,
-  borracha, laço, transformações, compactação), balde (flood fill + contornos com furos), seleção, documento.
-- Renderização checada contra **CanvasKit real** (`canvaskit-wasm`, o mesmo motor do web): paths, fills even-odd,
-  flood fill sobre pixels reais e borracha. Achou e corrigiu o arredondamento de cantos.
-- Cliente: gestos (`SketchInputLayer`), camadas/pictures, barra de opções, slider, rascunho, SVG e a tela
-  inteira (histórico, borracha, balde, laço, mover, duplicar, salvar, reverter, rascunho).
-- API: sync de sketch com desenho real e rejeição de dado corrompido.
+- Pure engine (`packages/shared`): codec (round-trip, bomb, truncated), geometry (smoothing with corners,
+  eraser, lasso, transforms, compaction), bucket (flood fill + outlines with holes), selection, document.
+- Rendering checked against **real CanvasKit** (`canvaskit-wasm`, the same engine as the web): paths, even-odd fills,
+  flood fill over real pixels and the eraser. It found and fixed the corner rounding.
+- Client: gestures (`SketchInputLayer`), layers/pictures, options bar, slider, draft, SVG and the whole
+  screen (history, eraser, bucket, lasso, move, duplicate, save, revert, draft).
+- API: sketch sync with a real drawing and rejection of corrupted data.
 
-## Riscos em aberto (não medidos — dependem de aparelho)
+## Open risks (not measured — they depend on a device)
 
-1. **Desempenho do pan/zoom com páginas muito cheias:** cada frame reproduz todas as `Picture`s. Se pesar,
-   mitigar com um cache raster descartável durante o gesto de câmera.
-2. **Tempo de abrir** um sketch grande (reproduzir milhares de traços): hoje síncrono.
-3. **Memória:** só `Picture`s em RAM, sem bitmaps; o `SkSurface` do balde é temporário (≤ 1800 px de lado).
-4. **Skia no web:** `createPicture`, `MakeOffscreen` e `readPixels` não foram exercitados no navegador real
-   (só o CanvasKit direto). Validar no build web e em Android/iOS.
-5. **Sync:** o `content` inteiro vai a cada save (um sketch grande = alguns centenas de KB por entrada do log).
-   Save manual mantém isso baixo; se virar problema, dividir o dado por camada.
+1. **Pan/zoom performance with very full pages:** each frame replays every `Picture`. If it gets heavy,
+   mitigate with a disposable raster cache during the camera gesture.
+2. **Time to open** a large sketch (replaying thousands of strokes): synchronous today.
+3. **Memory:** only `Picture`s in RAM, no bitmaps; the bucket's `SkSurface` is temporary (≤ 1800 px a side).
+4. **Skia on the web:** `createPicture`, `MakeOffscreen` and `readPixels` were not exercised in a real browser
+   (only CanvasKit directly). Validate on the web build and on Android/iOS.
+5. **Sync:** the whole `content` goes on each save (a large sketch = a few hundred KB per log entry).
+   Manual save keeps that low; if it becomes a problem, split the data per layer.
 
-## Fora do escopo desta versão
-Multi-página (livro de esboço), pressão/inclinação de caneta, texturas de pincel,
-miniatura automática na lista, export com camadas (ORA).
+## Out of scope for this version
+Multi-page (sketchbook), pen pressure/tilt, brush textures,
+automatic thumbnail in the list, export with layers (ORA).

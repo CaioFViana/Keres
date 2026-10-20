@@ -62,7 +62,7 @@ By contrast, `chapters` is read in **10 client files and 9 API files**, and most
 the value.
 
 This is the same weighing that made `packs` a table of its own rather than a row in `stories` (see
-the comment at the top of [`db/schemas/packs.ts`](../apps/client/src/db/schemas/packs.ts)) — and it
+the comment at the top of [`db/schemas/packs.ts`](../../apps/client/src/db/schemas/packs.ts)) — and it
 comes out the other way for the same reason. A pack is not a story wearing a disguise; **an Event
 genuinely is a chapter that is not numbered.**
 
@@ -81,12 +81,12 @@ container — the operation was what it was.
 
 Reordering chapters is a **story-level** operation, and the server demands that the payload contain
 exactly the story's non-deleted chapters, with indices contiguous from 1
-([`StorySyncHandler.ts:150`](../apps/api/src/services/entity-sync-handlers/StorySyncHandler.ts),
-[`reorderIndices.ts:34`](../packages/shared/rules/reorderIndices.ts)). An Event that shared that
+([`StorySyncHandler.ts:150`](../../apps/api/src/services/entity-sync-handlers/StorySyncHandler.ts),
+[`reorderIndices.ts:34`](../../packages/shared/rules/reorderIndices.ts)). An Event that shared that
 space would consume a slot in the numbered spine — exactly what it exists not to do.
 
 That is already solved elsewhere. `StoryReorderingStoryUpdateSchema` carries an optional
-discriminator ([`SyncSchemas.ts:151`](../packages/shared/schemas/SyncSchemas.ts)):
+discriminator ([`SyncSchemas.ts:151`](../../packages/shared/schemas/sync/SyncSchemas.ts)):
 
 ```ts
 reorderTarget: z.literal('StorySchemaField').optional(),
@@ -112,7 +112,7 @@ the timeline reads the relation graph, never the index.
 Two things this feature does *not* need, because they already exist:
 
 - **Duration.** A scene carries `duration` + `durationType`, and
-  [`sceneTiming.ts`](../apps/client/src/utils/sceneTiming.ts) already understands units up to
+  [`sceneTiming.ts`](../../apps/client/src/utils/scene/sceneTiming.ts) already understands units up to
   `millennia`. "Three hundred years" is expressible on the Event's scenes today.
 - **Scene ordering inside an Event.** `ChapterReorderingStoryUpdateSchema` already reorders scenes
   within a chapter, and an Event is a chapter. Nothing to add.
@@ -240,7 +240,7 @@ This is the riskiest part of the feature and §13 says why.
 
 ### 7.1 The chapter index check breaks on day one
 
-[`storyAnalysisChecks.ts:502`](../apps/client/src/utils/storyAnalysisChecks.ts) validates that
+[`storyAnalysisChecks.ts:502`](../../apps/client/src/utils/analysis/storyAnalysisChecks.ts) validates that
 chapter indices are 1..N with no holes or repeats, and `StoryAnalysisService` feeds it **every**
 chapter of the story. With two index spaces, a story with 3 chapters and 2 events hands it
 `[1, 2, 3, 1, 2]` — duplicates.
@@ -350,7 +350,7 @@ inside the eras still checked, and a report that comes back rather than throwing
 
 Two things remain untested rather than unknown, and both are screens: the narrative timeline is
 empty for such a story (correct - there is no spine to draw), and the container list shows only
-events. Neither has a suite yet, which is Phase 5 of `TESTING_ROADMAP.md`.
+events. Neither has a suite yet, which is Phase 5 of `docs/TESTING_ROADMAP.md`.
 
 ---
 
@@ -361,7 +361,7 @@ events. Neither has a suite yet, which is Phase 5 of `TESTING_ROADMAP.md`.
 ### 10.1 The protocol is not the release
 
 Compatibility is decided by `SYNC_PROTOCOL_VERSION`, a number of its own in
-[`packages/shared/metadata/SyncProtocol.ts`](../packages/shared/metadata/SyncProtocol.ts), modelled
+[`packages/shared/metadata/SyncProtocol.ts`](../../packages/shared/metadata/SyncProtocol.ts), modelled
 on `CURRENT_STORY_FORMAT_VERSION`. Gating on `major.minor` would have refused 1.5 against 1.6 even
 when nothing between them changed how a story travels — and most releases do not touch the wire.
 
@@ -408,7 +408,7 @@ refused — which is why they can ship at protocol 1 and the nullable column can
 ## 11. What the testing roadmap requires first
 
 This feature lands on the least-tested critical machinery in the repository. From
-[`TESTING_ROADMAP.md`](../TESTING_ROADMAP.md):
+[`docs/TESTING_ROADMAP.md`](../TESTING_ROADMAP.md):
 
 | Roadmap item | Why it becomes blocking |
 | --- | --- |

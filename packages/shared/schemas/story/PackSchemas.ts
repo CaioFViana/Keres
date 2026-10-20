@@ -35,7 +35,7 @@ import { CURRENT_PACK_FORMAT_VERSION } from '../../metadata/ReleaseVersions';
  * The rows are whole entities rather than a reduced shape on purpose. They then satisfy the same
  * schemas the story export already uses, and applying a pack can go through the very same
  * remap-and-import path (`cloneStoryForLocalImport` -> `importFullStory`), which is also what makes
- * it record no operations - see `docs/packs_feature_plan.md` §3.
+ * it record no operations - see `docs/finished_planning/packs_feature_plan.md` §3.
  */
 /**
  * Re-exported here because this is where importers expect to find it, and where the format it

@@ -15,6 +15,12 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
       from the tag) and the suites are the unit ones with coverage - the integration ones have their own job in
       `ci.yml`. No artifact starts being compiled before that passes.
 
+- [ ] Decide the compatibility numbers in
+      [`packages/shared/metadata/ReleaseVersions.ts`](../packages/shared/metadata/ReleaseVersions.ts):
+      the story export format and the sync protocol version are bumped by hand, in an official release
+      only, when the shape of an export or of the wire changed (with the matching migration).
+      `release:check` prints them so the question gets asked.
+
 ## 2. Version and release name
 
 - [ ] Decide the new semver version and a codename in the spirit of
@@ -67,3 +73,9 @@ script the release job runs). It writes `apps/api/dist-server/keres-server/`
 and a versioned zip next to it.
 
 Nothing here needs manual intervention unless a job fails.
+
+## 5. Development builds
+
+A tag like `v1.2.3-dev1` runs `.github/workflows/dev-build.yml` instead: it compiles the same artifacts
+without creating a GitHub Release, without publishing a Docker image and without touching `latest`. A newer
+dev tag cancels an older build. Releases themselves always use a plain `vMAJOR.MINOR.PATCH` tag.

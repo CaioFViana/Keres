@@ -1,103 +1,102 @@
-# Pagamentos: como funciona e como testar tudo junto
+# Payments: how it works and how to test it end to end
 
-## As três peças
+## The three pieces
 
 ```
- App / site de compra            Servidor Keres  (apps/api)           Serviço de pagamentos (apps/payments)        Provedor
+ App / purchase site             Keres server  (apps/api)            Payments service (apps/payments)             Provider
  ─────────────────────           ───────────────────────────          ─────────────────────────────────────         ────────
- escolhe plano e método  ──────▶ checa preço/plano, abre uma     ──▶  cria o pagamento no provedor        ──────▶  PayPal / Stripe
-                                 "tentativa" (checkout)               e devolve "abra esta página"                  (sandbox ou real)
- abre a página do provedor ◀──── devolve a ação (redirect)       ◀──
- paga lá (cartão nunca passa                                                                                        cobra
- pela Keres nem pelo serviço)
-                                 aplica o evento, estende o      ◀──  avisa "pagamento X aconteceu"        ◀──────  webhook / retorno
-                                 período da assinatura                (evento assinado, POST /api/payments/events)
+ picks plan and method   ──────▶ checks price/plan, opens an    ──▶  creates the payment at the provider   ──────▶  PayPal / Stripe
+                                 "attempt" (checkout)                 and returns "open this page"                  (sandbox or real)
+ opens the provider page ◀────── returns the action (redirect)  ◀──
+ pays there (the card never goes                                                                                    charges
+ through Keres or the service)
+                                 applies the event, extends the  ◀──  reports "payment X happened"          ◀──────  webhook / return
+                                 subscription period                  (signed event, POST /api/payments/events)
 ```
 
-- **Keres nunca cobra e nunca guarda cartão.** Só guarda: plano, período pago, status, valor e as referências do provedor.
-- **O serviço de pagamentos é separado** (outro processo, outra porta, em produção outra máquina: `buy.keres.me`). Ele fala o
-  "contrato do conector" com a Keres (`docs/payment_connectors.md`) e a API de cada provedor do outro lado.
-- **Compra no app Android não usa PayPal/Stripe:** usa Google Play Billing. O app compra na loja, manda o *purchase token* à
-  Keres, a Keres pergunta ao serviço, o serviço pergunta ao Google. Renovações e cancelamentos feitos na loja chegam por
-  notificações do Google (`/v1/play/notifications`).
+- **Keres never charges and never stores a card.** It keeps only: plan, paid period, status, amount and the provider's references.
+- **The payments service is separate** (another process, another port, and in production another machine: `buy.keres.me`). It speaks
+  the "connector contract" with Keres (`docs/payment_connectors.md`) and each provider's API on the other side.
+- **Buying in the Android app does not use PayPal/Stripe:** it uses Google Play Billing. The app buys from the store and sends the
+  *purchase token* to Keres, Keres asks the service, and the service asks Google. Renewals and cancellations made in the store
+  arrive through Google notifications (`/v1/play/notifications`).
 
-## As chaves (todas com 32+ caracteres, todas inventadas por você)
+## The keys (all 32+ characters, all made up by you)
 
-Duas chaves HMAC, **diferentes entre si**, uma por direção, e cada uma precisa ser igual dos dois lados:
+Two HMAC keys, **different from each other**, one per direction, and each must be identical on both sides:
 
-| Direção | Servidor Keres (`apps/api/.env`) | Serviço (`apps/payments/.env`) |
+| Direction | Keres server (`apps/api/.env`) | Service (`apps/payments/.env`) |
 | --- | --- | --- |
-| Keres → serviço (`/v1/*`) | `PAYMENT_CONNECTOR_SECRET` | `KERES_CONNECTOR_SECRET` |
-| serviço → Keres (`/api/payments/events`) | `PAYMENT_EVENTS_SECRET` | `KERES_EVENTS_SECRET` |
-| Keres → serviço, só Play (`/v1/play/verify`) | `PAYMENT_PLAY_ENDPOINT_SECRET` | `PLAY_ENDPOINT_SECRET` |
-| Google → serviço (Pub/Sub push) | — | `PLAY_NOTIFICATION_SECRET` (vai na URL do push) |
+| Keres → service (`/v1/*`) | `PAYMENT_CONNECTOR_SECRET` | `KERES_CONNECTOR_SECRET` |
+| service → Keres (`/api/payments/events`) | `PAYMENT_EVENTS_SECRET` | `KERES_EVENTS_SECRET` |
+| Keres → service, Play only (`/v1/play/verify`) | `PAYMENT_PLAY_ENDPOINT_SECRET` | `PLAY_ENDPOINT_SECRET` |
+| Google → service (Pub/Sub push) | — | `PLAY_NOTIFICATION_SECRET` (goes in the push URL) |
 
-Endereços: o servidor aponta para o serviço (`PAYMENT_CONNECTOR_URL`) e o serviço aponta para o servidor (`KERES_BASE_URL`).
-`PUBLIC_BASE_URL` é o endereço **do próprio serviço** como o navegador e o provedor o enxergam (páginas de retorno e webhooks).
-Fora do próprio computador tudo precisa ser `https`; os relógios dos dois lados precisam estar certos (tolerância de 5 min).
+Addresses: the server points at the service (`PAYMENT_CONNECTOR_URL`) and the service points at the server (`KERES_BASE_URL`).
+`PUBLIC_BASE_URL` is the address **of the service itself** as the browser and the provider see it (return pages and webhooks).
+Off your own machine everything must be `https`; the clocks on both sides must be right (5-minute tolerance).
 
-## Testar tudo junto, em uma máquina, sem provedor real
+## Test everything together, on one machine, with no real provider
 
 ```
-bun run payments:local            # sobe os dois, cria os planos Free e Pro, fica rodando (Ctrl+C encerra)
-bun run payments:local --smoke    # sobe os dois, roda o fluxo inteiro uma vez e sai (12 checagens)
+bun run payments:local            # starts both, creates the Free and Pro plans, keeps running (Ctrl+C stops it)
+bun run payments:local --smoke    # starts both, runs the whole flow once and exits (12 checks)
 ```
 
-O que ele faz (nada disso mexe nos seus `.env`):
+What it does (none of this touches your `.env` files):
 
-- servidor em `http://127.0.0.1:3300` (não 3000, para conviver com um servidor que você já tenha), banco SQLite temporário,
-  administrador `root` / `local-root-password-123`;
-- serviço em `http://127.0.0.1:3101` com o provedor **mock** (uma página de banco falsa, sem dinheiro) e Play em modo mock;
-- as seis chaves acima, inventadas, já casadas; planos **Free** (padrão) e **Pro** (R$ 25/mês, R$ 250/ano, produto de loja
+- server at `http://127.0.0.1:3300` (not 3000, so it can live next to a server you already run), temporary SQLite database,
+  administrator `root` / `local-root-password-123`;
+- service at `http://127.0.0.1:3101` with the **mock** provider (a fake bank page, no money) and Play in mock mode;
+- the six keys above, made up and already matched; plans **Free** (default) and **Pro** (R$ 25/month, R$ 250/year, store product
   `pro_monthly`).
 
-### Com os seus `.env` (os de teste que já estão no repositório)
+### With your own `.env` files (the test ones already in the repository)
 
-`apps/api/.env` (bloco `PAYMENT_*` no fim) e `apps/payments/.env` já têm valores de teste casados. Dois comandos provam isso:
+`apps/api/.env` (the `PAYMENT_*` block at the end) and `apps/payments/.env` already hold matched test values. Two commands prove it:
 
 ```
-bun run payments:env-check                        # lê os dois arquivos e confere o par (chaves, endereços, mock só em loopback)
-bun run payments:local --smoke --env-files        # sobe os dois LENDO esses arquivos e roda o fluxo inteiro
+bun run payments:env-check                        # reads both files and checks the pair (keys, addresses, mock only on loopback)
+bun run payments:local --smoke --env-files        # starts both READING those files and runs the whole flow
 ```
 
-O segundo troca só banco, pasta de mídia e a porta do servidor (3300), para não encostar na sua API da 3000. Para usar no dia a dia:
-reinicie a sua API (ela só lê o `.env` ao subir; as tabelas novas de pagamento são criadas pela migração no boot) e rode
-`bun run payments:start` (porta 3101). O `apps/api/.env` é versionado: só valores de teste cabem nele.
+The second swaps only the database, the media folder and the server port (3300), so it does not touch your API on 3000. For
+everyday use: restart your API (it only reads `.env` at startup; the new payment tables are created by the migration at boot) and run
+`bun run payments:start` (port 3101). `apps/api/.env` is versioned: only test values belong in it.
 
-### Para ver na interface
+### To see it in the interface
 
+1. Run `bun run payments:local` and leave it open.
+2. In the app (web/desktop), register a server `http://localhost:3300` (http is accepted on a local machine/network) and create an account.
+   Alternative without the app: the purchase site at `http://127.0.0.1:3101`, signing in with that same account.
+3. Server screen → **Plan and payment** → choose *Pro*, method *Mock card (test only)* → **Pay**.
+4. The "Mock payment" page opens: **Confirm payment**. The app screen switches to "paid" and the plan shows with its date.
+5. In the admin panel (`http://127.0.0.1:3300/admin`) → *Payments* shows the subscription and the ledger.
 
-1. `bun run payments:local` e deixe aberto.
-2. No app (web/desktop), cadastre um servidor `http://localhost:3300` (http é aceito em máquina/rede local) e crie uma conta.
-   Alternativa sem o app: o site de compra em `http://127.0.0.1:3101`, entrando com essa mesma conta.
-3. Tela do servidor → **Plano e pagamento** → escolha *Pro*, método *Mock card (test only)* → **Pagar**.
-4. A página "Mock payment" abre: **Confirm payment**. A tela do app passa para "pago" e o plano aparece com a data.
-5. No painel admin (`http://127.0.0.1:3300/admin`) → *Payments* mostra a assinatura e o extrato.
+The *Google Play* method appears in the API's list but the web/desktop app hides it (only Android uses it).
 
-O método *Google Play* aparece na lista da API mas o app web/desktop o esconde (só o Android o usa).
+## With a real provider (sandbox), without changing code
 
-## Com provedor de verdade (sandbox), sem alterar o código
+1. `cp apps/payments/.env.example apps/payments/.env` and fill in the keys from the table (`.env` is in `.gitignore`).
+2. PayPal sandbox: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_SANDBOX=true`, `PAYPAL_WEBHOOK_ID` (webhook pointing to
+   `<PUBLIC_BASE_URL>/v1/paypal/webhook`, events `PAYMENT.SALE.COMPLETED` and `BILLING.SUBSCRIPTION.CANCELLED`).
+3. Stripe test: `STRIPE_SECRET_KEY` (`sk_test_…`), `STRIPE_WEBHOOK_SECRET` (webhook to `<PUBLIC_BASE_URL>/v1/stripe/webhook`,
+   events `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.deleted`).
+4. The providers call your service over the internet: use an https tunnel (ngrok, cloudflared) and put its address in
+   `PUBLIC_BASE_URL`. Without a webhook the *return* still works (the page the provider sends the person back to), but it is the
+   webhook that guarantees renewals.
+5. On the server: `PAYMENT_CONNECTOR_URL` = the same public address (or `http://127.0.0.1:3101` if local) and the keys.
+6. Real Play: see `apps/payments/README.md` (service account, Pub/Sub topic, closed testing track).
 
-1. `cp apps/payments/.env.example apps/payments/.env` e preencha as chaves da tabela (o `.env` está no `.gitignore`).
-2. PayPal sandbox: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_SANDBOX=true`, `PAYPAL_WEBHOOK_ID` (webhook apontando para
-   `<PUBLIC_BASE_URL>/v1/paypal/webhook`, eventos `PAYMENT.SALE.COMPLETED` e `BILLING.SUBSCRIPTION.CANCELLED`).
-3. Stripe test: `STRIPE_SECRET_KEY` (`sk_test_…`), `STRIPE_WEBHOOK_SECRET` (webhook para `<PUBLIC_BASE_URL>/v1/stripe/webhook`,
-   eventos `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.deleted`).
-4. Os provedores chamam o seu serviço pela internet: use um túnel https (ngrok, cloudflared) e ponha o endereço dele em
-   `PUBLIC_BASE_URL`. Sem webhook ainda funciona o *retorno* (a página para onde o provedor devolve a pessoa), mas é o webhook
-   que garante renovações.
-5. No servidor: `PAYMENT_CONNECTOR_URL` = o mesmo endereço público (ou `http://127.0.0.1:3101` se for local) e as chaves.
-6. Play de verdade: ver `apps/payments/README.md` (conta de serviço, tópico Pub/Sub, faixa de teste fechado).
+## When something does not work
 
-## Quando algo não funciona
-
-- **O serviço não sobe:** a mensagem diz qual variável falta ou tem menos de 32 caracteres; as duas chaves HMAC iguais também
-  são recusadas.
-- **Servidor diz "payments are not enabled":** o conector não respondeu. O log da API mostra `The payment connector is not
-  available yet (...)` e tenta de novo sozinho (2 s, 4 s … 60 s). Causas comuns: chave diferente nos dois lados, porta errada,
-  `http` fora de localhost (precisa `PAYMENT_CONNECTOR_ALLOW_INSECURE=true`).
-- **Pagou e nada mudou:** o evento não chegou ou foi recusado. No serviço procure `refused`/`failed` no log; na API,
-  `A payment event request was refused (signature|stale|replay…)`. `stale` = relógios diferentes.
-- **O botão "Pagar" abre um endereço `http` e nada acontece:** o servidor recusa redirecionamento `http` por padrão; em
-  desenvolvimento use `PAYMENT_ALLOW_INSECURE_REDIRECTS=true` (o `payments:local` já usa).
-- **Aparece "no default plan" no log:** crie um plano marcado como padrão (assinatura vencida cai nele; sem padrão, sem limites).
+- **The service does not start:** the message says which variable is missing or shorter than 32 characters; the two HMAC keys being
+  equal is also refused.
+- **Server says "payments are not enabled":** the connector did not answer. The API log shows `The payment connector is not
+  available yet (...)` and retries on its own (2 s, 4 s … 60 s). Common causes: a different key on each side, a wrong port,
+  `http` outside localhost (needs `PAYMENT_CONNECTOR_ALLOW_INSECURE=true`).
+- **Paid and nothing changed:** the event did not arrive or was refused. In the service look for `refused`/`failed` in the log; in the
+  API, `A payment event request was refused (signature|stale|replay…)`. `stale` = clocks differ.
+- **The "Pay" button opens an `http` address and nothing happens:** the server refuses `http` redirects by default; in
+  development use `PAYMENT_ALLOW_INSECURE_REDIRECTS=true` (`payments:local` already does).
+- **"no default plan" shows in the log:** create a plan marked as default (an expired subscription falls back to it; with no default, no limits).

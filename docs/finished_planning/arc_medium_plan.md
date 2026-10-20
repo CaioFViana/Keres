@@ -1,199 +1,197 @@
-# Arco como obra: medium, páginas de cena, roteiro e lançamento por Arco
+# Arc as a work: medium, scene pages, screenplay and per-Arc release
 
-**Status:** proposta em revisão; decisões do usuário de 2026-10-06 incorporadas. Itens marcados **[aberto]** esperam
-resposta.
-**Modelo mental (não mudar):** a História é o universo (mundo, calendário, vocabulário base, permissões, sync). O Arco é
-a obra dentro dele: livro, filme, edição, temporada. **Não existe cânone compartilhado entre Histórias** (sync e
-permissão cruzados) e linear/ramificado não se mistura (a forma é da História; se houver demanda, vira outra decisão).
+**Status:** implemented (phases 1–7, October 2026); see "Implementation state" at the end for deviations and what was left out. The user's decisions of 2026-10-06 are incorporated.
+**Mental model (do not change):** the Story is the universe (world, calendar, base vocabulary, permissions, sync). The Arc is
+the work inside it: book, film, issue, season. **There is no canon shared between Stories** (cross-story sync and
+permissions), and linear/branching are not mixed (the shape belongs to the Story; if there is demand, it becomes another decision).
 
-## Decisões congeladas
+## Frozen decisions
 
-1. **Lançamento por Arco** publica só manuscrito e leitor, sem zip. O zip é só da História inteira (universo).
-2. **Tier:** `maxPublishedArcs` (arcos com ao menos uma versão no ar, por história; apagar a última versão libera a
-   vaga; `null` = ilimitado). O teto diário de publicações continua valendo em separado.
-3. **`ScenePage` com texto por página.** `Scene.body` fica livre. A UI diz que Keres é esboço: não publica com qualidade
-   final de HQ/animação (Sketch não é, nem deve ser, ferramenta profissional).
-4. **Roteiro:** `Scene.body` em Fountain; cabeçalho de cena gerado de Location + hora **só se o body não começar por um
-   cabeçalho**, com indicador/botão explícito. Sem hora de calendário, o cabeçalho sai sem hora; o texto do usuário vence.
-5. **Campanha é um medium** com pack de conveniência e template de crônica; a captura rápida só aparece nele.
-6. **Packs nunca são obrigatórios**, só conveniência. Um pack pode marcar o Arco padrão com um medium e avisar o que ligou.
-7. **Cada Arco tem seu medium; cada Arco pode ter seu vocabulário.** O medium fornece termos padrão amigáveis.
-8. **`ScenePage` conta nos limites de entidade do tier;** o que conta é revisado antes da release.
-9. **Mídia removida:** a página sobrevive com "mídia removida" e fica fora do manuscrito; a UI oferece substituir por
-   outra mídia (Sketch ou Galeria). Nunca apagar o texto da página em cascata.
-10. **Capa por Arco e por História** (`coverGalleryId`, opcional) em qualquer medium.
-11. **Autor por Arco** (`StoryArc.author`, anulável; cai para `Story.author`, depois para o `@handle` do usuário).
-12. **Cenas avulsas:** `includeLooseScenes` já existe (default `false`). Com `false` nenhuma cena sem capítulo entra num
-    lançamento de Arco; com `true` entram em **todos** os Arcos. Confirmar no teste de isolamento e avisar ao publicar.
-13. **Fontes:** lista curada de fontes livres (OFL), fixadas e embutidas no PDF; padrão continua o de hoje. Sem upload de
-    fonte do usuário (licença, peso). DOCX/EPUB/HTML só nomeiam a fonte; o leitor precisa tê-la.
-14. **Busca nas listas:** filtro do arco ativo + "+N resultados fora deste arco" (toque para ver). Busca global
-    continua sem filtro, com etiqueta de arco.
+1. **Per-Arc release** publishes only the manuscript and the reader, with no zip. The zip belongs to the whole Story (the universe).
+2. **Tier:** `maxPublishedArcs` (Arcs with at least one live version, per story; deleting the last version frees the
+   slot; `null` = unlimited). The daily publication cap still applies separately.
+3. **`ScenePage` with text per page.** `Scene.body` stays free. The UI says Keres is a sketch tool: it does not publish at
+   final comic/animation quality (Sketch is not, and should not be, a professional tool).
+4. **Screenplay:** `Scene.body` is Fountain; the scene heading is generated from Location + time **only if the body does not
+   start with a heading**, with an explicit indicator/button. Without a calendar time, the heading comes out without a time; the user's text wins.
+5. **Campaign is a medium** with a convenience pack and a chronicle template; quick capture only appears there.
+6. **Packs are never mandatory**, only convenience. A pack can mark the default Arc with a medium and report what it turned on.
+7. **Each Arc has its medium; each Arc can have its vocabulary.** The medium provides friendly default terms.
+8. **`ScenePage` counts toward the tier's entity limits;** what counts is reviewed before the release.
+9. **Removed media:** the page survives as "media removed" and stays out of the manuscript; the UI offers to replace it with
+   other media (Sketch or Gallery). Never delete the page's text in a cascade.
+10. **Cover per Arc and per Story** (`coverGalleryId`, optional) in any medium.
+11. **Author per Arc** (`StoryArc.author`, nullable; falls back to `Story.author`, then to the user's `@handle`).
+12. **Loose scenes:** `includeLooseScenes` already exists (default `false`). With `false` no scene without a chapter goes into an
+    Arc release; with `true` they go into **every** Arc. Confirm in the isolation test and warn when publishing.
+13. **Fonts:** a curated list of free (OFL) fonts, pinned and embedded in the PDF; the default stays today's. No user font
+    upload (licence, weight). DOCX/EPUB/HTML only name the font; the reader needs to have it.
+14. **Search in lists:** the active arc's filter + "+N results outside this arc" (tap to see). Global search
+    stays unfiltered, with an arc label.
 
-## 1. Medium no Arco
+## 1. Medium on the Arc
 
-- `StoryArc.medium`: `generic` (default) | `screenplay` | `comic` | `storyboard` | `campaign`. Nome distinto de
+- `StoryArc.medium`: `generic` (default) | `screenplay` | `comic` | `storyboard` | `campaign`. A name distinct from
   `Story.type` (`linear | branching`).
-- **Perfil de saída, nunca regra de dados:** escolhe termos padrão, template de compilação, preset de páginas e atalhos
-  de UI. Todas as entidades seguem disponíveis em qualquer medium. Trocar de medium não migra dado (páginas e textos
-  persistem, só deixam de ser compilados/exibidos se o medium novo não os usa).
-- Sem default de medium na História. Arco novo começa `generic` (ou copia o medium do arco ativo ao criar).
-- **Formulário de criação de História** ganha o campo "tipo da obra" (medium) que já cria o Arco padrão com ele. Packs
-  podem preenchê-lo.
-- Entra em export/import de pacote (`storyExportMigrations`), sync, clone, packs, snapshot de publicação.
+- **Output profile, never a data rule:** it picks default terms, a compilation template, a page preset and UI shortcuts.
+  Every entity stays available in any medium. Changing the medium migrates no data (pages and texts
+  persist, they just stop being compiled/shown if the new medium does not use them).
+- No medium default on the Story. A new Arc starts `generic` (or copies the active arc's medium on creation).
+- The **Story creation form** gains the "kind of work" field (medium), which already creates the default Arc with it. Packs
+  can fill it.
+- It goes into package export/import (`storyExportMigrations`), sync, clone, packs, publication snapshot.
 
-### Resolução de termos (vocabulário)
+### Term resolution (vocabulary)
 
-Precedência, do mais específico ao mais geral: **vocabulário do Arco > vocabulário da História > termos padrão do medium
-> padrão do app.** Um termo escolhido explicitamente pelo usuário nunca é sobrescrito por um padrão.
+Precedence, from most specific to most general: **Arc vocabulary > Story vocabulary > the medium's default terms
+> app default.** A term the user chose explicitly is never overridden by a default.
 
-- `StoryArc.vocabulary` (anulável; guarda só os termos que o usuário sobrescreveu). Dentro de um Arco, a tela de
-  vocabulário edita o vocabulário **desse Arco**; fora de Arco ("Todos"), edita o da História. Termo sem sobrescrita
-  herda (vivo) da História e, abaixo, do medium. Não há "copiar de outro Arco": o medium já traz termos amigáveis.
-  Cada termo e a tela inteira têm "restaurar" (remove as sobrescritas do Arco).
+- `StoryArc.vocabulary` (nullable; stores only the terms the user overrode). Inside an Arc, the vocabulary screen
+  edits **that Arc's** vocabulary; outside an Arc ("All"), it edits the Story's. A term with no override
+  inherits (live) from the Story and, below it, from the medium. There is no "copy from another Arc": the medium already brings friendly terms.
+  Each term and the whole screen have "restore" (removes the Arc's overrides).
 
-### Modo "Todos os arcos"
+### "All arcs" mode
 
-Não existe medium único nesse modo (decidido):
+There is no single medium in that mode (decided):
 
-- Listas e menus usam termos da História (vocabulário da História, senão padrão do app); sem termos de medium.
-- Telas de um item (cena, capítulo) adaptam ao **arco do próprio item** (cena → capítulo → arco): uma cena de HQ abre com
-  páginas, uma de roteiro abre com cabeçalho de roteiro, mesmo em "Todos". Cena avulsa (sem capítulo) usa o arco ativo
-  ou, em "Todos", `generic`.
-- Atalhos que dependem de um medium (captura rápida de sessão, exportação Fountain) só aparecem quando há um Arco
-  ativo desse medium.
-- Novo capítulo em "Todos" cai no Arco padrão (comportamento atual).
+- Lists and menus use the Story's terms (Story vocabulary, else the app default); no medium terms.
+- A single item's screens (scene, chapter) adapt to the **item's own arc** (scene → chapter → arc): a comic scene opens with
+  pages, a screenplay one opens with a screenplay heading, even in "All". A loose scene (no chapter) uses the active arc
+  or, in "All", `generic`.
+- Shortcuts that depend on a medium (quick session capture, Fountain export) only appear when there is an active Arc of that medium.
+- A new chapter in "All" lands in the default Arc (current behaviour).
 
-## 2. Lançamento por Arco
+## 2. Per-Arc release
 
-- `story_publications.arcId` (nullable; versões antigas = história inteira). Unicidade de label e retenção (5) por
+- `story_publications.arcId` (nullable; old versions = whole story). Label uniqueness and retention (5) per
   `(storyId, arcId)`.
-- Versão de Arco: `packageIncluded = false`, manuscrito e/ou leitor com `arcId` (o compilador já isola por Arco e corta
-  arestas de gamebook para fora do arco). Recusar (400) versão de Arco com `packageIncluded = true`.
-- Showcase: a página da História lista Arcos como obras (capa, nome, autor, versões, leitor). Zip só na versão universo.
-  O snapshot da publicação guarda título, autor, capa e medium do Arco como estavam.
-- Tier: `maxPublishedArcs` (coluna, migração PG/SQLite, página Tiers do admin, schema público do tier, testes de paridade).
-- Onboarding: "A história é o universo; cada Arco é uma obra dentro dele" no dashboard, na criação de História e na
-  ajuda; conferir se o termo Arco é renomeável pelo vocabulário.
+- Arc version: `packageIncluded = false`, manuscript and/or reader with `arcId` (the compiler already isolates by Arc and cuts
+  gamebook edges that leave the arc). Refuse (400) an Arc version with `packageIncluded = true`.
+- Showcase: the Story page lists Arcs as works (cover, name, author, versions, reader). The zip only on the universe version.
+  The publication snapshot keeps the Arc's title, author, cover and medium as they were.
+- Tier: `maxPublishedArcs` (column, PG/SQLite migration, admin Tiers page, public tier schema, parity tests).
+- Onboarding: "The story is the universe; each Arc is a work inside it" on the dashboard, in Story creation and in
+  help; check whether the term Arc can be renamed through the vocabulary.
 
-## 3. Capas
+## 3. Covers
 
-- `StoryArc.coverGalleryId` opcional, escolhida da Galeria. Usada no showcase, na capa do manuscrito e no seletor de Arco.
-- `Story.coverGalleryId` opcional para o universo (página da História no showcase e versão universo). O Arco sem capa
-  própria não herda a da História no manuscrito.
+- `StoryArc.coverGalleryId` optional, picked from the Gallery. Used in the showcase, on the manuscript cover and in the Arc picker.
+- `Story.coverGalleryId` optional for the universe (the Story page in the showcase and the universe version). An Arc without a
+  cover of its own does not inherit the Story's in the manuscript.
 
-## 4. Busca e Arco
+## 4. Search and Arc
 
-- Ver decisão 14. Pendente: ler o comportamento atual da busca dentro das listas antes de implementar.
+- See decision 14. Pending: read the current search behaviour inside the lists before implementing.
 
 ## 5. Location interior/exterior
 
-- `Location.setting`: `interior | exterior | both | none` (anulável). Migração, sync, schemas, import/export, packs.
-- Usado só pelo roteiro (`INT.`, `EXT.`, `INT./EXT.`); `none`/nulo não gera prefixo.
+- `Location.setting`: `interior | exterior | both | none` (nullable). Migration, sync, schemas, import/export, packs.
+- Used only by the screenplay (`INT.`, `EXT.`, `INT./EXT.`); `none`/null produces no prefix.
 
-## 6. Roteiro (Fountain)
+## 6. Screenplay (Fountain)
 
-- `Scene.body` = texto Fountain. Modo roteiro mostra acima do body: local, interior/exterior, elenco, hora.
-- Exportação Fountain: folha de rosto (`Title` do Arco, `Author` pela decisão 11, `Contact` vazio), capítulo → `#`,
-  resumo da cena → `=`, cabeçalho gerado (decisão 4), ênfase → `*`, `**`, `_`, comentários → `[[ ]]` (opcional),
-  numeração `#n#` (opcional), `===` onde o usuário marcar.
-- Importação Fountain: divide em cenas nos cabeçalhos; **sugere** (não cria sozinho) locais e personagens por nome.
-- PDF no padrão da indústria; FDX depois, se houver demanda.
-- Indicador explícito na UI: "Cabeçalho gerado a partir do local; escreva um cabeçalho no início do texto para
-  substituí-lo".
+- `Scene.body` = Fountain text. Screenplay mode shows above the body: location, interior/exterior, cast, time.
+- Fountain export: title page (the Arc's `Title`, `Author` per decision 11, empty `Contact`), chapter → `#`,
+  scene summary → `=`, generated heading (decision 4), emphasis → `*`, `**`, `_`, comments → `[[ ]]` (optional),
+  `#n#` numbering (optional), `===` where the user marks.
+- Fountain import: splits into scenes at the headings; **suggests** (does not create by itself) locations and characters by name.
+- PDF to industry standard; FDX later, if there is demand.
+- Explicit UI indicator: "Heading generated from the location; write a heading at the start of the text to
+  replace it".
 
-## 7. Layout de PDF e estimativa de páginas
+## 7. PDF layout and page estimate
 
-- O PDF de hoje usa fontes embutidas (fontkit, subconjunto, matrizes fixadas em `pdfFonts.manifest.json`). Fontes novas
-  entram no manifesto com sha256, como as atuais.
-- **Segundo layout, "screenplay"**, ao lado do atual (o de prosa não muda): Courier Prime (OFL, métrica de Courier),
-  12 pt, 10 cpi, 6 lpi, margens E 1,5" / D 1" / T 1" / B 1"; recuos a partir da borda: cena/ação 1,5", diálogo 2,5",
-  parentético 3,1", personagem 3,7"; número de página no canto superior direito a partir da página 2; nome de
-  personagem não fica sozinho no pé; `(MORE)`/`(CONT'D)`. Objetivo: o PDF ser o roteiro real quando viável de forma
-  simples; comparar com Highland/Final Draft é verificação de qualidade, não bloqueio.
-- **Genérico:** preset de manuscrito clássico (12 pt, espaçamento duplo, margens 1") com a fonte do layout de prosa.
-- Estimativa de páginas usa o **mesmo motor** do PDF; o cartão "Como estimamos" mostra papel (Letter/A4), fonte, tamanho,
-  espaçamento, margens e recuos. DOCX reflui no Word e pode divergir.
+- Today's PDF uses embedded fonts (fontkit, subset, matrices pinned in `pdfFonts.manifest.json`). New fonts
+  enter the manifest with a sha256, like the current ones.
+- **A second layout, "screenplay"**, beside the current one (the prose one does not change): Courier Prime (OFL, Courier metrics),
+  12 pt, 10 cpi, 6 lpi, margins L 1.5" / R 1" / T 1" / B 1"; indents from the edge: scene/action 1.5", dialogue 2.5",
+  parenthetical 3.1", character 3.7"; page number in the top right corner from page 2; a character
+  name is never left alone at the foot; `(MORE)`/`(CONT'D)`. Goal: the PDF being the real screenplay when that is feasible in a
+  simple way; comparing with Highland/Final Draft is a quality check, not a blocker.
+- **Generic:** a classic manuscript preset (12 pt, double spacing, 1" margins) with the prose layout's font.
+- The page estimate uses the **same engine** as the PDF; the "How we estimate" card shows paper (Letter/A4), font, size,
+  spacing, margins and indents. DOCX reflows in Word and can differ.
 
-## 8. Limite de tamanho do manuscrito (revisão do sistema)
+## 8. Manuscript size limit (system review)
 
-Hoje `MAX_MANUSCRIPT_BYTES` (50 MB) só é checado **depois** de compilar (`compileStoryManuscript.ts`, `storyReader.ts`),
-então o usuário só descobre o estouro no fim. Imagens de página tornam isso crítico. Revisão proposta (fase própria,
-antes de `ScenePage`):
+Today `MAX_MANUSCRIPT_BYTES` (50 MB) is only checked **after** compiling (`compileStoryManuscript.ts`, `storyReader.ts`),
+so the user only finds out about the overflow at the end. Page images make this critical. Proposed review (its own phase,
+before `ScenePage`):
 
-- **Estimar antes:** imagens de página são redimensionadas **antes** de compilar (tamanho conhecido), texto tem cota
-  conservadora por formato e há um overhead fixo por formato. Mostrar a estimativa e a margem na tela de exportar/publicar.
-- **Abortar cedo:** o escritor de PDF já libera por página; somar bytes enquanto escreve e parar no limite, em vez de
-  terminar e jogar fora.
-- **Orçamento por página** (resolução máxima e qualidade por preset), com aviso ao se aproximar do teto.
-- Reavaliar o teto (separado entre texto e imagem? vinculado ao tier/storage?) e o inchaço do leitor HTML
-  autossuficiente (imagens em base64).
+- **Estimate first:** page images are resized **before** compiling (known size), text has a conservative quota per format and there is
+  a fixed overhead per format. Show the estimate and the margin on the export/publish screen.
+- **Abort early:** the PDF writer already releases per page; sum bytes while writing and stop at the limit, instead of
+  finishing and throwing the result away.
+- **Budget per page** (maximum resolution and quality per preset), with a warning when nearing the cap.
+- Reassess the cap (split between text and image? tied to tier/storage?) and the bloat of the self-contained HTML
+  reader (base64 images).
 
-## 9. Páginas de cena (HQ e storyboard)
+## 9. Scene pages (comic and storyboard)
 
-- Nova entidade `ScenePage`: `id, storyId, sceneId, position, sketchId | galleryId (exatamente um), fit, text`, mais
-  campos padrão de sync. `fit`: `contain` (centralizado) | `cover` (corte centralizado).
-- Texto por página: balões numerados no desenho; `text` diz o que cada balão contém. `Scene.body` livre.
-- Tamanho de página vem do Arco (presets: A5, comic US, B5/mangá, 16:9). Termos Página/Quadro/Plano vêm do medium
-  (decisão 7), sobrescritíveis.
-- Snapshot: página com Sketch usa o PNG da Galeria (`coverGalleryId` do sketch); se o desenho mudou desde o snapshot
-  (`updatedAt`/hash), o cliente **regera antes de publicar/exportar**. Servidor só consome o que o cliente enviou.
-- Compilação: imagem da página seguida do `text` dela (DOCX/PDF/EPUB/HTML), sujeita ao §8.
-- Decisão 9 para mídia removida.
-- Lifecycle obrigatório: create, update, delete (tombstone), reorder (disputa a ordem inteira), sync/OCC, conflito,
-  export/import, clone, conversão linear/ramificado, limites de entidade do tier (decisão 8).
-- Aviso na UI e na ajuda: Keres é esboço; HQ/animação em qualidade final exige ferramenta profissional.
+- New entity `ScenePage`: `id, storyId, sceneId, position, sketchId | galleryId (exactly one), fit, text`, plus standard
+  sync fields. `fit`: `contain` (centred) | `cover` (centred crop).
+- Text per page: numbered balloons on the drawing; `text` says what each balloon holds. `Scene.body` free.
+- The page size comes from the Arc (presets: A5, comic US, B5/manga, 16:9). The terms Page/Panel/Shot come from the medium
+  (decision 7), overridable.
+- Snapshot: a page with a Sketch uses the Gallery PNG (the sketch's `coverGalleryId`); if the drawing changed since the snapshot
+  (`updatedAt`/hash), the client **regenerates before publishing/exporting**. The server only consumes what the client sent.
+- Compilation: the page image followed by its `text` (DOCX/PDF/EPUB/HTML), subject to §8.
+- Decision 9 for removed media.
+- Mandatory lifecycle: create, update, delete (tombstone), reorder (disputes the whole order), sync/OCC, conflict,
+  export/import, clone, linear/branching conversion, tier entity limits (decision 8).
+- Notice in the UI and in help: Keres is a sketch tool; final-quality comics/animation need a professional tool.
 
-## 10. Campanha
+## 10. Campaign
 
-- Medium `campaign`. Pack `campaign` (EN+PT) é conveniência: ao criar a história marca o Arco padrão como campanha,
-  avisa os módulos ligados e semeia vocabulário (Capítulo → Sessão), atributo DATE de data real, tags (NPC, facção,
-  missão) e seções de mundo. Tudo editável/removível; sem o pack o medium funciona igual.
-- Sessão = capítulo; o que aconteceu = **lista de cenas** (pode ser curta).
-- Template de compilação "crônica": sessão por sessão, "a história até agora", "anteriormente".
-- **Captura rápida** (tela só no medium campanha, com Arco ativo): "Nova sessão" pede **só a data real** (hoje por
-  padrão), sugere o próximo número e abre direto no texto, com a primeira cena criada e botão "+ cena". Elenco presente
-  marcável por cena. Data in-world não é perguntada (segue atributos/timeline ou quem registra resolve). Sem dado novo;
-  rascunho guardado se a tela fechar sem salvar.
-- Limitação a registrar na ajuda: sem visibilidade por campo/entidade; leitores veem tudo.
+- Medium `campaign`. The `campaign` pack (EN+PT) is convenience: on story creation it marks the default Arc as a campaign,
+  reports the modules it turned on and seeds vocabulary (Chapter → Session), a real-date DATE attribute, tags (NPC, faction,
+  quest) and world sections. Everything editable/removable; without the pack the medium works the same.
+- Session = chapter; what happened = a **list of scenes** (can be short).
+- A "chronicle" compilation template: session by session, "the story so far", "previously".
+- **Quick capture** (a screen only in the campaign medium, with an active Arc): "New session" asks **only for the real date** (today by
+  default), suggests the next number and opens straight into the text, with the first scene created and a "+ scene" button. Cast present
+  can be marked per scene. The in-world date is not asked (it follows attributes/timeline, or whoever records resolves it). No new data;
+  draft kept if the screen closes without saving.
+- A limitation to record in help: no per-field/entity visibility; readers see everything.
 
-## Ordem
+## Order
 
-1. `medium`, `vocabulary`, `cover`, `author` no Arco + campo no formulário de História + onboarding de Arco.
-2. Lançamento por Arco + `maxPublishedArcs`.
-3. `Location.setting` + modo roteiro + exportação Fountain.
-4. Revisão do limite de tamanho (§8) e layout de PDF "screenplay" + estimativa de páginas + seletor de fontes.
-5. `ScenePage` + compilação de HQ/storyboard.
-6. Medium campanha: pack, template de crônica e captura rápida.
-7. Importação Fountain; FDX se houver demanda.
-8. Por fase: ajuda e dicas (EN+PT), `feature_inventory.md`, `FEATURE_LANDSCAPE.md`, matriz de exemplos.
+1. `medium`, `vocabulary`, `cover`, `author` on the Arc + a field in the Story form + Arc onboarding.
+2. Per-Arc release + `maxPublishedArcs`.
+3. `Location.setting` + screenplay mode + Fountain export.
+4. Size-limit review (§8) and "screenplay" PDF layout + page estimate + font picker.
+5. `ScenePage` + comic/storyboard compilation.
+6. Campaign medium: pack, chronicle template and quick capture.
+7. Fountain import; FDX if there is demand.
+8. Per phase: help and tips (EN+PT), `feature_inventory.md`, `FEATURE_LANDSCAPE.md`, example matrix.
 
-## Verificação
+## Verification
 
-Teste de ciclo de vida com banco real e integração de API por entidade nova/coluna nova; paridade PG/SQLite nas
-migrações; teste de isolamento por Arco na publicação (versão de Arco nunca contém zip nem conteúdo de outro Arco,
-inclusive com `includeLooseScenes`).
+A lifecycle test with a real database and API integration per new entity/column; PG/SQLite parity in the
+migrations; an isolation-by-Arc test on publication (an Arc version never contains a zip or another Arc's content,
+`includeLooseScenes` included).
 
-## Estado da implementação (out/2026)
+## Implementation state (October 2026)
 
-Feito, por fase: **1** medium, vocabulário, capa e autor no Arco, campo na História, onboarding; **2** lançamento por
-Arco e `maxPublishedArcs`; **3** `Location.intExt`, modo roteiro, Fountain (exportação e importação); **4** sistema de
-tamanho (estimar antes, abortar cedo), layout de PDF de roteiro, estimativa de páginas (roteiro e prosa); **5**
-`ScenePage` com compilação de imagens (HTML, EPUB, DOCX, PDF e leitor), `Sketch.coverSourceHash`, `Arco.pageFormat`;
-**6** campanha (pack, preset "crônica", "Nova sessão"); **7** importação Fountain.
+Done, by phase: **1** medium, vocabulary, cover and author on the Arc, field on the Story, onboarding; **2** per-Arc release
+and `maxPublishedArcs`; **3** `Location.intExt`, screenplay mode, Fountain (export and import); **4** size
+system (estimate first, abort early), screenplay PDF layout, page estimate (screenplay and prose); **5**
+`ScenePage` with image compilation (HTML, EPUB, DOCX, PDF and reader), `Sketch.coverSourceHash`, `Arc.pageFormat`;
+**6** campaign (pack, "chronicle" preset, "New session"); **7** Fountain import.
 
-Desvios e pendências, ditos para não parecerem esquecimento:
+Deviations and leftovers, stated so they do not look like an oversight:
 
-- **Pack e medium:** o schema de pack não carrega medium, então o pack `campaign` não marca o Arco (o medium é escolhido
-  no formulário da História) e não "avisa o que ligou". É só conveniência de conteúdo (data real, tags, notas).
-- **Nova sessão:** pede só a data e abre a primeira cena; "+ cena" é o da lista de elementos. Sem elenco marcável nela e
-  sem rascunho guardado. Sem o campo `session_date` (pack), a data vai no resumo do capítulo.
-- **Mídia removida (decisão 9):** a página fica de fora do manuscrito, sem número; a exportação diz quantas ficaram.
-- **DOCX:** não recorta; uma página com `cover` aparece inteira, dentro do quadro.
-- **Publicação:** o servidor só lê o que o cliente mandou. Um Sketch alterado é redesenhado no cliente antes de publicar,
-  e esse snapshot novo precisa sincronizar antes de uma nova tentativa.
-- **Busca (decisão 14):** "+N fora deste arco" em Personagens, Locais, Itens e na lista de Elementos Narrativos (capítulos achados pela busca em outros arcos).
-- **Fontes (decisão 13):** não implementado (exige fontes OFL com sha256 no manifesto, matrizes e verificação visual).
-- **Cabeçalho de roteiro com hora:** não implementado; o cabeçalho sai sem hora, como a decisão 4 prevê sem calendário.
-- **FDX:** só se houver demanda.
-- Sem verificação em aparelho: snapshots de Sketch (Skia) e PDFs com imagens foram cobertos por testes, não vistos.
+- **Pack and medium:** the pack schema does not carry a medium, so the `campaign` pack does not mark the Arc (the medium is chosen
+  in the Story form) and does not "report what it turned on". It is content convenience only (real date, tags, notes).
+- **New session:** asks only for the date and opens the first scene; "+ scene" is the one in the elements list. No markable cast in it and
+  no kept draft. Without the `session_date` field (pack), the date goes in the chapter summary.
+- **Removed media (decision 9):** the page stays out of the manuscript, with no number; the export says how many were left out.
+- **DOCX:** does not crop; a `cover` page appears whole, inside the frame.
+- **Publication:** the server only reads what the client sent. A changed Sketch is redrawn on the client before publishing,
+  and that new snapshot must sync before a new attempt.
+- **Search (decision 14):** "+N outside this arc" in Characters, Locations, Items and in the Narrative Elements list (chapters found by search in other arcs).
+- **Fonts (decision 13):** not implemented (needs OFL fonts with a sha256 in the manifest, matrices and visual verification).
+- **Screenplay heading with a time:** not implemented; the heading comes out without a time, as decision 4 provides when there is no calendar.
+- **FDX:** only if there is demand.
+- Not verified on a device: Sketch snapshots (Skia) and PDFs with images were covered by tests, not seen.

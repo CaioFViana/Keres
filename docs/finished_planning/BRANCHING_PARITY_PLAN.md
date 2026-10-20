@@ -1,8 +1,8 @@
 # Branching parity, Routes and Story Navigator
 
-**Status:** implemented; chronology follow-up awaits an explicit product decision  
+**Status:** implemented, route-scoped Timeline included; a global chronology for branching scenes awaits an explicit product decision  
 **Scope:** Priority 2 of `FEATURE_LANDSCAPE.md`  
-**Last updated:** 2026-08-30
+**Last updated:** 2026-10-20
 
 ## Objective
 

@@ -1,7 +1,7 @@
 # Keres product landscape
 
 **Status:** living product decision document  
-**Last audited:** 2026-09-01
+**Last audited:** 2026-10-20 for version 1.10.1 (capabilities); competitor notes date from 2026-09-01 and were spot-checked on 2026-10-20
 **Purpose:** describe the product Keres is building, distinguish delivered capability from proposals, and make strategic trade-offs explicit. It is not a release plan or a competitor feature checklist.
 
 ## How to read this document
@@ -36,7 +36,7 @@ The first is usually aligned with Keres. The second is acceptable only as an opt
 
 ### 1.2 The claim Keres still has to earn
 
-"Usable by any medium" is directionally right, but not yet fully true in the product. Per-story vocabulary now lets a creator rename the visible default terms without duplicating the data model; it is a meaningful proof for comics, RPGs and game narrative. It does not create medium-specific workflows by itself: an issue is still stored through the same general container model, and a session is not yet a dedicated RPG entity.
+"Usable by any medium" is directionally right, but not yet fully true in the product. Per-story vocabulary now lets a creator rename the visible default terms without duplicating the data model; it is a meaningful proof for comics, RPGs and game narrative. It does not create medium-specific workflows by itself. Each Arc (a work inside the story) now has a medium - prose, screenplay, comic, storyboard or tabletop campaign - that adds an output profile (Fountain, scene pages, a chronicle preset and a "new session" shortcut) without changing the data model; a campaign session is still a chapter, not a dedicated RPG entity.
 
 ---
 
@@ -78,10 +78,14 @@ This is a meaningful architectural differentiator, but it is not a license to cl
 
 Keres does not currently provide:
 
-- a long-form manuscript editor, word-count workflow, editorial revision history or book compiler;
-- a game runtime, playable branching reader, engine export or scripting language;
+- a long-form manuscript editor with word-count targets or editorial revision history. Keres does compile
+  a story to DOCX, EPUB, PDF, Markdown, text, HTML and Fountain, and each scene has a text body, but it does
+  not compete with Scrivener or Dabble as the place where a book is drafted;
+- a game runtime, engine export or scripting language. A published branching story can be played in the
+  online reader (one scene at a time, with inventory, path, back and saves), which is a reader and not a runtime;
 - real-time co-editing with cursors;
-- a full public-world publishing and permission system;
+- a full public-world wiki with granular permissions. The showcase publishes a story, or one work of it, as
+  versions with an online reader and optional manuscript files;
 - geographic region discovery, controlled reveal, map comparison/overlay or persistent geographic layers;
 - a series-level shared entity model across Stories. Arcs now exist as an optional
   editorial subdivision *inside* one Story (Customization, vocabulary, default arc,
@@ -135,16 +139,16 @@ Worldbuilding and writing products have had years to accumulate categories, temp
 | Plan a conventional book quickly | [Plottr](https://plottr.com/features/) | Mature drag-and-drop timeline, scene cards, plotlines, templates, filtering and series planning. | Behind in focused linear-planning polish and series workflows. Keres is more structurally connected, not faster for the ordinary outline. |
 | Build and present a large world or campaign | [World Anvil](https://www.worldanvil.com/about), [Kanka](https://kanka.io/features) | Broad object catalogues, interactive maps, calendars, timelines, permissions and presentation/community surfaces. | World Pieces and spatial maps now cover structured private authoring for fauna, flora, mythology, rules, entities and places. Keres remains behind by a large margin in catalogue breadth, interactive cartography, public discovery and RPG-specific workflows. |
 | Manage exact chronology | [Aeon Timeline](https://release.aeontimeline.com/version1/manuals/AeonTimeline_UserManualMac.pdf) | Chronology-centered events, arcs and custom calendars with historical ranges. | Keres has calendars, timeline foundations and route-scoped branching chronology, but remains behind in mature chronology tooling and deliberately has no universal date order for a branching graph. |
-| Create interactive branching content | [articy:draft](https://www.articy.com/en/articydraft/feature-list/), [Twine](https://twinery.org/) | Visual flow, execution/simulation, variables or scripting, and publishing/engine paths. | Keres has a useful planning graph and story-bible context, but is not yet an interactive-fiction authoring or runtime tool. |
-| Draft, revise and compile prose | Scrivener, Dabble, Novelcrafter and similar | Manuscript editing, revision workflow, targets and publishing export. | Deliberately outside Keres's scope. The right relationship is coexistence or integration, not feature parity. |
+| Create interactive branching content | [articy:draft](https://www.articy.com/en/articydraft/feature-list/), [Twine](https://twinery.org/) | Visual flow, execution/simulation, variables or scripting, and publishing/engine paths. | Keres has a planning graph with checks and effects, routes, a navigator that simulates in memory, gamebook compilation and an online reader, plus story-bible context. It has no scripting language, no engine export and no production-grade simulation, so it is not an interactive-fiction runtime. |
+| Draft, revise and compile prose | Scrivener, Dabble, Novelcrafter and similar | Manuscript editing, revision workflow, targets, publishing export and (Novelcrafter) AI built on a codex. | Keres compiles what the bible holds and offers a per-scene editor, but is not where a book is drafted or revised; it has no AI. The right relationship is coexistence or integration, not feature parity. |
 | Build a linked personal knowledge base | Obsidian and similar tools | Backlinks, graph navigation, local files and ecosystem extensibility. | Keres is stronger in first-class narrative entities and rules; it is weaker in backlink discovery and general-purpose extensibility. |
 
 ### 4.2 The competitive omission to correct
 
 Any discussion of Keres branching must include articy:draft and Twine. Treating only Plottr or World Anvil as competitors hides the key distinction:
 
-- Keres currently models and analyses a branching plan.
-- articy:draft and Twine let the author execute, test or publish a branching experience.
+- Keres models, analyses and lightly plays a branching plan (the navigator and the online reader).
+- articy:draft and Twine let the author execute, test or publish a branching experience with variables, scripting and engine paths.
 
 Keres may intentionally remain on the first side of that boundary. If so, say it plainly. If it wants to cross it, that is a separate product strategy requiring a runtime, state persistence, playtesting, production export and a much stronger branching model.
 
@@ -278,3 +282,33 @@ Today's completed work tightened the boundary between linear and branching autho
 The remaining map boundary is intentional: Keres does not yet model geographic regions, reveal
 states, persistent overlay alignment or a public interactive map. These maps are private story
 planning documents, not a replacement for dedicated cartography or campaign-publishing systems.
+
+## 10. 2026-10-20 capability record
+
+The 1.10 release (patch notes: `PATCH_NOTES_1.10.md`) widened the product beyond the September audit. What is
+implemented, and where it is recorded in detail (`docs/feature_inventory.md`):
+
+- **Arcs as works with a medium.** Each Arc has a medium, vocabulary, author, cover and page format and can
+  be published alone under a plan ceiling (`maxPublishedArcs`). Plan: `finished_planning/arc_medium_plan.md`.
+- **Screenplay, comics and storyboards.** Fountain text with import, an industry-layout PDF and a stated page
+  estimate; scene pages (a Sketch or a Gallery image plus text) compiled into HTML, EPUB, DOCX, PDF and the online
+  reader. Pages are roughs, not final-quality art.
+- **Sketches.** A drawing board without a persisted bitmap (strokes and fills, layers, geometric eraser,
+  bucket). Plan: `finished_planning/sketch_canvas_plan.md`.
+- **Songs and music.** Songs are an entity (lyrics with chords, translation, a melody, key/tempo/meter) with a
+  synthesized hummed preview, MIDI/ABC/ChordPro export and a music cue sheet; a scene carries its own music.
+  Plan: `finished_planning/ALBUM_MUSICAL_PLAN.md`.
+- **Manuscript and publishing.** Compilation to DOCX, EPUB, PDF, Markdown, text and HTML on the device and on the
+  server, a gamebook form for branching stories, an online reader and versioned per-work publication to the
+  showcase.
+- **Accounts and the official server.** Plans with limits (entities, storage, comments and collaborators per
+  story, published works), payments through a separate connector service, terms and account deletion, age
+  verification for 18+ content through a separate service, messages and friendships per server, and an admin
+  panel with an activity record and evidence holds.
+
+What 1.10 did not change: the boundaries in section 2.4, the map boundary above, and the competitor gaps in
+section 4 (catalogue breadth, interactive cartography, drafting workflow, production-grade interactive fiction).
+Competitor facts were re-checked only against public pages on 2026-10-20 without a changelog for each product:
+Plottr added book bibles, virtual beta readers, a family tree and an idea board in 2025; Novelcrafter ties an AI to
+its Codex; Kanka states about 20 free modules; World Anvil lists interactive maps, timelines and whiteboards.
+Prices differ between sources and are deliberately not recorded here.

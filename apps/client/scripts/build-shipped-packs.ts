@@ -9,7 +9,7 @@ import { SHIPPED_PACKS } from './lib/shippedPackDefinitions';
  *
  * One row per language rather than one pack with translated labels: a pack carries a `language`
  * string and no selector, exactly as a story does, so two languages are two packs. That is the
- * design rather than an exception to it - see `docs/packs_feature_plan.md` §9.
+ * design rather than an exception to it - see `docs/finished_planning/packs_feature_plan.md` §9.
  *
  * The output is a `PackContentSchema` payload plus the metadata a shared pack travels with, so
  * installing one goes through the very same path a downloaded pack takes.

@@ -122,8 +122,8 @@ describe('ServerVerificationScreen', () => {
     jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     // React schedules its own work on the timers: a task left on a fake clock would stall every later render.
     if (fakeClock) jest.runOnlyPendingTimers();
     fakeClock = false;
@@ -280,7 +280,7 @@ describe('ServerVerificationScreen', () => {
       const view = await renderScreen();
       await waitFor(() => expect(mockFetchStatus).toHaveBeenCalledTimes(1));
 
-      view.unmount();
+      await view.unmount();
       // The cleanup of the screen stops the polling and drops the app listener together; React runs it as a task of its own.
       await waitFor(() => expect(mockRemove).toHaveBeenCalled());
     });
@@ -308,7 +308,7 @@ describe('ServerVerificationScreen', () => {
       });
       expect(mockFetchStatus).toHaveBeenCalledTimes(2);
 
-      act(() => appListener?.('background'));
+      await act(() => appListener?.('background'));
       await act(async () => {
         jest.advanceTimersByTime(15000);
       });

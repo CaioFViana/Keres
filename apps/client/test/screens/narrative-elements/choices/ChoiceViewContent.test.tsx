@@ -281,8 +281,8 @@ function jsonOf(view: RenderResult, testID: string) {
 }
 
 describe('ChoiceViewContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the loading state', async () => {

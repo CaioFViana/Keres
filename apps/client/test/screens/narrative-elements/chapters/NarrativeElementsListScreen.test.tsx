@@ -594,8 +594,8 @@ beforeEach(() => {
 });
 
 describe('NarrativeElementsListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('requests its guided tour', async () => {

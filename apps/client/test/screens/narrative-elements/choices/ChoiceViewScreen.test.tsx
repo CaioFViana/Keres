@@ -323,8 +323,8 @@ beforeEach(() => {
 });
 
 describe('ChoiceViewScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('stays on loading while the graph resolves', async () => {

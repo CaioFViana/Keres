@@ -326,8 +326,8 @@ function pinOptions() {
 }
 
 describe('BoardCanvasScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

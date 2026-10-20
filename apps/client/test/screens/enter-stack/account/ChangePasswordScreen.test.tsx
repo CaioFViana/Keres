@@ -123,8 +123,8 @@ describe('ChangePasswordScreen', () => {
     mockRedeem.mockResolvedValue({ success: false, reason: 'invalid_code' });
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the change form once the server loads', async () => {

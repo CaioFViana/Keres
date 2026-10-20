@@ -70,7 +70,7 @@ describe('useFlushDraftsOnBackground', () => {
     expect(error).toHaveBeenCalledWith('Failed to flush pending drafts:', expect.any(Error));
 
     await act(async () => {
-      unmount();
+      await unmount();
     });
     expect(remove).toHaveBeenCalled();
     error.mockRestore();

@@ -274,8 +274,8 @@ describe('ServerRegistrationScreen', () => {
     mockFetchVerificationStatus.mockResolvedValue({ status: 'not_required' });
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('blocks saving with empty required fields', async () => {

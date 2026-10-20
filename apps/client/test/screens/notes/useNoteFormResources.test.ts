@@ -27,6 +27,6 @@ it('creates the note service once from the drizzle client', async () => {
   expect(mockCreateNoteService).toHaveBeenCalledWith(fakeDb);
   expect(view.result.current.noteServiceRef.current).toBe(fakeService);
 
-  view.rerender({});
+  await view.rerender({});
   expect(mockCreateNoteService).toHaveBeenCalledTimes(1);
 });

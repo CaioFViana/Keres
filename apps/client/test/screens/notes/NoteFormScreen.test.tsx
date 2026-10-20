@@ -237,8 +237,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 describe('NoteFormScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

@@ -102,8 +102,8 @@ function routesData(overrides: any = {}) {
 }
 
 describe('RouteDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

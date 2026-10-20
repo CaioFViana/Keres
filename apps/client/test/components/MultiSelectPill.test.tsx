@@ -365,7 +365,7 @@ describe('MultiSelectPill, option height in the modal', () => {
         onSelectionChange={jest.fn()}
       />,
     );
-    fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
     await waitFor(() => screen.getByTestId('multiselect-option-atena'));
 
     expect(checkSlotOf(screen, 'atena')).toMatchObject({ width: 24, height: 24 });

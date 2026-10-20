@@ -530,8 +530,8 @@ beforeEach(() => {
 });
 
 describe('ChoiceFormScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the loading state', async () => {

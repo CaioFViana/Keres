@@ -127,8 +127,8 @@ beforeEach(() => {
   mockInstallShippedPack.mockResolvedValue({ status: 'installed' });
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('shows the empty catalog state', async () => {

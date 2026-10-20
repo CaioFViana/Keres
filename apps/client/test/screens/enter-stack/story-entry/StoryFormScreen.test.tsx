@@ -231,8 +231,8 @@ describe('StoryFormScreen', () => {
     mockCreateStoryWithPacks.mockResolvedValue('story-1');
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('asks how to begin before anything else, each option saying what it is', async () => {

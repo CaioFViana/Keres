@@ -159,8 +159,8 @@ describe('FriendshipFormScreen', () => {
     mockSendFriendRequest.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('names the only server, picks it itself and looks the tag up as it is typed', async () => {

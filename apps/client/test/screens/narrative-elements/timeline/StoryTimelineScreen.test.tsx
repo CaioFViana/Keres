@@ -246,8 +246,8 @@ beforeEach(() => {
 });
 
 describe('StoryTimelineScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the branching guard for non-linear stories', async () => {

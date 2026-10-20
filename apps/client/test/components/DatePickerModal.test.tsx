@@ -68,7 +68,7 @@ describe('DatePickerModal', () => {
     jest.useFakeTimers();
     try {
       await act(async () => {
-        fireEvent(screen.getByTestId('date-picker-include-time'), 'valueChange', true);
+        await fireEvent(screen.getByTestId('date-picker-include-time'), 'valueChange', true);
         await jest.advanceTimersByTimeAsync(180);
       });
       await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '10');

@@ -156,7 +156,7 @@ describe('opening the calendar form', () => {
     const screen = await render(<StoryCalendarFormScreen />);
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId('confirm-calendar-save'));
+      await fireEvent.press(screen.getByTestId('confirm-calendar-save'));
     });
 
     expect(mockCreateCalendar).not.toHaveBeenCalled();
@@ -166,10 +166,13 @@ describe('opening the calendar form', () => {
     const screen = await render(<StoryCalendarFormScreen />);
 
     await act(async () => {
-      fireEvent.changeText(screen.getByPlaceholderText('calendar_name_placeholder'), 'Reckoning');
+      await fireEvent.changeText(
+        screen.getByPlaceholderText('calendar_name_placeholder'),
+        'Reckoning',
+      );
     });
     await act(async () => {
-      fireEvent.press(screen.getByTestId('confirm-calendar-save'));
+      await fireEvent.press(screen.getByTestId('confirm-calendar-save'));
     });
 
     expect(mockCreateCalendar).toHaveBeenCalledTimes(1);
@@ -204,16 +207,16 @@ describe('opening the calendar form', () => {
     await waitFor(() => expect(screen.getByDisplayValue('Reckoning')).toBeTruthy());
 
     await act(async () => {
-      fireEvent.changeText(screen.getByDisplayValue('30'), '31');
+      await fireEvent.changeText(screen.getByDisplayValue('30'), '31');
     });
     await act(async () => {
-      fireEvent.press(screen.getByTestId('confirm-calendar-save'));
+      await fireEvent.press(screen.getByTestId('confirm-calendar-save'));
     });
 
     expect(mockUpdateCalendar).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('calendar-change-preview-confirm')).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByTestId('calendar-change-preview-confirm'));
+      await fireEvent.press(screen.getByTestId('calendar-change-preview-confirm'));
     });
     await waitFor(() => expect(mockUpdateCalendar).toHaveBeenCalledTimes(1));
   });

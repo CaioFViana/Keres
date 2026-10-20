@@ -338,8 +338,8 @@ describe('StoryPublishScreen', () => {
     mockFetchPreviews.mockResolvedValue([{ storyId: 'story-1', lastOperationVersion: 5 }]);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.restoreAllMocks();
   });
 

@@ -49,8 +49,8 @@ describe('CreditsScreen', () => {
     jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     (Linking.openURL as jest.Mock).mockRestore();
   });
 

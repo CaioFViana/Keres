@@ -27,6 +27,6 @@ it('creates the story-schema field service once from the drizzle client', async 
   expect(mockCreateStorySchemaFieldService).toHaveBeenCalledWith(fakeDb);
   expect(view.result.current.storySchemaFieldServiceRef.current).toBe(fakeService);
 
-  view.rerender({});
+  await view.rerender({});
   expect(mockCreateStorySchemaFieldService).toHaveBeenCalledTimes(1);
 });

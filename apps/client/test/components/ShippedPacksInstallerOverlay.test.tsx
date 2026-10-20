@@ -55,8 +55,8 @@ beforeEach(() => {
   useShippedPacksInstallerStore.setState({ open: false, lastInstalledPackId: null });
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('stays hidden until opened', async () => {

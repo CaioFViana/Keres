@@ -236,8 +236,8 @@ describe('FriendDetailScreen', () => {
     mockUnblacklist.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('shows a received request with accept, decline and blacklist', async () => {

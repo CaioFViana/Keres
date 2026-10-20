@@ -160,7 +160,7 @@ describe('useChoiceFormState durable drafts', () => {
       first.result.current.setText('Seguir pela esquerda');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -173,7 +173,7 @@ describe('useChoiceFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -195,7 +195,7 @@ describe('useChoiceFormState durable drafts', () => {
       first.result.current.setText('Abrir o portão, devagar');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -225,7 +225,7 @@ describe('useChoiceFormState durable drafts', () => {
     expect(first.result.current.text).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -239,7 +239,7 @@ describe('useChoiceFormState durable drafts', () => {
       second.result.current.setText('Seguir pela direita');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -268,7 +268,7 @@ describe('useChoiceFormState durable drafts', () => {
     expect(first.result.current.nextSceneId).toBe('scene-2');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -291,7 +291,7 @@ describe('useChoiceFormState durable drafts', () => {
       first.result.current.setText('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerChoice = {

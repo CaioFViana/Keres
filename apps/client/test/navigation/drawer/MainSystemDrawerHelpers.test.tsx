@@ -87,7 +87,7 @@ describe('MainSystemDrawerHelpers', () => {
   it('dispatches the drawer toggle action from the menu button', async () => {
     const view = await render(<DrawerToggleButton navigation={mockNavigation as any} />);
 
-    fireEvent.press(view.getByTestId('drawer-toggle'));
+    await fireEvent.press(view.getByTestId('drawer-toggle'));
 
     expect(mockToggleDrawer).toHaveBeenCalledTimes(1);
     expect(mockNavigation.dispatch).toHaveBeenCalledWith({ type: 'TOGGLE_DRAWER' });

@@ -180,8 +180,8 @@ function summaryJson(view: { getByTestId: (id: string) => { props: { children?: 
 }
 
 describe('MainDashboardContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('introduces the works of the universe when the screen can open them', async () => {

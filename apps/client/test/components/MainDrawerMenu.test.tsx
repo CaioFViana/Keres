@@ -103,8 +103,8 @@ beforeEach(async () => {
   await AsyncStorage.clear();
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 describe('MainDrawerMenu', () => {

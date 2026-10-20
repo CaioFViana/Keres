@@ -378,8 +378,8 @@ beforeEach(() => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
   jest.restoreAllMocks();
 });
 

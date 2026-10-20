@@ -318,8 +318,8 @@ function makeItem(overrides = {}) {
 }
 
 describe('ItemDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

@@ -385,8 +385,8 @@ function jsonOf(view: View, testID: string) {
 }
 
 describe('CharacterFormContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the title, actions and all text fields', async () => {

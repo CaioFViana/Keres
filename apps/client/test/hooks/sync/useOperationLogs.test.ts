@@ -97,7 +97,7 @@ describe('useOperationLogs', () => {
     );
     await waitFor(() => expect(view.result.current.worldPieceSections).toEqual({ 'wp-1': 'Lore' }));
     expect(mockService.getRecentOperationLogs).toHaveBeenCalled();
-    view.unmount();
+    await view.unmount();
   });
 
   it('clears world piece sections when the lookup fails and ignores other stories', async () => {
@@ -138,7 +138,7 @@ describe('useOperationLogs', () => {
     const calls = mockService.getRecentOperationLogs.mock.calls.length;
 
     await act(async () => {
-      view.rerender({ shouldRefetch: true });
+      await view.rerender({ shouldRefetch: true });
     });
     await waitFor(() =>
       expect(mockService.getRecentOperationLogs.mock.calls.length).toBe(calls + 1),

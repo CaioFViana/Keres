@@ -116,8 +116,8 @@ const usages = [
 ];
 
 describe('SuggestionUsageScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

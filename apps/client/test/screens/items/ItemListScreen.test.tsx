@@ -299,8 +299,8 @@ const freshListState = () => ({
 });
 
 describe('ItemListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

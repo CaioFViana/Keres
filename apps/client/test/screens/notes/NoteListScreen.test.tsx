@@ -152,8 +152,8 @@ const freshListState = () => ({
 });
 
 describe('NotesScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

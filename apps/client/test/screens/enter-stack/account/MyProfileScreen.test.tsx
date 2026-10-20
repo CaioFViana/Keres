@@ -160,8 +160,8 @@ describe('MyProfileScreen', () => {
     mockUpdatePreferences.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('loads the profile into the form', async () => {
@@ -271,8 +271,8 @@ describe('MyProfileScreen adults-only choice', () => {
     mockUpdatePreferences.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('is not offered to an account that is not age-verified', async () => {

@@ -320,8 +320,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 describe('ItemFormScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

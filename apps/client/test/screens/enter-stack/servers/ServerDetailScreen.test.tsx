@@ -210,8 +210,8 @@ describe('ServerDetailScreen', () => {
     useUserSettingsStore.setState({ userId: 'local-me' });
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('shows the server with where it is, who the user is, its tag, version and status', async () => {

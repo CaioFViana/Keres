@@ -226,7 +226,7 @@ describe('useDurableFormDraft', () => {
     expect(await storedRow()).toBeNull();
 
     await act(async () => {
-      view.unmount();
+      await view.unmount();
     });
 
     // No timer advanced: the unmount flush wrote it.

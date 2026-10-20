@@ -133,7 +133,7 @@ describe('useItemFormState durable drafts', () => {
       first.result.current.setName('Ferroada');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState();
@@ -146,7 +146,7 @@ describe('useItemFormState durable drafts', () => {
     const { view: first } = await renderState();
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState();
@@ -165,7 +165,7 @@ describe('useItemFormState durable drafts', () => {
       first.result.current.setName('Andúril, reforjada');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState('item-1', persistedItem);
@@ -192,7 +192,7 @@ describe('useItemFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -206,7 +206,7 @@ describe('useItemFormState durable drafts', () => {
       second.result.current.setName('Narsil');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState();
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -232,7 +232,7 @@ describe('useItemFormState durable drafts', () => {
     expect(first.result.current.category).toBe('Espada');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState('item-1', persistedItem);
@@ -249,7 +249,7 @@ describe('useItemFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerItem = {

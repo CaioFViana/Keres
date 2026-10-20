@@ -57,8 +57,8 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 const renderPicker = (props: { onOpenSongs?: () => void; visible?: boolean } = {}) =>

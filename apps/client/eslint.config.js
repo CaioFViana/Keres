@@ -52,7 +52,14 @@ module.exports = defineConfig([
   },
   {
     files: ['test/**/*.ts', 'test/**/*.tsx'],
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: __dirname } },
     rules: {
+      /**
+       * Testing Library 14 made `render`, `renderHook`, `fireEvent.*` and `cleanup` async, each wrapping its
+       * own `act()`. One left without `await` runs its `act` while the next call opens another (the
+       * "overlapping act" warning) and lets the test assert before the update lands.
+       */
+      '@typescript-eslint/no-floating-promises': 'error',
       /**
        * A test loads a module late on purpose: after `jest.mock`, after the environment or a fake clock is
        * set up, after `jest.resetModules()`, or to read the real one through `jest.requireActual`. A static

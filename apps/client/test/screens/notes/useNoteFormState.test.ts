@@ -172,7 +172,7 @@ describe('useNoteFormState durable drafts', () => {
       first.result.current.setTitle('Ideias para Moria');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -185,7 +185,7 @@ describe('useNoteFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -204,7 +204,7 @@ describe('useNoteFormState durable drafts', () => {
       first.result.current.setTitle('Anotações do Condado, revisadas');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ initialNoteId: 'note-1', note: persistedNote });
@@ -231,7 +231,7 @@ describe('useNoteFormState durable drafts', () => {
     expect(first.result.current.title).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -245,7 +245,7 @@ describe('useNoteFormState durable drafts', () => {
       second.result.current.setTitle('Mapas de Erebor');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -271,7 +271,7 @@ describe('useNoteFormState durable drafts', () => {
     expect(first.result.current.isFavorite).toBe(false);
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ initialNoteId: 'note-1', note: persistedNote });
@@ -288,7 +288,7 @@ describe('useNoteFormState durable drafts', () => {
       first.result.current.setTitle('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerNote = {

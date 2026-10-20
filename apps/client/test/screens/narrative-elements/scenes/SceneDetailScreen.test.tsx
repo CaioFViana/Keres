@@ -382,8 +382,8 @@ beforeEach(() => {
 });
 
 describe('SceneDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('stays on loading while the scene resolves', async () => {

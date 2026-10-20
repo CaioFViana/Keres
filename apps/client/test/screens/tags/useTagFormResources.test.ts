@@ -27,6 +27,6 @@ it('creates the tag service once from the drizzle client', async () => {
   expect(mockCreateTagService).toHaveBeenCalledWith(fakeDb);
   expect(view.result.current.tagServiceRef.current).toBe(fakeService);
 
-  view.rerender({});
+  await view.rerender({});
   expect(mockCreateTagService).toHaveBeenCalledTimes(1);
 });

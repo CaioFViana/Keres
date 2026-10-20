@@ -127,8 +127,8 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders sections with the default one open', async () => {

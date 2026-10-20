@@ -134,7 +134,7 @@ describe('useGraphDataLoader', () => {
       load.mockImplementation(() => new Promise<string>((resolve) => (release = resolve)));
 
       await act(async () => {
-        rerender({ storyId: 'story-2' });
+        await rerender({ storyId: 'story-2' });
       });
 
       expect(result.current.loading).toBe(true);

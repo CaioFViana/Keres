@@ -257,8 +257,8 @@ function headerActions(): HeaderAction[] {
 }
 
 describe('CharacterListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('binds the character store through the shared list hook', async () => {

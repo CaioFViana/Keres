@@ -171,8 +171,8 @@ async function chooseList(view: RenderResult, current: string, wanted: string) {
 }
 
 describe('SuggestionsScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

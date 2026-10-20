@@ -55,8 +55,8 @@ function setup(overrides: Partial<React.ComponentProps<typeof StoryWritingSectio
   return { handlers, element: <StoryWritingSection {...props} /> };
 }
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 describe('StoryWritingSection', () => {

@@ -170,8 +170,8 @@ beforeEach(() => {
   mockGetTagsByStoryId.mockResolvedValue([]);
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('binds the world rule store through the shared list hook', async () => {

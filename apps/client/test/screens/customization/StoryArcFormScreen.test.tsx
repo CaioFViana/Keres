@@ -270,8 +270,8 @@ beforeEach(() => {
   mockCreateArc.mockResolvedValue({});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders a blank creation form with the inherited theme', async () => {

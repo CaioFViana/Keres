@@ -130,7 +130,7 @@ describe('useCharacterFormState durable drafts', () => {
       first.result.current.setName('Gandalf');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState();
@@ -143,7 +143,7 @@ describe('useCharacterFormState durable drafts', () => {
     const { view: first } = await renderState();
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState();
@@ -162,7 +162,7 @@ describe('useCharacterFormState durable drafts', () => {
       first.result.current.setName('Aragorn, filho de Arathorn');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState('char-1', persistedCharacter);
@@ -189,7 +189,7 @@ describe('useCharacterFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -203,7 +203,7 @@ describe('useCharacterFormState durable drafts', () => {
       second.result.current.setName('Saruman');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState();
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -229,7 +229,7 @@ describe('useCharacterFormState durable drafts', () => {
     expect(first.result.current.title).toBeNull();
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState('char-1', persistedCharacter);
@@ -246,7 +246,7 @@ describe('useCharacterFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerCharacter = {

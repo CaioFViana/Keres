@@ -110,8 +110,8 @@ beforeEach(() => {
   mockResolved = { page: pages[0], usedFallback: false };
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders the page with its blocks', async () => {

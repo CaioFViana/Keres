@@ -342,8 +342,8 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
   jest.restoreAllMocks();
 });
 
@@ -363,7 +363,7 @@ async function exportWith(
     props.onChange({ ...props.settings, ...change });
   });
   await act(async () => {
-    fireEvent.press(view.getByTestId('export-confirm'));
+    await fireEvent.press(view.getByTestId('export-confirm'));
   });
 }
 

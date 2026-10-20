@@ -134,7 +134,7 @@ beforeEach(() => {
 /** RNTL 14 settles state asynchronously; a bare `fireEvent` leaves the assertion on the old render. */
 const press = async (element: unknown, event: string, value?: unknown) => {
   await act(async () => {
-    fireEvent(element as never, event, value);
+    await fireEvent(element as never, event, value);
   });
 };
 

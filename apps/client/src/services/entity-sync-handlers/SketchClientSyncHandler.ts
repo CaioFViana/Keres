@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Sketches arriving from a server. `content` travels as an object and is stored as one.
@@ -48,7 +49,7 @@ export class SketchClientSyncHandler implements ClientSyncEntityHandler {
       where: eq(schema.sketches.id, update.id),
     });
     if (!local) {
-      console.warn(`Sketch ${update.id} not found locally for update. Skipping.`);
+      logger.warn(`Sketch ${update.id} not found locally for update. Skipping.`);
       return;
     }
 

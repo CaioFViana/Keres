@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Calendars arriving from a server.
@@ -51,7 +52,7 @@ export class StoryCalendarClientSyncHandler implements ClientSyncEntityHandler {
       where: eq(schema.storyCalendars.id, update.id),
     });
     if (!local) {
-      console.warn(`StoryCalendar ${update.id} not found locally for update. Skipping.`);
+      logger.warn(`StoryCalendar ${update.id} not found locally for update. Skipping.`);
       return;
     }
 

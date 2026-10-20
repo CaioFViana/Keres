@@ -9,6 +9,7 @@ import { createOperationLogService } from '@/src/services/sync/OperationLogServi
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 interface UseOperationLogsOptions {
   storyId: string;
@@ -86,7 +87,7 @@ export function useOperationLogs({
         });
         setTotalLogs(total);
       } catch (err) {
-        console.error('Failed to fetch operation logs:', err);
+        logger.error('Failed to fetch operation logs:', err);
         setError(t('failed_to_load_operation_logs'));
       } finally {
         setLoading(false);
@@ -151,7 +152,7 @@ export function useOperationLogs({
           setWorldPieceSections(Object.fromEntries(rows.map((row) => [row.id, row.section])));
         }
       } catch (lookupError) {
-        console.warn('Could not resolve World Piece appearances for operation logs.', lookupError);
+        logger.warn('Could not resolve World Piece appearances for operation logs.', lookupError);
         if (!cancelled) setWorldPieceSections({});
       }
     })();

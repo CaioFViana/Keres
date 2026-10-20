@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseStorySchemaFieldFormStateOptions = {
   initialFieldId?: string;
@@ -123,7 +124,7 @@ export function useStorySchemaFieldFormState({
           onFieldMissing();
         }
       } catch (err) {
-        console.error('Failed to load attribute field:', err);
+        logger.error('Failed to load attribute field:', err);
         AppAlert.alert(t('error'), t('failed_to_load_attribute'));
       } finally {
         setLoading(false);
@@ -145,7 +146,7 @@ export function useStorySchemaFieldFormState({
 
   const restoreDraftFields = useCallback((fields: StorySchemaFieldFormDraftFields) => {
     if (!isStorySchemaFieldFormDraftFields(fields)) {
-      console.error('Corrupt story schema field form draft ignored.');
+      logger.error('Corrupt story schema field form draft ignored.');
       return;
     }
     // Raw setters, not the handlers: restore must not re-slug or force the manual flag.

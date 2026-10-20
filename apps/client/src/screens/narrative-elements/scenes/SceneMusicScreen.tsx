@@ -39,6 +39,7 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { sceneMusicWordKey } from '@/src/utils/scene/sceneMusicWords';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
 
@@ -99,7 +100,7 @@ const SceneMusicScreen = () => {
           },
         );
       } catch (error) {
-        console.log('SceneMusicScreen: failed to play the song.', error);
+        logger.debug('SceneMusicScreen: failed to play the song.', error);
         showNotification(t('melody_play_failed'), 'error');
       }
     },

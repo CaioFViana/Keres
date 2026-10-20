@@ -23,6 +23,7 @@ import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/common
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Packs shared on a server.
@@ -55,7 +56,7 @@ const PackBrowseScreen = () => {
       setServers(list);
       if (list.length === 1) setServerId(list[0]?.id ?? null);
       setLocalIds(new Set((await createPackService(drizzleDb).listPacks()).map((p) => p.id)));
-    })().catch((error) => console.error('PackBrowseScreen: failed to load servers.', error));
+    })().catch((error) => logger.error('PackBrowseScreen: failed to load servers.', error));
   }, [drizzleDb]);
 
   const server = servers.find((entry) => entry.id === serverId) ?? null;
@@ -66,7 +67,7 @@ const PackBrowseScreen = () => {
     try {
       setRemotePacks(await packApiService.list(server));
     } catch (error) {
-      console.error('PackBrowseScreen: failed to list remote packs.', error);
+      logger.error('PackBrowseScreen: failed to list remote packs.', error);
       showNotification(t('packs_browse_failed'), 'error');
       setRemotePacks([]);
     } finally {
@@ -100,7 +101,7 @@ const PackBrowseScreen = () => {
       } catch (error) {
         // A payload this client cannot read fails here, on purpose: the alternative is a broken
         // story at creation time, far from the download that caused it.
-        console.error('PackBrowseScreen: failed to download pack.', error);
+        logger.error('PackBrowseScreen: failed to download pack.', error);
         showNotification(t('packs_download_failed'), 'error');
       } finally {
         setBusyPackId(null);

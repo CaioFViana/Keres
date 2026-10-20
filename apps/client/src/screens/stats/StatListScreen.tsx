@@ -28,6 +28,7 @@ import { formatStatValue, type StatNotation } from '@keres/shared/graphs/stats/s
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { logger } from '@/src/utils/logging/logger';
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
@@ -141,7 +142,7 @@ const StatListScreen = () => {
               try {
                 await createStatService(drizzleDb).deleteStat(userId, stat.id);
               } catch (error) {
-                console.error('Failed to delete stat:', error);
+                logger.error('Failed to delete stat:', error);
                 AppAlert.alert(t('error'), t('stat_save_failed'));
               }
             },
@@ -160,7 +161,7 @@ const StatListScreen = () => {
         await createStatService(drizzleDb).reorderStats(userId, storyId, newOrder);
         setReordering(false);
       } catch (error) {
-        console.error('Failed to reorder stats:', error);
+        logger.error('Failed to reorder stats:', error);
         AppAlert.alert(t('error'), t('stat_save_failed'));
       }
     },
@@ -190,7 +191,7 @@ const StatListScreen = () => {
       setSelectedStory({ ...selectedStory, ...settings });
       AppAlert.alert(t('success'), t('story_updated_successfully'));
     } catch (saveError) {
-      console.error('Failed to save stat settings:', saveError);
+      logger.error('Failed to save stat settings:', saveError);
       AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
     } finally {
       setSavingSettings(false);

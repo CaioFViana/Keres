@@ -8,6 +8,7 @@ import type {
   SortDirection,
 } from '@/src/types/entityFilters';
 import { debounce } from '@/src/utils/sync/debounce';
+import type { EntityChangeEvent } from '@/src/state/events/entityEvents';
 import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
 
 /**
@@ -25,7 +26,7 @@ export interface UseEntityListScreenOptions<
   useStore: () => TStore;
   collectionKey: TKey;
   /** Emitted when the entity changes anywhere in the app; triggers a refetch. */
-  changeEvent: string;
+  changeEvent: EntityChangeEvent;
   /** How long to wait after typing stops before querying; a local query, so short enough to feel live. */
   searchDebounceMs?: number;
 }

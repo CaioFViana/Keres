@@ -39,6 +39,7 @@ import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { directConversationKey } from '@/src/utils/entity/conversationKey';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
 type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -141,7 +142,7 @@ const FriendDetailScreen = () => {
           : [],
       );
     } catch (err) {
-      console.error('Failed to load friend detail:', err);
+      logger.error('Failed to load friend detail:', err);
       showNotification(t('failed_to_load_friendships'), 'error');
     } finally {
       setLoading(false);

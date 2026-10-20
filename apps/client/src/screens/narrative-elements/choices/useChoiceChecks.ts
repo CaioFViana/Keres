@@ -8,6 +8,7 @@ import { createChoiceCheckService } from '@/src/services/storymanagement/choices
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 type CheckChanges = Partial<
   Omit<
@@ -53,7 +54,7 @@ export function useChoiceChecks(
       );
       setChecks(checksByGroup.flat());
     } catch (err) {
-      console.error('Failed to load choice checks:', err);
+      logger.error('Failed to load choice checks:', err);
     }
   }, [storyId, choiceId]);
 
@@ -71,9 +72,9 @@ export function useChoiceChecks(
         order: Math.max(0, ...checkGroups.map((group) => group.order + 1)),
       });
       setCheckGroups((prev) => [...prev, newGroup]);
-      entityEventEmitter.emit('choice_check_group_changed', storyId, choiceId);
+      if (storyId) entityEventEmitter.emit('choice_check_group_changed', storyId, choiceId);
     } catch (err) {
-      console.error('Failed to add check group:', err);
+      logger.error('Failed to add check group:', err);
       AppAlert.alert(t('error'), t('failed_to_save_check_group'));
     }
   };
@@ -86,7 +87,7 @@ export function useChoiceChecks(
       });
       setCheckGroups((prev) => prev.map((group) => (group.id === groupId ? updated : group)));
     } catch (err) {
-      console.error('Failed to update check group:', err);
+      logger.error('Failed to update check group:', err);
       AppAlert.alert(t('error'), t('failed_to_save_check_group'));
     }
   };
@@ -100,9 +101,9 @@ export function useChoiceChecks(
       await groupServiceRef.current.deleteChoiceCheckGroup(userId, groupId);
       setCheckGroups((prev) => prev.filter((group) => group.id !== groupId));
       setChecks((prev) => prev.filter((check) => check.groupId !== groupId));
-      entityEventEmitter.emit('choice_check_group_changed', storyId, choiceId);
+      if (storyId) entityEventEmitter.emit('choice_check_group_changed', storyId, choiceId);
     } catch (err) {
-      console.error('Failed to delete check group:', err);
+      logger.error('Failed to delete check group:', err);
       AppAlert.alert(t('error'), t('failed_to_delete_check_group'));
     }
   };
@@ -126,7 +127,7 @@ export function useChoiceChecks(
       });
       setChecks((prev) => [...prev, created]);
     } catch (err) {
-      console.error('Failed to add check:', err);
+      logger.error('Failed to add check:', err);
       AppAlert.alert(t('error'), t('failed_to_save_check'));
     }
   };
@@ -137,7 +138,7 @@ export function useChoiceChecks(
       const updated = await checkServiceRef.current.updateChoiceCheck(userId, checkId, changes);
       setChecks((prev) => prev.map((check) => (check.id === checkId ? updated : check)));
     } catch (err) {
-      console.error('Failed to update check:', err);
+      logger.error('Failed to update check:', err);
       AppAlert.alert(t('error'), t('failed_to_save_check'));
     }
   };
@@ -148,7 +149,7 @@ export function useChoiceChecks(
       await checkServiceRef.current.deleteChoiceCheck(userId, checkId);
       setChecks((prev) => prev.filter((check) => check.id !== checkId));
     } catch (err) {
-      console.error('Failed to delete check:', err);
+      logger.error('Failed to delete check:', err);
       AppAlert.alert(t('error'), t('failed_to_delete_check'));
     }
   };

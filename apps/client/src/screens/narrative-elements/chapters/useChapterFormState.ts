@@ -8,6 +8,7 @@ import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { ChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseChapterFormStateOptions = {
   initialChapterId?: string;
@@ -116,11 +117,11 @@ export function useChapterFormState({
                 : fromDb,
             );
           } else {
-            console.warn('Chapter not found:', initialChapterId);
+            logger.warn('Chapter not found:', initialChapterId);
           }
         }
       } catch (err) {
-        console.error('Failed to load chapter:', err);
+        logger.error('Failed to load chapter:', err);
       } finally {
         setLoading(false);
       }
@@ -144,7 +145,7 @@ export function useChapterFormState({
 
   const restoreDraftFields = useCallback((fields: ChapterFormDraftFields) => {
     if (!isChapterFormDraftFields(fields)) {
-      console.error('Corrupt chapter form draft ignored.');
+      logger.error('Corrupt chapter form draft ignored.');
       return;
     }
     setName(fields.name);

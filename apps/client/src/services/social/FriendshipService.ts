@@ -14,6 +14,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter'; // Import 
 import { isOfflineError } from '@/src/services/api/apiClient';
 import { friendshipApiService } from '@/src/services/api/FriendshipApiService'; // Import the API service
 import { userApiService } from '@/src/services/api/UserApiService';
+import { logger } from '@/src/utils/logging/logger';
 
 // Initial reconciliation and WebSocket connection/reconnection can request the same
 // server refresh at almost the same time. Expo SQLite must not run those write
@@ -379,7 +380,7 @@ export class FriendshipService {
     } catch (error) {
       if (isOfflineError(error)) {
         // Expected while the server is unreachable - keep local friendships as-is.
-        console.log('FriendshipService: server unreachable, skipping friendship sync.');
+        logger.debug('FriendshipService: server unreachable, skipping friendship sync.');
         return;
       }
       throw error;
@@ -454,7 +455,7 @@ export class FriendshipService {
 
       entityEventEmitter.emit('friendship_changed'); // Emit event after sync to notify of potential changes
     } catch (error) {
-      console.log(
+      logger.debug(
         'FriendshipService: Error syncing friendships with server:',
         (error as Error)?.message || error,
       );

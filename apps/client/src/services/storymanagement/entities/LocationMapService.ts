@@ -14,6 +14,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface LocationMapService {
   getMapsForStory(storyId: string): Promise<LocationMapSelect[]>;
@@ -122,7 +123,7 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
     async deleteMap(currentUserId, mapId) {
       const original = await db.query.locationMaps.findFirst({ where: eq(locationMaps.id, mapId) });
       if (!original) {
-        console.warn(`Attempted to delete non-existent location map ${mapId}.`);
+        logger.warn(`Attempted to delete non-existent location map ${mapId}.`);
         return;
       }
       await assertStoryIsWritable(db, original.storyId);

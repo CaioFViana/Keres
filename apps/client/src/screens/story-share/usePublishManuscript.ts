@@ -24,6 +24,7 @@ import { createChapterService } from '@/src/services/storymanagement/scenes-chap
 import { storyMusicFacts } from '@/src/services/storymanagement/media-music/ManuscriptMusicService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** A work of the story the person can release on its own. */
 export type PublishableArc = {
@@ -133,7 +134,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
             );
           }
         } catch (optionsError) {
-          console.log('PublishStoryScreen: could not load manuscript options.', optionsError);
+          logger.debug('PublishStoryScreen: could not load manuscript options.', optionsError);
         }
       })();
     },

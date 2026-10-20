@@ -8,6 +8,7 @@ import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseItemFormStateOptions = {
   initialItemId?: string;
@@ -119,11 +120,11 @@ export function useItemFormState({
                 : fromDb,
             );
           } else {
-            console.warn('Item not found:', initialItemId);
+            logger.warn('Item not found:', initialItemId);
           }
         }
       } catch (err) {
-        console.error('Failed to load item:', err);
+        logger.error('Failed to load item:', err);
       } finally {
         setLoading(false);
       }
@@ -140,7 +141,7 @@ export function useItemFormState({
 
   const restoreDraftFields = useCallback((fields: ItemFormDraftFields) => {
     if (!isItemFormDraftFields(fields)) {
-      console.error('Corrupt item form draft ignored.');
+      logger.error('Corrupt item form draft ignored.');
       return;
     }
     setName(fields.name);

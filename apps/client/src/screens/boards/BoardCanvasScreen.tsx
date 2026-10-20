@@ -50,6 +50,7 @@ import { toNavigableEntityType } from '@/src/utils/entity/entityNavigation';
 import { buildBoardMapFileName, deliverMapExport } from '@/src/utils/io/storyTransfer';
 import { buildStandaloneBoardSvg } from '@/src/utils/io/storyMapSvgExport';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
+import { logger } from '@/src/utils/logging/logger';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -169,7 +170,7 @@ const BoardCanvasScreen = () => {
       }
       setError(null);
     } catch (loadError) {
-      console.log('BoardCanvasScreen: failed to load board.', loadError);
+      logger.debug('BoardCanvasScreen: failed to load board.', loadError);
       setError(t('board_load_failed'));
     } finally {
       setLoading(false);
@@ -264,7 +265,7 @@ const BoardCanvasScreen = () => {
       setSavedContent(updated.content);
       showNotification(t('board_saved'), 'success');
     } catch (saveError) {
-      console.log('BoardCanvasScreen: failed to save board.', saveError);
+      logger.debug('BoardCanvasScreen: failed to save board.', saveError);
       showNotification(t('board_save_failed'), 'error');
     }
   }, [board, content, db, showNotification, t, userId]);
@@ -334,7 +335,7 @@ const BoardCanvasScreen = () => {
         );
       }
     } catch (exportError) {
-      console.log('BoardCanvasScreen: failed to export board.', exportError);
+      logger.debug('BoardCanvasScreen: failed to export board.', exportError);
       showNotification(t('board_export_failed'), 'error');
     } finally {
       setExporting(false);

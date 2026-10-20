@@ -30,6 +30,11 @@ export function deriveBaseVersion(payload: Record<string, any>): number | undefi
 }
 
 /** `EntityType:entityId` key used to group pending operations and conflicts per entity. */
+/** What a failure is logged as: its message when it has one, otherwise the thrown value itself. */
+export const detailOf = (error: unknown): unknown =>
+  (typeof error === 'object' && error !== null && 'message' in error ? error.message : undefined) ||
+  error;
+
 export function syncEntityKey(entityType: string, entityId: string): string {
   return `${entityType}:${entityId}`;
 }

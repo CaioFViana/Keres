@@ -8,6 +8,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import i18n from '@/src/utils/format/i18n';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Thrown when a story-content mutation is attempted by a user with only reader access. */
 export class StoryReadOnlyError extends Error {
@@ -202,7 +203,7 @@ export function recordLocalOperationSync(
   // Without this, a local edit's own operation log row doesn't show up in the Operation Log
   // screen until it's unmounted and remounted (e.g. leaving and re-entering the story).
   afterLocalWrite(() => entityEventEmitter.emit('operation_log_updated', storyId));
-  console.log(
+  logger.debug(
     `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${next}`,
   );
   return next;
@@ -222,7 +223,7 @@ export async function recordLocalOperation(
   payload: Record<string, any>,
 ): Promise<void> {
   if (!db) {
-    console.error('recordLocalOperation: Drizzle client (db) not set.');
+    logger.error('recordLocalOperation: Drizzle client (db) not set.');
     return;
   }
   await runLocalWrite(db, storyId, () =>
@@ -340,7 +341,7 @@ export async function trimSyncedOperationLogs(
   keep: number = MAX_RETAINED_SYNCED_OPERATIONS,
 ): Promise<number> {
   if (!db) {
-    console.error('trimSyncedOperationLogs: Drizzle client (db) not set.');
+    logger.error('trimSyncedOperationLogs: Drizzle client (db) not set.');
     return 0;
   }
 

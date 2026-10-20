@@ -27,6 +27,7 @@ import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 interface SyncInitializerProps {
   children: React.ReactNode;
@@ -94,7 +95,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   /** Resolves to true when at least one server was unreachable, so the caller can retry sooner. */
   const syncDataWithServers = useCallback(async (): Promise<boolean> => {
     if (!drizzleClient || !userId) {
-      console.warn('Drizzle client or userId not available for sync. Skipping.');
+      logger.warn('Drizzle client or userId not available for sync. Skipping.');
       return false;
     }
 
@@ -109,7 +110,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       localStories = await storyService.getAllStories();
       servers = await serverService.getAllServers();
     } catch (error) {
-      console.error(
+      logger.error(
         'SyncInitializer: Failed to read local stories/servers, skipping this sync cycle.',
         error,
       );
@@ -120,7 +121,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
     for (let server of servers) {
       if (!server.url) {
-        console.warn(`Server ${server.name} has no URL configured. Skipping.`);
+        logger.warn(`Server ${server.name} has no URL configured. Skipping.`);
         continue;
       }
 
@@ -128,7 +129,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       apiClient.setActiveServer(server);
       apiClient.setBaseUrl(server.url); // Set base URL explicitly
 
-      console.log(`Checking server ${server.name} at ${server.url} for new stories...`);
+      logger.debug(`Checking server ${server.name} at ${server.url} for new stories...`);
       try {
         server = await serverService.refreshServerToken(server);
         // The protocol was checked when this server was registered, but the app may have updated
@@ -139,7 +140,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           .catch(() => null);
         if (check && check.status === 200 && check.data?.version) {
           if (!canTalkToServer(check.data.syncProtocol)) {
-            console.log(
+            logger.debug(
               `Server ${server.name} speaks sync protocol ${JSON.stringify(check.data.syncProtocol)}, too old for this app; skipping until it updates.`,
             );
             showNotification(
@@ -158,7 +159,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         // Apart from the story sync: an invitation list that fails to load must not hold it up.
         await createStoryInvitationService(drizzleClient)
           .syncWithServer(server)
-          .catch((error: unknown) => console.log('Story invitation sync failed:', error));
+          .catch((error: unknown) => logger.debug('Story invitation sync failed:', error));
 
         const answeredPreviews = await syncEngine.fetchServerStoryPreviewsOrNull(server);
         const serverStoryPreviews = answeredPreviews ?? [];
@@ -173,9 +174,9 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         );
 
         if (newStoriesOnServer.length > 0) {
-          console.log(`Found ${newStoriesOnServer.length} new stories on server ${server.name}:`);
+          logger.debug(`Found ${newStoriesOnServer.length} new stories on server ${server.name}:`);
           for (const storyPreview of newStoriesOnServer) {
-            console.log(
+            logger.debug(
               `  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`,
             );
             try {
@@ -185,11 +186,11 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
                 server.idUser,
                 storyPreview.role,
               );
-              console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
+              logger.debug(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               fetchStoryList(storyService); // Refresh the story list after import
             } catch (downloadError) {
               if (isOfflineError(downloadError)) {
-                console.log(
+                logger.debug(
                   `Server unreachable while downloading story ${storyPreview.storyId}, will retry.`,
                 );
                 sawUnreachableServer = true;
@@ -197,7 +198,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
               }
               // A pending account is sent to its age check (the navigator's listener): nothing to report here.
               if (isVerificationPendingError(downloadError)) continue;
-              console.log(
+              logger.debug(
                 `Failed to download and import story ${storyPreview.storyId}:`,
                 (downloadError as Error)?.message || downloadError,
               );
@@ -208,21 +209,21 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             }
           }
         } else {
-          console.log(`No new stories found on server ${server.name}.`);
+          logger.debug(`No new stories found on server ${server.name}.`);
         }
       } catch (error) {
         if (isOfflineError(error)) {
           // Server unreachable: expected in an offline-first app, retried on a shorter delay.
-          console.log(`Server ${server.name} is unreachable, skipping this cycle.`);
+          logger.debug(`Server ${server.name} is unreachable, skipping this cycle.`);
           sawUnreachableServer = true;
           continue;
         }
         // Refused for want of an age check: the app opens the verification instead of a generic sync failure.
         if (isVerificationPendingError(error)) {
-          console.log(`Sync with ${server.name} held: the account awaits age verification.`);
+          logger.debug(`Sync with ${server.name} held: the account awaits age verification.`);
           continue;
         }
-        console.log(
+        logger.debug(
           `Error during sync with server ${server.name} at ${server.url}:`,
           (error as Error)?.message || error,
         );
@@ -238,7 +239,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     const reconciliation = syncDataWithServers();
     activeReconciliationsRef.current.add(reconciliation);
     reconciliation
-      .catch((error) => console.log('SyncInitializer: initial reconciliation failed.', error))
+      .catch((error) => logger.debug('SyncInitializer: initial reconciliation failed.', error))
       .finally(() => activeReconciliationsRef.current.delete(reconciliation));
   }, [syncDataWithServers]);
 
@@ -287,7 +288,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       applyStorySubscription();
     };
     connectServers().catch((error) =>
-      console.log('SyncInitializer: failed to start realtime connections.', error),
+      logger.debug('SyncInitializer: failed to start realtime connections.', error),
     );
     return () => {
       disposed = true;
@@ -326,7 +327,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         .getState()
         .refresh(drizzleClient, selectedStory?.id)
         .catch((error) => {
-          console.log('SyncInitializer: failed to refresh sync conflicts.', error);
+          logger.debug('SyncInitializer: failed to refresh sync conflicts.', error);
         });
     }
   }, [drizzleClient, selectedStory?.id]);
@@ -353,7 +354,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
     const manageStorySync = async () => {
       if (!drizzleClient || !serverService || !selectedStory?.id) {
-        console.log(
+        logger.debug(
           'SyncInitializer: No active story or DB/ServerService, stopping sync for selected story.',
         );
         await syncEngine.deactivateStory();
@@ -367,7 +368,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           const server = await serverService.getServerById(selectedStory.serverId);
           if (cancelled) return;
           if (server?.url) {
-            console.log(
+            logger.debug(
               `SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`,
             );
             try {
@@ -377,7 +378,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
               // while the cycle is nearly always gone a moment later. One retry beats stranding
               // sync off - a second failure falls through to the toast-and-deactivate below.
               if (cancelled) throw activateError;
-              console.log(
+              logger.debug(
                 `SyncInitializer: story activation failed, retrying once:`,
                 activateError,
               );
@@ -395,14 +396,14 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {
-            console.warn(
+            logger.warn(
               `SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`,
             );
             await syncEngine.deactivateStory();
             useUserSettingsStore.getState().clearActiveServer(); // Clear active server
           }
         } catch (error) {
-          console.error(
+          logger.error(
             `SyncInitializer: Error fetching server details for story ${selectedStory.id}:`,
             error,
           );
@@ -411,7 +412,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         }
       } else {
-        console.log(
+        logger.debug(
           `SyncInitializer: Selected story ${selectedStory.id} is not linked to a server. Stopping sync.`,
         );
         await syncEngine.deactivateStory();
@@ -421,18 +422,18 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
     manageStorySync().catch((error) => {
       if (isOfflineError(error)) {
-        console.log('SyncInitializer: story sync setup skipped, server unreachable.');
+        logger.debug('SyncInitializer: story sync setup skipped, server unreachable.');
         return;
       }
-      console.error('SyncInitializer: Unexpected error while managing story sync.', error);
+      logger.error('SyncInitializer: Unexpected error while managing story sync.', error);
     });
 
     // Cleanup function: stop sync when component unmounts or dependencies change
     return () => {
       cancelled = true;
-      console.log('SyncInitializer: Cleaning up story sync. Stopping sync engine.');
+      logger.debug('SyncInitializer: Cleaning up story sync. Stopping sync engine.');
       void syncEngine.deactivateStory().catch((error) => {
-        console.error('SyncInitializer: Failed to deactivate story sync.', error);
+        logger.error('SyncInitializer: Failed to deactivate story sync.', error);
       });
       useUserSettingsStore.getState().clearActiveServer(); // Clear active server on unmount/dependency change
     };

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { EntityOption } from '@/src/services/entity-solvers/entityOptions';
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Options for a picker whose target type is fixed by a Story Schema field. */
 export function useEntityPickerOptions(
@@ -23,7 +24,7 @@ export function useEntityPickerOptions(
     try {
       setOptions(await loadEntityOptions(db, storyId, entityType));
     } catch (error) {
-      console.error(`Failed to load ${entityType} picker options:`, error);
+      logger.error(`Failed to load ${entityType} picker options:`, error);
       setOptions([]);
     } finally {
       setLoading(false);

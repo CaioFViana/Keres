@@ -59,6 +59,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 export type ChapterDetailScreenParamList = {
   ChapterDetail: { chapterId: string; occurrence?: OccurrenceTarget };
@@ -123,7 +124,7 @@ const ChapterDetailScreen = () => {
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current) {
-      console.warn('Chapter service not initialized.');
+      logger.warn('Chapter service not initialized.');
       return;
     }
     try {
@@ -139,7 +140,7 @@ const ChapterDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch chapter details:', err);
+      logger.error('Failed to fetch chapter details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -156,7 +157,7 @@ const ChapterDetailScreen = () => {
       const fetchedScenes = await sceneServiceRef.current.getScenesByStoryId(selectedStory.id);
       setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all scenes:', err);
+      logger.error('Failed to fetch all scenes:', err);
     }
   }, [selectedStory?.id]);
 
@@ -169,7 +170,7 @@ const ChapterDetailScreen = () => {
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
       setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all locations:', err);
+      logger.error('Failed to fetch all locations:', err);
     }
   }, [selectedStory?.id]);
 
@@ -242,7 +243,7 @@ const ChapterDetailScreen = () => {
           rows.filter((row) => row.id !== chapterId).map((row) => ({ id: row.id, name: row.name })),
         ),
       )
-      .catch((error) => console.error('ChapterDetailScreen: failed to read the spine.', error));
+      .catch((error) => logger.error('ChapterDetailScreen: failed to read the spine.', error));
   }, [isConvertVisible, chapter, chapterId, drizzleDb]);
 
   useScreenHeader({
@@ -446,7 +447,7 @@ const ChapterDetailScreen = () => {
           } catch (error) {
             // The store swallows and records the error; without this the writer sees the modal
             // close and nothing else happen, which reads as the app ignoring them.
-            console.error('ChapterDetailScreen: failed to convert the container.', error);
+            logger.error('ChapterDetailScreen: failed to convert the container.', error);
             AppAlert.alert(t('error'), t('chapter_convert_failed'));
           }
         }}

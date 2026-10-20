@@ -1,6 +1,7 @@
 import type { FavoriteBehavior, FavoriteEntityType } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
+import type { EntityChangeEvent } from '@/src/state/events/entityEvents';
 import { favorites, stories } from '@/src/db/schema';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
@@ -12,7 +13,7 @@ import {
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
 
-const FAVORITE_ENTITY_EVENTS: Partial<Record<FavoriteEntityType, string>> = {
+const FAVORITE_ENTITY_EVENTS: Partial<Record<FavoriteEntityType, EntityChangeEvent>> = {
   Story: 'story_changed',
   Character: 'character_changed',
   Chapter: 'chapter_changed',

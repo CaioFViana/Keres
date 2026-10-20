@@ -29,6 +29,7 @@ import {
   DEFAULT_CRITICALITY,
 } from '@/src/utils/entity/commentCriticality';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import { logger } from '@/src/utils/logging/logger';
 
 interface CommentThreadModalProps {
   visible: boolean;
@@ -147,7 +148,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       setExcerptText('');
       setCriticality(DEFAULT_CRITICALITY);
     } catch (error) {
-      console.error('Failed to post comment:', error);
+      logger.error('Failed to post comment:', error);
       AppAlert.alert(t('error'), t('failed_to_post_comment'));
     } finally {
       setSubmitting(false);
@@ -165,7 +166,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
             try {
               await onDelete(commentId);
             } catch (error) {
-              console.error('Failed to delete comment:', error);
+              logger.error('Failed to delete comment:', error);
               AppAlert.alert(t('error'), t('failed_to_delete_comment'));
             }
           },

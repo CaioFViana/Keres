@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { deleteCjkPack } from '@/src/services/platform-web/cjkFontPack';
 import { defaultSongAudioStore } from '@/src/services/media/SongAudioService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * What the application reset must also forget: everything the app keeps OUTSIDE its database. The database, the media,
@@ -29,19 +30,19 @@ export async function clearLocalPreferences(): Promise<void> {
 /** Removes what was downloaded or rendered on the side. Each part on its own: one that cannot go does not hold the rest. */
 export async function clearDownloadedFiles(): Promise<void> {
   await deleteCjkPack().catch((error: unknown) => {
-    console.log('Reset: could not remove the CJK font pack.', error);
+    logger.debug('Reset: could not remove the CJK font pack.', error);
   });
   await defaultSongAudioStore()
     .prune(0)
     .catch((error: unknown) => {
-      console.log('Reset: could not remove the song renderings.', error);
+      logger.debug('Reset: could not remove the song renderings.', error);
     });
 }
 
 /** All of it. A failure to forget a preference is not worth failing the reset over, but it is said. */
 export async function clearEverythingOutsideDatabase(): Promise<void> {
   await clearLocalPreferences().catch((error: unknown) => {
-    console.log('Reset: could not clear the stored preferences.', error);
+    logger.debug('Reset: could not clear the stored preferences.', error);
   });
   await clearDownloadedFiles();
 }

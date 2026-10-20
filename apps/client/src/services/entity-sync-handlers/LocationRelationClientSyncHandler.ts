@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Mirrors the server's location relations. The server refuses a second connection of one pair
@@ -33,7 +34,7 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for create operation on ${this.entityName}`);
+      logger.error(`Missing ID for create operation on ${this.entityName}`);
       return;
     }
 
@@ -48,14 +49,14 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
       updatedAt: relationData.updatedAt ? new Date(relationData.updatedAt) : new Date(),
       deletedAt: relationData.deletedAt ? new Date(relationData.deletedAt) : null,
     });
-    console.log(`Applied create for LocationRelation ${update.id} in story ${storyId}`);
+    logger.debug(`Applied create for LocationRelation ${update.id} in story ${storyId}`);
   }
 
   async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
-      console.error(`Missing ID or changes for update operation on ${this.entityName}`);
+      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
@@ -64,7 +65,7 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     });
 
     if (!localRelation) {
-      console.warn(`LocationRelation ${update.id} not found locally for update. Skipping.`);
+      logger.warn(`LocationRelation ${update.id} not found locally for update. Skipping.`);
       return;
     }
 
@@ -80,14 +81,14 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
       })
       .where(eq(schema.locationRelations.id, update.id));
-    console.log(`Applied update for LocationRelation ${update.id}`);
+    logger.debug(`Applied update for LocationRelation ${update.id}`);
   }
 
   async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName} in story ${storyId}`);
+      logger.error(`Missing ID for delete operation on ${this.entityName} in story ${storyId}`);
       return;
     }
 
@@ -100,7 +101,7 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
         updatedAt: new Date(),
       })
       .where(eq(schema.locationRelations.id, update.id));
-    console.log(`Applied delete for LocationRelation ${update.id} in story ${storyId}`);
+    logger.debug(`Applied delete for LocationRelation ${update.id} in story ${storyId}`);
   }
 
   async getById(id: string): Promise<LocationRelation | undefined> {

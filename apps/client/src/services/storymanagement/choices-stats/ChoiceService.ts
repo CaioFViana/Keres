@@ -22,6 +22,7 @@ import {
   storyEntityConditions,
 } from '@/src/services/storymanagement/story-lifecycle/storyEntityListQuery';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 // Choices have no favourite flag; the parameter is accepted for signature parity with
 // the other entity services and ignored by the implementation.
@@ -232,7 +233,7 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
           .orderBy(asc(choices.createdAt))
           .all();
       } catch (error) {
-        console.error(`Error fetching all choices for story ${storyId}:`, error);
+        logger.error(`Error fetching all choices for story ${storyId}:`, error);
         return [];
       }
     },

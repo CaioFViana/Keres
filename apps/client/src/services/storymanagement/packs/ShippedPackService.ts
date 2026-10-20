@@ -4,6 +4,7 @@ import type { AppDrizzleClient } from '@/src/db';
 import { shippedPackRegistry } from '@/src/content/shipped-packs/generated/registry';
 import type { ShippedPackEntry } from '@/src/content/shipped-packs/types';
 import { createPackService, type PackContentCounts } from './PackService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Installs a pack packaged with the app.
@@ -139,13 +140,13 @@ export const createShippedPackService = (db: AppDrizzleClient): ShippedPackServi
       const entry = shippedPackRegistry.find((candidate) => candidate.slug === slug);
       const languageEntry = entry?.languages.find((candidate) => candidate.language === language);
       if (!languageEntry) {
-        console.error(`ShippedPackService: shipped pack not found: ${slug}/${language}.`);
+        logger.error(`ShippedPackService: shipped pack not found: ${slug}/${language}.`);
         return { status: 'not_found' };
       }
 
       const parsed = ShippedPackFileSchema.safeParse(languageEntry.pack);
       if (!parsed.success) {
-        console.error(
+        logger.error(
           `ShippedPackService: bundled content for ${slug}/${language} failed validation.`,
           parsed.error,
         );

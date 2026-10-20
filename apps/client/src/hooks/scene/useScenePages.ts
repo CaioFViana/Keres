@@ -5,6 +5,7 @@ import { createGalleryService } from '@/src/services/storymanagement/media-music
 import { createScenePageService } from '@/src/services/storymanagement/scenes-chapters/ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 /** A page with what it shows: the Gallery medium to draw, or the Sketch to draw, and its name. */
 export interface ScenePageView {
@@ -79,7 +80,7 @@ export function useScenePages(sceneId: string | undefined, storyId: string | und
       const rows = await createScenePageService(db).getPagesForScene(sceneId);
       setPages(await Promise.all(rows.map((row) => scenePageViewOf(db, row))));
     } catch (error) {
-      console.log('useScenePages: failed to load the pages.', error);
+      logger.debug('useScenePages: failed to load the pages.', error);
       setPages([]);
     } finally {
       setLoading(false);

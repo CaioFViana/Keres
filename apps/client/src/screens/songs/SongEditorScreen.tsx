@@ -57,6 +57,7 @@ import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { deliverFile } from '@/src/utils/io/storyTransfer';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type RouteProps = RouteProp<SongStackParamList, 'SongEditor'>;
 
@@ -166,7 +167,7 @@ const SongEditorScreen = () => {
         showNotification(t('export_story_no_share_target', { path: result.uri }), 'warning');
       }
     } catch (error) {
-      console.log('SongEditorScreen: failed to export the song.', error);
+      logger.debug('SongEditorScreen: failed to export the song.', error);
       showNotification(t('song_export_failed'), 'error');
     }
   }, [draft, showNotification, song, t]);
@@ -219,7 +220,7 @@ const SongEditorScreen = () => {
           showNotification(t('export_story_no_share_target', { path: result.uri }), 'warning');
         }
       } catch (error) {
-        console.log('SongEditorScreen: failed to export the tune.', error);
+        logger.debug('SongEditorScreen: failed to export the tune.', error);
         showNotification(t('song_export_failed'), 'error');
       }
     },

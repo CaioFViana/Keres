@@ -12,6 +12,7 @@ import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import i18n from '@/src/utils/format/i18n';
 import type { ShowcaseRequest } from './showcaseRequest';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Gets the app ready for the capture: language, theme, an example story installed and selected.
@@ -45,7 +46,7 @@ export async function prepareShowcase(
 
     const userId = useUserSettingsStore.getState().userId;
     if (!userId) {
-      console.warn('[showcase] sem usuário local depois de criar as configurações.');
+      logger.warn('[showcase] sem usuário local depois de criar as configurações.');
       return false;
     }
 
@@ -70,7 +71,7 @@ export async function prepareShowcase(
           request.language,
         );
         if (result.status !== 'installed') {
-          console.error('[showcase] não foi possível instalar o exemplo:', result.status);
+          logger.error('[showcase] não foi possível instalar o exemplo:', result.status);
           return undefined;
         }
         return storyService.getStoryById(result.storyId, userId);
@@ -88,7 +89,7 @@ export async function prepareShowcase(
     }
     return true;
   } catch (error) {
-    console.error('[showcase] falha ao preparar a vitrine:', error);
+    logger.error('[showcase] falha ao preparar a vitrine:', error);
     return false;
   }
 }

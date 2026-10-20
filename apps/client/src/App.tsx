@@ -33,6 +33,7 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import i18n from './utils/format/i18n';
 import { keepPageOutOfBackForwardCache } from './utils/ui/pageLifecycle';
 import { isServerless } from './utils/platform/clientFlavor';
+import { logger } from '@/src/utils/logging/logger';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
@@ -117,7 +118,7 @@ const DatabaseInitializer = () => {
     // `exists()`, auth tokens hydrate before the first API use, and the language applies
     // only after settings load. Screens mount only once all three are done (see below).
     const initialize = async () => {
-      console.log('DatabaseInitializer: Starting database initialization...');
+      logger.debug('DatabaseInitializer: Starting database initialization...');
       try {
         if (Platform.OS === 'web') {
           // It populates mediaFileService's synchronous "what already exists" cache (see webMediaStore.ts)
@@ -131,7 +132,7 @@ const DatabaseInitializer = () => {
         const initializedDrizzle = initializeDrizzle(db);
         setDrizzleClient(initializedDrizzle);
         setDbInitialized(true);
-        console.log('DatabaseInitializer: Database initialized successfully.');
+        logger.debug('DatabaseInitializer: Database initialized successfully.');
 
         setAuthDb(initializedDrizzle);
         setEditorDraftDb(initializedDrizzle);
@@ -142,19 +143,19 @@ const DatabaseInitializer = () => {
         const settings = await initializeUserSettings(initializedDrizzle);
         if (settings?.language) {
           i18n.changeLanguage(settings.language);
-          console.log(`DatabaseInitializer: Language set to ${settings.language}`);
+          logger.debug(`DatabaseInitializer: Language set to ${settings.language}`);
         }
         setUserSettingsLoaded(true);
-        console.log('DatabaseInitializer: User settings loaded and language applied.');
+        logger.debug('DatabaseInitializer: User settings loaded and language applied.');
       } catch (e) {
-        console.error('DatabaseInitializer: Failed to initialize database or load settings', e);
+        logger.error('DatabaseInitializer: Failed to initialize database or load settings', e);
       }
     };
 
     if (db) {
       initialize();
     } else {
-      console.log('DatabaseInitializer: db context is null, waiting...');
+      logger.debug('DatabaseInitializer: db context is null, waiting...');
     }
   }, [db, initializeUserSettings]);
 

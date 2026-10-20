@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import migrations from './migrations/index';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Applies pending client-side migrations in order, recording each in `_migrations`.
@@ -18,7 +19,7 @@ import migrations from './migrations/index';
  * executes the real thing.)
  */
 export async function migrate(expoDb: SQLiteDatabase) {
-  console.log('migrate: Starting custom Drizzle client-side migrations...');
+  logger.debug('migrate: Starting custom Drizzle client-side migrations...');
 
   await expoDb.execAsync(`
     CREATE TABLE IF NOT EXISTS _migrations (
@@ -35,20 +36,20 @@ export async function migrate(expoDb: SQLiteDatabase) {
 
   for (const migration of migrations) {
     if (!appliedMigrationNames.has(migration.name)) {
-      console.log(`migrate: Applying migration: ${migration.name}`);
+      logger.debug(`migrate: Applying migration: ${migration.name}`);
       try {
         await expoDb.execAsync('BEGIN');
         await migration.run(expoDb);
         await expoDb.runAsync(`INSERT INTO _migrations (name) VALUES (?)`, migration.name);
         await expoDb.execAsync('COMMIT');
-        console.log(`migrate: Successfully applied migration: ${migration.name}`);
+        logger.debug(`migrate: Successfully applied migration: ${migration.name}`);
       } catch (error) {
         try {
           await expoDb.execAsync('ROLLBACK');
         } catch {
           // BEGIN itself failed: nothing to roll back.
         }
-        console.error(`migrate: Failed to apply migration ${migration.name}:`, error);
+        logger.error(`migrate: Failed to apply migration ${migration.name}:`, error);
         throw error;
       }
     }
@@ -62,5 +63,5 @@ export async function migrate(expoDb: SQLiteDatabase) {
     WHERE media_type = 'link'
       AND (upload_state <> 'uploaded' OR download_state <> 'downloaded');
   `);
-  console.log('migrate: All pending migrations applied.');
+  logger.debug('migrate: All pending migrations applied.');
 }

@@ -23,6 +23,7 @@ import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { pickTextFile } from '@/src/utils/io/storyTransfer';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { logger } from '@/src/utils/logging/logger';
 
 const key = (name: string) => name.replace(/\s+/g, ' ').trim().toUpperCase();
 
@@ -64,7 +65,7 @@ const FountainImportScreen = () => {
       setPlaces(new Set());
       setCharacters(new Set());
     } catch (error) {
-      console.log('FountainImportScreen: could not read the file.', error);
+      logger.debug('FountainImportScreen: could not read the file.', error);
       showNotification(t('fountain_import_unreadable'), 'error');
     }
   };
@@ -99,7 +100,7 @@ const FountainImportScreen = () => {
       );
       navigation.goBack();
     } catch (error) {
-      console.log('FountainImportScreen: import failed.', error);
+      logger.debug('FountainImportScreen: import failed.', error);
       showNotification(t('fountain_import_failed'), 'error');
       setBusy(false);
     }

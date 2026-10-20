@@ -4,6 +4,7 @@ import type { AppDrizzleClient } from '@/src/db';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { setEntityAppearanceScheme, setGraphEntityPaletteScheme, themes } from '@keres/shared';
 import { ThemeContext } from './ThemeContext';
+import { logger } from '@/src/utils/logging/logger';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -30,7 +31,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     if (drizzleClient) {
       toggleDarkMode(drizzleClient);
     } else {
-      console.warn('Drizzle client not available for theme toggling.');
+      logger.warn('Drizzle client not available for theme toggling.');
     }
   }, [toggleDarkMode, drizzleClient]);
 
@@ -38,7 +39,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     if (themes[themeName]) {
       setCurrentThemeName(themeName);
     } else {
-      console.warn(`Theme "${themeName}" not found. Falling back to default theme.`);
+      logger.warn(`Theme "${themeName}" not found. Falling back to default theme.`);
       setCurrentThemeName('default');
     }
   }, []);

@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
+import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 export interface EntityEventSubscription {
-  event: string;
+  event: EntityEventName;
   listener: (...args: any[]) => void;
 }
 

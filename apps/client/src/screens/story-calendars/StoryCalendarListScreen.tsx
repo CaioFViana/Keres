@@ -36,6 +36,7 @@ import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 import type { CalendarsStackParamList } from '@/src/navigation/stacks/CalendarsStack';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story's calendars.
@@ -143,7 +144,7 @@ const StoryCalendarListScreen = () => {
         await createStoryCalendarService(db).setPrimary(currentUserId, calendar.id);
         await reload();
       } catch (error) {
-        console.log('StoryCalendarListScreen: failed to set the primary calendar.', error);
+        logger.debug('StoryCalendarListScreen: failed to set the primary calendar.', error);
         notify(t('calendar_save_failed'), 'error');
       } finally {
         setBusy(false);
@@ -159,7 +160,7 @@ const StoryCalendarListScreen = () => {
       await createStoryCalendarService(db).clearPrimary(currentUserId, story.id);
       await reload();
     } catch (error) {
-      console.log('StoryCalendarListScreen: failed to clear the primary calendar.', error);
+      logger.debug('StoryCalendarListScreen: failed to clear the primary calendar.', error);
       notify(t('calendar_save_failed'), 'error');
     } finally {
       setBusy(false);
@@ -190,7 +191,7 @@ const StoryCalendarListScreen = () => {
               if (refreshed) setSelectedStory(refreshed as never);
               await change();
             } catch (error) {
-              console.log('StoryCalendarListScreen: failed to change the main calendar.', error);
+              logger.debug('StoryCalendarListScreen: failed to change the main calendar.', error);
               notify(t('calendar_save_failed'), 'error');
             }
           },
@@ -235,7 +236,7 @@ const StoryCalendarListScreen = () => {
                 await createStoryCalendarService(db).deleteCalendar(currentUserId, calendar.id);
                 await reload();
               } catch (error) {
-                console.log('StoryCalendarListScreen: failed to delete the calendar.', error);
+                logger.debug('StoryCalendarListScreen: failed to delete the calendar.', error);
                 notify(t('calendar_save_failed'), 'error');
               }
             },
@@ -306,7 +307,7 @@ const StoryCalendarListScreen = () => {
         const refreshed = await service.getStoryById(story.id);
         if (refreshed) setSelectedStory(refreshed as never);
       } catch (error) {
-        console.log('StoryCalendarListScreen: failed to save the epoch.', error);
+        logger.debug('StoryCalendarListScreen: failed to save the epoch.', error);
         notify(t('calendar_save_failed'), 'error');
       } finally {
         setBusy(false);

@@ -6,6 +6,7 @@ import type { CharacterRelationServiceInterface } from '@/src/services/storymana
 import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 export type CharacterDetailMutationsProps = {
   characterRelationServiceRef: RefObject<CharacterRelationServiceInterface | null>;
@@ -50,7 +51,7 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
       AppAlert.alert(t('success'), t('relation_saved_successfully'));
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_save_relation'));
-      console.error('Failed to save character relation:', error);
+      logger.error('Failed to save character relation:', error);
     }
   };
 
@@ -73,7 +74,7 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
       }
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_delete_relation'));
-      console.error('Failed to delete character relation:', error);
+      logger.error('Failed to delete character relation:', error);
     }
   };
 
@@ -98,7 +99,7 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
       AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_save_character_scene'));
-      console.error('Failed to save character scene:', error);
+      logger.error('Failed to save character scene:', error);
     }
   };
 
@@ -121,7 +122,7 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
       }
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
-      console.error('Failed to delete character scene:', error);
+      logger.error('Failed to delete character scene:', error);
     }
   };
 

@@ -8,6 +8,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
 import { renderSketchSvg } from '@/src/utils/sketch/sketchSvg';
 import { buildSketchFileName, deliverMapExport, deliverSvgMap } from '@/src/utils/io/storyTransfer';
+import { logger } from '@/src/utils/logging/logger';
 
 interface UseSketchExportOptions {
   docRef: MutableRefObject<SketchDocument>;
@@ -67,7 +68,7 @@ export function useSketchExport({
       try {
         await work();
       } catch (error) {
-        console.log(`useSketchExport: failed to ${logLabel}.`, error);
+        logger.debug(`useSketchExport: failed to ${logLabel}.`, error);
         showNotification(t(failureKey), 'error');
       } finally {
         setBusy(false);

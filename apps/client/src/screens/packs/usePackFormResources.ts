@@ -11,6 +11,7 @@ import {
   type StoryService,
 } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Owns pack/story services and the source-story lookup list. */
 export function usePackFormResources(userId?: string | null) {
@@ -36,7 +37,7 @@ export function usePackFormResources(userId?: string | null) {
         const list = await storyServiceRef.current.getAllStories(userId ?? undefined);
         setStories(list);
       } catch (error) {
-        console.error('PackFormScreen: failed to load.', error);
+        logger.error('PackFormScreen: failed to load.', error);
         showNotification(t('packs_load_failed'), 'error');
       } finally {
         setStoriesLoading(false);

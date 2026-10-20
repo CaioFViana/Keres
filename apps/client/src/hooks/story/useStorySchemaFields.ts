@@ -5,6 +5,7 @@ import type { StorySchemaFieldSelect } from '@/src/db/schema';
 import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * A Story Schema's custom fields for an `entityType` within a story, already sorted by `order` - used
@@ -28,7 +29,7 @@ export function useStorySchemaFields(
       const result = await service.getFieldsByStoryAndEntityType(storyId, entityType);
       setFields(result);
     } catch (error) {
-      console.error(`Failed to load story schema fields for ${entityType}:`, error);
+      logger.error(`Failed to load story schema fields for ${entityType}:`, error);
       setFields([]);
     }
   }, [drizzleDb, storyId, entityType]);

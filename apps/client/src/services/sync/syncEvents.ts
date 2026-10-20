@@ -1,5 +1,16 @@
+import type {
+  EntityChangeEvent,
+  EntityEventName,
+  EntityEventPayloads,
+} from '@/src/state/events/entityEvents';
+
+/** What the sync engine emits UI refresh events through: the app's event bus, or a fake in tests. */
+export interface SyncEventPublisher {
+  emit<E extends EntityEventName>(event: E, ...args: EntityEventPayloads[E]): void;
+}
+
 /** UI refresh events emitted after applying remote entity changes. */
-export const SYNC_ENTITY_EVENTS: Record<string, string> = {
+export const SYNC_ENTITY_EVENTS: Partial<Record<string, EntityChangeEvent>> = {
   Story: 'story_changed',
   Character: 'character_changed',
   ChapterAnchor: 'chapter_anchor_changed',
@@ -45,7 +56,7 @@ export const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Mode: 'mode_changed',
 };
 
-export const FAVORITE_TARGET_EVENTS: Record<string, string> = {
+export const FAVORITE_TARGET_EVENTS: Partial<Record<string, EntityChangeEvent>> = {
   Story: 'story_changed',
   Character: 'character_changed',
   Chapter: 'chapter_changed',

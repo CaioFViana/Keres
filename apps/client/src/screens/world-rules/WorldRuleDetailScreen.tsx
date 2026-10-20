@@ -40,6 +40,7 @@ import { useTheme } from '@/src/theme';
 
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 // Define the parameter list for this screen
 export type WorldRuleDetailScreenParamList = {
@@ -85,7 +86,7 @@ const WorldRuleDetailScreen = () => {
 
   const fetchWorldRule = useCallback(async () => {
     if (!worldRuleServiceRef.current) {
-      console.warn('WorldRule service not initialized.');
+      logger.warn('WorldRule service not initialized.');
       return;
     }
     try {
@@ -101,7 +102,7 @@ const WorldRuleDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch world rule details:', err);
+      logger.error('Failed to fetch world rule details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {

@@ -6,6 +6,7 @@ import { createGalleryService } from '@/src/services/storymanagement/media-music
 import { createSceneMusicService } from '@/src/services/storymanagement/media-music/SceneMusicService';
 import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 /** What a piece of music points at: a song of the story, an audio file or a link of the Gallery. */
 export type SceneMusicTargetKind = 'song' | 'audio' | 'link';
@@ -93,7 +94,7 @@ export function useSceneMusic(sceneId: string | undefined, storyId: string | und
       const rows = await createSceneMusicService(db).getMusicForScene(sceneId);
       setViews(await Promise.all(rows.map((row) => sceneMusicViewOf(db, row))));
     } catch (error) {
-      console.log('useSceneMusic: failed to load the music.', error);
+      logger.debug('useSceneMusic: failed to load the music.', error);
       setViews([]);
     } finally {
       setLoading(false);
@@ -135,7 +136,7 @@ export function useSceneMusicCount(sceneId: string | undefined, storyId: string 
     try {
       setCount((await createSceneMusicService(db).getMusicForScene(sceneId)).length);
     } catch (error) {
-      console.log('useSceneMusicCount: failed to count the music.', error);
+      logger.debug('useSceneMusicCount: failed to count the music.', error);
       setCount(0);
     }
   }, [db, sceneId]);

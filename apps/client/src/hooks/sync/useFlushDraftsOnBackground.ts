@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import { flushPendingCanvasDrafts } from '@/src/services/drafts/canvasDraftPersistence';
 import { flushPendingEditorDrafts } from '@/src/services/drafts/EditorDraftService';
 import { useSketchDraftStore } from '@/src/state/drafts/sketchDraftStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Drafts are written a moment after the last keystroke, not on every one. A phone that sends the app to the
@@ -18,7 +19,7 @@ export function useFlushDraftsOnBackground(): void {
         flushPendingCanvasDrafts(),
         useSketchDraftStore.getState().flush(),
       ]).catch((error) => {
-        console.error('Failed to flush pending drafts:', error);
+        logger.error('Failed to flush pending drafts:', error);
       });
     });
     return () => subscription.remove();

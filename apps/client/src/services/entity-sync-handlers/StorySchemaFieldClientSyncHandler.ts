@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'StorySchemaField';
@@ -27,7 +28,7 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
     if (!update.id) {
-      console.error(`Missing ID for create operation on ${this.entityName}`);
+      logger.error(`Missing ID for create operation on ${this.entityName}`);
       return;
     }
 
@@ -46,7 +47,7 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
   async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
     if (!update.id || !update.changes) {
-      console.error(`Missing ID or changes for update operation on ${this.entityName}`);
+      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
@@ -72,7 +73,7 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
   async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName}`);
+      logger.error(`Missing ID for delete operation on ${this.entityName}`);
       return;
     }
 

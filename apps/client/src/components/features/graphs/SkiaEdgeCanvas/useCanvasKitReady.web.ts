@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ensureCanvasKit } from './canvasKitBoot';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Web readiness: every Skia surface below this stays unmounted (`null`) until CanvasKit
@@ -19,7 +20,7 @@ export function useCanvasKitReady(): boolean {
         if (!cancelled) setReady(true);
       },
       (error: unknown) => {
-        console.error('[SkiaEdgeCanvas] CanvasKit failed to load; edge lines stay hidden.', error);
+        logger.error('[SkiaEdgeCanvas] CanvasKit failed to load; edge lines stay hidden.', error);
       },
     );
     return () => {

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface ConfirmDeleteOptions {
   /** Translation key for the confirmation dialog title, e.g. `'delete_tag_title'`. */
@@ -65,7 +66,7 @@ export function useConfirmDelete() {
                   AppAlert.alert(t('success'), successMessage ?? t(successKey!));
                 }
               } catch (err) {
-                console.error(`Delete failed (${titleKey}):`, err);
+                logger.error(`Delete failed (${titleKey}):`, err);
                 AppAlert.alert(t('error'), failureMessage ?? t(failureKey));
               } finally {
                 deleting.current = false;

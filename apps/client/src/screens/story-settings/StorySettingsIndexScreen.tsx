@@ -16,6 +16,7 @@ import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { useResetToStorySelection } from './useResetToStorySelection';
+import { logger } from '@/src/utils/logging/logger';
 
 type Entry = {
   id: string;
@@ -107,7 +108,7 @@ const StorySettingsIndexScreen = () => {
             AppAlert.alert(t('success'), t('story_deleted_successfully'));
             resetToStorySelection();
           } catch (err) {
-            console.error('Failed to delete story:', err);
+            logger.error('Failed to delete story:', err);
             AppAlert.alert(t('error'), t('failed_to_delete_story'));
           } finally {
             setDeleting(false);

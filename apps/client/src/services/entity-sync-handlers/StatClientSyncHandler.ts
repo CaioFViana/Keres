@@ -12,6 +12,7 @@ import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /** What the base class needs from each table: the key it addresses rows by, and the soft-delete flag. */
 type SimpleSyncTable = SQLiteTable & { id: SQLiteColumn; isDeleted: SQLiteColumn };
@@ -50,7 +51,7 @@ abstract class SimpleTableClientSyncHandler<TTable extends SimpleSyncTable>
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
     if (!update.id) {
-      console.error(`Missing ID for create operation on ${this.entityName}`);
+      logger.error(`Missing ID for create operation on ${this.entityName}`);
       return;
     }
 
@@ -71,7 +72,7 @@ abstract class SimpleTableClientSyncHandler<TTable extends SimpleSyncTable>
   async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
     if (!update.id || !update.changes) {
-      console.error(`Missing ID or changes for update operation on ${this.entityName}`);
+      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
@@ -90,7 +91,7 @@ abstract class SimpleTableClientSyncHandler<TTable extends SimpleSyncTable>
   async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName}`);
+      logger.error(`Missing ID for delete operation on ${this.entityName}`);
       return;
     }
 

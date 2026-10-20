@@ -31,6 +31,7 @@ import {
 import { renderStatRadarSvg } from '@keres/shared/graphs/stats/statRadarSvg';
 import { resolveStatValue } from '@/src/utils/stats/statValues';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
+import { logger } from '@/src/utils/logging/logger';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
   StatsStackParamList,
@@ -203,7 +204,7 @@ const StatComparisonScreen = () => {
         result.delivered ? 'success' : 'warning',
       );
     } catch (error) {
-      console.log('StatComparisonScreen: failed to export the chart.', error);
+      logger.debug('StatComparisonScreen: failed to export the chart.', error);
       showNotification(t('stat_export_failed'), 'error');
     } finally {
       setExporting(false);

@@ -50,6 +50,7 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';
 import { createCharacterDetailMutations } from './createCharacterDetailMutations';
+import { logger } from '@/src/utils/logging/logger';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -151,7 +152,7 @@ const CharacterDetailScreen = () => {
 
   const fetchCharacter = useCallback(async () => {
     if (!characterServiceRef.current) {
-      console.warn('Character service not initialized.');
+      logger.warn('Character service not initialized.');
       return;
     }
     try {
@@ -167,7 +168,7 @@ const CharacterDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch character details:', err);
+      logger.error('Failed to fetch character details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -187,7 +188,7 @@ const CharacterDetailScreen = () => {
       );
       setCharacterRelations(fetchedRelations);
     } catch (err) {
-      console.error('Failed to fetch character relations:', err);
+      logger.error('Failed to fetch character relations:', err);
     }
   }, [character?.storyId, characterId]);
 
@@ -202,7 +203,7 @@ const CharacterDetailScreen = () => {
       );
       setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all characters:', err);
+      logger.error('Failed to fetch all characters:', err);
     }
   }, [character?.storyId]);
 
@@ -218,7 +219,7 @@ const CharacterDetailScreen = () => {
       );
       setCharacterSceneRelations(fetchedRelations);
     } catch (err) {
-      console.error('Failed to fetch character scene relations:', err);
+      logger.error('Failed to fetch character scene relations:', err);
     }
   }, [character?.storyId, characterId]);
 
@@ -232,7 +233,7 @@ const CharacterDetailScreen = () => {
       const fetchedScenes = await sceneService.getScenesByStoryId(character.storyId);
       setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all scenes:', err);
+      logger.error('Failed to fetch all scenes:', err);
     }
   }, [character?.storyId, drizzleDb]);
 
@@ -245,7 +246,7 @@ const CharacterDetailScreen = () => {
       const fetchedItems = await itemServiceRef.current.getAllByStoryId(character.storyId);
       setAllItems(fetchedItems.filter((i) => !i.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all items:', err);
+      logger.error('Failed to fetch all items:', err);
     }
   }, [character?.storyId]);
 
@@ -260,7 +261,7 @@ const CharacterDetailScreen = () => {
       );
       setAllItemJourneys(fetchedItemJourneys.filter((ij) => !ij.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all item journeys:', err);
+      logger.error('Failed to fetch all item journeys:', err);
     }
   }, [character?.storyId]);
 
@@ -273,7 +274,7 @@ const CharacterDetailScreen = () => {
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(character.storyId);
       setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all locations:', err);
+      logger.error('Failed to fetch all locations:', err);
     }
   }, [character?.storyId]);
 

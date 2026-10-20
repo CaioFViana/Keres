@@ -29,6 +29,7 @@ import type { SyncContext } from './SyncContext';
 import type { FavoritesFingerprint } from './syncFavoritesFingerprint';
 import { computeLocalFavoritesFingerprint } from './syncFavoritesFingerprint';
 import { deriveBaseVersion, onlyMoves, onlyPlaces, throwIfSyncAborted } from './syncPure';
+import { logger } from '@/src/utils/logging/logger';
 
 interface SyncPullOptions {
   context: SyncContext;
@@ -110,7 +111,7 @@ export class SyncPull {
         ? await computeLocalFavoritesFingerprint(this.context.db(), storyId)
         : null;
 
-    console.log(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
+    logger.debug(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
     const remoteUpdates: StoryUpdate[] = [];
     let publicFavorites: Favorite[] = [];
     let role = input.fallbackRole;
@@ -166,7 +167,7 @@ export class SyncPull {
     // The ceiling warning only fires when paging stopped for running out of pages: a short
     // final page proves the backlog is drained, even on the last allowed page.
     if (pagesFetched >= maxPages && !backlogExhausted) {
-      console.log(
+      logger.debug(
         `Pull reached the ${maxPages}-page ceiling for story ${storyId} with ` +
           `${remoteUpdates.length} updates collected; any remaining backlog continues on the next cycle.`,
       );
@@ -666,7 +667,7 @@ export class SyncPull {
       // Fall through to the in-memory snapshot below.
     }
     if (!snapshot) {
-      console.warn(
+      logger.warn(
         `Local operation ${op.id} has a payload that cannot be parsed; recording the conflict without a client version.`,
       );
       return null;

@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { editorDrafts } from '@/src/db/schema';
 import { createULID } from '@/src/utils/entity/entityUtils';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Client-only work-in-progress store: scene prose, canvas drawings, unfinished form queues.
@@ -142,7 +143,7 @@ const scheduleKey = (
 ): string => `${storyId}\n${entityType}\n${entityId}\n${field}`;
 
 function warnUnbound(caller: string): void {
-  console.warn(`EditorDraftService: no database bound, ${caller} is a no-op (legacy fallback).`);
+  logger.warn(`EditorDraftService: no database bound, ${caller} is a no-op (legacy fallback).`);
 }
 
 export function scheduleWriteEditorDraft(
@@ -165,7 +166,7 @@ export function scheduleWriteEditorDraft(
     try {
       await writeEditorDraft(db, storyId, entityType, entityId, field, content);
     } catch (error) {
-      console.error('Failed to write editor draft:', error);
+      logger.error('Failed to write editor draft:', error);
     }
   };
   pendingWrites.set(key, { timer: setTimeout(() => void flush(), WRITE_DEBOUNCE_MS), flush });

@@ -11,6 +11,7 @@ import { createGalleryService } from '@/src/services/storymanagement/media-music
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The media linked to an entity (a character, location, note, scene, item or World Piece), with the means
@@ -49,7 +50,7 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     try {
       setMedia(await services.gallery.getGalleriesForOwner(storyId, ownerId, ownerType));
     } catch (err) {
-      console.error(`Failed to fetch gallery media for ${ownerType} ${ownerId}:`, err);
+      logger.error(`Failed to fetch gallery media for ${ownerType} ${ownerId}:`, err);
     } finally {
       setLoading(false);
     }

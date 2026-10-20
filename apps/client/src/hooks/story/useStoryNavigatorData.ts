@@ -9,7 +9,9 @@ import { createEffectService } from '@/src/services/storymanagement/choices-stat
 import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface NavigatorData {
   scenes: SceneSelect[];
@@ -50,7 +52,7 @@ export function useStoryNavigatorData(storyId: string | undefined) {
       ]);
       setData({ scenes, choices, items, groups, checks, effects });
     } catch (error) {
-      console.error('Failed to load story navigator data:', error);
+      logger.error('Failed to load story navigator data:', error);
       setData(EMPTY);
     } finally {
       setLoading(false);
@@ -58,7 +60,7 @@ export function useStoryNavigatorData(storyId: string | undefined) {
   }, [db, storyId]);
   useEntityInitialLoad(reload);
   useEffect(() => {
-    const events = [
+    const events: EntityEventName[] = [
       'scene_changed',
       'choice_changed',
       'choice_check_group_changed',

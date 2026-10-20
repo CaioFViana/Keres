@@ -5,6 +5,7 @@ import type { CommentService } from '@/src/services/storymanagement/notes-tags-c
 import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Internal to `useEntityComments` and `useSceneBodyComments`: the plumbing both comment surfaces
@@ -52,7 +53,7 @@ export function useCommentSurface<TTarget>(
       setComments(rows);
       setAllowReaderComments(!!story?.allowReaderComments);
     } catch (error) {
-      console.error(loadFailure, error);
+      logger.error(loadFailure, error);
       setComments([]);
     } finally {
       setLoading(false);

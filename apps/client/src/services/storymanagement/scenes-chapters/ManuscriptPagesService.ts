@@ -15,6 +15,7 @@ import { createGalleryService } from '@/src/services/storymanagement/media-music
 import { createScenePageService, groupPagesByScene } from './ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { ensureSketchSnapshot } from '@/src/services/storymanagement/media-music/SketchSnapshotService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** A manuscript page is paper whatever theme the app is in. */
 const PRINT_COLORS: SvgExportColors = {
@@ -89,7 +90,7 @@ export async function loadManuscriptPages(
         problems.missing += 1;
       }
     } catch (error) {
-      console.log('loadManuscriptPages: could not read a page image.', error);
+      logger.debug('loadManuscriptPages: could not read a page image.', error);
       problems.missing += 1;
     }
     settled.set(galleryId, result);
@@ -125,7 +126,7 @@ export async function loadManuscriptPages(
         problems.missing += 1;
       }
     } catch (error) {
-      console.log('loadManuscriptPages: could not draw a sketch preview.', error);
+      logger.debug('loadManuscriptPages: could not draw a sketch preview.', error);
       problems.snapshot += 1;
     }
     sketched.set(sketchId, result);
@@ -208,7 +209,7 @@ export async function refreshStaleSketchSnapshots(
     try {
       if ((await ensureSketchSnapshot(db, userId, sketchId))?.regenerated) redrawn += 1;
     } catch (error) {
-      console.log('refreshStaleSketchSnapshots: could not redraw a snapshot.', error);
+      logger.debug('refreshStaleSketchSnapshots: could not redraw a snapshot.', error);
     }
   }
   return redrawn;
@@ -232,7 +233,7 @@ export async function loadManuscriptCover(
     if (!info || info.width * info.height > MAX_MANUSCRIPT_IMAGE_PIXELS) return null;
     return { key: `cover:${galleryId}`, image: { ...info, bytes } };
   } catch (error) {
-    console.log('loadManuscriptCover: could not read the cover.', error);
+    logger.debug('loadManuscriptCover: could not read the cover.', error);
     return null;
   }
 }

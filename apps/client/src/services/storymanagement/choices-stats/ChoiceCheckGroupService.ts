@@ -10,6 +10,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface ChoiceCheckGroupService {
   getById(id: string): Promise<ChoiceCheckGroup | undefined>;
@@ -186,7 +187,7 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
         where: eq(choiceCheckGroups.id, id),
       });
       if (!choiceCheckGroupToDelete) {
-        console.warn(`Attempted to delete non-existent ChoiceCheckGroup ${id}.`);
+        logger.warn(`Attempted to delete non-existent ChoiceCheckGroup ${id}.`);
         return;
       }
       await assertStoryIsWritable(db, choiceCheckGroupToDelete.storyId);

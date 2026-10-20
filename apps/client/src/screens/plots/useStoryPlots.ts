@@ -13,8 +13,10 @@ import { createPlotSceneService } from '@/src/services/storymanagement/entities/
 import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { buildNarrativeProjection, type NarrativePresentationOrder } from '@keres/shared';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Everything a Plot screen needs, in a single query and refreshed by event - the same
@@ -79,7 +81,7 @@ export function useStoryPlots(
       const projection = buildNarrativeProjection({ storyType, scenes, choices, chapters });
       setData({ plots, relations, scenes: projection.scenes, chapters, choices });
     } catch (error) {
-      console.error('Failed to load the plots of the story:', error);
+      logger.error('Failed to load the plots of the story:', error);
       setData(EMPTY);
     } finally {
       setLoading(false);
@@ -89,7 +91,7 @@ export function useStoryPlots(
   useEntityInitialLoad(reload);
 
   useEffect(() => {
-    const events = [
+    const events: EntityEventName[] = [
       'plot_changed',
       'plot_scene_changed',
       'scene_changed',

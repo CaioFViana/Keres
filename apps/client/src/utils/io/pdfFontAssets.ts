@@ -5,6 +5,7 @@ import { File } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import italicAsset from '@/assets/fonts/NotoSerif-Italic-Variable.ttf';
 import regularAsset from '@/assets/fonts/NotoSerif-Variable.ttf';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The bundled serif matrices for PDF export (Noto Serif variable files: bold
@@ -50,7 +51,7 @@ export async function pdfFontMatrices(): Promise<PdfFontMatrices | null> {
     cached = { regular, italic };
     return cached;
   } catch (error) {
-    console.warn('[manuscript] Bundled serif failed to load; PDF falls back to Times.', error);
+    logger.warn('[manuscript] Bundled serif failed to load; PDF falls back to Times.', error);
     return null;
   }
 }

@@ -1,3 +1,4 @@
+import type { EntityChangeEvent } from '@/src/state/events/entityEvents';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { StateCreator } from 'zustand';
 import { create } from 'zustand';
@@ -12,6 +13,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { FavoriteEntityType } from '@keres/shared';
 import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** The filter/sort state a fetch is run against. */
 export interface EntityQueryParams {
@@ -87,7 +89,7 @@ export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
     isFavorite: boolean,
   ) => Promise<unknown>;
   /** Emitted after a successful favourite toggle so open screens refresh. */
-  changeEvent?: string;
+  changeEvent?: EntityChangeEvent;
   defaultSort?: string | null;
   defaultSortDirection?: SortDirection;
   errorMessages?: { fetch?: string; toggleFavorite?: string };
@@ -227,7 +229,7 @@ export function createEntityStore<
         if (!isCurrentFetch(generation, requestedStoryId)) {
           return;
         }
-        console.error(`Failed to fetch ${label}:`, err);
+        logger.error(`Failed to fetch ${label}:`, err);
         setPartial({
           error: config.errorMessages?.fetch ?? `Failed to load ${label}.`,
           loading: false,
@@ -250,17 +252,17 @@ export function createEntityStore<
     const toggleFavorite = async (id: string, isFavorite: boolean): Promise<void> => {
       const { service, storyId } = get() as Store;
       if (!service || !storyId) {
-        console.warn(`Service or storyId not set; cannot toggle favorite for ${label}.`);
+        logger.warn(`Service or storyId not set; cannot toggle favorite for ${label}.`);
         return;
       }
       if (!config.updateFavorite || !config.favoriteEntityType) {
-        console.warn(`No updateFavorite configured for ${label}.`);
+        logger.warn(`No updateFavorite configured for ${label}.`);
         return;
       }
 
       const userId = useUserSettingsStore.getState().userId;
       if (!userId) {
-        console.error(`User ID not available. Cannot toggle favorite for ${label}.`);
+        logger.error(`User ID not available. Cannot toggle favorite for ${label}.`);
         return;
       }
 
@@ -290,7 +292,7 @@ export function createEntityStore<
           entityEventEmitter.emit(config.changeEvent, storyId);
         }
       } catch (err) {
-        console.error(`Failed to toggle favorite for ${label}:`, err);
+        logger.error(`Failed to toggle favorite for ${label}:`, err);
         setPartial({
           [collectionKey]: previous,
           error: config.errorMessages?.toggleFavorite ?? `Failed to update favorite status.`,

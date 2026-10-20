@@ -26,6 +26,7 @@ import {
   type StatTier,
 } from '@keres/shared/graphs/stats/statLadder';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
+import { logger } from '@/src/utils/logging/logger';
 
 type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;
 
@@ -212,7 +213,7 @@ const StatLadderScreen = () => {
       await createStatStrengthService(drizzleDb).replaceLadder(userId, storyId, statId, parsed);
       navigation.goBack();
     } catch (error: any) {
-      console.error('Failed to save stat ladder:', error);
+      logger.error('Failed to save stat ladder:', error);
       AppAlert.alert(t('error'), error?.message || t('stat_ladder_save_failed'));
     } finally {
       setSaving(false);

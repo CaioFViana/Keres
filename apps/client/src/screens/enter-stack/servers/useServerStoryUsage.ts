@@ -4,6 +4,7 @@ import {
   createStoryEntityCountService,
   type StoryEntityUsage,
 } from '@/src/services/storymanagement/story-lifecycle/StoryEntityCountService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The person's own stories on a server with their local entity counts, read again each time `active`
@@ -23,7 +24,7 @@ export function useServerStoryUsage(serverId: string | undefined, active: boolea
         if (!cancelled) setStories(usage);
       })
       .catch((error) => {
-        console.warn('useServerStoryUsage: could not count the stories.', error);
+        logger.warn('useServerStoryUsage: could not count the stories.', error);
         if (!cancelled) setStories([]);
       });
     return () => {

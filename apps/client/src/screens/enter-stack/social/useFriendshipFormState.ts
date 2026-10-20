@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import type { createServerService } from '@/src/services/servers/ServerService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 type ServerService = ReturnType<typeof createServerService>;
 
@@ -45,7 +46,7 @@ export function useFriendshipFormState({
         if (asked) setSelectedServerId(asked.id);
         else if (fetchedServers.length === 1) setSelectedServerId(fetchedServers[0].id);
       } catch (error) {
-        console.error('Error fetching servers for friendship form:', error);
+        logger.error('Error fetching servers for friendship form:', error);
         AppAlert.alert(t('error'), t('failed_to_load_form_data'));
       } finally {
         setServersLoaded(true);

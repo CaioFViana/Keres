@@ -7,6 +7,7 @@ import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { canRefreshSessionWithCookie } from '@/src/services/auth/browserCookieSession';
 import { isAllowedServerUrl } from '@/src/utils/auth/serverUrl';
+import { logger } from '@/src/utils/logging/logger';
 
 export const NO_RESPONSE_ERROR = 'NO_RESPONSE';
 export const TIMEOUT_ERROR = 'TIMEOUT';
@@ -369,7 +370,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
           const refreshToken = serverTokenCache.get(serverId)?.refreshToken || null;
 
           if (!refreshToken && !canRefreshSessionWithCookie(currentServer.url)) {
-            console.log('No refresh token available for token refresh. Clearing auth.');
+            logger.debug('No refresh token available for token refresh. Clearing auth.');
             refreshState.isRefreshing = false;
             tokenProvider.clearAuth(serverId);
             processQueue(
@@ -402,7 +403,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
               processQueue(refreshState, null, newAccessToken); // Resolve all queued requests
               return instance(originalRequest); // Retry the original request
             } else {
-              console.log('Token refresh failed: refreshAccessToken returned null.');
+              logger.debug('Token refresh failed: refreshAccessToken returned null.');
               tokenProvider.clearAuth(serverId);
               processQueue(
                 refreshState,
@@ -413,7 +414,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
               );
             }
           } catch (refreshError: any) {
-            console.log('Error refreshing token:', refreshError);
+            logger.debug('Error refreshing token:', refreshError);
             tokenProvider.clearAuth(serverId);
             processQueue(
               refreshState,
@@ -444,7 +445,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 
         if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
           // Expected while offline - keep it to a one-liner (never log the raw XHR object).
-          console.log(`API timeout: ${requestLabel}`);
+          logger.debug(`API timeout: ${requestLabel}`);
           return Promise.reject(
             new AxiosError(
               'Request timed out. Please check your internet connection or server availability.',
@@ -455,7 +456,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
             ),
           );
         } else if (error.response) {
-          console.log('API Response Error:', error.response.status, error.response.data);
+          logger.debug('API Response Error:', error.response.status, error.response.data);
           // The API's global `onError` (apps/api/src/index.ts) always picks a message that is
           // safe for the user before responding - discarding it and using a fixed generic
           // text hid things like "Story limit reached for your plan" behind "An
@@ -474,7 +475,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
         } else if (error.request) {
           // Server unreachable. This is the normal offline path, not an exceptional
           // condition, so log a short line rather than dumping the whole XHR object.
-          console.log(`API unreachable: ${requestLabel}`);
+          logger.debug(`API unreachable: ${requestLabel}`);
           return Promise.reject(
             new AxiosError(
               'No response received from the server. Please check your network connection.',
@@ -485,7 +486,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
             ),
           );
         } else {
-          console.log('API Request Setup Error:', error.message);
+          logger.debug('API Request Setup Error:', error.message);
           return Promise.reject(
             new AxiosError(
               `Request setup error: ${error.message}`,
@@ -512,7 +513,7 @@ applyInterceptors(apiClient); // Apply interceptors (and setActiveServer / setTo
 apiClient.setBaseUrl = (url: string) => {
   apiClient.defaults.baseURL = apiBaseUrl(url);
   if (Platform.OS === 'web') {
-    console.log(`API Client Base URL set to: ${url}`);
+    logger.debug(`API Client Base URL set to: ${url}`);
   }
 };
 

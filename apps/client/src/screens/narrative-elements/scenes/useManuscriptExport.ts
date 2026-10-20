@@ -65,6 +65,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/search/storyArcFilter';
 import { exportFileLanguage } from '@/src/utils/io/storyTransfer';
+import { logger } from '@/src/utils/logging/logger';
 
 // What there is while there is no story: the same empty values every time, so nothing draws again for them.
 const NO_LOCATIONS: LocationSelect[] = [];
@@ -456,7 +457,7 @@ export function useManuscriptExport() {
                   cjkMatrix = await loadCjkMatrix();
                   showNotification(t('export_manuscript_cjk_ready'), 'success');
                 } catch (error) {
-                  console.log('useManuscriptExport: CJK pack download failed.', error);
+                  logger.debug('useManuscriptExport: CJK pack download failed.', error);
                   showNotification(
                     t('export_manuscript_cjk_failed', {
                       reason: (error as Error)?.message ?? 'unknown error',
@@ -560,7 +561,7 @@ export function useManuscriptExport() {
           }
           made = true;
         } catch (error) {
-          console.log('useManuscriptExport: manuscript export failed.', error);
+          logger.debug('useManuscriptExport: manuscript export failed.', error);
           showNotification(t('export_manuscript_failed_body'), 'error');
         }
       });

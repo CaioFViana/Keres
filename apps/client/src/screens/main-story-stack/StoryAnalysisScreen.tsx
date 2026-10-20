@@ -42,6 +42,7 @@ import type {
   StoryAnalysisFinding,
 } from '@/src/utils/analysis/storyAnalysisChecks';
 import { StoryAnalysisCancelledError } from '@/src/utils/analysis/storyAnalysisChecks';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The structural analysis report: it is not search, it is finding what the writer would hardly notice
@@ -132,7 +133,7 @@ const StoryAnalysisScreen = () => {
       setReport(result);
       setHasRunFull(selectedStory?.type !== 'branching');
     } catch (loadError) {
-      console.error('StoryAnalysisScreen: failed to analyze story.', loadError);
+      logger.error('StoryAnalysisScreen: failed to analyze story.', loadError);
       setError(t('failed_to_load_analysis'));
     } finally {
       setLoading(false);
@@ -175,7 +176,7 @@ const StoryAnalysisScreen = () => {
       await loadCheapReport();
       AppAlert.alert(t('success'), t('analysis_fix_indexes_done', changed));
     } catch (normalizeError) {
-      console.error('StoryAnalysisScreen: failed to normalize indexes.', normalizeError);
+      logger.error('StoryAnalysisScreen: failed to normalize indexes.', normalizeError);
       AppAlert.alert(t('error'), t('analysis_fix_indexes_failed'));
     } finally {
       setNormalizing(false);
@@ -210,7 +211,7 @@ const StoryAnalysisScreen = () => {
       if (runError instanceof StoryAnalysisCancelledError) {
         setError(t('story_analysis_cancelled'));
       } else {
-        console.error('StoryAnalysisScreen: failed to run full analysis.', runError);
+        logger.error('StoryAnalysisScreen: failed to run full analysis.', runError);
         setError(t('failed_to_load_analysis'));
       }
     } finally {
@@ -237,7 +238,7 @@ const StoryAnalysisScreen = () => {
       await loadCheapReport();
       AppAlert.alert(t('success'), t('story_updated_successfully'));
     } catch (saveError) {
-      console.error('StoryAnalysisScreen: failed to save preferences.', saveError);
+      logger.error('StoryAnalysisScreen: failed to save preferences.', saveError);
       AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
     } finally {
       setSavingPreferences(false);

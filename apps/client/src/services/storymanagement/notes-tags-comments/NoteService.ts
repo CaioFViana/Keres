@@ -31,6 +31,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
+import { logger } from '@/src/utils/logging/logger';
 
 export type NoteWithTags = NoteSelect & {
   tags: TagSelect[];
@@ -272,7 +273,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for note ${noteId}. Skipping update and operation log.`,
         );
         return; // Return early if no significant changes
@@ -310,7 +311,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
     async deleteNote(currentUserId: string, noteId: string): Promise<void> {
       const noteToDelete = await db.query.notes.findFirst({ where: eq(notes.id, noteId) });
       if (!noteToDelete) {
-        console.warn(`Attempted to delete non-existent note ${noteId}.`);
+        logger.warn(`Attempted to delete non-existent note ${noteId}.`);
         return;
       }
       await assertStoryIsWritable(db, noteToDelete.storyId);

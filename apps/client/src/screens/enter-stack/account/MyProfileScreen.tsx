@@ -31,6 +31,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 const BIO_MAX_LENGTH = 200;
 
@@ -92,7 +93,7 @@ const MyProfileScreen = () => {
         setShowNsfw(loaded?.showNsfw ?? false);
       } catch (err) {
         if (!cancelled) {
-          console.error('Failed to load profile:', err);
+          logger.error('Failed to load profile:', err);
           setError(isOfflineError(err) ? t('server_unreachable') : t('failed_to_load_profile'));
         }
       } finally {
@@ -133,7 +134,7 @@ const MyProfileScreen = () => {
       AppAlert.alert(t('success'), t('profile_updated_successfully'));
       navigation.goBack();
     } catch (err) {
-      console.error('Failed to update profile:', err);
+      logger.error('Failed to update profile:', err);
       AppAlert.alert(
         t('error'),
         isOfflineError(err) ? t('server_unreachable') : t('failed_to_update_profile'),

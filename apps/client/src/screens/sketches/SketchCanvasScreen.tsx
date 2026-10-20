@@ -63,6 +63,7 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Placeholder until the row loads; never rendered or saved. */
 const EMPTY_DOC: SketchDocument = {
@@ -228,7 +229,7 @@ const SketchCanvasScreen = () => {
       clearSelection();
       setError(null);
     } catch (loadError) {
-      console.log('SketchCanvasScreen: failed to load sketch.', loadError);
+      logger.debug('SketchCanvasScreen: failed to load sketch.', loadError);
       setError(t('sketch_load_failed'));
     } finally {
       setLoading(false);
@@ -252,7 +253,7 @@ const SketchCanvasScreen = () => {
       setSavedDoc(savedFrom);
       showNotification(t('sketch_saved'), 'success');
     } catch (saveError) {
-      console.log('SketchCanvasScreen: failed to save sketch.', saveError);
+      logger.debug('SketchCanvasScreen: failed to save sketch.', saveError);
       const tooLarge = saveError instanceof Error && /too large/i.test(saveError.message);
       showNotification(t(tooLarge ? 'sketch_too_large' : 'sketch_save_failed'), 'error');
     }

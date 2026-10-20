@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
+import { logger } from '@/src/utils/logging/logger';
 
 type PlotService = ReturnType<typeof createPlotService>;
 
@@ -61,7 +62,7 @@ export function usePlotFormState({ plotId, storyId, plotServiceRef }: UsePlotFor
           setLoadedUpdatedAt(plot.updatedAt?.toISOString?.() ?? null);
         }
       } catch (error) {
-        console.error('Failed to load plot:', error);
+        logger.error('Failed to load plot:', error);
       } finally {
         setLoading(false);
       }
@@ -71,7 +72,7 @@ export function usePlotFormState({ plotId, storyId, plotServiceRef }: UsePlotFor
 
   const restoreDraftFields = useCallback((fields: PlotFormDraftFields) => {
     if (!isPlotFormDraftFields(fields)) {
-      console.error('Corrupt plot form draft ignored.');
+      logger.error('Corrupt plot form draft ignored.');
       return;
     }
     setName(fields.name);

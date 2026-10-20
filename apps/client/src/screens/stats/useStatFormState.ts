@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { StatSelect } from '@/src/db/schema';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseStatFormStateOptions = {
   statId?: string;
@@ -54,7 +55,7 @@ export function useStatFormState({ statId, storyId, stats }: UseStatFormStateOpt
 
   const restoreDraftFields = useCallback((fields: StatFormDraftFields) => {
     if (!isStatFormDraftFields(fields)) {
-      console.error('Corrupt stat form draft ignored.');
+      logger.error('Corrupt stat form draft ignored.');
       return;
     }
     setName(fields.name);

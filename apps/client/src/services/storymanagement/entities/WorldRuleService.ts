@@ -30,6 +30,7 @@ import {
   persistInitialFavorite,
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -288,7 +289,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for world rule ${worldRuleId}. Skipping update and operation log.`,
         );
         return originalWorldRule;
@@ -330,7 +331,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         where: eq(worldRules.id, worldRuleId),
       });
       if (!worldRuleToDelete) {
-        console.warn(`Attempted to delete non-existent world rule ${worldRuleId}.`);
+        logger.warn(`Attempted to delete non-existent world rule ${worldRuleId}.`);
         return;
       }
       await assertStoryIsWritable(db, worldRuleToDelete.storyId);

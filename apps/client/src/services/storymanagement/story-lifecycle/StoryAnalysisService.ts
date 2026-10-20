@@ -175,7 +175,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
        * The partition belongs in the check rather than here: the chapter numbering is the spine's
        * alone, but scenes are numbered inside every container - an event's scenes are as ordered as
        * a chapter's, and dropping events here would stop checking them at all. See
-       * `docs/finished_planning/events_feature_plan.md` section 7.1.
+       * `docs/decisions/events_feature_plan.md` section 7.1.
        */
       db
         .select({

@@ -27,12 +27,8 @@ import {
   onlyMissingReference,
   waitingOperationIds,
 } from './pushRefusals';
-import { deriveBaseVersion, onlyMoves, syncEntityKey } from './syncPure';
-
-/** What a failure is logged as: its message when it has one, otherwise the thrown value itself. */
-const detailOf = (error: unknown): unknown =>
-  (typeof error === 'object' && error !== null && 'message' in error ? error.message : undefined) ||
-  error;
+import { deriveBaseVersion, detailOf, onlyMoves, syncEntityKey } from './syncPure';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Rounds of push batches per cycle; a larger backlog continues on the next cycle. */
 export const PUSH_MAX_ROUNDS = 50;
@@ -93,7 +89,7 @@ export class SyncPush {
             // The conflicted mark may already have committed while the conflict row did not: the
             // op would sit out of every future queue with no conflict to resolve it, so release
             // it back and retry the quarantine on the next push instead of aborting this one.
-            console.log(
+            logger.debug(
               `Quarantine failed for operation ${op.id}, retrying on the next push:`,
               detailOf(quarantineError),
             );
@@ -109,7 +105,7 @@ export class SyncPush {
       }
       const prepared = mapped.slice(0, MAX_SYNC_BATCH_SIZE);
       if (mapped.length > prepared.length) {
-        console.log(
+        logger.debug(
           `Push batch capped at ${MAX_SYNC_BATCH_SIZE} for story ${this.context.storyId()}: ` +
             `sending ${prepared.length} of ${mapped.length} ready operations, ` +
             `${mapped.length - prepared.length} deferred to the next round.`,
@@ -118,7 +114,7 @@ export class SyncPush {
       if (prepared.length === 0) break;
 
       if (chunk === 0) {
-        console.log(`Pushing local operations for story ${this.context.storyId()} to server...`);
+        logger.debug(`Pushing local operations for story ${this.context.storyId()} to server...`);
       }
 
       const pushResponse = await this.context.client().post<SyncPushResult>(
@@ -143,7 +139,7 @@ export class SyncPush {
     }
 
     if (roundsRun >= this.maxRounds && lastRemaining > 0) {
-      console.log(
+      logger.debug(
         `Push hit the ${this.maxRounds}-round ceiling for story ${this.context.storyId()} with ` +
           `${lastRemaining} operations still queued; they continue on the next cycle.`,
       );
@@ -161,7 +157,7 @@ export class SyncPush {
     try {
       await trimSyncedOperationLogs(this.context.db()!, this.context.storyId()!);
     } catch (trimError) {
-      console.log(
+      logger.debug(
         `Error trimming synchronized operations for story ${this.context.storyId()}:`,
         detailOf(trimError),
       );
@@ -189,7 +185,7 @@ export class SyncPush {
     const reason =
       `Local ${op.operationType} of ${op.entityType} ${op.entityId} is not a valid sync operation ` +
       `(${checked.error}), so the server would refuse it.`;
-    console.warn(reason);
+    logger.warn(reason);
     return { update: null, reason };
   }
 
@@ -207,7 +203,7 @@ export class SyncPush {
       const reason =
         `Local ${op.operationType} of ${op.entityType} ${op.entityId} has a corrupted payload ` +
         `that cannot be parsed, so it can never be pushed.`;
-      console.warn(reason);
+      logger.warn(reason);
       return { update: null, reason };
     }
     const baseVersion = deriveBaseVersion(payloadData);
@@ -219,12 +215,12 @@ export class SyncPush {
       const reason =
         `Local ${op.operationType} of ${op.entityType} ${op.entityId} has no version in its ` +
         `payload, so the server would reject it as invalid.`;
-      console.warn(reason);
+      logger.warn(reason);
       return { update: null, reason };
     }
     if (op.operationType === 'create' && !op.entityId) {
       const reason = `Local create of ${op.entityType} has no entity id, so the server could never accept it.`;
-      console.warn(reason);
+      logger.warn(reason);
       return { update: null, reason };
     }
 
@@ -274,7 +270,7 @@ export class SyncPush {
         };
       default: {
         const reason = `Local operation ${op.id} has an unknown type '${op.operationType}' this client cannot push.`;
-        console.warn(reason);
+        logger.warn(reason);
         return { update: null, reason };
       }
     }
@@ -400,7 +396,7 @@ export class SyncPush {
         // A corrupted op cannot be rebased; the push quarantines it visibly instead. Skipping it
         // here - without advancing the chain, since it will never push - keeps one bad row from
         // aborting the rebase of every other op on the entity.
-        console.warn(`Skipping rebase of local operation ${op.id}: payload cannot be parsed.`);
+        logger.warn(`Skipping rebase of local operation ${op.id}: payload cannot be parsed.`);
         continue;
       }
       // The engine derives the base as `payload.version - 1`, so we write base + 1.
@@ -453,7 +449,7 @@ export class SyncPush {
       // version sits lower); counting back from the max restores the exact versions, since the
       // server bumps once per applied op. A concurrent interleaving may still shift one, but
       // that degrades to a bounded re-apply rather than missing every op of the batch.
-      console.log(
+      logger.debug(
         'SyncEngineService: server did not report per-operation results, assuming the whole batch was applied.',
       );
       const firstVersion = (result?.serverMaxOperationVersion || 0) - pushedOperations.length + 1;
@@ -585,7 +581,7 @@ export class SyncPush {
     const appliedCount = (result.applied || []).length;
     const realConflictCount = conflictsByEntity.size - autoMergedCount + routePaths.conflicts;
     if (appliedCount > 0) {
-      console.log(
+      logger.debug(
         `Successfully pushed ${appliedCount} operations for story ${this.context.storyId()}.`,
       );
       if (!options.silent) {

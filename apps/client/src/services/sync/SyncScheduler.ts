@@ -1,4 +1,5 @@
 import { isAbortError, isOfflineError } from '@/src/services/api/apiClient';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Normal cadence while the server is responding. */
 export const SYNC_INTERVAL_MS = 30_000;
@@ -82,23 +83,23 @@ export class SyncScheduler {
 
   public start(intervalTimeMs?: number): void {
     if (this.running) {
-      console.log('Sync engine already running.');
+      logger.debug('Sync engine already running.');
       return;
     }
 
     const readiness = this.options.readiness();
     if (!readiness.storyId) {
-      console.log('Cannot start sync: storyId is not set. Activate a story first.');
+      logger.debug('Cannot start sync: storyId is not set. Activate a story first.');
       return;
     }
     if (!readiness.hasServer) {
-      console.log(
+      logger.debug(
         'Cannot start sync: server URL is not set. Activate a story with a valid server.',
       );
       return;
     }
     if (!readiness.hasDatabase) {
-      console.log('Cannot start sync: Drizzle client (db) is not bound.');
+      logger.debug('Cannot start sync: Drizzle client (db) is not bound.');
       return;
     }
 
@@ -115,12 +116,12 @@ export class SyncScheduler {
         outcome = await this.runExclusive();
       } catch (error) {
         if (isAbortError(error)) {
-          console.log('SyncEngineService: sync cycle aborted.');
+          logger.debug('SyncEngineService: sync cycle aborted.');
         } else if (isOfflineError(error)) {
-          console.log('SyncEngineService: sync cycle skipped, server unreachable.');
+          logger.debug('SyncEngineService: sync cycle skipped, server unreachable.');
           outcome = 'offline';
         } else {
-          console.error('SyncEngineService: Unexpected error during sync cycle.', error);
+          logger.error('SyncEngineService: Unexpected error during sync cycle.', error);
           outcome = 'failed';
         }
       }
@@ -155,7 +156,7 @@ export class SyncScheduler {
     const readiness = this.options.readiness();
     if (!readiness.storyId || !readiness.hasDatabase || !readiness.hasServer) return;
     void this.runExclusive().catch((error) => {
-      console.log('SyncEngineService: on-demand sync failed.', error);
+      logger.debug('SyncEngineService: on-demand sync failed.', error);
     });
   }
 
@@ -187,7 +188,7 @@ export class SyncScheduler {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
-      console.log('Sync engine stopped.');
+      logger.debug('Sync engine stopped.');
     }
   }
 

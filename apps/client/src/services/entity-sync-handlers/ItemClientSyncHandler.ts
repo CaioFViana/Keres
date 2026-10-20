@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 export class ItemClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Item';
@@ -24,7 +25,7 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for create operation on ${this.entityName}`);
+      logger.error(`Missing ID for create operation on ${this.entityName}`);
       return;
     }
 
@@ -37,14 +38,14 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
       updatedAt: new Date(data.updatedAt),
       deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
-    console.log(`Applied create for Item ${update.id}`);
+    logger.debug(`Applied create for Item ${update.id}`);
   }
 
   async applyUpdate(entityId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
-      console.error(`Missing ID or changes for update operation on ${this.entityName}`);
+      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
@@ -59,14 +60,14 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
       })
       .where(eq(schema.items.id, update.id));
-    console.log(`Applied update for Item ${update.id}`);
+    logger.debug(`Applied update for Item ${update.id}`);
   }
 
   async applyDelete(entityId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName}`);
+      logger.error(`Missing ID for delete operation on ${this.entityName}`);
       return;
     }
 
@@ -78,7 +79,7 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
         updatedAt: new Date(),
       })
       .where(eq(schema.items.id, update.id));
-    console.log(`Applied delete for Item ${update.id}`);
+    logger.debug(`Applied delete for Item ${update.id}`);
   }
 
   async getById(id: string): Promise<Item | undefined> {

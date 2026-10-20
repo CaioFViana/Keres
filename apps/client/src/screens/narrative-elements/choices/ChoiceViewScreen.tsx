@@ -42,6 +42,7 @@ import {
 import { buildStoryMapFileName } from '@/src/utils/io/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story map: the scenes and the choices that link one to another.
@@ -131,7 +132,7 @@ const ChoiceViewScreen = () => {
       setPlots(loadedPlots);
       setPlotScenes(loadedPlotScenes);
     } catch (loadError) {
-      console.log('ChoiceViewScreen: failed to load graph data.', loadError);
+      logger.debug('ChoiceViewScreen: failed to load graph data.', loadError);
       setError(t('failed_to_load_graph_data'));
     } finally {
       setLoading(false);

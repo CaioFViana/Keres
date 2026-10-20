@@ -24,6 +24,7 @@ import {
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 import type { FavoriteFilterState } from '@/src/types/entityFilters';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -348,7 +349,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
     async deleteGallery(currentUserId, galleryId): Promise<void> {
       const toDelete = await db.query.galleries.findFirst({ where: eq(galleries.id, galleryId) });
       if (!toDelete) {
-        console.warn(`Attempted to delete non-existent gallery ${galleryId}.`);
+        logger.warn(`Attempted to delete non-existent gallery ${galleryId}.`);
         return;
       }
       await assertStoryIsWritable(db, toDelete.storyId);

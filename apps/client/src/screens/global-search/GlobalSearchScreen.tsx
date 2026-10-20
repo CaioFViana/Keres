@@ -23,6 +23,7 @@ import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -124,7 +125,7 @@ const GlobalSearchScreen = () => {
         if (!cancelled) setResults(found);
       })
       .catch((err) => {
-        console.error('Global search failed:', err);
+        logger.error('Global search failed:', err);
         if (!cancelled) setResults([]);
       })
       .finally(() => {

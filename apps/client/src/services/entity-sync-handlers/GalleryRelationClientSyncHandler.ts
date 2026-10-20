@@ -9,6 +9,7 @@ import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { GalleryRelationSelect } from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'GalleryRelation';
@@ -29,7 +30,7 @@ export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for create operation on ${this.entityName}`);
+      logger.error(`Missing ID for create operation on ${this.entityName}`);
       return;
     }
 
@@ -43,14 +44,14 @@ export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler
       updatedAt: new Date(data.updatedAt),
       deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
-    console.log(`Applied create for GalleryRelation ${update.id} in story ${storyId}`);
+    logger.debug(`Applied create for GalleryRelation ${update.id} in story ${storyId}`);
   }
 
   async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
-      console.error(`Missing ID or changes for update operation on ${this.entityName}`);
+      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
@@ -65,14 +66,14 @@ export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
       })
       .where(eq(schema.galleryRelations.id, update.id));
-    console.log(`Applied update for GalleryRelation ${update.id} in story ${storyId}`);
+    logger.debug(`Applied update for GalleryRelation ${update.id} in story ${storyId}`);
   }
 
   async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName}`);
+      logger.error(`Missing ID for delete operation on ${this.entityName}`);
       return;
     }
 
@@ -84,7 +85,7 @@ export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler
         updatedAt: new Date(),
       })
       .where(eq(schema.galleryRelations.id, update.id));
-    console.log(`Applied delete for GalleryRelation ${update.id} in story ${storyId}`);
+    logger.debug(`Applied delete for GalleryRelation ${update.id} in story ${storyId}`);
   }
 
   async getById(id: string): Promise<GalleryRelationSelect | undefined> {

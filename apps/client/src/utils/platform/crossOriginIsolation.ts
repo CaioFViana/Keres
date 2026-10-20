@@ -1,4 +1,5 @@
 import { isServerless } from './clientFlavor';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Set before the one reload that puts the page under the worker; a second miss gives up. */
 const RELOAD_FLAG = 'keres-coi-reload';
@@ -101,7 +102,7 @@ export async function ensureCrossOriginIsolation(
     ]);
   } catch (error) {
     // Workers can be off (private windows, policies): boot, and let the database say why it fails.
-    console.error('crossOriginIsolation: could not register the isolation worker.', error);
+    logger.error('crossOriginIsolation: could not register the isolation worker.', error);
     return true;
   }
   env.session.setItem(RELOAD_FLAG, '1');

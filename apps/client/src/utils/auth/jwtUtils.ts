@@ -1,3 +1,4 @@
+import { logger } from '@/src/utils/logging/logger';
 // apps/client/src/utils/jwtUtils.ts
 
 interface DecodedJwt {
@@ -14,13 +15,13 @@ export const decodeJwt = (token: string): DecodedJwt | null => {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) {
-      console.warn('Invalid JWT format: token must have 3 parts.');
+      logger.warn('Invalid JWT format: token must have 3 parts.');
       return null;
     }
     const payload = JSON.parse(atob(parts[1]));
     return payload;
   } catch (error) {
-    console.error('Error decoding JWT:', error);
+    logger.error('Error decoding JWT:', error);
     return null;
   }
 };
@@ -36,7 +37,7 @@ export const isJwtExpired = (token: string, gracePeriodSeconds: number = 60): bo
   if (!decoded || typeof decoded.exp !== 'number') {
     // If we can't decode or there's no expiration, assume it's valid for now
     // or handle as an error case depending on strictness. Here, we'll treat it as not expired to avoid false negatives.
-    console.warn('Could not determine JWT expiration. Assuming not expired.');
+    logger.warn('Could not determine JWT expiration. Assuming not expired.');
     return false;
   }
 

@@ -33,6 +33,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -67,7 +68,7 @@ const PackListScreen = () => {
     try {
       setPacks(await createPackService(drizzleDb).listPacks());
     } catch (error) {
-      console.error('PackListScreen: failed to list packs.', error);
+      logger.error('PackListScreen: failed to list packs.', error);
       showNotification(t('packs_load_failed'), 'error');
     } finally {
       setLoading(false);
@@ -80,7 +81,7 @@ const PackListScreen = () => {
       createServerService(drizzleDb)
         .getAllServers()
         .then(setServers)
-        .catch((error) => console.error('PackListScreen: failed to list servers.', error));
+        .catch((error) => logger.error('PackListScreen: failed to list servers.', error));
     }, [load, drizzleDb]),
   );
 
@@ -116,7 +117,7 @@ const PackListScreen = () => {
         await packApiService.upload(server, { ...uploadable, visibility });
         showNotification(t('packs_share_done', { name: pack.name }), 'success');
       } catch (error) {
-        console.error('PackListScreen: failed to share pack.', error);
+        logger.error('PackListScreen: failed to share pack.', error);
         showNotification(t('packs_share_failed'), 'error');
       } finally {
         setBusyPackId(null);
@@ -138,7 +139,7 @@ const PackListScreen = () => {
               await createPackService(drizzleDb).deletePack(pack.id);
               await load();
             } catch (error) {
-              console.error('PackListScreen: failed to delete pack.', error);
+              logger.error('PackListScreen: failed to delete pack.', error);
               showNotification(t('packs_delete_failed'), 'error');
             } finally {
               setBusyPackId(null);

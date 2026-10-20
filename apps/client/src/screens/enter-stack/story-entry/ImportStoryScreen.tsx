@@ -18,6 +18,7 @@ import { typography } from '@/src/theme/tokens';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { pickStoryExportFile, StoryImportError } from '@/src/utils/io/storyTransfer';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Bringing a story in from a file. Taking one out is done from inside the story (Publish and export), where
@@ -87,7 +88,7 @@ const ImportStoryScreen = () => {
       fetchStoryList(storyService); // Keeps the story selection screen up to date.
     } catch (importError) {
       if (importError instanceof StoryImportError) {
-        console.log('ImportStoryScreen: import rejected.', importError.message);
+        logger.debug('ImportStoryScreen: import rejected.', importError.message);
         const messageKey =
           importError.reason === 'future_format_version'
             ? 'import_story_future_version'
@@ -99,7 +100,7 @@ const ImportStoryScreen = () => {
         showNotification(t(messageKey), 'error');
         return;
       }
-      console.log('ImportStoryScreen: failed to import story.', importError);
+      logger.debug('ImportStoryScreen: failed to import story.', importError);
       showNotification(t('import_story_failed'), 'error');
     } finally {
       navigation.dispatch(DrawerActions.closeDrawer());

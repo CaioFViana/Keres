@@ -25,6 +25,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -114,7 +115,7 @@ const StorySelectionScreen = () => {
         ...contentCounts,
       });
     } catch (error) {
-      console.error(t('error_fetching_summary'), error);
+      logger.error(t('error_fetching_summary'), error);
       AppAlert.alert(t('error'), t('failed_to_load_summary_data'));
     }
   }, [storyContentMetricsService, updateSummary, t]);
@@ -145,7 +146,7 @@ const StorySelectionScreen = () => {
   const recordTrailChoice = useCallback(
     (patch: Parameters<typeof setFirstStoryProgress>[1]) => {
       setFirstStoryProgress(drizzleClient, patch).catch((error: unknown) => {
-        console.warn('[StorySelectionScreen] failed to record the first-story choice.', error);
+        logger.warn('[StorySelectionScreen] failed to record the first-story choice.', error);
       });
     },
     [drizzleClient, setFirstStoryProgress],
@@ -200,14 +201,14 @@ const StorySelectionScreen = () => {
   const toggleFavorite = useCallback(
     async (storyId: string, currentFavoriteStatus: boolean) => {
       if (!userId) {
-        console.error('User not logged in. Cannot toggle favorite status.');
+        logger.error('User not logged in. Cannot toggle favorite status.');
         return;
       }
       try {
         await storyService.updateStoryFavoriteStatus(userId, storyId, !currentFavoriteStatus);
         updateStoryFavoriteStatus(storyId, !currentFavoriteStatus);
       } catch (error) {
-        console.error('Error toggling favorite status:', error);
+        logger.error('Error toggling favorite status:', error);
         AppAlert.alert(t('error'), t('failed_to_update_favorite_status'));
       }
     },

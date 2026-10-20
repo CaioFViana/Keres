@@ -62,6 +62,7 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 export type LocationDetailScreenParamList = {
   LocationDetail: { locationId: string; occurrence?: OccurrenceTarget };
@@ -173,7 +174,7 @@ const LocationDetailsScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch location details:', err);
+      logger.error('Failed to fetch location details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -190,7 +191,7 @@ const LocationDetailsScreen = () => {
       const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
       setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all characters:', err);
+      logger.error('Failed to fetch all characters:', err);
     }
   }, [selectedStory?.id]);
 
@@ -205,7 +206,7 @@ const LocationDetailsScreen = () => {
       const fetchedScenes = await sceneService.getScenesByStoryId(selectedStory.id);
       setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all scenes:', err);
+      logger.error('Failed to fetch all scenes:', err);
     }
   }, [selectedStory?.id, drizzleDb]);
 
@@ -220,7 +221,7 @@ const LocationDetailsScreen = () => {
       );
       setCharacterSceneRelations(fetchedRelations.filter((cs: CharacterScene) => !cs.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all character scene relations:', err);
+      logger.error('Failed to fetch all character scene relations:', err);
     }
   }, [selectedStory?.id]);
 
@@ -233,7 +234,7 @@ const LocationDetailsScreen = () => {
       const fetchedItems = await itemServiceRef.current.getAllByStoryId(selectedStory.id);
       setAllItems(fetchedItems.filter((i) => !i.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all items:', err);
+      logger.error('Failed to fetch all items:', err);
     }
   }, [selectedStory?.id]);
 
@@ -248,7 +249,7 @@ const LocationDetailsScreen = () => {
       );
       setAllItemJourneys(fetchedItemJourneys.filter((ij) => !ij.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all item journeys:', err);
+      logger.error('Failed to fetch all item journeys:', err);
     }
   }, [selectedStory?.id]);
 
@@ -261,7 +262,7 @@ const LocationDetailsScreen = () => {
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
       setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all locations:', err);
+      logger.error('Failed to fetch all locations:', err);
     }
   }, [selectedStory?.id]);
 
@@ -276,7 +277,7 @@ const LocationDetailsScreen = () => {
       );
       setAllLocationRelations(fetchedRelations);
     } catch (err) {
-      console.error('Failed to fetch all location relations:', err);
+      logger.error('Failed to fetch all location relations:', err);
     }
   }, [selectedStory?.id]);
 

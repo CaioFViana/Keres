@@ -10,6 +10,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface ChoiceCheckService {
   getById(id: string): Promise<ChoiceCheck | undefined>;
@@ -179,7 +180,7 @@ export const createChoiceCheckService = (db: AppDrizzleClient): ChoiceCheckServi
         where: eq(choiceChecks.id, id),
       });
       if (!choiceCheckToDelete) {
-        console.warn(`Attempted to delete non-existent ChoiceCheck ${id}.`);
+        logger.warn(`Attempted to delete non-existent ChoiceCheck ${id}.`);
         return;
       }
       await assertStoryIsWritable(db, choiceCheckToDelete.storyId);

@@ -7,6 +7,7 @@ import type { ReportType } from '@keres/shared';
 import { storyReportApi } from '@/src/services/api/StoryReportApiService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
+import { logger } from '@/src/utils/logging/logger';
 
 const statusOf = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
@@ -43,7 +44,7 @@ export function useStoryReport(storyId: string | undefined) {
         } else if (statusOf(error) === 403) {
           showNotification(t('report_story_forbidden'), 'error');
         } else {
-          console.error('Failed to report story:', error);
+          logger.error('Failed to report story:', error);
           showNotification(t('report_story_failed'), 'error');
         }
         return false;

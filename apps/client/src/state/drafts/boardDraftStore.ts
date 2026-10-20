@@ -16,6 +16,7 @@ import {
   scheduleWriteCanvasDraft,
   writeCanvasDraftNow,
 } from '@/src/services/drafts/canvasDraftPersistence';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface BoardDraft {
   boardId: string;
@@ -101,7 +102,7 @@ async function readDurableDraft(storyId: string, boardId: string): Promise<Board
         const parsed = JSON.parse(row.content) as unknown;
         if (isBoardDraft(parsed, storyId, boardId)) return parsed;
       } catch (error) {
-        console.error('Corrupt board draft ignored:', error);
+        logger.error('Corrupt board draft ignored:', error);
       }
     }
     // One-time transparent adoption of drafts left in AsyncStorage by older versions.

@@ -33,6 +33,7 @@ import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { deliverFile, pickTextFile } from '@/src/utils/io/storyTransfer';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type Navigation = NativeStackNavigationProp<SongStackParamList, 'SongList'>;
 
@@ -88,7 +89,7 @@ const SongListScreen = () => {
         const song = await createSongService(db).createSong(userId, { storyId, title });
         open(song.id);
       } catch (error) {
-        console.log('SongListScreen: failed to create a song.', error);
+        logger.debug('SongListScreen: failed to create a song.', error);
         showNotification(t('song_save_failed'), 'error');
       }
     },
@@ -113,7 +114,7 @@ const SongListScreen = () => {
       showNotification(t('song_import_done', { title: song.title }), 'success');
       open(song.id);
     } catch (error) {
-      console.log('SongListScreen: failed to import a ChordPro file.', error);
+      logger.debug('SongListScreen: failed to import a ChordPro file.', error);
       showNotification(t('song_import_failed'), 'error');
     }
   }, [db, open, showNotification, storyId, t, userId]);
@@ -165,7 +166,7 @@ const SongListScreen = () => {
           showNotification(t('export_story_no_share_target', { path: result.uri }), 'warning');
         }
       } catch (error) {
-        console.log('SongListScreen: failed to make the cue sheet.', error);
+        logger.debug('SongListScreen: failed to make the cue sheet.', error);
         showNotification(t('cue_sheet_failed'), 'error');
       }
     },

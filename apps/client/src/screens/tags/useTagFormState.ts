@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseTagFormStateOptions = {
   tagId?: string;
@@ -78,11 +79,11 @@ export function useTagFormState({ tagId, storyId, tagServiceRef }: UseTagFormSta
           setLoadedUpdatedAt(fetchedTag.updatedAt?.toISOString?.() ?? null);
         } else {
           setLoadError(t('tag_data_missing'));
-          console.warn('Tag not found:', tagId);
+          logger.warn('Tag not found:', tagId);
         }
       } catch (err) {
         setLoadError(t('tag_data_missing'));
-        console.error('Failed to load tag:', err);
+        logger.error('Failed to load tag:', err);
       } finally {
         setLoading(false);
       }
@@ -92,7 +93,7 @@ export function useTagFormState({ tagId, storyId, tagServiceRef }: UseTagFormSta
 
   const restoreDraftFields = useCallback((fields: TagFormDraftFields) => {
     if (!isTagFormDraftFields(fields)) {
-      console.error('Corrupt tag form draft ignored.');
+      logger.error('Corrupt tag form draft ignored.');
       return;
     }
     setName(fields.name);

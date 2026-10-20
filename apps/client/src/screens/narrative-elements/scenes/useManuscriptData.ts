@@ -17,7 +17,9 @@ import {
   type ChoiceAnnotationLines,
 } from '@/src/services/storymanagement/choices-stats/choiceAnnotations';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The manuscript's read model: every container (chapters AND events), every scene with
@@ -65,7 +67,7 @@ export function useManuscriptData(storyId: string | undefined | null) {
       setChoices(allChoices);
       setStepsByRouteId(new Map(allSteps));
     } catch (error) {
-      console.error('Failed to load manuscript data:', error);
+      logger.error('Failed to load manuscript data:', error);
       setChapters([]);
       setScenes([]);
       setRoutes([]);
@@ -87,7 +89,7 @@ export function useManuscriptData(storyId: string | undefined | null) {
   useEntityInitialLoad(reload);
 
   useEffect(() => {
-    const events = [
+    const events: EntityEventName[] = [
       'scene_changed',
       'chapter_changed',
       'choice_changed',

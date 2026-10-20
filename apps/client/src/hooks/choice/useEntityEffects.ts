@@ -6,6 +6,7 @@ import { createEffectService } from '@/src/services/storymanagement/choices-stat
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 type EffectEntityType = 'Scene' | 'Choice';
 type EffectChanges = Partial<
@@ -49,7 +50,7 @@ export function useEntityEffects(
     try {
       setEffects(await effectServiceRef.current.getEffectsByEntity(storyId, entityType, entityId));
     } catch (err) {
-      console.error('Failed to fetch effects:', err);
+      logger.error('Failed to fetch effects:', err);
     }
   }, [storyId, entityType, entityId]);
 
@@ -69,9 +70,9 @@ export function useEntityEffects(
         triggerName: null,
       });
       setEffects((prev) => [...prev, created]);
-      entityEventEmitter.emit('effect_changed', storyId, entityId);
+      if (storyId) entityEventEmitter.emit('effect_changed', storyId, entityId);
     } catch (err) {
-      console.error('Failed to add effect:', err);
+      logger.error('Failed to add effect:', err);
       AppAlert.alert(t('error'), t('failed_to_save_effect'));
     }
   };
@@ -81,9 +82,9 @@ export function useEntityEffects(
     try {
       const updated = await effectServiceRef.current.updateEffect(userId, effectId, changes);
       setEffects((prev) => prev.map((effect) => (effect.id === effectId ? updated : effect)));
-      entityEventEmitter.emit('effect_changed', storyId, entityId);
+      if (storyId) entityEventEmitter.emit('effect_changed', storyId, entityId);
     } catch (err) {
-      console.error('Failed to update effect:', err);
+      logger.error('Failed to update effect:', err);
       AppAlert.alert(t('error'), t('failed_to_save_effect'));
     }
   };
@@ -97,9 +98,9 @@ export function useEntityEffects(
     try {
       await effectServiceRef.current.deleteEffect(userId, effectId);
       setEffects((prev) => prev.filter((effect) => effect.id !== effectId));
-      entityEventEmitter.emit('effect_changed', storyId, entityId);
+      if (storyId) entityEventEmitter.emit('effect_changed', storyId, entityId);
     } catch (err) {
-      console.error('Failed to delete effect:', err);
+      logger.error('Failed to delete effect:', err);
       AppAlert.alert(t('error'), t('failed_to_delete_effect'));
     }
   };

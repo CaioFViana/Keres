@@ -30,6 +30,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
@@ -89,7 +90,7 @@ const ChangePasswordScreen = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('Failed to load server:', err);
+          logger.error('Failed to load server:', err);
           setError(t('server_not_found'));
         }
       } finally {
@@ -124,7 +125,7 @@ const ChangePasswordScreen = () => {
       AppAlert.alert(t('success'), t('password_changed_successfully'));
       navigation.goBack();
     } catch (err: any) {
-      console.error('Failed to change password:', err);
+      logger.error('Failed to change password:', err);
       if (isOfflineError(err)) {
         AppAlert.alert(t('error'), t('server_unreachable'));
       } else if (err?.response?.status === 401) {
@@ -153,7 +154,7 @@ const ChangePasswordScreen = () => {
               const codes = await userApiService.regenerateRecoveryCodes(server, currentPassword);
               setRecoveryCodesToShow(codes);
             } catch (err: any) {
-              console.error('Failed to regenerate recovery codes:', err);
+              logger.error('Failed to regenerate recovery codes:', err);
               if (isOfflineError(err)) {
                 AppAlert.alert(t('error'), t('server_unreachable'));
               } else if (err?.response?.status === 401) {
@@ -215,7 +216,7 @@ const ChangePasswordScreen = () => {
       AppAlert.alert(t('success'), t('password_reset_successfully'));
       navigation.goBack();
     } catch (err) {
-      console.error('Failed to recover account with a code:', err);
+      logger.error('Failed to recover account with a code:', err);
       if (isOfflineError(err)) {
         AppAlert.alert(t('error'), t('server_unreachable'));
       } else {

@@ -4,6 +4,7 @@ import {
   DESKTOP_MEDIA_URI_PREFIX,
   resolveBlobUri,
 } from '@/src/services/platform-web/webMediaStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Resolves several media paths into renderable URIs at once (the board resolves one at a time;
@@ -41,7 +42,7 @@ export function useResolvedMediaUris(
           try {
             next[path] = await resolveBlobUri(path);
           } catch (error) {
-            console.warn('useResolvedMediaUris: failed to resolve', path, error);
+            logger.warn('useResolvedMediaUris: failed to resolve', path, error);
             next[path] = null;
           }
         }),

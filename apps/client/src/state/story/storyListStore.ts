@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { logger } from '@/src/utils/logging/logger';
 
 interface StoryListState {
   stories: Story[];
@@ -31,7 +32,7 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
       );
       set({ stories: fetchedStories as Story[] });
     } catch (error) {
-      console.error('Error fetching stories:', error);
+      logger.error('Error fetching stories:', error);
       // TODO: Add error notification if necessary
     }
   },

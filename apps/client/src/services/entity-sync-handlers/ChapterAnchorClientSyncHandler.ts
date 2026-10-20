@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Anchors arriving from a server.
@@ -52,7 +53,7 @@ export class ChapterAnchorClientSyncHandler implements ClientSyncEntityHandler {
       where: eq(schema.chapterAnchors.id, update.id),
     });
     if (!local) {
-      console.warn(`ChapterAnchor ${update.id} not found locally for update. Skipping.`);
+      logger.warn(`ChapterAnchor ${update.id} not found locally for update. Skipping.`);
       return;
     }
 

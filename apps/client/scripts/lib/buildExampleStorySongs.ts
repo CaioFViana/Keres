@@ -16,7 +16,7 @@ type Context = {
  * Alice is the story that shows them: she recites one song in the scene where she shrinks and grows,
  * and the Hatter mentions another at the trial. The first is sung in part (a section of two), the
  * second whole, so a manuscript has both a partial and a whole song to print. No recording is bundled
- * (see "Media rule" in `docs/example_story_feature_matrix.md`).
+ * (see "Media rule" in `docs/structure/example_story_feature_matrix.md`).
  */
 const SONGS = {
   crocodile: {

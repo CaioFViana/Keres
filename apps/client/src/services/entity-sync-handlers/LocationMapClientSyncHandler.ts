@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Applies LocationMap documents received from the server to the local SQLite store. */
 export class LocationMapClientSyncHandler implements ClientSyncEntityHandler {
@@ -44,7 +45,7 @@ export class LocationMapClientSyncHandler implements ClientSyncEntityHandler {
       where: eq(schema.locationMaps.id, update.id),
     });
     if (!local) {
-      console.warn(`LocationMap ${update.id} not found locally for update. Skipping.`);
+      logger.warn(`LocationMap ${update.id} not found locally for update. Skipping.`);
       return;
     }
 

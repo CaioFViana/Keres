@@ -23,6 +23,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { usePublishManuscript } from './usePublishManuscript';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * A story's public address.
@@ -191,7 +192,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         setShowcase(remote);
       } catch (remoteError) {
         if (!isOfflineError(remoteError)) {
-          console.log('useStoryPublishing: could not read showcase state.', remoteError);
+          logger.debug('useStoryPublishing: could not read showcase state.', remoteError);
         }
       }
 
@@ -210,7 +211,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         resetForStory(found);
       }
     } catch (loadError) {
-      console.log('useStoryPublishing: failed to load the story.', loadError);
+      logger.debug('useStoryPublishing: failed to load the story.', loadError);
       setError(t('failed_to_load_story'));
     } finally {
       setLoading(false);
@@ -273,7 +274,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         // A verdict on the bytes themselves (rejected options, over the
         // ceiling, unsupported type): retrying the same bytes changes nothing,
         // so it is told once and never retried blindly.
-        console.log('useStoryPublishing: publish refused.', uploadError);
+        logger.debug('useStoryPublishing: publish refused.', uploadError);
         const message = t('publish_failed');
         setPublishError({ message, kind: 'upload', retryable: false });
         notifyFailure(message);
@@ -282,7 +283,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         setPublishError({ message, kind: 'upload', retryable: true });
         notifyFailure(message);
       } else {
-        console.log('useStoryPublishing: publish failed.', uploadError);
+        logger.debug('useStoryPublishing: publish failed.', uploadError);
         const message = t('publish_failed');
         setPublishError({ message, kind: 'upload', retryable: true });
         notifyFailure(message);
@@ -415,7 +416,7 @@ export function useStoryPublishing(storyId: string | undefined) {
           }
           // Nothing compiled, so there is nothing to upload and nothing to
           // keep: a retry rebuilds from scratch.
-          console.log('useStoryPublishing: compile failed.', compileError);
+          logger.debug('useStoryPublishing: compile failed.', compileError);
           const message = t('publish_compile_failed');
           setPublishError({ message, kind: 'compile', retryable: true });
           showNotification(message, 'error');
@@ -637,7 +638,7 @@ export function useStoryPublishing(storyId: string | undefined) {
                 showNotification(t('publish_version_deleted'), 'success');
                 await load();
               } catch (deleteError) {
-                console.log('useStoryPublishing: delete failed.', deleteError);
+                logger.debug('useStoryPublishing: delete failed.', deleteError);
                 showNotification(t('publish_failed'), 'error');
               } finally {
                 setBusy(false);
@@ -665,7 +666,7 @@ export function useStoryPublishing(storyId: string | undefined) {
             showNotification(t('publish_unpublished'), 'success');
             await load();
           } catch (unpublishError) {
-            console.log('useStoryPublishing: unpublish failed.', unpublishError);
+            logger.debug('useStoryPublishing: unpublish failed.', unpublishError);
             showNotification(t('publish_failed'), 'error');
           } finally {
             setBusy(false);

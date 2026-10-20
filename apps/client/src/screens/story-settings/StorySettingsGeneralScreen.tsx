@@ -24,6 +24,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useLoadedStory } from './useLoadedStory';
 import { useStorySettingsSave } from './useStorySettingsSave';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story's identity (title, type, description, genre, author, language, notes), the adults-only flag and
@@ -114,7 +115,7 @@ const StorySettingsGeneralScreen = () => {
               identity.setType('branching');
               AppAlert.alert(t('success'), t('story_type_converted_successfully'));
             } catch (err) {
-              console.error('Failed to convert story to branching:', err);
+              logger.error('Failed to convert story to branching:', err);
               AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
             } finally {
               setConverting(false);
@@ -154,7 +155,7 @@ const StorySettingsGeneralScreen = () => {
                 identity.setType('linear');
                 AppAlert.alert(t('success'), t('story_type_converted_successfully'));
               } catch (err) {
-                console.error('Failed to convert story to linear:', err);
+                logger.error('Failed to convert story to linear:', err);
                 AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
               } finally {
                 setConverting(false);
@@ -164,7 +165,7 @@ const StorySettingsGeneralScreen = () => {
         ]);
       } catch (err) {
         setConverting(false);
-        console.error('Failed to check linear compatibility:', err);
+        logger.error('Failed to check linear compatibility:', err);
         AppAlert.alert(t('error'), t('failed_to_check_story_compatibility'));
       }
     })();

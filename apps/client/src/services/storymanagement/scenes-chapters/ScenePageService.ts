@@ -14,6 +14,7 @@ import {
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 /** The one image of a page: a Sketch of the story, or a medium of its Gallery. */
 export type ScenePageMedia = { sketchId: string } | { galleryId: string };
@@ -169,7 +170,7 @@ export const createScenePageService = (db: AppDrizzleClient): ScenePageService =
     async deletePage(currentUserId, pageId) {
       const original = await db.query.scenePages.findFirst({ where: eq(scenePages.id, pageId) });
       if (!original) {
-        console.warn(`Attempted to delete non-existent scene page ${pageId}.`);
+        logger.warn(`Attempted to delete non-existent scene page ${pageId}.`);
         return;
       }
       await assertStoryIsWritable(db, original.storyId);

@@ -31,6 +31,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -66,7 +67,7 @@ const LocationMapListScreen = () => {
       setMaps(await createLocationMapService(db).getMapsForStory(storyId));
       setError(null);
     } catch (loadError) {
-      console.log('LocationMapListScreen: failed to load maps.', loadError);
+      logger.debug('LocationMapListScreen: failed to load maps.', loadError);
       setError(t('location_map_load_failed'));
     }
   }, [db, storyId, t]);
@@ -124,7 +125,7 @@ const LocationMapListScreen = () => {
             });
             await reload();
           } catch (duplicateError) {
-            console.log('LocationMapListScreen: failed to duplicate map.', duplicateError);
+            logger.debug('LocationMapListScreen: failed to duplicate map.', duplicateError);
             showNotification(t('location_map_save_failed'), 'error');
           }
         },
@@ -150,7 +151,7 @@ const LocationMapListScreen = () => {
       setEditingMap(null);
       await reload();
     } catch (updateError) {
-      console.log('LocationMapListScreen: failed to update map details.', updateError);
+      logger.debug('LocationMapListScreen: failed to update map details.', updateError);
       showNotification(t('location_map_save_failed'), 'error');
     }
   };
@@ -210,7 +211,7 @@ const LocationMapListScreen = () => {
             });
             navigation.navigate('LocationMap', { mapId: created.id });
           } catch (createError) {
-            console.log('LocationMapListScreen: failed to create a map.', createError);
+            logger.debug('LocationMapListScreen: failed to create a map.', createError);
             showNotification(t('location_map_save_failed'), 'error');
           }
         }}

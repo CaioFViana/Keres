@@ -11,6 +11,7 @@ import type { LocationRelationService } from '@/src/services/storymanagement/rel
 import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { createULID } from '@/src/utils/entity/entityUtils';
+import { logger } from '@/src/utils/logging/logger';
 
 const makePendingLocationRelation = (
   storyId: string,
@@ -91,7 +92,7 @@ export function useLocationFormAssociations({
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(storyId);
       setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all locations:', err);
+      logger.error('Failed to fetch all locations:', err);
     }
   }, [locationServiceRef, storyId]);
 
@@ -105,7 +106,7 @@ export function useLocationFormAssociations({
         await locationRelationServiceRef.current.getAllRelationsForStory(storyId);
       setAllLocationRelations(fetchedRelations);
     } catch (err) {
-      console.error('Failed to fetch all location relations:', err);
+      logger.error('Failed to fetch all location relations:', err);
     }
   }, [locationRelationServiceRef, storyId]);
 
@@ -281,7 +282,7 @@ export function useLocationFormAssociations({
         } catch (error) {
           setPendingLocationRelations(previous);
           AppAlert.alert(t('error'), t('failed_to_remove_relation'));
-          console.error('Failed to delete pending location relation draft:', error);
+          logger.error('Failed to delete pending location relation draft:', error);
         }
         return;
       }

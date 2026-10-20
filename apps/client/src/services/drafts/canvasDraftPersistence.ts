@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/src/utils/logging/logger';
 
 export type CanvasDraftKind = 'board' | 'location-map' | 'sketch';
 
@@ -25,7 +26,7 @@ export async function readCanvasDraft<T extends object>(
     const parsed = JSON.parse(raw) as T;
     return parsed && typeof parsed === 'object' ? parsed : null;
   } catch (error) {
-    console.error(`Failed to read ${kind} canvas draft:`, error);
+    logger.error(`Failed to read ${kind} canvas draft:`, error);
     return null;
   }
 }
@@ -44,7 +45,7 @@ export function scheduleWriteCanvasDraft(
     try {
       await AsyncStorage.setItem(key, JSON.stringify(draft));
     } catch (error) {
-      console.error(`Failed to write ${kind} canvas draft:`, error);
+      logger.error(`Failed to write ${kind} canvas draft:`, error);
     }
   };
   pendingWrites.set(key, { timer: setTimeout(() => void flush(), WRITE_DEBOUNCE_MS), flush });
@@ -72,7 +73,7 @@ export async function writeCanvasDraftNow(
   try {
     await AsyncStorage.setItem(key, JSON.stringify(draft));
   } catch (error) {
-    console.error(`Failed to write ${kind} canvas draft:`, error);
+    logger.error(`Failed to write ${kind} canvas draft:`, error);
   }
 }
 
@@ -90,7 +91,7 @@ export async function clearCanvasDraft(
   try {
     await AsyncStorage.removeItem(key);
   } catch (error) {
-    console.error(`Failed to clear ${kind} canvas draft:`, error);
+    logger.error(`Failed to clear ${kind} canvas draft:`, error);
   }
 }
 
@@ -105,6 +106,6 @@ export async function clearAllCanvasDrafts(): Promise<void> {
       await AsyncStorage.multiRemove(draftKeys);
     }
   } catch (error) {
-    console.error('Failed to clear all canvas drafts:', error);
+    logger.error('Failed to clear all canvas drafts:', error);
   }
 }

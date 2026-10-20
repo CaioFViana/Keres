@@ -53,6 +53,7 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { removeLocationMapPoint } from '@/src/utils/location-map/locationMapContent';
+import { logger } from '@/src/utils/logging/logger';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -161,7 +162,7 @@ const LocationMapScreen = () => {
       }
       setError(null);
     } catch (loadError) {
-      console.log('LocationMapScreen: failed to load map.', loadError);
+      logger.debug('LocationMapScreen: failed to load map.', loadError);
       setError(t('location_map_load_failed'));
     } finally {
       setLoading(false);
@@ -199,7 +200,7 @@ const LocationMapScreen = () => {
       setSavedContent(updated.content);
       showNotification(t('location_map_saved'), 'success');
     } catch (saveError) {
-      console.log('LocationMapScreen: failed to save map.', saveError);
+      logger.debug('LocationMapScreen: failed to save map.', saveError);
       showNotification(t('location_map_save_failed'), 'error');
     } finally {
       setSaving(false);

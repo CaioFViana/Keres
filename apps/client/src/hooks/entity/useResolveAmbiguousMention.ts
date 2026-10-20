@@ -6,6 +6,7 @@ import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/relations/
 import { createSeeAlsoRelationService } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * One-touch resolution for ambiguous-name suggestions: links the source entity to the
@@ -33,7 +34,7 @@ export function useResolveAmbiguousMention() {
         await service.addSeeAlsoLink(userId, storyId, source, target);
         return true;
       } catch (error) {
-        console.error('Failed to resolve ambiguous mention:', error);
+        logger.error('Failed to resolve ambiguous mention:', error);
         AppAlert.alert(t('error'), t('failed_to_resolve_ambiguous_mention'));
         return false;
       }

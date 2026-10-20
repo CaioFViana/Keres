@@ -6,6 +6,7 @@ import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
 import type { StatService } from '@/src/services/storymanagement/choices-stats/StatService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StatFormState } from './useStatFormState';
+import { logger } from '@/src/utils/logging/logger';
 
 type StatNavigation = NativeStackNavigationProp<StatsStackParamList, 'StatForm'>;
 
@@ -66,7 +67,7 @@ export function useStatFormActions({
       await state.clearFormDraft();
       navigation.goBack();
     } catch (error: any) {
-      console.error('Failed to save stat:', error);
+      logger.error('Failed to save stat:', error);
       AppAlert.alert(t('error'), error?.message || t('stat_save_failed'));
     } finally {
       setSaving(false);

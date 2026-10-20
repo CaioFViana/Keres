@@ -8,6 +8,7 @@ import { createAttributeValueService } from '@/src/services/storymanagement/enti
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
 import type { StorySchemaField } from '@keres/shared';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseCharacterFormStateOptions = {
   initialCharacterId?: string;
@@ -167,11 +168,11 @@ export function useCharacterFormState({
                 : fromDb,
             );
           } else {
-            console.warn('Character not found:', initialCharacterId);
+            logger.warn('Character not found:', initialCharacterId);
           }
         }
       } catch (err) {
-        console.error('Failed to load character:', err);
+        logger.error('Failed to load character:', err);
       } finally {
         setLoading(false);
       }
@@ -188,7 +189,7 @@ export function useCharacterFormState({
 
   const restoreDraftFields = useCallback((fields: CharacterFormDraftFields) => {
     if (!isCharacterFormDraftFields(fields)) {
-      console.error('Corrupt character form draft ignored.');
+      logger.error('Corrupt character form draft ignored.');
       return;
     }
     setName(fields.name);

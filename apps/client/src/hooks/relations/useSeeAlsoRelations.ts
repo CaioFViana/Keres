@@ -6,6 +6,7 @@ import { createSeeAlsoRelationService } from '@/src/services/storymanagement/rel
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface SeeAlsoLink {
   relationId: string;
@@ -93,7 +94,7 @@ export function useSeeAlsoRelations(
         }),
       );
     } catch (error) {
-      console.error(`Failed to load See Also relations for ${entityType} ${entityId}:`, error);
+      logger.error(`Failed to load See Also relations for ${entityType} ${entityId}:`, error);
       setRelations([]);
     } finally {
       setLoading(false);

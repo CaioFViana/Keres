@@ -12,6 +12,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface StatRelationService {
   /** Every value in the story - enough to build the radar and the ranking in one go. */
@@ -123,7 +124,7 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
   ): StatRelationSelect | undefined => {
     const live = findLiveValues(characterId, modeId, statId);
     for (const duplicate of live.slice(1)) {
-      console.warn(
+      logger.warn(
         `Collapsing a duplicate stat value for character ${characterId} and stat ${statId}.`,
       );
       softDelete(duplicate, userIdToLog);

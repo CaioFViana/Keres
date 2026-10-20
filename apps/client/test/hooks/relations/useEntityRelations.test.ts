@@ -415,7 +415,7 @@ describe('reacting to changes elsewhere in the app', () => {
     ['note_changed', () => noteService.getNotesByStoryId],
     ['note_relation_changed', () => noteRelationService.getRelationsForEntity],
     ['tag_changed', () => tagService.getTagsByStoryId],
-  ])('refreshes on %s for the open story', async (event, getSpy) => {
+  ] as const)('refreshes on %s for the open story', async (event, getSpy) => {
     await render();
     getSpy().mockClear();
 
@@ -426,18 +426,21 @@ describe('reacting to changes elsewhere in the app', () => {
     expect(getSpy()).toHaveBeenCalled();
   });
 
-  it.each(['note_changed', 'tag_changed'])('ignores %s from another story', async (event) => {
-    await render();
-    noteService.getNotesByStoryId.mockClear();
-    tagService.getTagsByStoryId.mockClear();
+  it.each(['note_changed', 'tag_changed'] as const)(
+    'ignores %s from another story',
+    async (event) => {
+      await render();
+      noteService.getNotesByStoryId.mockClear();
+      tagService.getTagsByStoryId.mockClear();
 
-    await act(async () => {
-      entityEventEmitter.emit(event, 'outra-historia');
-    });
+      await act(async () => {
+        entityEventEmitter.emit(event, 'outra-historia');
+      });
 
-    expect(noteService.getNotesByStoryId).not.toHaveBeenCalled();
-    expect(tagService.getTagsByStoryId).not.toHaveBeenCalled();
-  });
+      expect(noteService.getNotesByStoryId).not.toHaveBeenCalled();
+      expect(tagService.getTagsByStoryId).not.toHaveBeenCalled();
+    },
+  );
 
   /** The tag event carries the entity it belongs to; the others' are of no interest. */
   it('ignores a tag relation change that belongs to another entity', async () => {

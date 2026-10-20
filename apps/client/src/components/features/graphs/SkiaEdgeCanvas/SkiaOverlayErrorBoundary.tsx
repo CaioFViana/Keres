@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '@/src/utils/logging/logger';
 
 interface SkiaOverlayErrorBoundaryProps {
   /** Which canvas owns the overlay, so the logged failure names its screen. */
@@ -27,7 +28,7 @@ class SkiaOverlayErrorBoundary extends React.Component<
   }
 
   override componentDidCatch(error: unknown): void {
-    console.error(
+    logger.error(
       `[SkiaEdgeCanvas:${this.props.canvas}] edges overlay failed to render; ` +
         `pins and images stay interactive without the edge lines.`,
       error,

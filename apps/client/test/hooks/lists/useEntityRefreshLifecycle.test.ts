@@ -22,7 +22,7 @@ describe('entity refresh lifecycle', () => {
   });
 
   it('subscribes and removes each listener with the lifecycle of its screen', async () => {
-    const event = 'test_lifecycle_subscription';
+    const event = 'character_changed' as const;
     const listener = jest.fn();
     const view = await renderHook(() => useEntityEventSubscriptions([{ event, listener }]));
     entityEventEmitter.emit(event, 'story');

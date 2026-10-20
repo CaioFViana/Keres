@@ -53,6 +53,7 @@ import { accountNeedsVerification } from '@/src/services/auth/ageVerificationRou
 import { blocksNewAccounts } from '@/src/utils/auth/ageVerificationRules';
 import { fetchServerPrivacy, fetchServerTerms } from '@/src/services/servers/ServerTermsService';
 import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/auth/serverUrl';
+import { logger } from '@/src/utils/logging/logger';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
@@ -144,7 +145,7 @@ const ServerRegistrationScreen = () => {
             setError(t('server_not_found'));
           }
         } catch (err) {
-          console.error('Failed to load server:', err);
+          logger.error('Failed to load server:', err);
           setError(t('failed_to_load_server'));
         } finally {
           setLoading(false);
@@ -476,7 +477,7 @@ const ServerRegistrationScreen = () => {
             AppAlert.alert(t('success'), t('server_deleted_successfully'));
             navigation.goBack();
           } catch (err) {
-            console.error('Failed to delete server:', err);
+            logger.error('Failed to delete server:', err);
             if (err instanceof ServerHasOwnedStoriesError) {
               const message = t('cannot_delete_server_owned_stories_message', {
                 stories: err.ownedStories.map((story) => story.title).join(', '),

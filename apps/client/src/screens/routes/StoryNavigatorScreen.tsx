@@ -29,6 +29,7 @@ import { useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useDrizzle } from '@/src/db';
+import { logger } from '@/src/utils/logging/logger';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'StoryNavigator'>;
 
@@ -82,7 +83,7 @@ export default function StoryNavigatorScreen() {
               setPersistenceMode(null);
               navigation.navigate('RouteDetail', { routeId: route.id });
             } catch (error) {
-              console.error('Failed to persist navigator route:', error);
+              logger.error('Failed to persist navigator route:', error);
               AppAlert.alert(t('error'), t('navigator_save_route_failed'));
             }
           },

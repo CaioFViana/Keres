@@ -37,6 +37,7 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import { logger } from '@/src/utils/logging/logger';
 
 type ArcFormDraftFields = {
   title: string;
@@ -144,7 +145,7 @@ const StoryArcFormScreen = () => {
 
   const restoreDraftFields = useCallback((fields: ArcFormDraftFields) => {
     if (!isArcFormDraftFields(fields)) {
-      console.error('Corrupt arc form draft ignored.');
+      logger.error('Corrupt arc form draft ignored.');
       return;
     }
     setTitle(fields.title);

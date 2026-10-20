@@ -12,6 +12,7 @@ import {
   type AccessRevocationReason,
 } from '@/src/services/social/accessRevocation';
 import type { ServerStoryPreview } from '@/src/services/sync/SyncEngineService';
+import { logger } from '@/src/utils/logging/logger';
 
 const REVOCATION_MESSAGE_KEYS: Record<AccessRevocationReason, string> = {
   'nsfw-story': 'story_access_revoked_nsfw',
@@ -61,7 +62,7 @@ export async function dropRevokedServerStories(
       // Whatever is showing it - the open story above all - lets go of it.
       entityEventEmitter.emit('story_access_lost', story.id);
     } catch (error) {
-      console.log(`Failed to drop the copy of story ${story.id} after losing access:`, error);
+      logger.debug(`Failed to drop the copy of story ${story.id} after losing access:`, error);
     }
   }
   if (dropped.length > 0) {

@@ -27,6 +27,7 @@ import {
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -172,7 +173,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for tag ${tagId}. Skipping update and operation log.`,
         );
         return;
@@ -210,7 +211,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
     async deleteTag(currentUserId: string, tagId: string): Promise<void> {
       const tagToDelete = await db.query.tags.findFirst({ where: eq(tags.id, tagId) });
       if (!tagToDelete) {
-        console.warn(`Attempted to delete non-existent tag ${tagId}.`);
+        logger.warn(`Attempted to delete non-existent tag ${tagId}.`);
         return;
       }
       await assertStoryIsWritable(db, tagToDelete.storyId);

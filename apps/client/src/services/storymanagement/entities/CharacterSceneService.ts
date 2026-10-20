@@ -10,6 +10,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export type NewCharacterScene = Omit<
   CharacterSceneInterface,
@@ -74,7 +75,7 @@ export function createCharacterSceneService(
         });
         return relations;
       } catch (error) {
-        console.error('Error fetching character-scene relations for scene:', error);
+        logger.error('Error fetching character-scene relations for scene:', error);
         throw error;
       }
     },
@@ -93,7 +94,7 @@ export function createCharacterSceneService(
         });
         return relations;
       } catch (error) {
-        console.error('Error fetching character-scene relations for character:', error);
+        logger.error('Error fetching character-scene relations for character:', error);
         throw error;
       }
     },
@@ -108,7 +109,7 @@ export function createCharacterSceneService(
         });
         return relations;
       } catch (error) {
-        console.error('Error fetching all character-scene relations for story:', error);
+        logger.error('Error fetching all character-scene relations for story:', error);
         throw error;
       }
     },
@@ -146,7 +147,7 @@ export function createCharacterSceneService(
             delete changes.updatedAt;
 
             if (Object.keys(changes).length === 0) {
-              console.log(
+              logger.debug(
                 `CharacterScene ${relation.id}: No significant changes detected. Skipping update and operation log.`,
               );
               return existingRelation;
@@ -246,7 +247,7 @@ export function createCharacterSceneService(
 
         return resultRelation;
       } catch (error) {
-        console.error('Error saving character-scene relation:', error);
+        logger.error('Error saving character-scene relation:', error);
         throw error;
       }
     },
@@ -258,7 +259,7 @@ export function createCharacterSceneService(
         });
 
         if (!existingRelation) {
-          console.warn(`CharacterScene with ID ${relationId} not found for deletion.`);
+          logger.warn(`CharacterScene with ID ${relationId} not found for deletion.`);
           return false;
         }
         await assertStoryIsWritable(drizzleDb, existingRelation.storyId);
@@ -301,7 +302,7 @@ export function createCharacterSceneService(
 
         return true;
       } catch (error) {
-        console.error('Error deleting character-scene relation:', error);
+        logger.error('Error deleting character-scene relation:', error);
         throw error;
       }
     },

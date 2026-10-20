@@ -25,16 +25,15 @@ import { SyncMedia } from './SyncMedia';
 import type { SyncNotifier } from './SyncNotifier';
 import { heldStorySaveReport } from './heldStorySave';
 import { protectRemoteUpdate, throwIfSyncAborted } from './syncPure';
-import { FAVORITE_TARGET_EVENTS } from './syncEvents';
+import { FAVORITE_TARGET_EVENTS, type SyncEventPublisher } from './syncEvents';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { ServerStoryPreview } from './StoryTransfer';
 export { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from './SyncScheduler';
 
 export type SyncEngineLifecycle = 'unbound' | 'idle' | 'active' | 'running';
 
-export interface SyncEventPublisher {
-  emit(event: string, ...args: unknown[]): void;
-}
+export type { SyncEventPublisher };
 
 export interface SyncTokenProvider extends TokenProvider {
   setGetServerById(getServerById: ServerService['getServerById']): void;
@@ -205,7 +204,7 @@ export class SyncEngineService {
       this.pullApply.reset();
       this.scheduler.resetBackoff();
       this.scheduler.resume();
-      console.log(`SyncEngineService activated for story ${storyId} with server: ${server.url}`);
+      logger.debug(`SyncEngineService activated for story ${storyId} with server: ${server.url}`);
     });
   }
 
@@ -244,7 +243,7 @@ export class SyncEngineService {
       this._db = null;
       this._conflictService = null;
       this.media.reset();
-      console.log('Sync engine has been reset, database instance cleared.');
+      logger.debug('Sync engine has been reset, database instance cleared.');
     });
   }
 
@@ -294,7 +293,7 @@ export class SyncEngineService {
     try {
       await this.scheduler.runAndWait();
     } catch (error) {
-      console.log(`Sync for story ${storyId} after a manual save failed:`, error);
+      logger.debug(`Sync for story ${storyId} after a manual save failed:`, error);
       return { conflicts: 0, refusals: [] };
     }
     if (this.storyId !== storyId) return { conflicts: 0, refusals: [] };
@@ -367,7 +366,7 @@ export class SyncEngineService {
    */
   private deactivateStoryFromActiveCycle(cycleStoryId?: string): void {
     if (cycleStoryId && this.storyId && this.storyId !== cycleStoryId) {
-      console.log(
+      logger.debug(
         `Sync cycle for ${cycleStoryId} ending without clearing active story ${this.storyId}.`,
       );
       return;
@@ -387,18 +386,18 @@ export class SyncEngineService {
    */
   private async performSync(signal: AbortSignal): Promise<SyncCycleOutcome> {
     if (!this.storyId) {
-      console.log('No storyId set for sync operation.');
+      logger.debug('No storyId set for sync operation.');
       return 'ok';
     }
 
     if (!this.client.defaults.baseURL) {
-      console.log('No server URL set for sync operation.');
+      logger.debug('No server URL set for sync operation.');
       this.deactivateStoryFromActiveCycle(this.storyId);
       return 'ok';
     }
 
     if (!this._db) {
-      console.log('Drizzle client (db) is not initialized. Cannot perform sync.');
+      logger.debug('Drizzle client (db) is not initialized. Cannot perform sync.');
       this.deactivateStoryFromActiveCycle(this.storyId);
       return 'ok';
     }
@@ -429,7 +428,7 @@ export class SyncEngineService {
       });
 
       if (!localStory) {
-        console.log(`Story with ID ${storyId} not found locally.`);
+        logger.debug(`Story with ID ${storyId} not found locally.`);
         this.deactivateStoryFromActiveCycle(storyId);
         return 'ok';
       }
@@ -502,7 +501,7 @@ export class SyncEngineService {
           // success: reporting 'ok' would let a permanently stuck pull look healthy.
           if (batchOutcome.blocked) pullFailed = true;
         } else {
-          console.log(`No new remote updates for story ${storyId} since version ${lastSyncedLog}`);
+          logger.debug(`No new remote updates for story ${storyId} since version ${lastSyncedLog}`);
         }
 
         // The public snapshot is the authoritative source for collaborators' favourites. It closes gaps left by
@@ -555,29 +554,31 @@ export class SyncEngineService {
         if (isOfflineError(pullError)) {
           // Offline-first: an unreachable server is expected, not a failure worth
           // interrupting the user for. Retried on a shorter delay, without pushing.
-          console.log(`Sync skipped for story ${storyId}: server unreachable.`);
+          logger.debug(`Sync skipped for story ${storyId}: server unreachable.`);
           return 'offline';
         }
         if (isNotFoundError(pullError)) {
           // The story is gone server-side: pushing cannot succeed either, and retrying
           // next cycle changes nothing. Tell the user once and deactivate instead of
           // hammering a settled fact forever.
-          console.log(`Sync stopped for story ${storyId}: not found on the server.`);
+          logger.debug(`Sync stopped for story ${storyId}: not found on the server.`);
           this.dependencies.notifier.storyNotFound();
           this.deactivateStoryFromActiveCycle(storyId);
           return 'failed';
         }
         if (isProtocolMismatchError(pullError)) {
-          console.log(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
+          logger.debug(
+            `Sync refused for story ${storyId}: the server needs a newer sync protocol.`,
+          );
           this.dependencies.notifier.protocolMismatch();
         } else if (isVerificationPendingError(pullError)) {
           // The app sends a pending account to its age check; that is not a sync failure to report.
-          console.log(`Pull held for story ${storyId}: the account awaits age verification.`);
+          logger.debug(`Pull held for story ${storyId}: the account awaits age verification.`);
         } else if (isTransientServerError(pullError)) {
           // Rate limited or restarting: the backoff retries, and there is nothing to tell the user.
-          console.log(`Pull deferred for story ${storyId}: ${pullError?.message || pullError}`);
+          logger.debug(`Pull deferred for story ${storyId}: ${pullError?.message || pullError}`);
         } else {
-          console.log('Error during sync pull phase:', pullError?.message || pullError);
+          logger.debug('Error during sync pull phase:', pullError?.message || pullError);
           this.dependencies.notifier.syncFailed();
         }
         pullFailed = true;
@@ -594,29 +595,31 @@ export class SyncEngineService {
         if (isOfflineError(pushError)) {
           // The pull already applied above; its progress must not be lost to the re-fetch.
           await persistPullProgress();
-          console.log(`Push skipped for story ${storyId}: server unreachable.`);
+          logger.debug(`Push skipped for story ${storyId}: server unreachable.`);
           return 'offline';
         }
         if (isNotFoundError(pushError)) {
           // Deleted between the pull and the push: keep what the pull applied, then stop
           // hammering the gone story like the pull phase does.
           await persistPullProgress();
-          console.log(`Sync stopped for story ${storyId}: not found on the server.`);
+          logger.debug(`Sync stopped for story ${storyId}: not found on the server.`);
           this.dependencies.notifier.storyNotFound();
           this.deactivateStoryFromActiveCycle(storyId);
           return 'failed';
         }
         pushFailed = true;
         if (isProtocolMismatchError(pushError)) {
-          console.log(`Push refused for story ${storyId}: the server needs a newer sync protocol.`);
+          logger.debug(
+            `Push refused for story ${storyId}: the server needs a newer sync protocol.`,
+          );
           this.dependencies.notifier.protocolMismatch();
         } else if (isVerificationPendingError(pushError)) {
-          console.log(`Push held for story ${storyId}: the account awaits age verification.`);
+          logger.debug(`Push held for story ${storyId}: the account awaits age verification.`);
         } else if (isTransientServerError(pushError)) {
           // Rate limited or restarting: the operations stay queued and the backoff retries them.
-          console.log(`Push deferred for story ${storyId}: ${pushError?.message || pushError}`);
+          logger.debug(`Push deferred for story ${storyId}: ${pushError?.message || pushError}`);
         } else {
-          console.log(
+          logger.debug(
             `Error pushing local operations for story ${storyId}:`,
             pushError?.message || pushError,
           );
@@ -645,25 +648,25 @@ export class SyncEngineService {
       return pullFailed || pushFailed ? 'failed' : 'ok';
     } catch (error: any) {
       if (isAbortError(error)) {
-        console.log(`Sync cycle for story ${storyId} aborted.`);
+        logger.debug(`Sync cycle for story ${storyId} aborted.`);
         return 'ok';
       }
       if (isOfflineError(error)) {
         // Offline-first: an unreachable server is expected, not a failure worth
         // interrupting the user for. Retried on a shorter delay.
-        console.log(`Sync skipped for story ${storyId}: server unreachable.`);
+        logger.debug(`Sync skipped for story ${storyId}: server unreachable.`);
         return 'offline';
       }
       if (isProtocolMismatchError(error)) {
-        console.log(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
+        logger.debug(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
         this.dependencies.notifier.protocolMismatch();
         return 'failed';
       }
       if (isVerificationPendingError(error)) {
-        console.log(`Sync held for story ${storyId}: the account awaits age verification.`);
+        logger.debug(`Sync held for story ${storyId}: the account awaits age verification.`);
         return 'failed';
       }
-      console.log('Error during sync operation:', error?.message || error);
+      logger.debug('Error during sync operation:', error?.message || error);
       this.dependencies.notifier.syncFailed();
       return 'failed';
     } finally {

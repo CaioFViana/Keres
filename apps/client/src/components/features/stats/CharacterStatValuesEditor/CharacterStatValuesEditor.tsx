@@ -12,6 +12,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import { formatStatNumber, formatTierLabel } from '@keres/shared/graphs/stats/statLadder';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 import { resolveStatValue } from '@/src/utils/stats/statValues';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * A character's stat values, per mode.
@@ -122,7 +123,7 @@ export function CharacterStatValuesEditor({
       }
       await onSetValue({ modeId, statId, value });
     } catch (error: any) {
-      console.error('Failed to save stat value:', error);
+      logger.error('Failed to save stat value:', error);
       AppAlert.alert(t('error'), error?.message || t('stat_value_save_failed'));
     }
   };

@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { logger } from '@/src/utils/logging/logger';
 
 type RouteService = ReturnType<typeof createRouteService>;
 
@@ -69,7 +70,7 @@ export function useRouteFormState({ routeId, storyId, routeServiceRef }: UseRout
 
   const restoreDraftFields = useCallback((fields: RouteFormDraftFields) => {
     if (!isRouteFormDraftFields(fields)) {
-      console.error('Corrupt route form draft ignored.');
+      logger.error('Corrupt route form draft ignored.');
       return;
     }
     setName(fields.name);

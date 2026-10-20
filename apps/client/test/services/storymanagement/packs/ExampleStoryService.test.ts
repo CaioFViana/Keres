@@ -419,7 +419,7 @@ it('uses every bundled example as a clean story-analysis reference', async () =>
         storyType: story.story.type,
         // Deliberately on, unlike a real story's default: an example is the reference for a
         // well-formed story, so an unused tag or a character in no scene is a defect *here* even
-        // though it is a legitimate choice in somebody's own bible. See docs/example_story_feature_matrix.md.
+        // though it is a legitimate choice in somebody's own bible. See docs/structure/example_story_feature_matrix.md.
         includeCompletenessChecks: true,
         characters: story.characters,
         characterScenes: story.characterScenes,

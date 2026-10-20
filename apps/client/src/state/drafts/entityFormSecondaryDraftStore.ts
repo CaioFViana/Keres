@@ -7,6 +7,7 @@ import {
   SECONDARY_DRAFT_FIELD,
   writeEditorDraftNow,
 } from '@/src/services/drafts/EditorDraftService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Durable secondary-data draft for multi-step entity forms.
@@ -74,7 +75,7 @@ function parseSecondaryDraft(raw: string | null): EntityFormSecondaryDraft | nul
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Corrupt entity secondary draft ignored:', error);
+    logger.error('Corrupt entity secondary draft ignored:', error);
     return null;
   }
 }
@@ -88,7 +89,7 @@ async function readLegacyDraft(
   try {
     raw = await AsyncStorage.getItem(storageKey(storyId, entityType, entityId));
   } catch (error) {
-    console.error('Failed to read entity secondary draft:', error);
+    logger.error('Failed to read entity secondary draft:', error);
     throw error;
   }
   return parseSecondaryDraft(raw);
@@ -118,7 +119,7 @@ export async function readEntityFormSecondaryDraft(
         try {
           await AsyncStorage.removeItem(storageKey(storyId, entityType, entityId));
         } catch (error) {
-          console.error('Failed to clear adopted entity secondary draft:', error);
+          logger.error('Failed to clear adopted entity secondary draft:', error);
         }
       }
     }
@@ -151,7 +152,7 @@ export async function writeEntityFormSecondaryDraft(
         );
         if (!stored) throw new Error('Editor draft database was unbound mid-write.');
       } catch (error) {
-        console.error('Failed to write entity secondary draft:', error);
+        logger.error('Failed to write entity secondary draft:', error);
         throw error;
       }
       return;
@@ -159,7 +160,7 @@ export async function writeEntityFormSecondaryDraft(
     try {
       await AsyncStorage.setItem(key, JSON.stringify(payload));
     } catch (error) {
-      console.error('Failed to write entity secondary draft:', error);
+      logger.error('Failed to write entity secondary draft:', error);
       throw error;
     }
   });
@@ -176,14 +177,14 @@ export async function clearEntityFormSecondaryDraft(
       try {
         await clearBoundEditorDraft(storyId, entityType, entityId, SECONDARY_DRAFT_FIELD);
       } catch (error) {
-        console.error('Failed to clear entity secondary draft:', error);
+        logger.error('Failed to clear entity secondary draft:', error);
         throw error;
       }
     }
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error('Failed to clear entity secondary draft:', error);
+      logger.error('Failed to clear entity secondary draft:', error);
       throw error;
     }
   });
@@ -222,7 +223,7 @@ export async function patchEntityFormSecondaryDraft(
         );
         if (!stored) throw new Error('Editor draft database was unbound mid-write.');
       } catch (error) {
-        console.error('Failed to patch entity secondary draft:', error);
+        logger.error('Failed to patch entity secondary draft:', error);
         throw error;
       }
       return;
@@ -230,7 +231,7 @@ export async function patchEntityFormSecondaryDraft(
     try {
       await AsyncStorage.setItem(key, JSON.stringify(payload));
     } catch (error) {
-      console.error('Failed to patch entity secondary draft:', error);
+      logger.error('Failed to patch entity secondary draft:', error);
       throw error;
     }
   });

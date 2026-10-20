@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Boards arriving from a server. `content` travels as an object and is stored as one.
@@ -43,7 +44,7 @@ export class BoardClientSyncHandler implements ClientSyncEntityHandler {
       where: eq(schema.boards.id, update.id),
     });
     if (!local) {
-      console.warn(`Board ${update.id} not found locally for update. Skipping.`);
+      logger.warn(`Board ${update.id} not found locally for update. Skipping.`);
       return;
     }
 

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { StorySelect } from '@/src/db/schema';
 import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { logger } from '@/src/utils/logging/logger';
 
 const ALL_OFF: PackSelectionType = {
   customAttributes: false,
@@ -60,7 +61,7 @@ export function usePackFormState({
           setSourceStoryId(pack.sourceStoryId);
         }
       } catch (error) {
-        console.error('PackFormScreen: failed to load.', error);
+        logger.error('PackFormScreen: failed to load.', error);
         showNotification(t('packs_load_failed'), 'error');
       } finally {
         setLoading(false);

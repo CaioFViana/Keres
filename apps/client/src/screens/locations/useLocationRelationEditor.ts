@@ -8,6 +8,7 @@ import {
   computeAncestorIds,
   computeDescendantIds,
 } from '@/src/utils/location-map/locationMapRelations';
+import { logger } from '@/src/utils/logging/logger';
 
 export type LocationRelationEditKind = 'parent' | 'child' | 'connection';
 
@@ -106,7 +107,7 @@ export function useLocationRelationEditor({
         await action(userId, storyId);
         await reload();
       } catch (error) {
-        console.error('Failed to change a location relation:', error);
+        logger.error('Failed to change a location relation:', error);
         AppAlert.alert(t('error'), t('failed_to_save_relation'));
       }
     },

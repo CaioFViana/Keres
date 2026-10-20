@@ -18,6 +18,7 @@ import {
   planPlacementSync,
   writeRankChangesSync,
 } from '@/src/db/arrangedWrites';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface StatService {
   getStatsByStoryId(storyId: string): Promise<StatSelect[]>;
@@ -180,7 +181,7 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
     async deleteStat(currentUserId, statId) {
       const stat = await db.query.stats.findFirst({ where: eq(stats.id, statId) });
       if (!stat) {
-        console.warn(`Attempted to delete non-existent stat ${statId}.`);
+        logger.warn(`Attempted to delete non-existent stat ${statId}.`);
         return;
       }
       if (stat.isDeleted) return;

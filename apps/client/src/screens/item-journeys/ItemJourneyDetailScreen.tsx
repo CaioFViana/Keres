@@ -44,6 +44,7 @@ import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEnt
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { ItemStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { logger } from '@/src/utils/logging/logger';
 
 export type ItemJourneyDetailScreenParamList = {
   ItemJourneyDetail: { itemJourneyId: string; occurrence?: OccurrenceTarget };
@@ -151,7 +152,7 @@ const ItemJourneyDetailScreen = () => {
 
   const fetchItemJourney = useCallback(async () => {
     if (!itemJourneyServiceRef.current) {
-      console.warn('Item Journey service not initialized.');
+      logger.warn('Item Journey service not initialized.');
       return;
     }
     try {
@@ -171,7 +172,7 @@ const ItemJourneyDetailScreen = () => {
         );
       }
     } catch (err) {
-      console.error('Failed to fetch item journey details:', err);
+      logger.error('Failed to fetch item journey details:', err);
       setError(t('vocabulary_failed_to_load_entity', { entity: itemCopy.itemJourney }));
       setHeaderTitle(t('error'));
     } finally {

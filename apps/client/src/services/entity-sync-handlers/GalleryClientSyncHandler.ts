@@ -11,6 +11,7 @@ import * as schema from '@/src/db/schema';
 import type { GallerySelect } from '@/src/db/schema';
 import { mediaFileService } from '@/src/services/media/MediaFileService';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Applies a media file's *metadata* changes coming from the server locally.
@@ -40,7 +41,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for create operation on ${this.entityName}`);
+      logger.error(`Missing ID for create operation on ${this.entityName}`);
       return;
     }
 
@@ -59,14 +60,14 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
       uploadState: 'uploaded',
       downloadState: galleryHasFile(data.mediaType) ? 'pending' : 'downloaded',
     });
-    console.log(`Applied create for Gallery ${update.id} in story ${storyId}`);
+    logger.debug(`Applied create for Gallery ${update.id} in story ${storyId}`);
   }
 
   async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
-      console.error(`Missing ID or changes for update operation on ${this.entityName}`);
+      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
@@ -101,7 +102,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     if (hashChanged && existing) {
       await this.deleteAbandonedFiles(storyId, [existing.localPath, existing.thumbnailPath]);
     }
-    console.log(`Applied update for Gallery ${update.id} in story ${storyId}`);
+    logger.debug(`Applied update for Gallery ${update.id} in story ${storyId}`);
   }
 
   /**
@@ -142,7 +143,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
         }
       }
     } catch (error) {
-      console.warn('GalleryClientSyncHandler: could not delete abandoned media files.', error);
+      logger.warn('GalleryClientSyncHandler: could not delete abandoned media files.', error);
     }
   }
 
@@ -150,7 +151,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName}`);
+      logger.error(`Missing ID for delete operation on ${this.entityName}`);
       return;
     }
 
@@ -162,7 +163,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
         updatedAt: new Date(),
       })
       .where(eq(schema.galleries.id, update.id));
-    console.log(`Applied delete for Gallery ${update.id} in story ${storyId}`);
+    logger.debug(`Applied delete for Gallery ${update.id} in story ${storyId}`);
   }
 
   async getById(id: string): Promise<GallerySelect | undefined> {

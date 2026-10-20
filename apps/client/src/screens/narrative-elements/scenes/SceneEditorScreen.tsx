@@ -44,6 +44,7 @@ import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type SceneEditorNavigation = NativeStackNavigationProp<
@@ -371,7 +372,7 @@ const SceneEditorScreen = () => {
         setError(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch scene for the editor:', err);
+      logger.error('Failed to fetch scene for the editor:', err);
       setError(copy.failedToLoad);
     } finally {
       setLoading(false);

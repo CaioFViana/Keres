@@ -18,6 +18,7 @@ import {
   SNAPSHOT_BOOKKEEPING,
   withoutDerivedPosition,
 } from './syncConflictHelpers';
+import { logger } from '@/src/utils/logging/logger';
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -232,7 +233,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       columns: { storyId: true },
     });
     if (!initial) {
-      console.log(`SyncConflictService: conflict ${conflictId} not found.`);
+      logger.debug(`SyncConflictService: conflict ${conflictId} not found.`);
       return;
     }
     await withOpLogLock(initial.storyId, async () => {
@@ -240,7 +241,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         where: eq(schema.syncConflicts.id, conflictId),
       });
       if (!row || row.status !== 'pending') {
-        console.log(`SyncConflictService: conflict ${conflictId} is no longer pending.`);
+        logger.debug(`SyncConflictService: conflict ${conflictId} is no longer pending.`);
         return;
       }
       await resolve(toPendingConflict(row));
@@ -344,7 +345,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   ) => {
     const table = getEntityTable(entityType);
     if (!table) {
-      console.log(`SyncConflictService: no local table registered for entity type ${entityType}.`);
+      logger.debug(`SyncConflictService: no local table registered for entity type ${entityType}.`);
       return;
     }
 

@@ -3,6 +3,7 @@ import type { AppDrizzleClient } from '@/src/db';
 import { exampleStoryRegistry } from '@/src/content/example-stories/generated/registry';
 import type { ExampleStoryEntry } from '@/src/content/example-stories/types';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Installs an example story (packaged with the app) into the user's repertoire.
@@ -46,7 +47,7 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
       const entry = exampleStoryRegistry.find((candidate) => candidate.slug === slug);
       const languageEntry = entry?.languages.find((candidate) => candidate.language === language);
       if (!languageEntry) {
-        console.error(`ExampleStoryService: example story not found: ${slug}/${language}.`);
+        logger.error(`ExampleStoryService: example story not found: ${slug}/${language}.`);
         return { status: 'not_found' };
       }
 
@@ -54,7 +55,7 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
       try {
         story = await languageEntry.load();
       } catch (loadError) {
-        console.error(`ExampleStoryService: could not load ${slug}/${language}.`, loadError);
+        logger.error(`ExampleStoryService: could not load ${slug}/${language}.`, loadError);
         return { status: 'load_failed' };
       }
 
@@ -62,7 +63,7 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
       // `JSON.parse` of a file chosen by the user) - the same care as `pickStoryExportFile`.
       const parsed = FullStoryExportSchema.safeParse(reviveDates(story));
       if (!parsed.success) {
-        console.error(
+        logger.error(
           `ExampleStoryService: bundled content for ${slug}/${language} failed validation.`,
           parsed.error,
         );

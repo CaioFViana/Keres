@@ -10,6 +10,7 @@ import { createStoryService } from '@/src/services/storymanagement/story-lifecyc
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 export type StoryFieldsPatch = Partial<
   Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
@@ -46,7 +47,7 @@ export function useStorySettingsSave() {
           else AppAlert.alert(t('success'), t('story_updated_successfully'));
           navigation.goBack();
         } catch (err) {
-          console.error('Failed to save story settings:', err);
+          logger.error('Failed to save story settings:', err);
           AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
         }
       }),

@@ -6,6 +6,7 @@ import { createCharacterSceneService } from '@/src/services/storymanagement/enti
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 export function useSceneCharacterPresence(
   sceneId: string | undefined,
@@ -34,7 +35,7 @@ export function useSceneCharacterPresence(
     try {
       setCharacterSceneRelations(await serviceRef.current.getRelationsForScene(storyId, sceneId));
     } catch (err) {
-      console.error('Failed to fetch character-scene relations:', err);
+      logger.error('Failed to fetch character-scene relations:', err);
     }
   }, [storyId, sceneId]);
 
@@ -65,7 +66,7 @@ export function useSceneCharacterPresence(
       AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_save_character_scene'));
-      console.error('Failed to save character-scene relation:', error);
+      logger.error('Failed to save character-scene relation:', error);
     }
   };
 
@@ -90,7 +91,7 @@ export function useSceneCharacterPresence(
       }
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
-      console.error('Failed to delete character-scene relation:', error);
+      logger.error('Failed to delete character-scene relation:', error);
     }
   };
 

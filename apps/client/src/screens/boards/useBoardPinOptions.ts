@@ -12,6 +12,7 @@ import { boards, chapters, galleries, worldRules } from '@/src/db/schema';
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
+import { logger } from '@/src/utils/logging/logger';
 
 type BoardPinGroup =
   | 'character'
@@ -168,7 +169,7 @@ export function useBoardPinOptions(storyId: string | undefined, excludedBoardId?
       ];
       setOptions(next);
     } catch (error) {
-      console.log('useBoardPinOptions: failed to load pin candidates.', error);
+      logger.debug('useBoardPinOptions: failed to load pin candidates.', error);
       setOptions([]);
     } finally {
       setLoading(false);

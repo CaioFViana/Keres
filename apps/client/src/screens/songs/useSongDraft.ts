@@ -6,6 +6,7 @@ import {
   type SongFields,
 } from '@/src/services/storymanagement/media-music/SongService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /** How long a song waits, after the last keystroke, before it is written. */
 export const SONG_SAVE_DELAY_MS = 1500;
@@ -49,7 +50,7 @@ export function useSongDraft(song: SongSelect | null | undefined, delayMs = SONG
       pendingRef.current = stillPending;
       setPending(stillPending);
     } catch (saveError) {
-      console.log('useSongDraft: could not save the song.', saveError);
+      logger.debug('useSongDraft: could not save the song.', saveError);
       // The draft stays: the person can fix it, and the next change tries again.
       setError(saveError instanceof Error ? saveError.message : 'save failed');
     } finally {

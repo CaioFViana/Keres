@@ -1,6 +1,7 @@
 import type * as DocumentPicker from 'expo-document-picker';
 import { mediaFileService } from './MediaFileService';
 import type { GalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The result of importing a batch of files chosen by the person.
@@ -70,7 +71,7 @@ export async function importPickedMediaAssets(
       // halfway (unreadable, hash failure, storage error) - and the interface reports all of
       // them as "unsupported format". The asset context plus the real reason is what tells the
       // two apart when diagnosing a device that refuses every file.
-      console.log('Failed to import media asset:', {
+      logger.debug('Failed to import media asset:', {
         name: asset.name ?? null,
         mimeType: asset.mimeType ?? null,
         uri: asset.uri,

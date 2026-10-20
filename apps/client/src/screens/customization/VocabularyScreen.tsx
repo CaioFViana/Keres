@@ -28,6 +28,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type VocabularyNavigation = NativeStackNavigationProp<StorySettingsStackParamList, 'Vocabulary'>;
 type DraftTerms = Record<
@@ -275,7 +276,7 @@ const VocabularyScreen = () => {
       AppAlert.alert(t('success'), t('vocabulary_saved'));
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to save story vocabulary:', error);
+      logger.error('Failed to save story vocabulary:', error);
       AppAlert.alert(t('error'), t('vocabulary_save_failed'));
     } finally {
       setSaving(false);

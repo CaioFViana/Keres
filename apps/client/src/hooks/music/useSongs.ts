@@ -5,6 +5,7 @@ import { createSceneMusicService } from '@/src/services/storymanagement/media-mu
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 /** The songs of a story, by title. Reloads when a song is made, changed or deleted. */
 export function useSongs(storyId: string | undefined) {
@@ -21,7 +22,7 @@ export function useSongs(storyId: string | undefined) {
     try {
       setSongs(await createSongService(db).getSongsForStory(storyId));
     } catch (error) {
-      console.log('useSongs: failed to load the songs.', error);
+      logger.debug('useSongs: failed to load the songs.', error);
       setSongs([]);
     } finally {
       setLoading(false);
@@ -61,7 +62,7 @@ export function useSong(songId: string | undefined) {
       const row = await createSongService(db).getById(songId);
       setSong(row && !row.isDeleted ? row : null);
     } catch (error) {
-      console.log('useSong: failed to load the song.', error);
+      logger.debug('useSong: failed to load the song.', error);
       setSong(null);
     }
   }, [db, songId]);
@@ -109,7 +110,7 @@ export function useSongUses(songId: string | undefined, storyId: string | undefi
         ),
       );
     } catch (error) {
-      console.log('useSongUses: failed to load the scenes.', error);
+      logger.debug('useSongUses: failed to load the scenes.', error);
       setUses([]);
     }
   }, [db, songId]);

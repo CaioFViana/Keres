@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useDrizzle } from '@/src/db';
 import { useGuideStore } from '@/src/state/ui/guideStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Records finished or skipped tours. The write belongs here - a hook - because components
@@ -18,7 +19,7 @@ export function useGuidePersistence(): (guideId: string) => void {
   return useCallback(
     (guideId: string) => {
       markTutorialSeen(db, guideId).catch((error: unknown) => {
-        console.warn('[GuideHost] failed to record a seen tour; it will show again.', error);
+        logger.warn('[GuideHost] failed to record a seen tour; it will show again.', error);
         undismissGuide(guideId);
       });
     },

@@ -39,6 +39,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -115,7 +116,7 @@ const GalleryListScreen = () => {
         try {
           assets = await picker();
         } catch (pickError) {
-          console.log('Media picker failed:', pickError);
+          logger.debug('Media picker failed:', pickError);
           showNotification(t('media_picker_failed'), 'error');
           return;
         }
@@ -173,7 +174,7 @@ const GalleryListScreen = () => {
         }
         await refetch();
       } catch (linkError) {
-        console.log('Failed to add gallery link:', linkError);
+        logger.debug('Failed to add gallery link:', linkError);
         showNotification(t('media_save_failed'), 'error');
       } finally {
         setImporting(false);

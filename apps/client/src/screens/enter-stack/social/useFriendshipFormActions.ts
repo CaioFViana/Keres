@@ -11,6 +11,7 @@ import { userApiService } from '@/src/services/api/UserApiService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { FriendshipFormState } from './useFriendshipFormState';
+import { logger } from '@/src/utils/logging/logger';
 
 type FriendshipNavigation = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
 
@@ -68,7 +69,7 @@ export function useFriendshipFormActions({
       state.setFriendFound(true);
       return { id: userDetails.id, username: userDetails.username };
     } catch (error) {
-      console.error('Error checking friend tag:', error);
+      logger.error('Error checking friend tag:', error);
       if (id !== lookupId.current) return null;
       state.setCheckFailed(true);
       return null;
@@ -140,7 +141,7 @@ export function useFriendshipFormActions({
       showNotification(t('friend_request_sent_notice', { name: friend.username }), 'success');
       navigation.goBack();
     } catch (error) {
-      console.error('Error saving friendship:', error);
+      logger.error('Error saving friendship:', error);
       AppAlert.alert(t('error'), t('failed_to_save_friendship'));
     }
   }, [

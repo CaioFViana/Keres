@@ -78,6 +78,7 @@ import {
   type TagsStackParamList,
   type WorldRulesStackParamList,
 } from '@/src/navigation/stacks/MainSystemStacks';
+import { logger } from '@/src/utils/logging/logger';
 
 export type {
   BoardStackParamList,
@@ -508,7 +509,7 @@ const MainSystemNavigator = () => {
                   }),
                 );
               } else {
-                console.error(
+                logger.error(
                   'Could not find root stack navigation to dispatch reset action. This is unexpected.',
                 );
                 navigation.dispatch(

@@ -14,6 +14,7 @@ import apiClient, {
 import { canRefreshSessionWithCookie, usesHttpOnlyCookieSession } from './browserCookieSession';
 import type { AuthTokens } from './TokenVault';
 import { tokenVault } from './TokenVault';
+import { logger } from '@/src/utils/logging/logger';
 
 let drizzleDb: AppDrizzleClient | null = null;
 
@@ -79,7 +80,7 @@ class AuthTokenManager implements TokenProvider {
         apiClient.setActiveServer(activeServer);
       }
     } catch (error) {
-      console.log('Failed to update tokens in secure storage/cache:', error);
+      logger.debug('Failed to update tokens in secure storage/cache:', error);
       throw error;
     }
   }
@@ -89,19 +90,19 @@ class AuthTokenManager implements TokenProvider {
     currentRefreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string } | null> {
     if (!drizzleDb) {
-      console.log('AuthTokenManager: Database not set for token refresh.');
+      logger.debug('AuthTokenManager: Database not set for token refresh.');
       return null;
     }
 
     if (!this._getServerById) {
-      console.log('AuthTokenManager: getServerById dependency not set.');
+      logger.debug('AuthTokenManager: getServerById dependency not set.');
       return null;
     }
 
     const server = await this._getServerById(serverId); // Use injected function
 
     if (!server || !server.url) {
-      console.log(`AuthTokenManager: Server with ID ${serverId} not found or no URL available.`);
+      logger.debug(`AuthTokenManager: Server with ID ${serverId} not found or no URL available.`);
       this.clearAuth(serverId); // Clear auth if server info is missing
       return null;
     }
@@ -110,7 +111,7 @@ class AuthTokenManager implements TokenProvider {
     const refreshTokenToUse = (await tokenVault.get(serverId))?.refreshToken || currentRefreshToken;
 
     if (!refreshTokenToUse && !canRefreshSessionWithCookie(server.url)) {
-      console.log(
+      logger.debug(
         'AuthTokenManager: No refresh token available for server. Clearing authentication.',
       );
       this.clearAuth(serverId);
@@ -135,7 +136,7 @@ class AuthTokenManager implements TokenProvider {
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
       await this.updateTokens(serverId, newAccessToken, newRefreshToken);
-      console.log('AuthTokenManager: Tokens refreshed successfully for server:', server.name);
+      logger.debug('AuthTokenManager: Tokens refreshed successfully for server:', server.name);
 
       return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     } catch (error) {
@@ -143,12 +144,12 @@ class AuthTokenManager implements TokenProvider {
         // The server is unreachable, which says nothing about whether our
         // credentials are still valid. Clearing them here would silently log the
         // user out of a perfectly good account just because the network blipped.
-        console.log(
+        logger.debug(
           `AuthTokenManager: Server ${server.name} unreachable, keeping existing tokens.`,
         );
         return null;
       }
-      console.log(
+      logger.debug(
         'AuthTokenManager: Error during token refresh for server:',
         server.name,
         (error as Error)?.message || error,
@@ -179,7 +180,7 @@ class AuthTokenManager implements TokenProvider {
           await logoutClient.post('/auth/logout');
         }
       } catch (error) {
-        console.log('Failed to clear session cookie:', error);
+        logger.debug('Failed to clear session cookie:', error);
       }
     }
 
@@ -187,7 +188,7 @@ class AuthTokenManager implements TokenProvider {
     try {
       await tokenVault.remove(serverId);
     } catch (error) {
-      console.log('Failed to clear secure credentials:', error);
+      logger.debug('Failed to clear secure credentials:', error);
     }
 
     const activeServer = useUserSettingsStore.getState().activeServer;

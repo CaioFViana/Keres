@@ -1136,22 +1136,24 @@ code {
 
 /* Legal. The two documents switch in tabs; the text itself reads like the FAQ -
    headed sections with breathing room, capped in width so long lines stay readable. */
-.legal-tabs {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+.legal-version {
+  margin: 14px 0 0;
 }
 
-.legal-text {
-  display: grid;
-  gap: 24px;
+/* A document on a page of its own: each section a knot of the thread, with room to breathe. */
+.legal-body {
+  padding-top: 40px;
+}
+
+.legal-section {
   max-width: 72ch;
+  padding: 18px 0 22px;
 }
 
-.legal-section h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
+.legal-section h2 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
 }
 
 .legal-section p {

@@ -230,7 +230,9 @@
     "retry": "Tentar de novo",
     "unavailable": "Este servidor não tem textos legais públicos.",
     "version": "Versão {{version}} · {{date}}",
-    "contactCta": "Dúvidas? Fale conosco"
+    "contactCta": "Dúvidas? Fale conosco",
+    "home": "← Voltar ao início",
+    "contactTitle": "Dúvidas sobre isto?"
   },
   "meta": {
     "title": "Keres — Organize universos, conecte narrativas",
@@ -244,7 +246,6 @@
     "platforms": "Plataformas",
     "download": "Baixar",
     "contact": "Contato",
-    "legal": "Legal",
     "showcase": "Vitrine",
     "github": "GitHub",
     "menu": "Menu"

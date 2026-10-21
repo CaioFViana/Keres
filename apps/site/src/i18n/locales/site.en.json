@@ -230,7 +230,9 @@
     "retry": "Try again",
     "unavailable": "This server has no public legal texts.",
     "version": "Version {{version}} · {{date}}",
-    "contactCta": "Questions? Contact us"
+    "contactCta": "Questions? Contact us",
+    "home": "← Back to the start",
+    "contactTitle": "Questions about this?"
   },
   "meta": {
     "title": "Keres — Organize universes, connect narratives",
@@ -244,7 +246,6 @@
     "platforms": "Platforms",
     "download": "Download",
     "contact": "Contact",
-    "legal": "Legal",
     "showcase": "Showcase",
     "github": "GitHub",
     "menu": "Menu"

@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { ContactSection } from '../components/ContactSection';
-import { LegalSection } from '../components/LegalSection';
 import { OfficialSection } from '../components/OfficialSection';
 import { Showcase } from '../components/Showcase';
 import { useShowcaseAvailable } from '../components/ShowcaseAvailability';
@@ -258,7 +257,6 @@ export function HomePage() {
       </section>
 
       {isLandingBuild && <ContactSection />}
-      {isLandingBuild && <LegalSection />}
 
       <section className="band end" id="end">
         <div className="section-inner">

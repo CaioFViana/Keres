@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import keresLogoUrl from 'virtual:keres-logo';
 import { LANDING_NAV_SECTIONS, NAV_SECTIONS } from '../content/catalog';
+import { legalPath } from '../content/legalPages';
 import { GITHUB_README_URL, GITHUB_REPO_URL, HOSTED_SHOWCASE_URL } from '../content/links';
 import { useShowcaseAvailable } from './ShowcaseAvailability';
 import { isLandingBuild } from '../variant';
@@ -30,7 +31,11 @@ function ThemeToggle() {
   );
 }
 
-export function Layout({ children }: { children: ReactNode }) {
+/**
+ * The header and the footer of every page. `home` is whether this page is the landing itself: on any other page of the
+ * server (the legal documents) the sections of the landing are addresses on its root, not on this page.
+ */
+export function Layout({ children, home = true }: { children: ReactNode; home?: boolean }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const showcaseAvailable = useShowcaseAvailable();
@@ -39,7 +44,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="site">
       <header className="site-header">
         <div className="site-header-inner">
-          <a href="#top" className="brand">
+          <a href={home ? '#top' : '/'} className="brand">
             <KeresMark />
             <span className="brand-name">Keres</span>
           </a>
@@ -55,7 +60,11 @@ export function Layout({ children }: { children: ReactNode }) {
             </button>
             <div id="site-nav-links" className={menuOpen ? 'nav-links is-open' : 'nav-links'}>
               {(isLandingBuild ? LANDING_NAV_SECTIONS : NAV_SECTIONS).map((section) => (
-                <a key={section} href={`#${section}`} onClick={() => setMenuOpen(false)}>
+                <a
+                  key={section}
+                  href={`${home ? '' : '/'}#${section}`}
+                  onClick={() => setMenuOpen(false)}
+                >
                   {t(`nav.${section}`)}
                 </a>
               ))}
@@ -102,9 +111,9 @@ export function Layout({ children }: { children: ReactNode }) {
                   </>
                 )}
                 <span aria-hidden="true"> · </span>
-                <a href="#terms">{t('footer.terms')}</a>
+                <a href={legalPath('terms')}>{t('footer.terms')}</a>
                 <span aria-hidden="true"> · </span>
-                <a href="#privacy">{t('footer.privacy')}</a>
+                <a href={legalPath('privacy')}>{t('footer.privacy')}</a>
               </>
             )}
           </p>

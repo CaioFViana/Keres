@@ -13,7 +13,6 @@ export const LANDING_NAV_SECTIONS = [
   'platforms',
   'download',
   'contact',
-  'legal',
 ] as const;
 
 export const PILLARS = ['offline', 'universe', 'anywhere'] as const;

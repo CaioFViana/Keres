@@ -5,7 +5,6 @@ import sitePt from '../../src/i18n/locales/site.pt.json';
 import { changeInput, click } from '../helpers/react';
 
 const fetchMock = vi.fn();
-const scrollIntoView = vi.fn();
 
 function jsonResponse(payload: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, json: async () => payload } as Response;
@@ -20,28 +19,38 @@ async function flush(): Promise<void> {
 const terms = {
   version: 2,
   updatedAt: '2026-10-12',
-  en: [{ heading: 'Terms', paragraphs: ['Be kind.'] }],
-  pt: [{ heading: 'Termos', paragraphs: ['Seja gentil.'] }],
+  en: [
+    { heading: 'Your account', paragraphs: ['Be kind.', 'Keep it safe.'] },
+    { heading: 'Our rights', paragraphs: ['We may remove content.'] },
+  ],
+  pt: [{ heading: 'Sua conta', paragraphs: ['Seja gentil.'] }],
 };
 
 const privacy = {
   version: 1,
   updatedAt: '2026-10-11',
-  en: [{ heading: 'Privacy', paragraphs: ['We keep little.'] }],
-  pt: [{ heading: 'Privacidade', paragraphs: ['Guardamos pouco.'] }],
+  en: [{ heading: 'What we keep', paragraphs: ['We keep little.'] }],
+  pt: [{ heading: 'O que guardamos', paragraphs: ['Guardamos pouco.'] }],
 };
 
 function serveLegal(): void {
   fetchMock.mockImplementation((url: string) => {
     if (url === '/api/public/tiers')
       return Promise.resolve(jsonResponse({ currency: 'BRL', tiers: [] }));
+    if (url === '/api/public/config')
+      return Promise.resolve(jsonResponse({ showcaseEnabled: false }));
     if (url === '/api/keres-tos') return Promise.resolve(jsonResponse(terms));
     if (url === '/api/keres-privacy') return Promise.resolve(jsonResponse(privacy));
     return Promise.reject(new Error(`unexpected ${url}`));
   });
 }
 
-async function renderLanding() {
+/**
+ * The landing build opened at an address: the variant flag is read at module load, so the app is re-imported fresh
+ * after stubbing it, and the address bar is set the way a visit would.
+ */
+async function renderAt(path: string) {
+  window.history.replaceState(null, '', path);
   vi.resetModules();
   vi.stubEnv('VITE_SITE_VARIANT', 'landing');
   const { SiteApp } = await import('../../src/App');
@@ -52,195 +61,155 @@ async function renderLanding() {
   return view;
 }
 
-/** The tab that the section marks as selected, by its visible label. */
-function selectedTabLabel(container: HTMLElement): string | undefined {
-  const tabs = [...container.querySelectorAll('#legal [role="tab"]')];
-  return tabs.find((tab) => tab.getAttribute('aria-selected') === 'true')?.textContent ?? undefined;
-}
-
-function tabButton(container: HTMLElement, label: string): Element {
-  const tab = [...container.querySelectorAll('#legal [role="tab"]')].find(
-    (candidate) => candidate.textContent === label,
-  );
-  if (!tab) throw new Error(`no legal tab labelled ${label}`);
-  return tab;
-}
-
-/**
- * Sets the address bar the way a link would, without the hashchange that a real link fires.
- * An empty hash is written as the path alone: `replaceState(..., '')` keeps the old fragment.
- */
-function setHash(hash: string): void {
-  const path = `${window.location.pathname}${window.location.search}`;
-  window.history.replaceState(null, '', hash === '' ? path : hash);
-}
-
-async function fireHashChange(): Promise<void> {
-  await act(async () => {
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-  });
-}
+const titles = (container: HTMLElement) =>
+  [...container.querySelectorAll('.legal-section h2')].map((heading) => heading.textContent);
 
 beforeEach(() => {
   fetchMock.mockReset();
-  scrollIntoView.mockReset();
   serveLegal();
   vi.stubGlobal('fetch', fetchMock);
-  // jsdom has no layout, so the section cannot be scrolled; the spy records the request instead.
-  Object.defineProperty(Element.prototype, 'scrollIntoView', {
-    configurable: true,
-    value: scrollIntoView,
-  });
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
-  Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
-  setHash('');
+  window.history.replaceState(null, '', '/');
 });
 
-describe('landing legal section', () => {
-  it('renders the terms by default and switches to the privacy tab', async () => {
-    const { container, unmount } = await renderLanding();
+describe('the legal pages of the landing', () => {
+  it('shows the terms on a page of their own, every section a knot of the thread', async () => {
+    const { container, unmount } = await renderAt('/terms');
 
-    const section = container.querySelector('#legal')!;
-    expect(section.textContent).toContain(siteEn.legal.title);
-    expect(section.textContent).toContain('Terms');
-    expect(section.textContent).toContain('Be kind.');
-    expect(section.textContent).toContain('2');
+    expect(container.querySelector('h1')?.textContent).toBe(siteEn.legal.tabs.terms);
+    expect(titles(container)).toEqual(['Your account', 'Our rights']);
+    expect(container.querySelector('.legal-body')?.textContent).toContain('Keep it safe.');
+    expect(container.querySelectorAll('.legal-section h2[data-thread-knot]')).toHaveLength(2);
+    expect(container.querySelector('.legal-version')?.textContent).toBe('Version 2 · 2026-10-12');
+    // Only the document of the page is asked for.
+    expect(fetchMock).toHaveBeenCalledWith('/api/keres-tos', expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/keres-privacy', expect.anything());
+    expect(document.title).toBe(`${siteEn.legal.tabs.terms} · Keres`);
 
-    const tabs = [...section.querySelectorAll('[role="tab"]')];
-    expect(tabs.map((tab) => tab.textContent)).toEqual([
-      siteEn.legal.tabs.terms,
-      siteEn.legal.tabs.privacy,
+    await unmount();
+  });
+
+  it('shows the privacy policy at /privacy, with or without a trailing slash', async () => {
+    for (const path of ['/privacy', '/privacy/']) {
+      const { container, unmount } = await renderAt(path);
+
+      expect(container.querySelector('h1')?.textContent).toBe(siteEn.legal.tabs.privacy);
+      expect(titles(container)).toEqual(['What we keep']);
+      expect(fetchMock).toHaveBeenCalledWith('/api/keres-privacy', expect.anything());
+
+      await unmount();
+    }
+  });
+
+  it('links to the other document and back to the start, and its menu points at the landing', async () => {
+    const { container, unmount } = await renderAt('/terms');
+
+    const hrefs = [...container.querySelectorAll('#legal .hero-actions a')].map((anchor) => [
+      anchor.textContent,
+      anchor.getAttribute('href'),
     ]);
-    await click(tabs[1]);
-    await flush();
+    expect(hrefs).toEqual([
+      [siteEn.legal.home, '/'],
+      [siteEn.legal.tabs.privacy, '/privacy'],
+    ]);
+    // The sections of the landing are addresses on its root, not on this page.
+    const nav = [...container.querySelectorAll('#site-nav-links a')].map((anchor) =>
+      anchor.getAttribute('href'),
+    );
+    expect(nav).toContain('/#product');
+    expect(nav).toContain('/#contact');
+    expect(container.querySelector('.brand')?.getAttribute('href')).toBe('/');
+    expect(container.querySelector('.end a')?.getAttribute('href')).toBe('/#contact');
 
-    expect(section.textContent).toContain('Privacy');
-    expect(section.textContent).toContain('We keep little.');
-    expect(section.textContent).not.toContain('Be kind.');
+    await unmount();
+  });
 
-    // The Play-listing anchors: the nav entry reaches the section, the footer names each document.
-    const navHrefs = [...container.querySelectorAll('#site-nav-links a')].map((a) =>
+  it('is no longer a section of the landing: the footer names each document, the menu has no entry', async () => {
+    const { container, unmount } = await renderAt('/');
+
+    expect(container.querySelector('#legal')).toBeNull();
+    expect(container.querySelector('.legal-section')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/keres-tos', expect.anything());
+    const footer = [...container.querySelectorAll('.footer-links a')].map((a) =>
       a.getAttribute('href'),
     );
-    expect(navHrefs).toContain('#legal');
-    const footerHrefs = [...container.querySelectorAll('.footer-links a')].map((a) =>
+    expect(footer).toContain('/terms');
+    expect(footer).toContain('/privacy');
+    const nav = [...container.querySelectorAll('#site-nav-links a')].map((a) =>
       a.getAttribute('href'),
     );
-    expect(footerHrefs).toContain('#terms');
-    expect(footerHrefs).toContain('#privacy');
-    expect(footerHrefs).not.toContain('#legal');
+    expect(nav).not.toContain('#legal');
+    expect(nav).toContain('#contact');
+
+    await unmount();
+  });
+
+  it.each([
+    ['#privacy', '/privacy'],
+    ['#terms', '/terms'],
+    ['#legal', '/terms'],
+  ])('sends the old address /%s to %s', async (hash, destination) => {
+    const replace = vi.fn();
+    vi.stubGlobal('location', { ...window.location, pathname: '/', hash, replace });
+    const { unmount } = await renderAt('/');
+
+    expect(replace).toHaveBeenCalledWith(destination);
+
+    await unmount();
+  });
+
+  it('leaves other addresses of the landing where they are', async () => {
+    const replace = vi.fn();
+    vi.stubGlobal('location', { ...window.location, pathname: '/', hash: '#contact', replace });
+    const { unmount } = await renderAt('/');
+
+    expect(replace).not.toHaveBeenCalled();
 
     await unmount();
   });
 
   it('says so when the server predates the legal routes', async () => {
     fetchMock.mockImplementation((url: string) => {
-      if (url === '/api/public/tiers')
-        return Promise.resolve(jsonResponse({ currency: 'BRL', tiers: [] }));
+      if (url === '/api/public/config')
+        return Promise.resolve(jsonResponse({ showcaseEnabled: false }));
       return Promise.resolve(jsonResponse({}, 404));
     });
-    const { container, unmount } = await renderLanding();
+    const { container, unmount } = await renderAt('/terms');
 
-    expect(container.querySelector('#legal')!.textContent).toContain(siteEn.legal.unavailable);
+    expect(container.querySelector('.legal-body')?.textContent).toContain(siteEn.legal.unavailable);
 
     await unmount();
   });
 
-  it('retries loading the documents after a failure', async () => {
+  it('retries loading the document after a failure', async () => {
     fetchMock.mockImplementation((url: string) => {
-      if (url === '/api/public/tiers')
-        return Promise.resolve(jsonResponse({ currency: 'BRL', tiers: [] }));
+      if (url === '/api/public/config')
+        return Promise.resolve(jsonResponse({ showcaseEnabled: false }));
       return Promise.reject(new Error('down'));
     });
-    const { container, unmount } = await renderLanding();
-
-    // The documents failed: the section offers a retry.
-    expect(container.querySelector('#legal')!.textContent).toContain(siteEn.legal.loadFailed);
+    const { container, unmount } = await renderAt('/terms');
+    expect(container.querySelector('.legal-body')?.textContent).toContain(siteEn.legal.loadFailed);
 
     serveLegal();
-    const retry = [...container.querySelectorAll('#legal button')].find(
+    const retry = [...container.querySelectorAll('.legal-body button')].find(
       (button) => button.textContent === siteEn.legal.retry,
     )!;
     await click(retry);
     await flush();
     await flush();
 
-    expect(container.querySelector('#legal')!.textContent).toContain('Be kind.');
-
-    await unmount();
-  });
-
-  it('opens the privacy policy and scrolls to it when the page is opened at #privacy', async () => {
-    setHash('#privacy');
-    const { container, unmount } = await renderLanding();
-
-    expect(selectedTabLabel(container)).toBe(siteEn.legal.tabs.privacy);
-    expect(container.querySelector('#legal')!.textContent).toContain('We keep little.');
-    expect(scrollIntoView).toHaveBeenCalled();
-
-    await unmount();
-  });
-
-  it.each(['#terms', '#legal'])('opens the terms when the page is opened at %s', async (hash) => {
-    setHash(hash);
-    const { container, unmount } = await renderLanding();
-
-    expect(selectedTabLabel(container)).toBe(siteEn.legal.tabs.terms);
-    expect(container.querySelector('#legal')!.textContent).toContain('Be kind.');
-    expect(scrollIntoView).toHaveBeenCalled();
-
-    await unmount();
-  });
-
-  it('follows the hash while the page is open, and ignores hashes it does not own', async () => {
-    const { container, unmount } = await renderLanding();
-    expect(selectedTabLabel(container)).toBe(siteEn.legal.tabs.terms);
-
-    setHash('#privacy');
-    await fireHashChange();
-    expect(selectedTabLabel(container)).toBe(siteEn.legal.tabs.privacy);
-    expect(container.querySelector('#legal')!.textContent).toContain('We keep little.');
-
-    setHash('#contact');
-    await fireHashChange();
-    expect(selectedTabLabel(container)).toBe(siteEn.legal.tabs.privacy);
-
-    setHash('#terms');
-    await fireHashChange();
-    expect(selectedTabLabel(container)).toBe(siteEn.legal.tabs.terms);
-    expect(container.querySelector('#legal')!.textContent).toContain('Be kind.');
-
-    await unmount();
-  });
-
-  it('writes the hash when a tab is clicked, without scrolling', async () => {
-    const { container, unmount } = await renderLanding();
-    expect(scrollIntoView).not.toHaveBeenCalled();
-
-    await click(tabButton(container, siteEn.legal.tabs.privacy));
-    await flush();
-    expect(window.location.hash).toBe('#privacy');
-
-    await click(tabButton(container, siteEn.legal.tabs.terms));
-    await flush();
-    expect(window.location.hash).toBe('#terms');
-
-    // replaceState moves the address without jumping the reader to the section.
-    expect(scrollIntoView).not.toHaveBeenCalled();
+    expect(titles(container)).toEqual(['Your account', 'Our rights']);
 
     await unmount();
   });
 
   it('shows the other language, without a reload, when the site language changes', async () => {
-    const { container, unmount } = await renderLanding();
-    expect(container.querySelector('#legal')!.textContent).toContain('Be kind.');
-    const termsRequests = () =>
-      fetchMock.mock.calls.filter(([url]) => url === '/api/keres-tos').length;
-    const requestsBefore = termsRequests();
+    const { container, unmount } = await renderAt('/terms');
+    expect(titles(container)).toEqual(['Your account', 'Our rights']);
 
     const select = container.querySelector<HTMLSelectElement>('.language-select')!;
     try {
@@ -248,11 +217,9 @@ describe('landing legal section', () => {
       await flush();
       await flush();
 
-      const section = container.querySelector('#legal')!;
-      expect(section.textContent).toContain(sitePt.legal.title);
-      expect(section.textContent).toContain('Seja gentil.');
-      expect(section.textContent).not.toContain('Be kind.');
-      expect(termsRequests()).toBe(requestsBefore + 1);
+      expect(container.querySelector('h1')?.textContent).toBe(sitePt.legal.tabs.terms);
+      expect(titles(container)).toEqual(['Sua conta']);
+      expect(container.querySelector('.legal-body')?.textContent).toContain('Seja gentil.');
     } finally {
       await changeInput(select, 'en');
       await flush();

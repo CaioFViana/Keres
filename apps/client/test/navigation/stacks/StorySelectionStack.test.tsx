@@ -89,6 +89,14 @@ jest.mock('@/src/screens/showcase/ShowcaseHomeScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('@/src/screens/showcase/ShowcaseBrowseScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/showcase/ShowcaseAuthorScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('@/src/screens/showcase/ShowcaseStoryScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -331,13 +339,18 @@ describe('a serverless build', () => {
 
 /** The showcase entry is a nested stack: a story opens from the home, where the link is pasted, and goes back to it. */
 describe('the showcase stack', () => {
-  it('has the home and the story', async () => {
+  it('has the home, the lists, the author and the story', async () => {
     await render(<StorySelectionStack />);
     const ShowcaseStack = drawerScreen('ShowcaseDrawer')?.component;
     mockStackScreens.length = 0;
     await render(<ShowcaseStack />);
 
-    expect(mockStackScreens).toEqual(['ShowcaseHome', 'ShowcaseStory']);
+    expect(mockStackScreens).toEqual([
+      'ShowcaseHome',
+      'ShowcaseBrowse',
+      'ShowcaseAuthor',
+      'ShowcaseStory',
+    ]);
   });
 });
 

@@ -185,17 +185,68 @@ describe('ShowcaseHomeScreen', () => {
     expect(view.queryByText('showcase_link_site_off')).toBeNull();
   });
 
-  it('sends the pages the app does not draw (lists, authors, packs) to the browser', async () => {
+  it.each([
+    [
+      'https://keres.example/showcase/author/ana',
+      'ShowcaseAuthor',
+      { serverId: 'srv-1', username: 'ana' },
+    ],
+    [
+      'https://keres.example/showcase/authors',
+      'ShowcaseBrowse',
+      { serverId: 'srv-1', tab: 'authors' },
+    ],
+    ['https://keres.example/showcase', 'ShowcaseBrowse', { serverId: 'srv-1', tab: 'stories' }],
+    ['https://keres.example', 'ShowcaseBrowse', { serverId: 'srv-1', tab: 'stories' }],
+    [
+      'https://other.example/showcase/author/mei',
+      'ShowcaseAuthor',
+      { guestOrigin: 'https://other.example', username: 'mei' },
+    ],
+  ])('opens %s inside the app', async (link, screen, params) => {
     const view = await render(<ShowcaseHomeScreen />);
 
-    await typeLink(view, 'https://keres.example/showcase/author/ana');
+    await typeLink(view, link);
+    await fireEvent.press(view.getByTestId('showcase-link-open'));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(screen, params));
+    expect(openUrl).not.toHaveBeenCalled();
+  });
+
+  it('sends the pages the app does not draw yet (packs) to the browser', async () => {
+    const view = await render(<ShowcaseHomeScreen />);
+
+    await typeLink(view, 'https://keres.example/showcase/pack/K1');
     await waitFor(() => expect(view.getByText('showcase_link_registered')).toBeTruthy());
     await fireEvent.press(view.getByTestId('showcase-link-open'));
 
     await waitFor(() =>
-      expect(openUrl).toHaveBeenCalledWith('https://keres.example/showcase/author/ana'),
+      expect(openUrl).toHaveBeenCalledWith('https://keres.example/showcase/pack/K1'),
     );
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("lists the person's servers, and browses the one that is tapped", async () => {
+    mockGetAllServers.mockResolvedValue([
+      registered,
+      { id: 'srv-2', name: null, url: 'http://localhost:3187' },
+    ]);
+    const view = await render(<ShowcaseHomeScreen />);
+
+    await waitFor(() => expect(view.getByText('Main')).toBeTruthy());
+    // A server with no name is told by its address.
+    expect(view.getAllByText('http://localhost:3187').length).toBeGreaterThan(0);
+    expect(view.queryByTestId('showcase-servers-empty')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('showcase-server-srv-1'));
+    expect(mockNavigate).toHaveBeenCalledWith('ShowcaseBrowse', { serverId: 'srv-1' });
+  });
+
+  it('says there is no server to browse yet', async () => {
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<ShowcaseHomeScreen />);
+
+    await waitFor(() => expect(view.getByTestId('showcase-servers-empty')).toBeTruthy());
   });
 
   it('opens what is pasted from the clipboard at once', async () => {

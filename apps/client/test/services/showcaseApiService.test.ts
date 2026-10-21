@@ -2,6 +2,7 @@
 import {
   ShowcaseApiService,
   ShowcaseUnlockError,
+  showcaseCoverUrl,
   showcaseSourceUrl,
   type ShowcaseSource,
 } from '@/src/services/api/ShowcaseApiService';
@@ -225,5 +226,92 @@ describe('downloadPackage', () => {
 
     await expect(service.downloadPackage(guest, 'S1', 'P1')).rejects.toThrow(/local network/);
     expect(mockPlain.get).not.toHaveBeenCalled();
+  });
+});
+
+describe('the lists of the public site', () => {
+  it('lists stories, leaving out the filters that are not set, and reads the total the server sends', async () => {
+    mockClient.get.mockResolvedValue({
+      data: [{ storyId: 'S1' }],
+      headers: { 'x-total-count': '41' },
+    });
+
+    const page = await service.listStories(guest, {
+      q: 'casa',
+      genre: undefined,
+      language: '',
+      type: 'branching',
+      sort: 'title',
+      limit: 24,
+      offset: 0,
+    });
+
+    expect(page).toEqual({ items: [{ storyId: 'S1' }], total: 41 });
+    expect(mockClient.get).toHaveBeenCalledWith('/public/stories', {
+      params: { q: 'casa', type: 'branching', sort: 'title', limit: 24, offset: 0 },
+    });
+  });
+
+  it('has no total when the server does not say (another origin cannot read the header)', async () => {
+    mockClient.get.mockResolvedValue({ data: [], headers: {} });
+    await expect(service.listStories(guest, {})).resolves.toEqual({ items: [], total: null });
+
+    mockClient.get.mockResolvedValue({ data: [], headers: { 'x-total-count': 'many' } });
+    await expect(service.listStories(guest, {})).resolves.toEqual({ items: [], total: null });
+
+    mockClient.get.mockResolvedValue({ data: [] });
+    await expect(service.listStories(guest, {})).resolves.toEqual({ items: [], total: null });
+  });
+
+  it('reads what the list can be filtered by', async () => {
+    const facets = {
+      genres: [{ value: 'Fantasy', count: 2 }],
+      languages: [],
+      mediums: [],
+      types: [],
+    };
+    mockClient.get.mockResolvedValue({ data: facets });
+
+    await expect(service.getFacets(registered)).resolves.toEqual(facets);
+    expect(mockClient.get).toHaveBeenCalledWith('/public/stories/facets');
+  });
+
+  it('lists authors by name', async () => {
+    mockClient.get.mockResolvedValue({
+      data: [{ owner: { username: 'ana' } }],
+      headers: { 'x-total-count': '1' },
+    });
+
+    await expect(service.listAuthors(guest, { q: 'an', limit: 48, offset: 0 })).resolves.toEqual({
+      items: [{ owner: { username: 'ana' } }],
+      total: 1,
+    });
+    expect(mockClient.get).toHaveBeenCalledWith('/public/authors', {
+      params: { q: 'an', limit: 48, offset: 0 },
+    });
+  });
+
+  it("reads an author's page by the name they publish under", async () => {
+    mockClient.get.mockResolvedValue({ data: { owner: { username: 'júlia d' } } });
+
+    await service.getAuthor(guest, 'júlia d');
+
+    expect(mockClient.get).toHaveBeenCalledWith('/public/authors/j%C3%BAlia%20d');
+  });
+
+  it('lets an author with nothing to show (a 404) reach the caller', async () => {
+    mockClient.get.mockRejectedValue({ response: { status: 404 } });
+    await expect(service.getAuthor(guest, 'nobody')).rejects.toEqual({ response: { status: 404 } });
+  });
+});
+
+describe('showcaseCoverUrl', () => {
+  it("is the cover of the story, or of one of its works, under the server's API", () => {
+    expect(showcaseCoverUrl(registered, 'S 1')).toBe(
+      'https://keres.example/api/public/stories/S%201/cover',
+    );
+    expect(showcaseCoverUrl({ kind: 'guest', origin: 'https://other.example/' }, 'S1', 'W1')).toBe(
+      'https://other.example/api/public/stories/S1/works/W1/cover',
+    );
   });
 });

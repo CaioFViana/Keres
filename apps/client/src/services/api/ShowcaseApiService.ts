@@ -1,4 +1,11 @@
-import type { ShowcaseStoryResponse } from '@keres/shared';
+import type {
+  ShowcaseAuthorCard,
+  ShowcaseAuthorPage,
+  ShowcaseFacets,
+  ShowcaseSearchQuery,
+  ShowcaseStoryCard,
+  ShowcaseStoryResponse,
+} from '@keres/shared';
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
 import { isAllowedServerUrl } from '@/src/utils/auth/serverUrl';
@@ -19,6 +26,34 @@ export type ShowcaseSource =
 
 export function showcaseSourceUrl(source: ShowcaseSource): string {
   return source.kind === 'server' ? source.server.url : source.origin;
+}
+
+/** One page of a listing, and how many there are in all - `null` when the server's answer does not say. */
+export interface ShowcasePage<T> {
+  items: T[];
+  total: number | null;
+}
+
+/** The address of a story's cover (or of one of its works'): an image anybody can load, when the story is open. */
+export function showcaseCoverUrl(source: ShowcaseSource, storyId: string, workId?: string): string {
+  const origin = showcaseSourceUrl(source).replace(/\/+$/, '');
+  const base = `${origin}/api/public/stories/${encodeURIComponent(storyId)}`;
+  return workId ? `${base}/works/${encodeURIComponent(workId)}/cover` : `${base}/cover`;
+}
+
+/** The query without what is not asked: an empty filter is no filter. */
+function withoutBlanks(query: object): Record<string, string | number> {
+  return Object.fromEntries(
+    Object.entries(query).filter(
+      ([, value]) => value !== undefined && value !== null && value !== '',
+    ),
+  ) as Record<string, string | number>;
+}
+
+/** The match count the server sends along, when it does (a browser cannot read it from another origin). */
+function totalOf(headers: Record<string, unknown> | undefined): number | null {
+  const total = Number(headers?.['x-total-count']);
+  return Number.isFinite(total) ? total : null;
 }
 
 /** What a server says about its public site; `showcaseEnabled` is false when the site is switched off. */
@@ -129,6 +164,42 @@ export class ShowcaseApiService {
         status === 401 ? 'wrong' : status === 429 ? 'locked' : 'failed',
       );
     }
+  }
+
+  /** The stories on show, newest first unless the query sorts them otherwise; the filters add up. */
+  async listStories(
+    source: ShowcaseSource,
+    query: Partial<ShowcaseSearchQuery>,
+  ): Promise<ShowcasePage<ShowcaseStoryCard>> {
+    const response = await this.clientFor(source).get<ShowcaseStoryCard[]>('/public/stories', {
+      params: withoutBlanks(query),
+    });
+    return { items: response.data, total: totalOf(response.headers) };
+  }
+
+  /** What the list can be filtered by, counted over what this viewer may see. */
+  async getFacets(source: ShowcaseSource): Promise<ShowcaseFacets> {
+    const response = await this.clientFor(source).get<ShowcaseFacets>('/public/stories/facets');
+    return response.data;
+  }
+
+  /** The accounts with something on show, most recently active first; `q` looks in the name. */
+  async listAuthors(
+    source: ShowcaseSource,
+    query: { q?: string; limit?: number; offset?: number },
+  ): Promise<ShowcasePage<ShowcaseAuthorCard>> {
+    const response = await this.clientFor(source).get<ShowcaseAuthorCard[]>('/public/authors', {
+      params: withoutBlanks(query),
+    });
+    return { items: response.data, total: totalOf(response.headers) };
+  }
+
+  /** An author's page: their texts and what they have on show. A 404 when they have nothing to show. */
+  async getAuthor(source: ShowcaseSource, username: string): Promise<ShowcaseAuthorPage> {
+    const response = await this.clientFor(source).get<ShowcaseAuthorPage>(
+      `/public/authors/${encodeURIComponent(username)}`,
+    );
+    return response.data;
   }
 
   /**

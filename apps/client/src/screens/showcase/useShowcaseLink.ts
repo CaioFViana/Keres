@@ -99,12 +99,25 @@ export function useShowcaseLink() {
         }
       }
       const { target } = link;
-      if (target.kind === 'story' || target.kind === 'read') {
-        navigation.navigate('ShowcaseStory', { ...source, storyId: target.storyId });
-        return;
+      switch (target.kind) {
+        case 'story':
+        case 'read':
+          navigation.navigate('ShowcaseStory', { ...source, storyId: target.storyId });
+          return;
+        case 'author':
+          navigation.navigate('ShowcaseAuthor', { ...source, username: target.username });
+          return;
+        case 'authors':
+          navigation.navigate('ShowcaseBrowse', { ...source, tab: 'authors' });
+          return;
+        case 'server':
+        case 'stories':
+          navigation.navigate('ShowcaseBrowse', { ...source, tab: 'stories' });
+          return;
+        default:
+          // What the app does not draw yet (packs): the page itself, in the browser.
+          await Linking.openURL(link.url);
       }
-      // The rest of the site is not in the app: the page itself, in the browser.
-      await Linking.openURL(link.url);
     },
     [navigation, t],
   );
@@ -154,6 +167,7 @@ export function useShowcaseLink() {
   }, [resolved]);
 
   return {
+    servers,
     text,
     changeText,
     busy,

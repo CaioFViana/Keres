@@ -19,6 +19,8 @@ import ConversationScreen from '@/src/screens/enter-stack/social/ConversationScr
 import FriendshipListScreen from '@/src/screens/enter-stack/social/FriendshipListScreen';
 import MessageInboxScreen from '@/src/screens/enter-stack/social/MessageInboxScreen';
 import ImportStoryScreen from '@/src/screens/enter-stack/story-entry/ImportStoryScreen';
+import ShowcaseAuthorScreen from '@/src/screens/showcase/ShowcaseAuthorScreen';
+import ShowcaseBrowseScreen from '@/src/screens/showcase/ShowcaseBrowseScreen';
 import ShowcaseHomeScreen from '@/src/screens/showcase/ShowcaseHomeScreen';
 import ShowcaseStoryScreen from '@/src/screens/showcase/ShowcaseStoryScreen';
 import PackBrowseScreen from '@/src/screens/packs/PackBrowseScreen';
@@ -100,9 +102,14 @@ export type ShowcaseSourceParams = { serverId?: string; guestOrigin?: string };
  * The showcase stack: the public sites of servers, read from inside the app. Stories open *from* the home (where
  * a link is pasted) and belong behind it, for the same reason as the packs' screens.
  */
+export type ShowcaseTab = 'stories' | 'authors';
+
 export type ShowcaseStackParamList = {
   ShowcaseHome: undefined;
+  /** The lists of one server's public site: its stories and its authors. */
+  ShowcaseBrowse: ShowcaseSourceParams & { tab?: ShowcaseTab };
   ShowcaseStory: ShowcaseSourceParams & { storyId: string };
+  ShowcaseAuthor: ShowcaseSourceParams & { username: string };
 };
 
 /**
@@ -321,6 +328,16 @@ const ShowcaseStackNavigator = () => {
         name="ShowcaseHome"
         component={ShowcaseHomeScreen}
         options={{ headerTitle: t('showcase_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcaseBrowse"
+        component={ShowcaseBrowseScreen}
+        options={{ headerTitle: t('showcase_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcaseAuthor"
+        component={ShowcaseAuthorScreen}
+        options={{ headerTitle: t('showcase_author_title') }}
       />
       <ShowcaseStack.Screen
         name="ShowcaseStory"

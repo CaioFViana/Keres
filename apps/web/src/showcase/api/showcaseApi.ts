@@ -1,4 +1,7 @@
 import type {
+  ShowcaseAuthorCard,
+  ShowcaseAuthorPage,
+  ShowcaseFacets,
   ShowcasePackCard,
   ShowcasePackDetail,
   ShowcaseStoryCard,
@@ -15,6 +18,7 @@ import type {
  * `sessionStorage` (gone when the tab closes) and scoped to a single story.
  */
 
+import { type StoryFilters, listQuery } from '@/showcase/storyFilters';
 import { readSessionToken } from './showcaseAuth';
 
 const UNLOCK_TOKEN_PREFIX = 'keres_showcase_unlock_';
@@ -89,26 +93,77 @@ export interface StoryListResult {
   /** `null` when the server answered 304 - the list in hand is still valid. */
   stories: ShowcaseStoryCard[] | null;
   etag: string | null;
+  /** How many stories match the filters, whatever page was asked for. */
+  total: number | null;
 }
+
+const totalOf = (response: Response): number | null => {
+  const header = response.headers.get('x-total-count');
+  return header === null ? null : Number(header);
+};
 
 /**
  * The listing, with `If-None-Match`. The page polls, and without this every poll would download
  * the whole catalog again just to find out nothing changed.
  */
-export async function fetchStories(previousEtag: string | null): Promise<StoryListResult> {
-  const response = await fetch('/api/public/stories', {
+export async function fetchStories(
+  previousEtag: string | null,
+  filters?: StoryFilters,
+  limit?: number,
+): Promise<StoryListResult> {
+  const query = filters ? listQuery(filters, limit) : '';
+  const response = await fetch(`/api/public/stories${query ? `?${query}` : ''}`, {
     headers: {
       ...sessionHeaders(),
       ...(previousEtag ? { 'If-None-Match': previousEtag } : {}),
     },
   });
   if (response.status === 304) {
-    return { stories: null, etag: previousEtag };
+    return { stories: null, etag: previousEtag, total: null };
   }
   if (!response.ok) {
     throw new Error(await readError(response));
   }
-  return { stories: await response.json(), etag: response.headers.get('etag') };
+  return {
+    stories: await response.json(),
+    etag: response.headers.get('etag'),
+    total: totalOf(response),
+  };
+}
+
+/** What the list can be filtered by, counted over what this viewer may see. */
+export async function fetchFacets(): Promise<ShowcaseFacets> {
+  const response = await fetch('/api/public/stories/facets', { headers: sessionHeaders() });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export interface AuthorListResult {
+  authors: ShowcaseAuthorCard[];
+  total: number;
+}
+
+export async function fetchAuthors(q: string, limit: number): Promise<AuthorListResult> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (q.trim()) params.set('q', q.trim());
+  const response = await fetch(`/api/public/authors?${params}`, { headers: sessionHeaders() });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const authors: ShowcaseAuthorCard[] = await response.json();
+  return { authors, total: totalOf(response) ?? authors.length };
+}
+
+export async function fetchAuthor(username: string): Promise<ShowcaseAuthorPage> {
+  const response = await fetch(`/api/public/authors/${encodeURIComponent(username)}`, {
+    headers: sessionHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
 }
 
 export async function fetchStory(storyId: string): Promise<ShowcaseStoryResponse> {
@@ -164,15 +219,17 @@ export async function fetchDownloadUrl(storyId: string, publicationId: string): 
 }
 
 /**
- * The cover of a story as an address the page can draw: the picture is fetched with the credentials of the
+ * The cover of a story (or of one of its released works) as an address the page can draw: the picture is fetched with the credentials of the
  * viewer (a protected or adults-only story answers only to them, and an image tag cannot send headers) and kept
  * as a local object URL. `null` when there is no cover to show; the caller revokes the address when done.
  */
-export async function fetchCoverUrl(storyId: string): Promise<string | null> {
+export async function fetchCoverUrl(storyId: string, workId?: string): Promise<string | null> {
   try {
-    const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}/cover`, {
-      headers: storyHeaders(storyId),
-    });
+    const story = `/api/public/stories/${encodeURIComponent(storyId)}`;
+    const response = await fetch(
+      workId ? `${story}/works/${encodeURIComponent(workId)}/cover` : `${story}/cover`,
+      { headers: storyHeaders(storyId) },
+    );
     if (!response.ok) return null;
     return URL.createObjectURL(await response.blob());
   } catch {

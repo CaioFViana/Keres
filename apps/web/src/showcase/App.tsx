@@ -3,6 +3,8 @@ import { ShowcaseAuthProvider } from './auth/ShowcaseAuthProvider';
 import { Layout } from './components/Layout';
 import { ShowcaseConfigProvider } from './config/ShowcaseConfigProvider';
 import { AboutPage } from './pages/AboutPage';
+import { AuthorPage } from './pages/AuthorPage';
+import { AuthorsPage } from './pages/AuthorsPage';
 import { HomePage } from './pages/HomePage';
 import { PackPage } from './pages/PackPage';
 import { PacksPage } from './pages/PacksPage';
@@ -25,6 +27,8 @@ export function ShowcaseApp() {
               <Route path="/" element={<HomePage />} />
               <Route path="/story/:storyId" element={<StoryPage />} />
               <Route path="/story/:storyId/read/:publicationId" element={<ReaderPage />} />
+              <Route path="/authors" element={<AuthorsPage />} />
+              <Route path="/author/:username" element={<AuthorPage />} />
               <Route path="/packs" element={<PacksPage />} />
               <Route path="/pack/:packId" element={<PackPage />} />
               <Route path="/about" element={<AboutPage />} />

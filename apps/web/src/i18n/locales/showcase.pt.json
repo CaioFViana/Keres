@@ -20,8 +20,47 @@
     "signInHint": "Uma conta do site destrava a prateleira adulta quando verificada e com o conteúdo +18 ligado no perfil do app. A sessão vive só nesta aba.",
     "unverified": "não verificado"
   },
+  "author": {
+    "aboutTitle": "Sobre",
+    "back": "← Todos os autores",
+    "linkOpens": "abre em uma nova aba",
+    "linksTitle": "Em outros lugares",
+    "loadFailed": "Não foi possível carregar este autor.",
+    "loading": "Carregando…",
+    "notFound": "Este autor não tem nada em exibição.",
+    "storiesTitle": "Histórias",
+    "storyCount_one": "{{count}} história",
+    "storyCount_other": "{{count}} histórias"
+  },
+  "authors": {
+    "empty": "Nenhum autor publicou algo ainda.",
+    "intro": "As pessoas que publicaram neste servidor. Abra uma para ler o que escreveram sobre si e ver todas as histórias.",
+    "loadFailed": "Não foi possível carregar os autores.",
+    "loading": "Carregando…",
+    "noResults": "Nenhum autor corresponde a esta busca.",
+    "searchPlaceholder": "Busque autores pelo nome…",
+    "search": "Buscar autores",
+    "showMore": "Mostrar mais autores",
+    "title": "Autores"
+  },
   "common": {
     "cancel": "Cancelar"
+  },
+  "filters": {
+    "any": "Qualquer",
+    "clear": "Limpar filtros",
+    "genre": "Gênero",
+    "language": "Idioma",
+    "medium": "Obra",
+    "search": "Buscar histórias",
+    "searchPlaceholder": "Busque por título, autor, gênero, idioma…",
+    "sort": {
+      "label": "Ordem",
+      "recent": "Mais recentes",
+      "title": "Título",
+      "author": "Autor"
+    },
+    "type": "Estrutura"
   },
   "footer": {
     "disclaimer": "O Keres é um companheiro de escrita para planejar histórias. Ele não tem vínculo com o servidor que hospeda esta página nem com as histórias publicadas nela, e não as endossa nem modera. Cada história aqui pertence a quem a publicou."
@@ -45,7 +84,10 @@
     "empty": "Nada foi publicado neste servidor ainda. Quando alguém publicar uma história, ela aparece aqui.",
     "loadFailed": "Não foi possível carregar as histórias.",
     "adultHint": "Adultos verificados conectados também podem ver a prateleira +18 aqui, depois de ligar o conteúdo +18 no perfil do app.",
-    "adultHintOptIn": "Sua conta está verificada. Ligue o conteúdo +18 no seu perfil no app para ver a prateleira +18 aqui."
+    "adultHintOptIn": "Sua conta está verificada. Ligue o conteúdo +18 no seu perfil no app para ver a prateleira +18 aqui.",
+    "noResults": "Nenhuma história corresponde a esta busca.",
+    "showMore": "Mostrar mais histórias",
+    "resultsOf": "{{shown}} de {{total}}"
   },
   "language": {
     "label": "Idioma"
@@ -53,7 +95,8 @@
   "nav": {
     "stories": "Histórias",
     "about": "Sobre",
-    "packs": "Pacotes"
+    "packs": "Pacotes",
+    "authors": "Autores"
   },
   "pack": {
     "back": "← Todos os pacotes",
@@ -185,7 +228,8 @@
       "comic": "Quadrinhos",
       "storyboard": "Storyboard",
       "campaign": "Campanha"
-    }
+    },
+    "workCover": "Capa de {{title}}"
   },
   "theme": {
     "system": "Tema: Sistema",

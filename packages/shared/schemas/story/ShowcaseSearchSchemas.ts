@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { ARC_MEDIUMS } from '../../metadata/ArcMedium';
-
-export const SHOWCASE_SORTS = ['recent', 'title', 'author'] as const;
-export type ShowcaseSort = (typeof SHOWCASE_SORTS)[number];
+import { DEFAULT_SHOWCASE_SORT, SHOWCASE_SORTS } from '../../metadata/ShowcaseSort';
 
 /** The largest page the listing hands out in one answer. */
 export const SHOWCASE_PAGE_MAX = 100;
@@ -21,7 +19,7 @@ export const ShowcaseSearchQuerySchema = z.object({
   language: text(60),
   type: z.enum(['linear', 'branching']).optional(),
   medium: z.enum(ARC_MEDIUMS).optional(),
-  sort: z.enum(SHOWCASE_SORTS).default('recent'),
+  sort: z.enum(SHOWCASE_SORTS).default(DEFAULT_SHOWCASE_SORT),
   limit: z.coerce.number().int().min(1).max(SHOWCASE_PAGE_MAX).optional(),
   offset: z.coerce.number().int().min(0).default(0),
 });

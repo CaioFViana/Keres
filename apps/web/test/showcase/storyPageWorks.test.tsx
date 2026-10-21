@@ -7,6 +7,7 @@ import { flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
+  fetchFacets: vi.fn(async () => ({ genres: [], languages: [], mediums: [], types: [] })),
   fetchStory: vi.fn(),
   unlockStory: vi.fn(),
   fetchDownloadUrl: vi.fn(),
@@ -14,10 +15,12 @@ const mocks = vi.hoisted(() => ({
   fetchConfig: vi.fn(),
   fetchPacks: vi.fn(),
   fetchPack: vi.fn(),
+  fetchCoverUrl: vi.fn(),
 }));
 
 vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
+  fetchFacets: mocks.fetchFacets,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
   fetchDownloadUrl: mocks.fetchDownloadUrl,
@@ -25,6 +28,7 @@ vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchConfig: mocks.fetchConfig,
   fetchPacks: mocks.fetchPacks,
   fetchPack: mocks.fetchPack,
+  fetchCoverUrl: mocks.fetchCoverUrl,
 }));
 
 const bookOne = {
@@ -119,6 +123,7 @@ beforeEach(() => {
   mocks.fetchStories.mockResolvedValue({ stories: [], etag: 'W/"showcase-0"' });
   mocks.fetchConfig.mockResolvedValue({ showcaseEnabled: true, serverVersion: '1.8.0' });
   mocks.fetchPacks.mockResolvedValue([]);
+  mocks.fetchCoverUrl.mockResolvedValue('blob:cover');
 });
 
 describe('story page works', () => {
@@ -163,6 +168,32 @@ describe('story page works', () => {
     );
     expect(container.querySelector('[data-testid^="work-"]')).toBeNull();
     expect(container.querySelectorAll('.version')).toHaveLength(2);
+    await unmount();
+  });
+
+  it('draws the cover of each work that has one, above its title', async () => {
+    const { container, unmount } = await renderStory({
+      ...detailOf([
+        version('w1', { arc: bookOne, packageIncluded: false }),
+        version('w2', { arc: bookTwo, packageIncluded: false }),
+      ]),
+      workCovers: ['arc-1'],
+    });
+    await flush();
+
+    expect(mocks.fetchCoverUrl).toHaveBeenCalledTimes(1);
+    expect(mocks.fetchCoverUrl).toHaveBeenCalledWith('story-1', 'arc-1');
+    const first = container.querySelector('[data-testid="work-arc-1"]');
+    expect(first?.querySelector('img.work-cover')?.getAttribute('src')).toBe('blob:cover');
+    expect(container.querySelector('[data-testid="work-arc-2"] img')).toBeNull();
+    await unmount();
+  });
+
+  it('names the publisher with a link to their author page', async () => {
+    const { container, unmount } = await renderStory(detailOf([version('u-1')]));
+
+    const owner = container.querySelector('.story-head a.owner') as HTMLAnchorElement;
+    expect(owner.getAttribute('href')).toBe('/author/ana');
     await unmount();
   });
 });

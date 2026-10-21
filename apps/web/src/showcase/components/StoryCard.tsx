@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
 import { paletteVars } from '@/showcase/theme/paletteVars';
 import { OwnerAvatar } from './OwnerAvatar';
+import { OwnerLink } from './OwnerLink';
 import { StoryCover } from './StoryCover';
 import { formatBytes, formatDate, genreList } from '@/showcase/format';
 
@@ -49,7 +50,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
             declared author, the card shows only the publisher - passing the account name off
             as the author would attribute to it a work that may not be theirs.
           */}
-          <div className="owner">
+          <OwnerLink username={owner.username} className="owner">
             <OwnerAvatar owner={owner} size={26} />
             <span className="owner-name">
               {snapshot.author ? (
@@ -68,7 +69,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
                 </>
               )}
             </span>
-          </div>
+          </OwnerLink>
           <div className="version-meta">
             <span className="version-label">{latestVersion.label}</span>
             <span className="dot">·</span>

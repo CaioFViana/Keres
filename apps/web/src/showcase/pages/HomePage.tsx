@@ -1,60 +1,53 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ShowcaseStoryCard } from '@keres/shared';
-import { fetchStories } from '@/showcase/api/showcaseApi';
+import { useSearchParams } from 'react-router-dom';
+import type { ShowcaseFacets } from '@keres/shared';
+import { fetchFacets } from '@/showcase/api/showcaseApi';
 import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 import { StoryCard } from '@/showcase/components/StoryCard';
+import { StoryFiltersBar } from '@/showcase/components/StoryFiltersBar';
 import { useShowcaseConfig } from '@/showcase/config/ShowcaseConfigProvider';
+import { useStoryList } from '@/showcase/hooks/useStoryList';
+import {
+  filtersFromParams,
+  hasActiveFilters,
+  paramsFromFilters,
+  type StoryFilters,
+} from '@/showcase/storyFilters';
 
-/** How often the list is polled. With an ETag, it almost always costs a 304. */
-const POLL_INTERVAL_MS = 30_000;
+/** What the filters offer: counted over what this viewer may see, so it is asked again when the viewer changes. */
+function useFacets(): ShowcaseFacets | null {
+  const { status: authStatus } = useShowcaseAuth();
+  const [facets, setFacets] = useState<ShowcaseFacets | null>(null);
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    let alive = true;
+    // The filters are an extra: without their counts the search box and the list still work.
+    fetchFacets()
+      .then((loaded) => alive && setFacets(loaded))
+      .catch(() => alive && setFacets(null));
+    return () => {
+      alive = false;
+    };
+  }, [authStatus]);
+  return facets;
+}
 
 export function HomePage() {
   const { t } = useTranslation('showcase');
   const config = useShowcaseConfig();
-  const { status: authStatus, seesNsfw, viewer } = useShowcaseAuth();
-  const [stories, setStories] = useState<ShowcaseStoryCard[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const etagRef = useRef<string | null>(null);
+  const { seesNsfw, viewer } = useShowcaseAuth();
+  const [params, setParams] = useSearchParams();
+  const filters = useMemo(() => filtersFromParams(params), [params]);
+  const facets = useFacets();
+  const { stories, total, error, hasMore, showMore } = useStoryList(filters);
 
-  const refresh = useCallback(async () => {
-    try {
-      const result = await fetchStories(etagRef.current);
-      etagRef.current = result.etag;
-      // `null` = 304: nothing changed, and overwriting the state would only cause a pointless re-render.
-      if (result.stories) {
-        setStories(result.stories);
-      }
-      setError(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('home.loadFailed'));
-    }
-  }, [t]);
-
-  // The listing is per viewer class: signing in or out changes what the server shows, so a
-  // class change drops the list and its etag (one class's etag must never validate another's).
-  // Polling starts only once the class is known - otherwise the mount fetches twice.
-  const seenAuthStatus = useRef(authStatus);
-  useEffect(() => {
-    if (authStatus === 'loading') {
-      return;
-    }
-    if (seenAuthStatus.current !== authStatus) {
-      seenAuthStatus.current = authStatus;
-      etagRef.current = null;
-      setStories(null);
-    }
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), POLL_INTERVAL_MS);
-    // Coming back to the tab is the most likely moment for something new to exist - it is not worth
-    // waiting for the next interval tick to find that out.
-    const onFocus = () => void refresh();
-    window.addEventListener('focus', onFocus);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [refresh, authStatus]);
+  // The address is where the search lives: it can be shared, and the back button undoes a filter.
+  const change = useCallback(
+    (next: StoryFilters) => setParams(paramsFromFilters(next), { replace: true }),
+    [setParams],
+  );
+  const narrowed = hasActiveFilters(filters);
 
   return (
     <>
@@ -73,8 +66,16 @@ export function HomePage() {
       <section className="stories" id="stories">
         <div className="section-head">
           <h2>{t('home.publishedStories')}</h2>
-          {stories && <span className="count">{stories.length}</span>}
+          {stories && (
+            <span className="count">
+              {narrowed && total !== null && total !== stories.length
+                ? t('home.resultsOf', { shown: stories.length, total })
+                : (total ?? stories.length)}
+            </span>
+          )}
         </div>
+
+        <StoryFiltersBar filters={filters} facets={facets} onChange={change} />
 
         {error && <p className="error-text">{error}</p>}
 
@@ -86,13 +87,23 @@ export function HomePage() {
           </p>
         )}
 
-        {stories && stories.length === 0 && <p className="empty">{t('home.empty')}</p>}
+        {stories && stories.length === 0 && (
+          <p className="empty">{t(narrowed ? 'home.noResults' : 'home.empty')}</p>
+        )}
 
         {stories && stories.length > 0 && (
           <div className="story-grid">
             {stories.map((story) => (
               <StoryCard key={story.storyId} story={story} />
             ))}
+          </div>
+        )}
+
+        {hasMore && (
+          <div className="show-more">
+            <button type="button" className="button-secondary" onClick={showMore}>
+              {t('home.showMore')}
+            </button>
           </div>
         )}
       </section>

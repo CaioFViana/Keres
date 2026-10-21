@@ -8,10 +8,12 @@ import {
   type ShowcaseStoryDetail,
 } from '@keres/shared';
 import { ShowcaseApp } from '@/showcase/App';
+import { NO_FILTERS } from '@/showcase/storyFilters';
 import { click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
+  fetchFacets: vi.fn(async () => ({ genres: [], languages: [], mediums: [], types: [] })),
   fetchStory: vi.fn(),
   unlockStory: vi.fn(),
   fetchDownloadUrl: vi.fn(),
@@ -23,6 +25,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
+  fetchFacets: mocks.fetchFacets,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
   fetchDownloadUrl: mocks.fetchDownloadUrl,
@@ -231,7 +234,7 @@ describe('showcase listing refresh', () => {
     await flush();
 
     expect(mocks.fetchStories).toHaveBeenCalledTimes(2);
-    expect(mocks.fetchStories).toHaveBeenLastCalledWith('W/"showcase-1"');
+    expect(mocks.fetchStories).toHaveBeenLastCalledWith('W/"showcase-1"', NO_FILTERS, 24);
     expect(container.textContent).toContain('O Vale Silencioso');
     await unmount();
   });

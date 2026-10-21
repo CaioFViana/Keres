@@ -61,7 +61,7 @@ describe('the cover on the showcase', () => {
 
     const image = view.container.querySelector('img.story-cover');
     expect(image?.getAttribute('src')).toBe('blob:cover-1');
-    expect(mocks.fetchCoverUrl).toHaveBeenCalledWith('story-1');
+    expect(mocks.fetchCoverUrl).toHaveBeenCalledWith('story-1', undefined);
     await view.unmount();
   });
 

@@ -123,6 +123,7 @@ export * from './schemas/accounts/UserTagSchemas';
 export * from './schemas/accounts/UserSchemas';
 export * from './schemas/accounts/PublicProfileSchemas';
 export * from './schemas/story/PublicationSchemas';
+export * from './metadata/ShowcaseSort';
 export * from './schemas/story/ShowcaseSearchSchemas';
 export * from './metadata/OperationLogEntityType';
 export * from './metadata/recoverableEntityTypes';

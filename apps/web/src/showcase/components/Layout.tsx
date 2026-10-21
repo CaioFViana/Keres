@@ -80,6 +80,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
           <nav className="site-nav">
             <Link to="/">{t('nav.stories')}</Link>
+            <Link to="/authors">{t('nav.authors')}</Link>
             <Link to="/packs">{t('nav.packs')}</Link>
             <Link to="/about">{t('nav.about')}</Link>
             <LanguageSelect storageKey={SHOWCASE_LANGUAGE_KEY} className="language-select" />

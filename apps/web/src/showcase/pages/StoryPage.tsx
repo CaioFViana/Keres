@@ -10,6 +10,7 @@ import {
 } from '@/showcase/api/showcaseApi';
 import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 import { LoginDialog } from '@/showcase/components/LoginDialog';
+import { authorPath } from '@/showcase/components/OwnerLink';
 import { OwnerAvatar } from '@/showcase/components/OwnerAvatar';
 import { PasswordGate } from '@/showcase/components/PasswordGate';
 import { StoryCover } from '@/showcase/components/StoryCover';
@@ -139,7 +140,7 @@ export function StoryPage() {
           The publisher, always - it is a fact about this page. The work's author is a different
           thing, shown among the story's data below.
         */}
-        <div className="owner">
+        <Link to={authorPath(owner.username)} className="owner">
           <OwnerAvatar owner={owner} size={34} />
           <span className="owner-name">
             {owner.username}
@@ -147,7 +148,7 @@ export function StoryPage() {
               #{owner.tag} · {t('story.publishedThis')}
             </span>
           </span>
-        </div>
+        </Link>
       </header>
 
       {snapshot.description && <p className="story-description">{snapshot.description}</p>}
@@ -200,6 +201,12 @@ export function StoryPage() {
         >
           {group.arc ? (
             <>
+              <StoryCover
+                storyId={detail.storyId}
+                workId={group.arc.id}
+                hasCover={detail.workCovers?.includes(group.arc.id)}
+                className="work-cover"
+              />
               <h2>{group.arc.title}</h2>
               <p className="muted work-meta">
                 <span className="badge">{t(`story.medium.${group.arc.medium}`)}</span>

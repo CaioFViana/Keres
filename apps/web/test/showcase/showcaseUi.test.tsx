@@ -7,6 +7,7 @@ import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
+  fetchFacets: vi.fn(async () => ({ genres: [], languages: [], mediums: [], types: [] })),
   fetchStory: vi.fn(),
   unlockStory: vi.fn(),
   fetchDownloadUrl: vi.fn(),
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
+  fetchFacets: mocks.fetchFacets,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
   fetchDownloadUrl: mocks.fetchDownloadUrl,

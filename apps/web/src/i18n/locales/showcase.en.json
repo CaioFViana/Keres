@@ -20,8 +20,47 @@
     "signInHint": "A site account unlocks the adults-only shelf when it is age-verified and adults-only content is turned on in its app profile. The session lives only in this tab.",
     "unverified": "not verified"
   },
+  "author": {
+    "aboutTitle": "About",
+    "back": "← All authors",
+    "linkOpens": "opens a new tab",
+    "linksTitle": "Elsewhere",
+    "loadFailed": "Could not load this author.",
+    "loading": "Loading…",
+    "notFound": "This author has nothing on show.",
+    "storiesTitle": "Stories",
+    "storyCount_one": "{{count}} story",
+    "storyCount_other": "{{count}} stories"
+  },
+  "authors": {
+    "empty": "No author has published anything yet.",
+    "intro": "The people who published on this server. Open one to read what they wrote about themselves and to see all their stories.",
+    "loadFailed": "Could not load the authors.",
+    "loading": "Loading…",
+    "noResults": "No author matches this search.",
+    "searchPlaceholder": "Search authors by name…",
+    "search": "Search authors",
+    "showMore": "Show more authors",
+    "title": "Authors"
+  },
   "common": {
     "cancel": "Cancel"
+  },
+  "filters": {
+    "any": "Any",
+    "clear": "Clear filters",
+    "genre": "Genre",
+    "language": "Language",
+    "medium": "Work",
+    "search": "Search stories",
+    "searchPlaceholder": "Search by title, author, genre, language…",
+    "sort": {
+      "label": "Order",
+      "recent": "Newest",
+      "title": "Title",
+      "author": "Author"
+    },
+    "type": "Structure"
   },
   "footer": {
     "disclaimer": "Keres is a writing companion for planning stories. It is not affiliated with the server hosting this page, nor with the stories published on it, and it does not endorse or moderate them. Every story here belongs to the person who published it."
@@ -45,7 +84,10 @@
     "empty": "Nothing has been published on this server yet. When an author publishes a story, it shows up here.",
     "loadFailed": "Could not load the stories.",
     "adultHint": "Signed-in verified adults can also see the +18 shelf here, once they turn on adults-only content in their app profile.",
-    "adultHintOptIn": "Your account is verified. Turn on adults-only content in your profile in the app to see the +18 shelf here."
+    "adultHintOptIn": "Your account is verified. Turn on adults-only content in your profile in the app to see the +18 shelf here.",
+    "noResults": "No story matches this search.",
+    "showMore": "Show more stories",
+    "resultsOf": "{{shown}} of {{total}}"
   },
   "language": {
     "label": "Language"
@@ -53,7 +95,8 @@
   "nav": {
     "stories": "Stories",
     "about": "About",
-    "packs": "Packs"
+    "packs": "Packs",
+    "authors": "Authors"
   },
   "pack": {
     "back": "← All packs",
@@ -185,7 +228,8 @@
       "comic": "Comic",
       "storyboard": "Storyboard",
       "campaign": "Campaign"
-    }
+    },
+    "workCover": "Cover of {{title}}"
   },
   "theme": {
     "system": "Theme: System",

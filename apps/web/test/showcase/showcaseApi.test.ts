@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearUnlockToken,
+  fetchAuthor,
+  fetchAuthors,
   fetchConfig,
   fetchCoverUrl,
   fetchDownloadUrl,
+  fetchFacets,
   fetchManuscriptDownloadUrl,
   fetchPack,
   fetchPacks,
@@ -33,17 +36,22 @@ function respond({
   status = 200,
   etag = null,
   jsonThrows = false,
+  total = null,
 }: {
   body?: unknown;
   status?: number;
   etag?: string | null;
   jsonThrows?: boolean;
+  total?: number | null;
 }): StubResponse {
   return {
     ok: status >= 200 && status < 300,
     status,
     json: jsonThrows ? () => Promise.reject(new Error('not json')) : () => Promise.resolve(body),
-    headers: { get: (name: string) => (name === 'etag' ? etag : null) },
+    headers: {
+      get: (name: string) =>
+        name === 'etag' ? etag : name === 'x-total-count' && total !== null ? String(total) : null,
+    },
   };
 }
 
@@ -114,7 +122,11 @@ describe('fetchStories', () => {
 
     const result = await fetchStories(null);
 
-    expect(result).toEqual({ stories: [{ storyId: 'story-1' }], etag: 'W/"showcase-1"' });
+    expect(result).toEqual({
+      stories: [{ storyId: 'story-1' }],
+      etag: 'W/"showcase-1"',
+      total: null,
+    });
     expect(fetchMock).toHaveBeenCalledWith('/api/public/stories', { headers: {} });
   });
 
@@ -123,7 +135,7 @@ describe('fetchStories', () => {
 
     const result = await fetchStories('W/"showcase-1"');
 
-    expect(result).toEqual({ stories: null, etag: 'W/"showcase-1"' });
+    expect(result).toEqual({ stories: null, etag: 'W/"showcase-1"', total: null });
     expect(fetchMock).toHaveBeenCalledWith('/api/public/stories', {
       headers: { 'If-None-Match': 'W/"showcase-1"' },
     });
@@ -350,5 +362,97 @@ describe('fetchCoverUrl', () => {
 
     fetchMock.mockRejectedValueOnce(new Error('offline'));
     expect(await fetchCoverUrl('story-1')).toBeNull();
+  });
+});
+
+describe('fetchStories with filters', () => {
+  const filters = {
+    q: 'vale',
+    genre: 'Fantasia',
+    language: '',
+    type: '',
+    medium: '',
+    sort: 'title' as const,
+  };
+
+  it('puts only what narrows or reorders the list in the address, with the page size, and reads the total', async () => {
+    fetchMock.mockResolvedValue(respond({ body: [], etag: 'W/"1"', total: 57 }));
+
+    const result = await fetchStories(null, filters, 24);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      '/api/public/stories?q=vale&genre=Fantasia&sort=title&limit=24',
+    );
+    expect(result.total).toBe(57);
+  });
+
+  it('asks for the plain address when nothing is filtered and no page is cut', async () => {
+    fetchMock.mockResolvedValue(respond({ body: [] }));
+
+    await fetchStories(null, { ...filters, q: '', genre: '', sort: 'recent' });
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/public/stories');
+  });
+});
+
+describe('fetchFacets', () => {
+  it('reads what the list can be filtered by, as the viewer', async () => {
+    const facets = {
+      genres: [{ value: 'Fantasia', count: 2 }],
+      languages: [],
+      mediums: [],
+      types: [],
+    };
+    fetchMock.mockResolvedValue(respond({ body: facets }));
+
+    expect(await fetchFacets()).toEqual(facets);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/public/stories/facets');
+  });
+
+  it('fails with the server message', async () => {
+    fetchMock.mockResolvedValue(respond({ status: 404, body: { message: 'Not found.' } }));
+    await expect(fetchFacets()).rejects.toThrow('Not found.');
+  });
+});
+
+describe('authors', () => {
+  it('lists them with the match total and the name searched', async () => {
+    fetchMock.mockResolvedValue(respond({ body: [{ owner: { username: 'ana' } }], total: 9 }));
+
+    const result = await fetchAuthors(' an ', 48);
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/public/authors?limit=48&q=an');
+    expect(result).toEqual({ authors: [{ owner: { username: 'ana' } }], total: 9 });
+  });
+
+  it('counts the page when the server sends no total', async () => {
+    fetchMock.mockResolvedValue(respond({ body: [{}, {}] }));
+    expect((await fetchAuthors('', 48)).total).toBe(2);
+  });
+
+  it('reads one author by name, encoded', async () => {
+    fetchMock.mockResolvedValue(respond({ body: { biography: 'x' } }));
+
+    await fetchAuthor('ana maria');
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/public/authors/ana%20maria');
+  });
+
+  it('fails with the server message when the author has nothing on show', async () => {
+    fetchMock.mockResolvedValue(respond({ status: 404, body: { message: 'Not found.' } }));
+    await expect(fetchAuthor('nobody')).rejects.toThrow('Not found.');
+  });
+});
+
+describe('fetchCoverUrl of a work', () => {
+  it('asks for the cover of the work, not of the story', async () => {
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:work');
+    fetchMock.mockResolvedValue({
+      ...respond({}),
+      blob: () => Promise.resolve(new Blob(['png'], { type: 'image/png' })),
+    });
+
+    expect(await fetchCoverUrl('story-1', 'arc 1')).toBe('blob:work');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/public/stories/story-1/works/arc%201/cover');
   });
 });

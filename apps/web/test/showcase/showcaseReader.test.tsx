@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   fetchReaderUrl: vi.fn(),
   fetchConfig: vi.fn(),
   fetchStories: vi.fn(),
+  fetchFacets: vi.fn(async () => ({ genres: [], languages: [], mediums: [], types: [] })),
 }));
 
 vi.mock('@/showcase/api/showcaseApi', () => ({
@@ -20,6 +21,7 @@ vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchReaderUrl: mocks.fetchReaderUrl,
   fetchConfig: mocks.fetchConfig,
   fetchStories: mocks.fetchStories,
+  fetchFacets: mocks.fetchFacets,
   fetchDownloadUrl: vi.fn(),
   fetchManuscriptDownloadUrl: vi.fn(),
   fetchPacks: vi.fn(),

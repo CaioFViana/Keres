@@ -29,7 +29,7 @@ export function formatDate(isoDate: string, language?: string): string {
 }
 
 // The server filters by the same split, so the chips and the filter agree on what a genre is.
-export { genreList } from '@keres/shared';
+export { genreList } from '@keres/shared/utils/genreList';
 
 /**
  * What a pack contains, as short phrases.
@@ -93,4 +93,17 @@ export function packContentLines(
     lines.push(plural('pack.locationMapCount', summary.locationMapCount));
   }
   return lines;
+}
+
+/**
+ * "3 stories". The plural form is chosen here, with both keys written out, rather than left to i18next: the
+ * translation audit reads literal keys out of the source and cannot see one that is assembled.
+ */
+export function storyCountLabel(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  count: number,
+): string {
+  return count === 1
+    ? t('author.storyCount_one', { count })
+    : t('author.storyCount_other', { count });
 }

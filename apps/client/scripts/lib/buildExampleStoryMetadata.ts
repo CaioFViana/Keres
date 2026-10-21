@@ -1,14 +1,15 @@
+import type { ExampleRow } from './exampleStoryTypes';
 type BuilderContext = {
   slug: string;
   language: 'en' | 'pt';
-  source: Record<string, any>;
-  text: any;
-  showcase: any;
+  source: ExampleRow;
+  text: ExampleRow;
+  showcase: ExampleRow;
   storyId: string;
   id: (key: string) => string;
-  base: (id: string, storyId: string) => Record<string, any>;
-  characters: any[];
-  locations: any[];
+  base: (id: string, storyId: string) => ExampleRow;
+  characters: ExampleRow[];
+  locations: ExampleRow[];
 };
 
 export function buildExampleStoryMetadata(context: BuilderContext) {
@@ -72,7 +73,7 @@ export function buildExampleStoryMetadata(context: BuilderContext) {
       description: text.schema.descriptions[7],
     },
   };
-  const storySchemaFields: any[] = schemaTypes.map((type, index) => ({
+  const storySchemaFields: ExampleRow[] = schemaTypes.map((type, index) => ({
     ...base(id(`schema-field-${index}`), storyId),
     entityType: 'Character',
     ...definitions[type],
@@ -149,15 +150,15 @@ export function buildExampleStoryMetadata(context: BuilderContext) {
     label: language === 'pt' ? ['Baixa', 'Pronta', 'Forte', 'Excepcional'][index] : label,
     minValue: index * 20,
   }));
-  const modes: any[] = [0, 1].map((characterIndex) => ({
+  const modes: ExampleRow[] = [0, 1].map((characterIndex) => ({
     ...base(id(`mode-${characterIndex}`), storyId),
     characterId: characters[characterIndex].id,
     name: text.modeNames[characterIndex],
     modeChanges: text.modeChanges[characterIndex],
     order: 1,
   }));
-  const statRelations: any[] = characters.slice(0, 4).flatMap((character, characterIndex) =>
-    stats.map((stat: any, statIndex: number) => ({
+  const statRelations: ExampleRow[] = characters.slice(0, 4).flatMap((character, characterIndex) =>
+    stats.map((stat: ExampleRow, statIndex: number) => ({
       ...base(id(`stat-relation-${characterIndex}-${statIndex}`), storyId),
       characterId: character.id,
       modeId: null,
@@ -166,7 +167,7 @@ export function buildExampleStoryMetadata(context: BuilderContext) {
     })),
   );
   modes.forEach((mode, modeIndex) => {
-    stats.forEach((stat: any, statIndex: number) =>
+    stats.forEach((stat: ExampleRow, statIndex: number) =>
       statRelations.push({
         ...base(id(`stat-relation-mode-${modeIndex}-${statIndex}`), storyId),
         characterId: characters[modeIndex].id,

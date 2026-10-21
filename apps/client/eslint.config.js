@@ -51,9 +51,9 @@ module.exports = defineConfig([
     },
   },
   {
-    // The app's code. The content-build scripts under `scripts/` read loosely typed example-story data and are
-    // not held to it; tests are off in their own block below.
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    // The app's code and its build scripts; tests are off in their own block below. The example-story scripts name
+    // their loose rows once (`scripts/lib/exampleStoryTypes.ts`).
+    files: ['src/**/*.ts', 'src/**/*.tsx', 'scripts/**/*.ts'],
     rules: {
       /**
        * `any` switches the checker off for everything it touches. Use `unknown` and narrow, or the real type;

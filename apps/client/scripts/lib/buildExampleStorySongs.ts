@@ -1,12 +1,13 @@
 import type { ExampleStoryLanguage } from './exampleStoryBuilderSupport';
+import type { ExampleRow } from './exampleStoryTypes';
 
 type Context = {
   slug: string;
   language: ExampleStoryLanguage;
   storyId: string;
   id: (key: string) => string;
-  base: (id: string, storyId: string) => Record<string, any>;
-  scenes: { id: string }[];
+  base: (id: string, storyId: string) => ExampleRow;
+  scenes: ExampleRow[];
 };
 
 /**

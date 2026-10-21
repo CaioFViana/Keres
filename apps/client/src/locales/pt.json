@@ -2650,6 +2650,8 @@
   "server_action_privacy_hint": "Versão {{version}} aceita",
   "server_action_profile": "Perfil e avatar",
   "server_action_profile_hint": "Seu avatar, cor e bio neste servidor",
+  "server_action_showcase": "Vitrine",
+  "server_action_showcase_hint": "Navegue pelo que está publicado neste servidor: histórias, autores e packs",
   "server_action_terms": "Termos de serviço",
   "server_action_terms_hint": "Versão {{version}} aceita",
   "server_address": "Endereço do Servidor",

@@ -8,8 +8,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
-import type { RouteProp } from '@react-navigation/native';
-import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import { type RouteProp, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +17,7 @@ import DeleteAccountModal from '@/src/components/features/servers/DeleteAccountM
 import PlanLimitsCard from '@/src/components/features/servers/PlanLimitsCard';
 import PlanStatusCard from '@/src/components/features/servers/PlanStatusCard';
 import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
+import ServerShowcaseAction from '@/src/components/features/servers/ServerShowcaseAction';
 import TermsModal from '@/src/components/features/servers/TermsModal/TermsModal';
 import { serverCardStyleDefs } from '@/src/components/features/servers/serverCardStyleDefs';
 import ServerStatusPill from '@/src/components/features/servers/ServerStatusPill';
@@ -476,6 +476,7 @@ const ServerDetailScreen = () => {
         onPress={() => navigation.navigate('PublicProfile', { serverId })}
         testID="server-action-author-page"
       />
+      <ServerShowcaseAction serverId={serverId} />
       <ServerActionRow
         icon="key-outline"
         title={t('server_action_password')}

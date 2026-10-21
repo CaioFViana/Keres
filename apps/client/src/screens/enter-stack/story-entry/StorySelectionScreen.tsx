@@ -25,6 +25,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
 
 type RootStackParamList = {
@@ -187,6 +188,14 @@ const StorySelectionScreen = () => {
         icon: 'download-outline',
         label: t('import_story_title'),
         onPress: () => navigation.getParent()?.navigate('ImportStory'),
+      },
+      // A server's public site - what others published there - is a step away; a build with no server has none.
+      {
+        id: 'action-2',
+        icon: 'storefront-outline',
+        label: t('showcase_title'),
+        onPress: () => navigation.getParent()?.navigate('ShowcaseDrawer'),
+        visible: !isServerless(),
       },
     ],
   });

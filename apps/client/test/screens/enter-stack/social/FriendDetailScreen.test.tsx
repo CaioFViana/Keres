@@ -1,6 +1,6 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
-import { Linking, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import FriendDetailScreen from '@/src/screens/enter-stack/social/FriendDetailScreen';
 
@@ -13,8 +13,10 @@ const mockHeader = jest.fn();
 const mockCanGoBack = jest.fn();
 const mockUnsubscribe = jest.fn();
 const mockFocusListeners: (() => void)[] = [];
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
   navigate: (...args: unknown[]) => mockNavigate(...args),
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
   goBack: (...args: unknown[]) => mockGoBack(...args),
   canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
   addListener: (_event: string, cb: () => void) => {
@@ -330,16 +332,9 @@ describe('FriendDetailScreen', () => {
       owner: { username: 'Zoe' },
       stories: Array.from({ length: count }, (_, at) => card(at + 1)),
     });
-    let openUrl: jest.SpyInstance;
-
     beforeEach(() => {
-      mockGetAllServers.mockResolvedValue([{ ...server, url: 'https://s.example/' }]);
+      mockGetAllServers.mockResolvedValue([server]);
       mockGetAllFriendships.mockResolvedValue([friendship({ status: FriendStatus.FRIEND })]);
-      openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
-    });
-
-    afterEach(() => {
-      openUrl.mockRestore();
     });
 
     it('lists a few of the stories, and the header offers the author page', async () => {
@@ -373,19 +368,32 @@ describe('FriendDetailScreen', () => {
         .onPress();
       await fireEvent.press(view.getByTestId('friend-published-more'));
 
-      expect(openUrl).toHaveBeenCalledTimes(2);
-      expect(openUrl).toHaveBeenNthCalledWith(1, 'https://s.example/showcase/author/Zoe');
-      expect(openUrl).toHaveBeenNthCalledWith(2, 'https://s.example/showcase/author/Zoe');
+      // Inside the app, in the showcase, under its home: back goes there and not out of the section.
+      expect(mockParentNavigate).toHaveBeenCalledTimes(2);
+      for (const call of mockParentNavigate.mock.calls) {
+        expect(call).toEqual([
+          'ShowcaseDrawer',
+          {
+            screen: 'ShowcaseAuthor',
+            params: { serverId: 'srv-1', username: 'Zoe' },
+            initial: false,
+          },
+        ]);
+      }
     });
 
-    it('opens a story on the public site from its row', async () => {
+    it('opens a story in the showcase from its row', async () => {
       mockAuthorPage.current = pageOf(1);
       const view = await render(<FriendDetailScreen />);
       await view.findByText('Zoe');
 
       await fireEvent.press(view.getByTestId('friend-published-story-story-1'));
 
-      expect(openUrl).toHaveBeenCalledWith('https://s.example/showcase/story/story-1');
+      expect(mockParentNavigate).toHaveBeenCalledWith('ShowcaseDrawer', {
+        screen: 'ShowcaseStory',
+        params: { serverId: 'srv-1', storyId: 'story-1' },
+        initial: false,
+      });
     });
 
     it('shows only the first few and says how many the author page has besides', async () => {
@@ -411,7 +419,7 @@ describe('FriendDetailScreen', () => {
       mockHeader.mock.calls[0][0].actions
         .find((a: { id: string }) => a.id === 'author-page')
         .onPress();
-      expect(openUrl).not.toHaveBeenCalled();
+      expect(mockParentNavigate).not.toHaveBeenCalled();
     });
 
     it('keeps the header action but lists nothing when the page has no stories', async () => {

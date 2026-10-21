@@ -2650,6 +2650,8 @@
   "server_action_privacy_hint": "Version {{version}} accepted",
   "server_action_profile": "Profile and avatar",
   "server_action_profile_hint": "Your avatar, colour and bio on this server",
+  "server_action_showcase": "Showcase",
+  "server_action_showcase_hint": "Browse what is published on this server: stories, authors and packs",
   "server_action_terms": "Terms of service",
   "server_action_terms_hint": "Version {{version}} accepted",
   "server_address": "Server Address",

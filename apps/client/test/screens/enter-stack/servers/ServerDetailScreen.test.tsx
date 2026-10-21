@@ -10,7 +10,9 @@ const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
   goBack: (...args: unknown[]) => mockGoBack(...args),
   navigate: (...args: unknown[]) => mockNavigate(...args),
 };
@@ -274,6 +276,19 @@ describe('ServerDetailScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('ChangePassword', { serverId: 'srv-1' });
     await fireEvent.press(view.getByTestId('server-action-connection'));
     expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', { serverId: 'srv-1' });
+  });
+
+  it("opens the server's showcase from its row, under the showcase's home", async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-showcase'));
+
+    expect(mockParentNavigate).toHaveBeenCalledWith('ShowcaseDrawer', {
+      screen: 'ShowcaseBrowse',
+      params: { serverId: 'srv-1' },
+      initial: false,
+    });
   });
 
   it('reads the agreed server terms from the local copy, offline', async () => {

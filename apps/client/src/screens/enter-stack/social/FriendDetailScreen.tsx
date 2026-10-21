@@ -10,7 +10,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import FriendConversationCard from '@/src/components/features/friendship/FriendConversationCard';
 import FriendDetailActions, {
   type FriendDetailMode,
@@ -41,7 +41,6 @@ import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { directConversationKey } from '@/src/utils/entity/conversationKey';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { buildAuthorPublicUrl, buildStoryPublicUrl } from '@/src/utils/format/showcaseUrls';
 import { logger } from '@/src/utils/logging/logger';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
@@ -85,15 +84,24 @@ const FriendDetailScreen = () => {
   );
   // What the friend has on show on their server's public site: the header and the page point at it.
   const authorPage = useFriendAuthorPage(server, friendship?.friendUsername ?? null, friendship);
-  const openAuthorPage = useCallback(() => {
-    if (!server || !friendship) return;
-    void Linking.openURL(buildAuthorPublicUrl(server.url, friendship.friendUsername));
-  }, [server, friendship]);
-  const openPublishedStory = useCallback(
-    (storyId: string) => {
-      if (server) void Linking.openURL(buildStoryPublicUrl(server.url, storyId));
+  // The author's page and the stories on it open inside the app, in the showcase, under its home.
+  const openInShowcase = useCallback(
+    (screen: 'ShowcaseAuthor' | 'ShowcaseStory', params: Record<string, string>) => {
+      if (!friendship) return;
+      navigation.getParent()?.navigate('ShowcaseDrawer', {
+        screen,
+        params: { serverId: friendship.serverId, ...params },
+        initial: false,
+      });
     },
-    [server],
+    [friendship, navigation],
+  );
+  const openAuthorPage = useCallback(() => {
+    if (friendship) openInShowcase('ShowcaseAuthor', { username: friendship.friendUsername });
+  }, [friendship, openInShowcase]);
+  const openPublishedStory = useCallback(
+    (storyId: string) => openInShowcase('ShowcaseStory', { storyId }),
+    [openInShowcase],
   );
   useScreenHeader({
     target: 'parent',

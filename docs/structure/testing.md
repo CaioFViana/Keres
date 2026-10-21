@@ -9,6 +9,7 @@ How Keres is tested, what the coverage floors mean and how to add a test. The hi
 | `bun run test:report` | Every suite, with coverage, and a summary table per workspace. Prefer it over reading the raw output of `bun run test`. |
 | `bun run --cwd apps/client test` | The client (Jest). Already limited to two workers and a 512 MB idle limit. |
 | `bun run --cwd apps/api test` | API unit tests (Vitest). |
+| `bun run --cwd apps/e2e test` | The web client's build in a real browser (Playwright), served like GitHub Pages serves it: boot under the Pages path, the service worker that isolates the page, the WASM SQLite, a first story that survives a reload. Build first: `bun run --cwd apps/client build:pages` with `KERES_WEB_BASE_URL=/Keres/client`; `E2E_CHANNEL=chrome` uses the installed Chrome instead of downloading Chromium. Runs in CI as the `e2e-web` job. |
 | `bun run test:sync-fuzz-api` | The client's sync engine against the real API (Postgres up first): three devices edit one story at random and must converge. Runs in CI as the `sync-fuzz` job; `SYNC_FUZZ_SEEDS=200` for a deeper local run. |
 | `bun run test:integration` | API integration tests on a real Postgres and a real SQLite. Start the disposable database first: `docker compose -f apps/api/docker-compose.test.yml up -d`. |
 | `bun run check` | Formatting and static checks for the whole repository (Biome). |
@@ -21,6 +22,15 @@ Two things that look like failures on such a machine and are not tests failing:
 - One `An update to VirtualizedList inside a test was not wrapped in act(...)` per run, in a different list screen each time. It is the list's batching timer firing after the test's last `act`, under load; it does not reproduce running the file alone.
 
 The API figure that counts is the **union** of its unit and integration suites: neither alone is representative (the unit-only file reads far lower), so `coverage-check.ts api` merges both.
+
+## End-to-end
+
+`apps/e2e` is the one place that opens the built client in a browser. It exists for what Jest cannot see by construction, because Jest runs on `better-sqlite3` with the native modules mocked: the bundle under the deploy path, the cross-origin isolation the web SQLite needs, the migrations on the WASM database and persistence across a reload. Each of those has broken a release. It is not where behaviour is tested: a rule that a screen follows belongs in a Jest test, and this folder stays a short list of journeys a person makes.
+
+- The build is not made by the tests: they serve `apps/client/dist-pages` through `apps/e2e/static-server.ts`, which sends **no** COOP/COEP headers, as Pages does, so a failure of the service worker (`public/coi-sw.js`) is not hidden by the server.
+- Select by `data-testid` (the client's `testID`) or by role and visible English text; the browser is started in `en-US`.
+- A first visit shows a tour over the first screen: dismiss it (`guide-skip`) before acting. Reading the terms and the privacy notice takes about twelve seconds each: wait for the accept button to enable, do not sleep.
+- **Building the client for this is heavy** (Metro starts several workers; one local build reached 5 GB). Reuse a `dist-pages` that is already built when the UI has not changed.
 
 ## Static checks
 

@@ -56,6 +56,10 @@
       ],
       "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
     },
+    "apps/e2e": {
+      "entry": ["tests/**/*.spec.ts"],
+      "project": ["*.ts", "tests/**/*.ts"]
+    },
     "packages/shared": {
       "entry": ["test/**/*.test.ts"],
       "project": ["**/*.ts"]

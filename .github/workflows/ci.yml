@@ -223,3 +223,32 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun run test:sync-fuzz-api
+
+  # The web client's build, served the way GitHub Pages serves it, opened in a real browser: the bundle boots under
+  # the Pages path, the service worker isolates the page, the WASM SQLite opens and what it stores survives a reload.
+  # None of that exists in Jest (better-sqlite3, mocked natives), and all of it has broken a release before.
+  # The local equivalent is `bun run --cwd apps/client build:pages` with `KERES_WEB_BASE_URL=/Keres/client`, then
+  # `E2E_CHANNEL=chrome bun run --cwd apps/e2e test` (the installed Chrome stands in for Playwright's Chromium).
+  e2e-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run --cwd apps/e2e typecheck
+      - name: Build the web client as the Pages deploy does
+        run: bun run --cwd apps/client build:pages
+        env:
+          KERES_WEB_BASE_URL: /Keres/client
+      - name: Install the browser
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run the browser tests
+        run: bun run --cwd apps/e2e test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-web-traces
+          path: apps/e2e/test-results
+          if-no-files-found: ignore

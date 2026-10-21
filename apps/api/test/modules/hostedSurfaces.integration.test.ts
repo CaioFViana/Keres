@@ -149,6 +149,28 @@ describe('a server with every surface built', () => {
     });
   });
 
+  describe("the landing's own pages", () => {
+    it.each(['/terms', '/privacy'])(
+      'serves the landing at %s while the administrator has it on',
+      async (path) => {
+        await setSettings({ landing: true });
+
+        const { status, text, headers } = await get(app, path);
+
+        expect(status).toBe(200);
+        expect(text).toContain('landing');
+        expect(headers.get('content-type')).toContain('text/html');
+        expect(headers.get('content-security-policy')).toContain("default-src 'self'");
+      },
+    );
+
+    it.each(['/terms', '/privacy'])('answers 404 at %s while the landing is off', async (path) => {
+      await setSettings({});
+
+      expect((await get(app, path)).status).toBe(404);
+    });
+  });
+
   describe('the hosted client', () => {
     it('serves its entry with the marker, the history guard and the isolation headers', async () => {
       const { status, text, headers } = await get(app, '/client/');

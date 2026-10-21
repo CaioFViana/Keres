@@ -138,6 +138,15 @@ function prefixedStatics(surface: WebSurface, prefix: string) {
   };
 }
 
+/** The landing page for one of its own paths (`/terms`, `/privacy`): only while the landing is built and switched on. */
+async function serveLandingDocument(landing: WebSurface, set: Reply): Promise<Served> {
+  const settings = await showcaseSettingsService.getOrCreate().catch(() => null);
+  if (landing.available && (settings?.isLandingEnabled ?? false)) {
+    return servePage(set, landing);
+  }
+  return notFound(set);
+}
+
 /**
  * What answers before the API's routes: the root, the hosted client and the favicon.
  *
@@ -190,6 +199,25 @@ export function webEntryRoutes(surfaces: WebSurfaces) {
           summary: 'Hosted Keres client',
           description:
             'Serves the web export of apps/client built for /client (KERES_WEB_BASE_URL), with COOP/COEP so expo-sqlite can use SharedArrayBuffer. A path with no file falls back to the entry page.',
+          tags: ['Client'],
+        },
+      })
+      // The landing's own pages - the server's terms and its privacy policy. They are the landing's single page, which
+      // reads its path and shows the document; with no landing there is no such page, so they answer 404 instead of
+      // sending the visitor somewhere that does not say what they asked for.
+      .get('/terms', ({ set }) => serveLandingDocument(landing, set), {
+        detail: {
+          summary: 'Terms of service page of the landing',
+          description:
+            'The landing page, opened on the terms. 404 while the landing is off or not built.',
+          tags: ['Client'],
+        },
+      })
+      .get('/privacy', ({ set }) => serveLandingDocument(landing, set), {
+        detail: {
+          summary: 'Privacy policy page of the landing',
+          description:
+            'The landing page, opened on the privacy policy. 404 while the landing is off or not built.',
           tags: ['Client'],
         },
       })

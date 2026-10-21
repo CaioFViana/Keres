@@ -66,4 +66,23 @@ describe('UserService', () => {
     expect(await service.pruneDeletedAccounts(0, new Date(Date.now() + 1000))).toBe(1);
     expect(await service.pruneDeletedAccounts(0)).toBe(0);
   });
+
+  it('erases the author page texts with the account', async () => {
+    const ana = await registerUser('ana');
+    const service = new UserService();
+    await service.updatePublicProfile(ana.userId, {
+      biography: 'Ana writes',
+      links: [{ label: 'Site', url: 'https://example.com' }],
+      theme: 'ocean',
+    });
+
+    await service.deleteOwnAccount(ana.userId, ana.password);
+    expect(await service.pruneDeletedAccounts(0, new Date(Date.now() + 1000))).toBe(1);
+
+    expect(await service.getPublicProfile(ana.userId)).toEqual({
+      biography: null,
+      links: [],
+      theme: null,
+    });
+  });
 });

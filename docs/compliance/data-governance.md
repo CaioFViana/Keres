@@ -34,7 +34,7 @@ number: it receives a signed result only.
 
 | Activity | Data | Legal basis | Where it lives |
 |---|---|---|---|
-| Account | username, tag, hashed password/recovery codes | contract (Art. 7, V) | Postgres, until deletion + 30 days |
+| Account | username, tag, hashed password/recovery codes, bio, and what the user writes for their public author page (biography, links, theme) | contract (Art. 7, V) | Postgres, until deletion + 30 days |
 | Accepted terms/privacy proof | user id, version, text hash, timestamp | legal obligation / rights protection (Art. 7, II/VI; Art. 16, I) | `terms_acceptances`, kept |
 | Stories, messages, publications, reports | content the user sends | contract | Postgres, until deletion + 30 days |
 | Payments | order ids, purchase-token hashes (never card data) | legal obligation (fiscal) | Postgres + providers (Stripe, PayPal, Google Play) |

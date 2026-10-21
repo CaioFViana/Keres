@@ -40,6 +40,7 @@ The API figure that counts is the **union** of its unit and integration suites: 
 | `bun run typecheck` | Type errors in every package and in the repository's own scripts. |
 | `bun run lint` | The linter of each package (ESLint for the client and the admin panel, Biome elsewhere). |
 | `bun run check` | Formatting for the whole repository, and the Biome rules where they are enabled. |
+| `bun run deps:audit` | A workspace with its own copy of `zod`, `drizzle-orm`, `elysia`, `typescript` or `react` in `bun.lock`. Two copies make the compiler instantiate every shared type twice; the API's typecheck ran out of its heap over exactly that. Runs in CI next to `knip`. |
 | `bun run docs:audit` | A path in backticks or a relative link in `README.md`, `CONTRIBUTING.md`, `docs/` (history in `docs/decisions/` and `docs/extras/` aside) and the workspaces' READMEs that points at a file or folder that no longer exists. Run in CI next to `knip`. |
 | `bun run knip` | Unused files, exports and types; dependencies that are used but not declared (or declared and not used); binaries nobody declared. Configured in `knip.json` and run in CI. |
 

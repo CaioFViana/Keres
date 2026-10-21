@@ -86,6 +86,8 @@ jobs:
       - run: bun run knip
       # Every file and link the documents name has to exist (`scripts/verify-doc-paths.ts`).
       - run: bun run docs:audit
+      # No workspace of ours with a private copy of zod, drizzle-orm or elysia (`scripts/verify-single-versions.ts`).
+      - run: bun run deps:audit
 
   # The repository's own scripts are not a package, but they are TypeScript. `run-all.ts`
   # checks them on unfiltered local `typecheck` runs; here they get their own tiny job so the

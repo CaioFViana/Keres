@@ -29,9 +29,10 @@ const TYPES: Record<string, string> = {
   '.woff2': 'font/woff2',
 };
 
+// Not fatal: a run of the other project (`--project online`) has no use for this build, and the pages tests fail with
+// a 404 that says the same.
 if (!existsSync(join(DIST, 'index.html'))) {
-  console.error(`No build at ${DIST}: run "bun run --cwd apps/client build:pages" first.`);
-  process.exit(1);
+  console.warn(`No build at ${DIST}: run "bun run --cwd apps/client build:pages" first.`);
 }
 
 createServer((request, response) => {

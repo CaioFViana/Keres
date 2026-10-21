@@ -7,12 +7,18 @@ export async function waitForIsolation(page: Page) {
   await page.waitForFunction(() => window.crossOriginIsolated, null, { timeout: 60_000 });
 }
 
-/** Every error the page raises or logs; a journey ends by asserting the list is empty. */
-export function collectProblems(page: Page): string[] {
+/**
+ * Every error the page raises or logs; a journey ends by asserting the list is empty. `expected` names the ones a
+ * working client raises anyway (a probe that answers 401 before anyone has signed in).
+ */
+export function collectProblems(page: Page, expected: RegExp[] = []): string[] {
   const problems: string[] = [];
-  page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
+  const record = (text: string) => {
+    if (!expected.some((pattern) => pattern.test(text))) problems.push(text);
+  };
+  page.on('pageerror', (error) => record(`page error: ${error.message}`));
   page.on('console', (message) => {
-    if (message.type() === 'error') problems.push(`console error: ${message.text()}`);
+    if (message.type() === 'error') record(`console error: ${message.text()}`);
   });
   return problems;
 }

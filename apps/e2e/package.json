@@ -5,7 +5,9 @@
   "description": "End-to-end smoke tests of the built web client in a real browser.",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:pages": "playwright test --project pages",
+    "test:online": "playwright test --project online"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

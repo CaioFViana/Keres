@@ -247,7 +247,7 @@ jobs:
         working-directory: apps/e2e
         run: bunx playwright install --with-deps chromium
       - name: Run the browser tests
-        run: bun run --cwd apps/e2e test
+        run: bun run --cwd apps/e2e test:pages
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -274,3 +274,28 @@ jobs:
         run: xvfb-run -a bun run --cwd apps/desktop test:sqlite-web
         env:
           ELECTRON_DISABLE_SANDBOX: '1'
+
+  # The client a person uses with a server, in two browser profiles of one account against the real API on a throwaway
+  # SQLite database: sign-up, a story sent to the server, the pull on sign-in on the second device, and each device
+  # seeing the other's edit. The API serves the hosted client itself (`apps/e2e/api-server.ts`). Its own job, parallel
+  # to `e2e-web`: the two builds are separate exports of the client and each takes minutes.
+  e2e-online:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Build the hosted web client
+        run: bun run --cwd apps/client build:hosted
+      - name: Install the browser
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run the online journey
+        run: bun run --cwd apps/e2e test:online
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-online-traces
+          path: apps/e2e/test-results
+          if-no-files-found: ignore

@@ -600,19 +600,35 @@ export function useStoryPublishing(storyId: string | undefined) {
     const opensProtectedVersions =
       !usePassword && showcase?.visibility === 'password' && showcase.publications.length > 0;
 
-    if (!opensProtectedVersions) {
-      void runPublish();
+    const askAboutProtectedVersions = () => {
+      if (!opensProtectedVersions || !showcase) {
+        void runPublish();
+        return;
+      }
+      AppAlert.alert(
+        t('publish_opening_protected_title'),
+        t('publish_opening_protected_message', { count: showcase.publications.length }),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          { text: t('publish_opening_protected_confirm'), onPress: () => void runPublish() },
+        ],
+      );
+    };
+
+    // The story file is the whole story, not the text: every note, summary and Gallery file the author wrote for
+    // themselves goes public with it. A switch left on by default is not consent to that, so it is asked, every time.
+    if (manuscript.includePackage && manuscript.releaseArcId === null) {
+      AppAlert.alert(t('publish_package_confirm_title'), t('publish_package_confirm_message'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('publish_package_confirm'),
+          style: 'destructive',
+          onPress: askAboutProtectedVersions,
+        },
+      ]);
       return;
     }
-
-    AppAlert.alert(
-      t('publish_opening_protected_title'),
-      t('publish_opening_protected_message', { count: showcase.publications.length }),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('publish_opening_protected_confirm'), onPress: () => void runPublish() },
-      ],
-    );
+    askAboutProtectedVersions();
   }, [manuscript, password, runPublish, showcase, showNotification, t, usePassword]);
 
   const deleteVersion = useCallback(

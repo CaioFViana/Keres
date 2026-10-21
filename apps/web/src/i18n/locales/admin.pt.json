@@ -188,7 +188,8 @@
       "admin_evidence_hold_created": "Preservação de provas criada",
       "admin_evidence_hold_viewed": "Preservação de provas consultada",
       "admin_evidence_hold_extended": "Preservação de provas prorrogada",
-      "admin_evidence_hold_released": "Preservação de provas liberada"
+      "admin_evidence_hold_released": "Preservação de provas liberada",
+      "admin_user_public_profile_cleared": "Página de autor de usuário limpa por um admin"
     }
   },
   "appearance": {
@@ -789,7 +790,13 @@
     "revoke": "Revogar verificação",
     "revoking": "Revogando...",
     "confirmRevoke": "Revogar a verificação +18 de {{username}}? A conta perde o acesso a todas as histórias para adultos de uma vez.",
-    "revokeFailed": "Não foi possível revogar a verificação."
+    "revokeFailed": "Não foi possível revogar a verificação.",
+    "viewAuthorPage": "Ver página de autor",
+    "clearAuthorPage": "Limpar página de autor",
+    "clearingAuthorPage": "Limpando…",
+    "confirmClearAuthorPage": "Limpar a biografia, os links e o tema da página de autor de {{username}}? A conta e as histórias não são tocadas, e a pessoa pode escrever a página de novo.",
+    "clearAuthorPageFailed": "Não foi possível limpar a página de autor.",
+    "authorPageCleared": "A página de autor foi limpa."
   },
   "users": {
     "title": "Usuários",

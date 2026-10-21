@@ -262,6 +262,37 @@ export const adminUserRoutes = new Elysia()
     },
   )
 
+  .delete(
+    '/:id/public-profile',
+    async ({ params, user }) => {
+      await requireAdmin(user);
+
+      try {
+        await adminUserService.clearPublicProfile(params.id);
+        return { cleared: true };
+      } catch (error) {
+        if (error instanceof AdminUserNotFoundError) {
+          throw new AppError(404, error.message);
+        }
+        throw error;
+      }
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      response: {
+        200: t.Object({ cleared: t.Boolean() }),
+        404: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: "Clear a user's author page",
+        description:
+          "Empties the biography, links and theme the user wrote for their public author page. The account, its short bio and its stories stay as they are, and the user may write the page again.",
+        tags: ['Admin'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+
   .post(
     '/:id/regenerate-recovery-codes',
     async ({ params, user }) => {

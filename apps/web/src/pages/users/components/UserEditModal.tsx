@@ -68,6 +68,8 @@ export function UserEditModal({
   const [tierError, setTierError] = useState<string | null>(null);
   const [giftOpen, setGiftOpen] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [clearingAuthorPage, setClearingAuthorPage] = useState(false);
+  const [authorPageCleared, setAuthorPageCleared] = useState(false);
   /** After creating: the dialog over this one showing the codes exactly once. */
   const [created, setCreated] = useState<{ id: string; codes: string[] } | null>(null);
 
@@ -178,6 +180,26 @@ export function UserEditModal({
       setError(err instanceof Error ? err.message : t('userForm.revokeFailed'));
     } finally {
       setRevoking(false);
+    }
+  };
+
+  /**
+   * Moderation of the public author page: empties the biography, links and theme the person wrote for it. The
+   * account, its short bio and its stories stay, and the person may write the page again.
+   */
+  const onClearAuthorPage = async () => {
+    if (!userId || clearingAuthorPage) return;
+    if (!confirm(t('userForm.confirmClearAuthorPage', { username }))) return;
+    setClearingAuthorPage(true);
+    setError(null);
+    setAuthorPageCleared(false);
+    try {
+      await AdminUserApiService.clearPublicProfile(userId);
+      setAuthorPageCleared(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('userForm.clearAuthorPageFailed'));
+    } finally {
+      setClearingAuthorPage(false);
     }
   };
 
@@ -363,7 +385,31 @@ export function UserEditModal({
               <button type="button" onClick={() => setRecoveryOpen(true)}>
                 {t('userForm.openRecovery')}
               </button>
+              {/* The page is public: seeing it is how a moderator judges it. Another site (bundle) of the same origin, so a plain link. */}
+              <a
+                href={`/showcase/author/${encodeURIComponent(username)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button button-secondary"
+              >
+                {t('userForm.viewAuthorPage')}
+              </a>
+              <button
+                type="button"
+                className="button-danger"
+                disabled={clearingAuthorPage}
+                onClick={() => void onClearAuthorPage()}
+              >
+                {clearingAuthorPage
+                  ? t('userForm.clearingAuthorPage')
+                  : t('userForm.clearAuthorPage')}
+              </button>
             </div>
+          )}
+          {authorPageCleared && (
+            <p className="hint" data-testid="author-page-cleared">
+              {t('userForm.authorPageCleared')}
+            </p>
           )}
         </div>
       )}

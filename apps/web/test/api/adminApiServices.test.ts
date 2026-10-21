@@ -82,6 +82,14 @@ describe('AdminUserApiService', () => {
     expect(mocks.post).toHaveBeenNthCalledWith(2, '/admin/users/user-1/regenerate-recovery-codes');
   });
 
+  it('clears the public author page through its own sub-resource', async () => {
+    mocks.delete.mockResolvedValue({ data: { cleared: true } });
+
+    await expect(AdminUserApiService.clearPublicProfile('user-1')).resolves.toBeUndefined();
+
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/users/user-1/public-profile');
+  });
+
   it('returns the fresh recovery codes after regenerating', async () => {
     mocks.post.mockResolvedValue({ data: { recoveryCodes: ['AAAAA-11111', 'BBBBB-22222'] } });
 

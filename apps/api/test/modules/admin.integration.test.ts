@@ -27,6 +27,7 @@ describe('requireAdmin gate', () => {
     ['DELETE', '/admin/api/users/qualquer'],
     ['POST', '/admin/api/users/qualquer/restore'],
     ['POST', '/admin/api/users/qualquer/regenerate-recovery-codes'],
+    ['DELETE', '/admin/api/users/qualquer/public-profile'],
     ['GET', '/admin/api/tiers'],
     ['POST', '/admin/api/tiers', { name: 'Pro' }],
     ['GET', '/admin/api/messages'],
@@ -247,6 +248,30 @@ describe('admin user lifecycle', () => {
     expect(restored.data.isDeleted).toBe(false);
   });
 
+  it('clears the author page texts of an account and leaves the rest alone', async () => {
+    await request('PUT', '/user/public-profile', {
+      token: comum.token,
+      body: {
+        biography: 'Not for this page',
+        links: [{ label: 'Site', url: 'https://example.com' }],
+        theme: 'ocean',
+      },
+    });
+    await request('PUT', '/user/profile', { token: comum.token, body: { bio: 'short bio' } });
+
+    const cleared = await request('DELETE', `/admin/api/users/${comum.userId}/public-profile`, {
+      token: admin.token,
+    });
+
+    expect(cleared.status).toBe(200);
+    expect(cleared.data).toEqual({ cleared: true });
+    const page = await request('GET', '/user/public-profile', { token: comum.token });
+    expect(page.data).toEqual({ biography: null, links: [], theme: null });
+    // The short bio friends see is not the author page's: moderation of the page does not touch it.
+    const own = await request('GET', `/user/details/${comum.userId}`, { token: comum.token });
+    expect(own.data.bio).toBe('short bio');
+  });
+
   it('regenerates recovery codes the account can use to reset its own password', async () => {
     const { status, data } = await request(
       'POST',
@@ -370,11 +395,15 @@ describe('admin user error paths', () => {
     const rekeyed = await request('POST', `/admin/api/users/${missing}/regenerate-recovery-codes`, {
       token: admin.token,
     });
+    const unpaged = await request('DELETE', `/admin/api/users/${missing}/public-profile`, {
+      token: admin.token,
+    });
 
     expect(updated.status).toBe(404);
     expect(deleted.status).toBe(404);
     expect(restored.status).toBe(404);
     expect(rekeyed.status).toBe(404);
+    expect(unpaged.status).toBe(404);
   });
 
   it('refuses to demote or delete the root account reconciled from the environment', async () => {

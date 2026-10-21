@@ -47,6 +47,11 @@ export const AdminUserApiService = {
     const { data } = await apiClient.post(`/admin/users/${safeId}/restore`);
     return data;
   },
+  /** Empties the biography, links and theme of the user's public author page; nothing else of the account changes. */
+  async clearPublicProfile(id: string): Promise<void> {
+    const safeId = assertSafePathSegment(id);
+    await apiClient.delete(`/admin/users/${safeId}/public-profile`);
+  },
   async regenerateRecoveryCodes(id: string): Promise<{ recoveryCodes: string[] }> {
     const safeId = assertSafePathSegment(id);
     const { data } = await apiClient.post(`/admin/users/${safeId}/regenerate-recovery-codes`);

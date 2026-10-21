@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   softDeleteUser: vi.fn(),
   restoreUser: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
+  clearPublicProfile: vi.fn(),
   listTiers: vi.fn(),
   userSubscription: vi.fn(),
 }));
@@ -26,6 +27,7 @@ vi.mock('@/api/AdminUserApiService', () => ({
     softDelete: mocks.softDeleteUser,
     restore: mocks.restoreUser,
     regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
+    clearPublicProfile: mocks.clearPublicProfile,
   },
 }));
 vi.mock('@/api/PaymentsApiService', () => ({
@@ -129,6 +131,7 @@ beforeEach(() => {
   mocks.softDeleteUser.mockResolvedValue({});
   mocks.restoreUser.mockResolvedValue({});
   mocks.regenerateRecoveryCodes.mockResolvedValue({ recoveryCodes: [] });
+  mocks.clearPublicProfile.mockResolvedValue(undefined);
   vi.stubGlobal(
     'confirm',
     vi.fn(() => true),
@@ -709,6 +712,53 @@ describe('user form', () => {
         (button) => button.textContent === 'Regenerate recovery codes',
       ),
     ).toBe(true);
+    await view.unmount();
+  });
+
+  it('clears the author page after confirmation and says so', async () => {
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    await clickDialogButton(view.container, 'Clear author page');
+    await flush();
+
+    expect(window.confirm).toHaveBeenCalledOnce();
+    expect(mocks.clearPublicProfile).toHaveBeenCalledWith('user-1');
+    expect(view.container.querySelector('[data-testid="author-page-cleared"]')).not.toBeNull();
+    await view.unmount();
+  });
+
+  it('clears nothing when the operator cancels', async () => {
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    await clickDialogButton(view.container, 'Clear author page');
+    await flush();
+
+    expect(mocks.clearPublicProfile).not.toHaveBeenCalled();
+    expect(view.container.querySelector('[data-testid="author-page-cleared"]')).toBeNull();
+    await view.unmount();
+  });
+
+  it('reports a failure to clear the author page, and links to the page to judge it', async () => {
+    mocks.clearPublicProfile.mockRejectedValue(new Error('Not found.'));
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    const link = Array.from(topModal(view.container).querySelectorAll('a')).find(
+      (anchor) => anchor.textContent === 'View author page',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/showcase/author/ana');
+    expect(link.rel).toContain('noopener');
+
+    await clickDialogButton(view.container, 'Clear author page');
+    await flush();
+
+    expect(topModalError(view.container)).toBe('Not found.');
     await view.unmount();
   });
 

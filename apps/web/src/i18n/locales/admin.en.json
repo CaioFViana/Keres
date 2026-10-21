@@ -188,7 +188,8 @@
       "admin_evidence_hold_created": "Evidence hold created",
       "admin_evidence_hold_viewed": "Evidence hold viewed",
       "admin_evidence_hold_extended": "Evidence hold extended",
-      "admin_evidence_hold_released": "Evidence hold released"
+      "admin_evidence_hold_released": "Evidence hold released",
+      "admin_user_public_profile_cleared": "User author page cleared by an admin"
     }
   },
   "appearance": {
@@ -789,7 +790,13 @@
     "revoke": "Revoke verification",
     "revoking": "Revoking...",
     "confirmRevoke": "Revoke {{username}}'s 18+ verification? They lose access to every adults-only story at once.",
-    "revokeFailed": "Could not revoke the verification."
+    "revokeFailed": "Could not revoke the verification.",
+    "viewAuthorPage": "View author page",
+    "clearAuthorPage": "Clear author page",
+    "clearingAuthorPage": "Clearing…",
+    "confirmClearAuthorPage": "Clear the biography, links and theme of {{username}}'s author page? Their account and stories are not touched, and they can write the page again.",
+    "clearAuthorPageFailed": "Failed to clear the author page.",
+    "authorPageCleared": "The author page was cleared."
   },
   "users": {
     "title": "Users",

@@ -55,6 +55,10 @@ describe('classifyRequest', () => {
       rule: { action: 'admin.story_collaborator_removed' },
       groups: { id: 's1', userId: 'u2' },
     });
+    expect(classifyRequest('DELETE', '/api/admin/users/u1/public-profile')).toMatchObject({
+      rule: { action: 'admin.user_public_profile_cleared', targetType: 'user' },
+      groups: { id: 'u1' },
+    });
   });
 
   it('finds the rule of a route at the root of its group, whether or not the path ends in a slash', () => {

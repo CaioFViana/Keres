@@ -649,7 +649,8 @@ code {
   color: var(--color-primary);
 }
 
-@media (max-width: 800px) {
+/* The landing has many entries: the menu folds up before they stop fitting on one line. */
+@media (max-width: 1080px) {
   .nav-toggle {
     display: inline-flex;
   }
@@ -706,7 +707,9 @@ code {
   .theme-toggle-text {
     display: none;
   }
+}
 
+@media (max-width: 800px) {
   .hero-title {
     max-width: none;
   }

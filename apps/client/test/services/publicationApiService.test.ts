@@ -51,6 +51,22 @@ describe('getPublicConfig', () => {
   });
 });
 
+describe('getAuthorPage', () => {
+  it("returns the author's public page, asked by the name it is published under", async () => {
+    const page = { owner: { username: 'zoe é' }, stories: [] };
+    mockGet.mockResolvedValue({ data: page });
+
+    await expect(publicationApiService.getAuthorPage(server, 'zoe é')).resolves.toEqual(page);
+    expect(mockGet).toHaveBeenCalledWith('/public/authors/zoe%20%C3%A9');
+  });
+
+  it('has no page when the server has none to show or cannot answer', async () => {
+    mockGet.mockRejectedValue(new Error('404'));
+
+    await expect(publicationApiService.getAuthorPage(server, 'zoe')).resolves.toBeNull();
+  });
+});
+
 describe('supportsCompiledUpload', () => {
   it('is true when the server advertises the upload capability', async () => {
     mockGet.mockResolvedValue({ data: { showcaseEnabled: true, compiledUpload: true } });

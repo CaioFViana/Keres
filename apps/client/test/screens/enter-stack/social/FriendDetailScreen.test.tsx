@@ -1,6 +1,6 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { Linking, StyleSheet } from 'react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import FriendDetailScreen from '@/src/screens/enter-stack/social/FriendDetailScreen';
 
@@ -129,6 +129,11 @@ jest.mock('@/src/screens/enter-stack/social/useFriendActivity', () => ({
   useFriendActivity: () => mockActivity.current,
 }));
 
+const mockAuthorPage: { current: unknown } = { current: null };
+jest.mock('@/src/screens/enter-stack/social/useFriendAuthorPage', () => ({
+  useFriendAuthorPage: () => mockAuthorPage.current,
+}));
+
 const mockInvitationActions = {
   accept: jest.fn(),
   decline: jest.fn(),
@@ -221,6 +226,7 @@ describe('FriendDetailScreen', () => {
     jest.clearAllMocks();
     mockCompact.current = false;
     mockActivity.current = { ...NO_ACTIVITY };
+    mockAuthorPage.current = null;
     mockInvitations.current = { received: [], sent: [], busyId: null };
     mockInviteState.current = { stories: null, busy: false, invite: jest.fn(async () => true) };
     mockFocusListeners.length = 0;
@@ -313,6 +319,108 @@ describe('FriendDetailScreen', () => {
     // Nothing to open before the friendship is loaded.
     mockHeader.mock.calls[0][0].actions[0].onPress();
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  describe("what the friend has published on their server's public site", () => {
+    const card = (n: number) => ({
+      storyId: `story-${n}`,
+      snapshot: { title: `Story ${n}`, genre: n === 1 ? 'Fantasy' : null },
+    });
+    const pageOf = (count: number) => ({
+      owner: { username: 'Zoe' },
+      stories: Array.from({ length: count }, (_, at) => card(at + 1)),
+    });
+    let openUrl: jest.SpyInstance;
+
+    beforeEach(() => {
+      mockGetAllServers.mockResolvedValue([{ ...server, url: 'https://s.example/' }]);
+      mockGetAllFriendships.mockResolvedValue([friendship({ status: FriendStatus.FRIEND })]);
+      openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    });
+
+    afterEach(() => {
+      openUrl.mockRestore();
+    });
+
+    it('lists a few of the stories, and the header offers the author page', async () => {
+      mockAuthorPage.current = pageOf(2);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.getByText('friend_published_title')).toBeTruthy();
+      expect(view.getByText('Story 1')).toBeTruthy();
+      expect(view.getByText('Fantasy')).toBeTruthy();
+      expect(view.getByText('Story 2')).toBeTruthy();
+      // With nothing left over, the button says what it is: the author page.
+      expect(
+        within(view.getByTestId('friend-published-more')).getByText('friend_author_page'),
+      ).toBeTruthy();
+
+      const header = mockHeader.mock.calls
+        .at(-1)![0]
+        .actions.find((action: { id: string }) => action.id === 'author-page');
+      expect(header).toMatchObject({ icon: 'person-circle-outline', visible: true });
+    });
+
+    it('opens the author page from the header and from the button', async () => {
+      mockAuthorPage.current = pageOf(1);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      mockHeader.mock.calls
+        .at(-1)![0]
+        .actions.find((action: { id: string }) => action.id === 'author-page')
+        .onPress();
+      await fireEvent.press(view.getByTestId('friend-published-more'));
+
+      expect(openUrl).toHaveBeenCalledTimes(2);
+      expect(openUrl).toHaveBeenNthCalledWith(1, 'https://s.example/showcase/author/Zoe');
+      expect(openUrl).toHaveBeenNthCalledWith(2, 'https://s.example/showcase/author/Zoe');
+    });
+
+    it('opens a story on the public site from its row', async () => {
+      mockAuthorPage.current = pageOf(1);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      await fireEvent.press(view.getByTestId('friend-published-story-story-1'));
+
+      expect(openUrl).toHaveBeenCalledWith('https://s.example/showcase/story/story-1');
+    });
+
+    it('shows only the first few and says how many the author page has besides', async () => {
+      mockAuthorPage.current = pageOf(5);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.getByText('Story 3')).toBeTruthy();
+      expect(view.queryByText('Story 4')).toBeNull();
+      expect(view.getByText('friend_published_more')).toBeTruthy();
+    });
+
+    it('shows nothing, and no header action, when the friend has no page', async () => {
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.queryByTestId('friend-published-stories')).toBeNull();
+      const header = mockHeader.mock.calls
+        .at(-1)![0]
+        .actions.find((action: { id: string }) => action.id === 'author-page');
+      expect(header.visible).toBe(false);
+      // Nothing to open before the friendship is loaded either.
+      mockHeader.mock.calls[0][0].actions
+        .find((a: { id: string }) => a.id === 'author-page')
+        .onPress();
+      expect(openUrl).not.toHaveBeenCalled();
+    });
+
+    it('keeps the header action but lists nothing when the page has no stories', async () => {
+      mockAuthorPage.current = pageOf(0);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.queryByTestId('friend-published-stories')).toBeNull();
+    });
   });
 
   it('shows a sent request with a single cancel action', async () => {

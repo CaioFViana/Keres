@@ -22,20 +22,11 @@ import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { usePublishManuscript } from './usePublishManuscript';
+import { buildStoryPublicUrl } from '@/src/utils/format/showcaseUrls';
 import { logger } from '@/src/utils/logging/logger';
 
-/**
- * A story's public address.
- *
- * Assembled here from `servers.url` because the app already knows where the server lives - the
- * showcase is served by the same process and on the same origin as the API, under `/showcase` (the
- * web client is under `/client`; see `SHOWCASE_PATH_PREFIX` and `HOSTED_CLIENT_PATH_PREFIX` in
- * apps/api/src/services/static-delivery/hostedClient.ts), so
- * there is nothing to ask the server.
- */
-export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {
-  return `${serverUrl.replace(/\/+$/, '')}/showcase/story/${storyId}`;
-}
+// A story's public address lives with the author's (see `showcaseUrls`); the publish screen reads it from here.
+export { buildStoryPublicUrl };
 
 /**
  * Why the story cannot be published at all, as opposed to not right now (`reason`): it never left this

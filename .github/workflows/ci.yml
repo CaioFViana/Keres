@@ -252,3 +252,23 @@ jobs:
           name: e2e-web-traces
           path: apps/e2e/test-results
           if-no-files-found: ignore
+
+  # The desktop app's web SQLite, in Electron: wa-sqlite over OPFS with SharedArrayBuffer, which depends on the
+  # COOP/COEP headers the main process's `app://` protocol sends and on a Web Worker channel that once truncated long
+  # results (the probe is `apps/client/src/testing/sqliteWebSmokeProbe.ts`). Only this path runs that combination. The
+  # build carries the probe, so it is its own export; Electron needs a display, which `xvfb-run` fakes, and a runner
+  # cannot give the browser sandbox its setuid helper.
+  desktop-sqlite-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      # Bun does not always run the `electron` package's install script, which is what downloads the binary.
+      - name: Make sure the Electron binary is there
+        run: node node_modules/electron/install.js
+      - name: Build the client with the probe, then run it in Electron
+        run: xvfb-run -a bun run --cwd apps/desktop test:sqlite-web
+        env:
+          ELECTRON_DISABLE_SANDBOX: '1'

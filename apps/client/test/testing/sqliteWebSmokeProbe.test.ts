@@ -100,6 +100,19 @@ it('passes a healthy channel and publishes the handoff result', async () => {
   expect(database.execAsync).toHaveBeenLastCalledWith('DROP TABLE IF EXISTS _sqlite_web_smoke;');
 });
 
+it('imports the exported story under the target id it later looks for', async () => {
+  await runSqliteWebSmokeProbe(mockDatabase());
+
+  expect(mockStories.importFullStory).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ extra: 1 }),
+    null,
+    null,
+    undefined,
+    IMPORTED_STORY_ID,
+  );
+});
+
 it('accepts string failures that name the missing table', async () => {
   const database = mockDatabase({
     getAllAsync: jest.fn(async () => {

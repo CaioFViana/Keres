@@ -174,7 +174,8 @@
       "suggestion": "Suggestion",
       "suggestion_list": "Suggestion list",
       "entity": "Link to an entity"
-    }
+    },
+    "aboutTitle": "About the pack"
   },
   "packs": {
     "eyebrow": "Shared structure",

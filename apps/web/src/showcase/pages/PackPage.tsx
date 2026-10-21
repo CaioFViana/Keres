@@ -5,6 +5,9 @@ import type { ShowcasePackDetail, StorySchemaEntityType } from '@keres/shared';
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared/metadata/StorySchemaEntityType';
 import { fetchPack } from '@/showcase/api/showcaseApi';
 import { OwnerAvatar } from '@/showcase/components/OwnerAvatar';
+import { ThreadMark } from '@/showcase/components/ThreadMark';
+import { ThreadFork, ThreadPage } from '@/showcase/components/thread/ThreadPage';
+import { authorPath } from '@/showcase/format';
 
 const CUSTOM_SUGGESTION_PREFIX = 'custom:';
 
@@ -128,191 +131,202 @@ export function PackPage() {
   }
 
   return (
-    <section className="story-page">
-      <Link to="/packs" className="back-link">
-        {t('pack.back')}
-      </Link>
+    <ThreadPage className="story-page">
+      <ThreadMark />
 
-      <header className="story-head">
-        <span className="badge badge-pack">{t('pack.version', { version: pack.version })}</span>
-        <h1>{pack.name}</h1>
-        <div className="owner">
-          <OwnerAvatar owner={pack.owner} size={34} />
-          <span className="owner-name">
-            {pack.owner.username}
-            <span className="owner-tag">
-              #{pack.owner.tag} · {t('pack.sharedThis')}
+      <section className="hero thread-col story-top">
+        <Link to="/packs" className="back-link">
+          {t('pack.back')}
+        </Link>
+
+        <header className="story-head-text">
+          <span className="badge badge-pack">{t('pack.version', { version: pack.version })}</span>
+          <h1 className="pack-title" data-thread-knot>
+            {pack.name}
+          </h1>
+          <Link to={authorPath(pack.owner.username)} className="owner">
+            <OwnerAvatar owner={pack.owner} size={34} />
+            <span className="owner-name">
+              {pack.owner.username}
+              <span className="owner-tag">
+                #{pack.owner.tag} · {t('pack.sharedThis')}
+              </span>
             </span>
-          </span>
-        </div>
-      </header>
+          </Link>
+          {pack.description && <p className="story-description">{pack.description}</p>}
+        </header>
+      </section>
 
-      {pack.description && <p className="story-description">{pack.description}</p>}
+      <ThreadFork count={1}>
+        <section className="card story-facts-card" data-thread-branch>
+          <h2 data-thread-title>{t('pack.aboutTitle')}</h2>
+          <dl className="story-facts">
+            {pack.authorName && (
+              <div>
+                <dt>{t('pack.author')}</dt>
+                <dd>{pack.authorName}</dd>
+              </div>
+            )}
+            {pack.language && (
+              <div>
+                <dt>{t('pack.language')}</dt>
+                <dd>{pack.language}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{t('pack.statSystem')}</dt>
+              <dd>
+                {content.settings.statSystem
+                  ? t(`pack.notation.${content.settings.statNotation}`)
+                  : t('pack.statSystemOff')}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </ThreadFork>
 
-      <dl className="story-facts">
-        {pack.authorName && (
-          <div>
-            <dt>{t('pack.author')}</dt>
-            <dd>{pack.authorName}</dd>
-          </div>
-        )}
-        {pack.language && (
-          <div>
-            <dt>{t('pack.language')}</dt>
-            <dd>{pack.language}</dd>
-          </div>
-        )}
-        <div>
-          <dt>{t('pack.statSystem')}</dt>
-          <dd>
-            {content.settings.statSystem
-              ? t(`pack.notation.${content.settings.statNotation}`)
-              : t('pack.statSystemOff')}
-          </dd>
-        </div>
-      </dl>
-
-      <section className="pack-contents">
-        <h2>{t('pack.contentsTitle')}</h2>
+      <section className="pack-contents thread-col">
+        <h2 data-thread-knot>{t('pack.contentsTitle')}</h2>
         {/*
           A pack is structure, and the point of this page is that a visitor reads that structure in
           full before deciding. Nothing is withheld for a download: what is listed here is
           everything the pack carries.
         */}
         <p className="muted">{t('pack.contentsIntro')}</p>
-
-        {fieldsByEntity.size > 0 && (
-          <div className="pack-section">
-            <h3>{t('pack.fields')}</h3>
-            {[...fieldsByEntity].map(([entityType, fields]) => (
-              <div className="pack-group" key={entityType}>
-                <h4>{t(`pack.entity.${entityType}`)}</h4>
-                <ul className="pack-field-list">
-                  {fields.map((field) => (
-                    <li key={field.id}>
-                      <span className="pack-field-name">{field.name}</span>
-                      <span className="pack-field-type">
-                        {t(`pack.attributeType.${field.type}`)}
-                        {field.isRequired && ` · ${t('pack.required')}`}
-                      </span>
-                      {field.description && (
-                        <span className="pack-field-desc">{field.description}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {content.stats.length > 0 && (
-          <div className="pack-section">
-            <h3>{t('pack.stats')}</h3>
-            <ul className="pack-stat-list">
-              {[...content.stats]
-                .sort((left, right) => left.order - right.order)
-                .map((stat) => {
-                  const own = ladders.byStat.get(stat.id) ?? [];
-                  return (
-                    <li key={stat.id}>
-                      <span className="pack-field-name">{stat.name}</span>
-                      {!stat.isPrimary && (
-                        <span className="pack-field-type">{t('pack.secondaryStat')}</span>
-                      )}
-                      {own.length > 0 && (
-                        <span className="pack-ladder">
-                          {own.map((tier) => tier.label).join(' · ')}
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-            </ul>
-            {ladders.shared.length > 0 && (
-              <p className="pack-ladder shared">
-                {t('pack.defaultLadder')}: {ladders.shared.map((tier) => tier.label).join(' · ')}
-              </p>
-            )}
-          </div>
-        )}
-
-        {content.tags.length > 0 && (
-          <div className="pack-section">
-            <h3>{t('pack.tags')}</h3>
-            <div className="chips">
-              {content.tags.map((tag) => (
-                <span
-                  className="chip"
-                  key={tag.id}
-                  style={tag.color ? { borderColor: tag.color } : undefined}
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {vocabularyTerms.length > 0 && (
-          <div className="pack-section">
-            <h3>{t('pack.vocabulary')}</h3>
-            <ul className="pack-field-list">
-              {vocabularyTerms.map(({ entityType, term }) => (
-                <li key={entityType}>
-                  <span className="pack-field-name">{term.singular}</span>
-                  <span className="pack-field-type">{term.plural}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {catalogues.length > 0 && (
-          <div className="pack-section">
-            <h3>{t('pack.suggestions')}</h3>
-            <ul className="pack-field-list">
-              {catalogues.map(([label, count]) => (
-                <li key={label}>
-                  <span className="pack-field-name">{label}</span>
-                  <span className="pack-field-type">
-                    {t(count === 1 ? 'pack.entryCount_one' : 'pack.entryCount_other', { count })}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {extrasGroups.length > 0 && (
-          <div className="pack-section">
-            <h3>{t('pack.extras')}</h3>
-            <p className="muted">{t('pack.extrasIntro')}</p>
-            {extrasGroups.map((group) => (
-              <div className="pack-group" key={group.title}>
-                <h4>{t(group.title)}</h4>
-                <div className="chips">
-                  {group.names.map((name, index) => (
-                    <span className="chip" key={`${group.title}-${index}`}>
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
+
+      {/* Each part of the pack is a knot of the thread: the rail is the page's table of contents. */}
+      {fieldsByEntity.size > 0 && (
+        <section className="pack-section thread-col">
+          <h3 data-thread-knot>{t('pack.fields')}</h3>
+          {[...fieldsByEntity].map(([entityType, fields]) => (
+            <div className="pack-group" key={entityType}>
+              <h4>{t(`pack.entity.${entityType}`)}</h4>
+              <ul className="pack-field-list">
+                {fields.map((field) => (
+                  <li key={field.id}>
+                    <span className="pack-field-name">{field.name}</span>
+                    <span className="pack-field-type">
+                      {t(`pack.attributeType.${field.type}`)}
+                      {field.isRequired && ` · ${t('pack.required')}`}
+                    </span>
+                    {field.description && (
+                      <span className="pack-field-desc">{field.description}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {content.stats.length > 0 && (
+        <section className="pack-section thread-col">
+          <h3 data-thread-knot>{t('pack.stats')}</h3>
+          <ul className="pack-stat-list">
+            {[...content.stats]
+              .sort((left, right) => left.order - right.order)
+              .map((stat) => {
+                const own = ladders.byStat.get(stat.id) ?? [];
+                return (
+                  <li key={stat.id}>
+                    <span className="pack-field-name">{stat.name}</span>
+                    {!stat.isPrimary && (
+                      <span className="pack-field-type">{t('pack.secondaryStat')}</span>
+                    )}
+                    {own.length > 0 && (
+                      <span className="pack-ladder">
+                        {own.map((tier) => tier.label).join(' · ')}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+          </ul>
+          {ladders.shared.length > 0 && (
+            <p className="pack-ladder shared">
+              {t('pack.defaultLadder')}: {ladders.shared.map((tier) => tier.label).join(' · ')}
+            </p>
+          )}
+        </section>
+      )}
+
+      {content.tags.length > 0 && (
+        <section className="pack-section thread-col">
+          <h3 data-thread-knot>{t('pack.tags')}</h3>
+          <div className="chips">
+            {content.tags.map((tag) => (
+              <span
+                className="chip"
+                key={tag.id}
+                style={tag.color ? { borderColor: tag.color } : undefined}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {vocabularyTerms.length > 0 && (
+        <section className="pack-section thread-col">
+          <h3 data-thread-knot>{t('pack.vocabulary')}</h3>
+          <ul className="pack-field-list">
+            {vocabularyTerms.map(({ entityType, term }) => (
+              <li key={entityType}>
+                <span className="pack-field-name">{term.singular}</span>
+                <span className="pack-field-type">{term.plural}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {catalogues.length > 0 && (
+        <section className="pack-section thread-col">
+          <h3 data-thread-knot>{t('pack.suggestions')}</h3>
+          <ul className="pack-field-list">
+            {catalogues.map(([label, count]) => (
+              <li key={label}>
+                <span className="pack-field-name">{label}</span>
+                <span className="pack-field-type">
+                  {t(count === 1 ? 'pack.entryCount_one' : 'pack.entryCount_other', { count })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {extrasGroups.length > 0 && (
+        <section className="pack-section thread-col">
+          <h3 data-thread-knot>{t('pack.extras')}</h3>
+          <p className="muted">{t('pack.extrasIntro')}</p>
+          {extrasGroups.map((group) => (
+            <div className="pack-group" key={group.title}>
+              <h4>{t(group.title)}</h4>
+              <div className="chips">
+                {group.names.map((name, index) => (
+                  <span className="chip" key={`${group.title}-${index}`}>
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {/*
         No download button, deliberately. A pack applies to a story at creation, inside the app - a
         `.json` saved from a browser has nowhere to go, and offering one would be a button that
-        leads nowhere. What the visitor needs is the address of this server.
+        leads nowhere. What the visitor needs is the address of this server. The thread ends here.
       */}
-      <section className="pack-howto">
-        <h2>{t('pack.howtoTitle')}</h2>
+      <section className="pack-howto thread-col">
+        <h2 data-thread-end>{t('pack.howtoTitle')}</h2>
         <p>{t('pack.howtoBody')}</p>
       </section>
-    </section>
+    </ThreadPage>
   );
 }

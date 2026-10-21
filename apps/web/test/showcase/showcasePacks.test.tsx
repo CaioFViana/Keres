@@ -302,7 +302,9 @@ describe('the pack listing', () => {
     const { container, unmount } = await renderAt('/packs');
     await flush();
 
-    expect(container.querySelector('a.pack-card')?.getAttribute('href')).toBe('/pack/pack-1');
+    expect(container.querySelector('.pack-card .entry-title a')?.getAttribute('href')).toBe(
+      '/pack/pack-1',
+    );
     await unmount();
   });
 
@@ -436,7 +438,7 @@ describe('the pack page', () => {
     const { container, unmount } = await renderAt('/packs');
     await flush();
 
-    const foot = container.querySelector('.pack-card-foot')?.textContent ?? '';
+    const foot = container.querySelector('.pack-card .owner')?.textContent ?? '';
     expect(foot).toContain('Ana the GM');
     expect(foot).toContain('shared by ana#1234');
     await unmount();
@@ -447,7 +449,7 @@ describe('the pack page', () => {
     const { container, unmount } = await renderAt('/packs');
     await flush();
 
-    const foot = container.querySelector('.pack-card-foot')?.textContent ?? '';
+    const foot = container.querySelector('.pack-card .owner')?.textContent ?? '';
     expect(foot).toContain('ana');
     expect(foot).not.toContain('shared by');
     await unmount();

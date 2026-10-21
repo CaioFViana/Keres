@@ -874,73 +874,11 @@ a.download-button {
  * description and a row of counts - nothing with the visual weight of a published work, and
  * stretching it to a story's width would only pad it with emptiness.
  */
-.pack-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
-}
-
-.pack-card {
-  /*
-   * A column with the foot pushed down, because the grid stretches every card to the tallest in
-   * the row: without this a card with no description leaves its author line floating halfway up,
-   * and the row reads as ragged rather than as a set.
-   */
-  display: flex;
-  flex-direction: column;
-  padding: 18px 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease,
-    border-color 0.16s ease;
-}
-
-.pack-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-  border-color: var(--color-primary);
-}
-
-.pack-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.pack-card-head h3 {
-  margin: 0 0 10px;
-  font-size: 1.05rem;
-  color: var(--color-text);
-}
-
-.pack-card-desc {
-  margin: 0 0 12px;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-}
-
 .badge-pack {
   color: var(--color-primary);
   border-color: currentColor;
   text-transform: none;
   letter-spacing: 0.02em;
-}
-
-.pack-card-foot {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border);
 }
 
 .pack-language {
@@ -952,14 +890,25 @@ a.download-button {
   margin-top: 32px;
 }
 
+.pack-contents h2 {
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
 .pack-section {
   margin-top: 24px;
 }
 
 .pack-section h3 {
-  margin: 0 0 10px;
-  font-size: 1rem;
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
   color: var(--color-text);
+}
+
+.pack-section {
+  max-width: 880px;
 }
 
 .pack-group {
@@ -1023,17 +972,23 @@ a.download-button {
   margin-top: 10px;
 }
 
+/* How to use a pack: where the thread ends. */
 .pack-howto {
   margin-top: 36px;
-  padding: 18px 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  padding-bottom: 24px;
+}
+
+.pack-title {
+  margin: 12px 0 14px;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
 .pack-howto h2 {
   margin: 0 0 8px;
-  font-size: 1rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
 }
 
 .pack-howto p {

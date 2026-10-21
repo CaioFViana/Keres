@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { ShowcasePackCard } from '@keres/shared';
 import { fetchPacks } from '@/showcase/api/showcaseApi';
 import { PackCard } from '@/showcase/components/PackCard';
+import { ThreadMark } from '@/showcase/components/ThreadMark';
+import { ThreadPage } from '@/showcase/components/thread/ThreadPage';
 
 export function PacksPage() {
   const { t } = useTranslation('showcase');
@@ -29,16 +31,19 @@ export function PacksPage() {
   }, [refresh]);
 
   return (
-    <>
-      <section className="hero">
+    <ThreadPage>
+      <ThreadMark />
+      <section className="hero thread-col">
         <div className="hero-inner">
           <p className="hero-eyebrow">{t('packs.eyebrow')}</p>
-          <h1 className="hero-title">{t('packs.title')}</h1>
+          <h1 className="hero-title" data-thread-knot>
+            {t('packs.title')}
+          </h1>
           <p className="hero-text">{t('packs.intro')}</p>
         </div>
       </section>
 
-      <section className="stories" id="packs">
+      <section className="stories thread-col" id="packs">
         <div className="section-head">
           <h2>{t('packs.sharedPacks')}</h2>
           {packs && <span className="count">{packs.length}</span>}
@@ -51,13 +56,13 @@ export function PacksPage() {
         {packs && packs.length === 0 && <p className="empty">{t('packs.empty')}</p>}
 
         {packs && packs.length > 0 && (
-          <div className="pack-grid">
+          <div className="entry-list">
             {packs.map((pack) => (
               <PackCard key={pack.id} pack={pack} />
             ))}
           </div>
         )}
       </section>
-    </>
+    </ThreadPage>
   );
 }

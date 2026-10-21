@@ -10,11 +10,12 @@ import {
 } from '@/showcase/api/showcaseApi';
 import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 import { LoginDialog } from '@/showcase/components/LoginDialog';
-import { authorPath } from '@/showcase/components/OwnerLink';
 import { OwnerAvatar } from '@/showcase/components/OwnerAvatar';
 import { PasswordGate } from '@/showcase/components/PasswordGate';
 import { StoryCover } from '@/showcase/components/StoryCover';
-import { formatBytes, formatDate, genreList } from '@/showcase/format';
+import { ThreadMark } from '@/showcase/components/ThreadMark';
+import { ThreadFork, ThreadPage } from '@/showcase/components/thread/ThreadPage';
+import { authorPath, formatBytes, formatDate, genreList } from '@/showcase/format';
 import { paletteDisplayName, paletteVars } from '@/showcase/theme/paletteVars';
 import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
 
@@ -123,75 +124,99 @@ export function StoryPage() {
 
   const { snapshot, owner, versions } = detail;
   const groups = groupVersions(versions);
+  const vars = paletteVars(snapshot.theme, resolved);
+  const tint = vars['--story-primary'];
+  const branching = snapshot.type === 'branching';
+  const genres = genreList(snapshot.genre);
 
   return (
-    // Here the story's palette does tint the whole page: it is *its* page.
-    <section className="story-page themed" style={paletteVars(snapshot.theme, resolved)}>
-      <Link to="/" className="back-link">
-        {t('story.back')}
-      </Link>
+    // Here the story's palette does tint the whole page: it is *its* page - its thread, its nodes and its accents.
+    <ThreadPage className="story-page themed" style={vars}>
+      <ThreadMark />
 
-      <header className="story-head">
-        <StoryCover storyId={detail.storyId} hasCover={detail.hasCover} className="story-cover" />
-        <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
-        {snapshot.isNsfw && <span className="badge badge-adult">{t('story.adultsOnly')}</span>}
-        <h1>{snapshot.title}</h1>
-        {/*
-          The publisher, always - it is a fact about this page. The work's author is a different
-          thing, shown among the story's data below.
-        */}
-        <Link to={authorPath(owner.username)} className="owner">
-          <OwnerAvatar owner={owner} size={34} />
-          <span className="owner-name">
-            {owner.username}
-            <span className="owner-tag">
-              #{owner.tag} · {t('story.publishedThis')}
-            </span>
-          </span>
+      <section className="hero thread-col story-top">
+        <Link to="/" className="back-link">
+          {t('story.back')}
         </Link>
-      </header>
 
-      {snapshot.description && <p className="story-description">{snapshot.description}</p>}
-
-      <dl className="story-facts">
-        {/*
-          Free text from the story itself: it may be a pseudonym, a team, or a public-domain
-          attribution. It has no relation to the account that published, so it never falls back
-          to that account's name when empty.
-        */}
-        {snapshot.author && (
-          <div>
-            <dt>{t('story.author')}</dt>
-            <dd>{snapshot.author}</dd>
-          </div>
-        )}
-        {genreList(snapshot.genre).length > 0 && (
-          <div>
-            <dt>{t('story.genre')}</dt>
-            <dd className="chips">
-              {genreList(snapshot.genre).map((genre) => (
-                <span className="chip" key={genre}>
-                  {genre}
+        <header className="story-head">
+          <div className="story-head-text">
+            <div className="entry-badges">
+              <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
+              {snapshot.isNsfw && (
+                <span className="badge badge-adult">{t('story.adultsOnly')}</span>
+              )}
+            </div>
+            <h1
+              data-thread-knot
+              data-thread-tint={tint}
+              {...(branching ? { 'data-thread-branching': '' } : {})}
+            >
+              {snapshot.title}
+            </h1>
+            {/*
+              The publisher, always - it is a fact about this page. The work's author is a different
+              thing, shown among the story's data below.
+            */}
+            <Link to={authorPath(owner.username)} className="owner">
+              <OwnerAvatar owner={owner} size={34} />
+              <span className="owner-name">
+                {owner.username}
+                <span className="owner-tag">
+                  #{owner.tag} · {t('story.publishedThis')}
                 </span>
-              ))}
-            </dd>
+              </span>
+            </Link>
+            {snapshot.description && <p className="story-description">{snapshot.description}</p>}
           </div>
-        )}
-        {snapshot.language && (
-          <div>
-            <dt>{t('story.language')}</dt>
-            <dd>{snapshot.language}</dd>
-          </div>
-        )}
-        <div>
-          <dt>{t('story.structure')}</dt>
-          <dd>{t(`story.${snapshot.type}`)}</dd>
-        </div>
-        <div>
-          <dt>{t('story.theme')}</dt>
-          <dd>{paletteDisplayName(snapshot.theme)}</dd>
-        </div>
-      </dl>
+          <StoryCover storyId={detail.storyId} hasCover={detail.hasCover} className="story-cover" />
+        </header>
+      </section>
+
+      <ThreadFork count={1}>
+        <section className="card story-facts-card" data-thread-branch>
+          <h2 data-thread-title>{t('story.aboutTitle')}</h2>
+          <dl className="story-facts">
+            {/*
+              Free text from the story itself: it may be a pseudonym, a team, or a public-domain
+              attribution. It has no relation to the account that published, so it never falls back
+              to that account's name when empty.
+            */}
+            {snapshot.author && (
+              <div>
+                <dt>{t('story.author')}</dt>
+                <dd>{snapshot.author}</dd>
+              </div>
+            )}
+            {genres.length > 0 && (
+              <div>
+                <dt>{t('story.genre')}</dt>
+                <dd className="chips">
+                  {genres.map((genre) => (
+                    <span className="chip" key={genre}>
+                      {genre}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {snapshot.language && (
+              <div>
+                <dt>{t('story.language')}</dt>
+                <dd>{snapshot.language}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{t('story.structure')}</dt>
+              <dd>{t(`story.${snapshot.type}`)}</dd>
+            </div>
+            <div>
+              <dt>{t('story.theme')}</dt>
+              <dd>{paletteDisplayName(snapshot.theme)}</dd>
+            </div>
+          </dl>
+        </section>
+      </ThreadFork>
 
       {groups.map((group) => (
         <section
@@ -199,37 +224,46 @@ export function StoryPage() {
           key={group.key}
           data-testid={group.arc ? `work-${group.arc.id}` : 'universe-versions'}
         >
-          {group.arc ? (
-            <>
-              <StoryCover
-                storyId={detail.storyId}
-                workId={group.arc.id}
-                hasCover={detail.workCovers?.includes(group.arc.id)}
-                className="work-cover"
-              />
-              <h2>{group.arc.title}</h2>
-              <p className="muted work-meta">
-                <span className="badge">{t(`story.medium.${group.arc.medium}`)}</span>
-                {group.arc.author ? ` ${t('story.workBy', { author: group.arc.author })}` : ''}
-              </p>
-              {group.arc.description && (
-                <p className="story-description">{group.arc.description}</p>
-              )}
-            </>
-          ) : (
-            <>
-              <h2>{groups.length > 1 ? t('story.universeTitle') : t('story.downloadTitle')}</h2>
-              <p className="muted">
-                {groups.length > 1 ? t('story.universeIntro') : t('story.downloadIntro')}
-              </p>
-            </>
-          )}
+          <div className="versions-head thread-col">
+            {group.arc ? (
+              <>
+                <div>
+                  <h2 data-thread-knot data-thread-tint={tint}>
+                    {group.arc.title}
+                  </h2>
+                  <p className="muted work-meta">
+                    <span className="badge">{t(`story.medium.${group.arc.medium}`)}</span>
+                    {group.arc.author ? ` ${t('story.workBy', { author: group.arc.author })}` : ''}
+                  </p>
+                  {group.arc.description && (
+                    <p className="story-description">{group.arc.description}</p>
+                  )}
+                </div>
+                <StoryCover
+                  storyId={detail.storyId}
+                  workId={group.arc.id}
+                  hasCover={detail.workCovers?.includes(group.arc.id)}
+                  className="work-cover"
+                />
+              </>
+            ) : (
+              <div>
+                <h2 data-thread-knot data-thread-tint={tint}>
+                  {groups.length > 1 ? t('story.universeTitle') : t('story.downloadTitle')}
+                </h2>
+                <p className="muted">
+                  {groups.length > 1 ? t('story.universeIntro') : t('story.downloadIntro')}
+                </p>
+              </div>
+            )}
+          </div>
           <ul className="version-list">
             {group.versions.map((version, index) => (
               <VersionRow
                 key={version.id}
                 version={version}
                 storyId={storyId}
+                tint={tint}
                 newest={index === 0}
                 downloading={downloading === version.id}
                 downloadingManuscript={downloadingManuscript === version.id}
@@ -240,8 +274,8 @@ export function StoryPage() {
           </ul>
         </section>
       ))}
-      {error && <p className="error-text">{error}</p>}
-    </section>
+      {error && <p className="error-text thread-col">{error}</p>}
+    </ThreadPage>
   );
 }
 
@@ -280,6 +314,7 @@ export function groupVersions(versions: readonly ShowcaseVersion[]): VersionGrou
 function VersionRow({
   version,
   storyId,
+  tint,
   newest,
   downloading,
   downloadingManuscript,
@@ -288,6 +323,7 @@ function VersionRow({
 }: {
   version: ShowcaseVersion;
   storyId: string;
+  tint: string | undefined;
   newest: boolean;
   downloading: boolean;
   downloadingManuscript: boolean;
@@ -296,9 +332,12 @@ function VersionRow({
 }) {
   const { t, i18n } = useTranslation('showcase');
   return (
-    <li className={newest ? 'version newest' : 'version'}>
-      <div>
-        <span className="version-label">{version.label}</span>
+    <li className={newest ? 'version newest thread-col' : 'version thread-col'}>
+      <div className="version-info">
+        <h3 className="version-label" data-thread-knot data-thread-tint={tint}>
+          {version.label}
+          {newest && <span className="badge badge-newest">{t('story.newest')}</span>}
+        </h3>
         <span className="version-sub">
           {formatDate(version.createdAt, i18n.language)}
           {version.packageIncluded !== false && ` · ${formatBytes(version.byteSize)}`}

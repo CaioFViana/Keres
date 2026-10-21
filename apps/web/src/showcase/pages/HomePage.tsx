@@ -6,6 +6,8 @@ import { fetchFacets } from '@/showcase/api/showcaseApi';
 import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 import { StoryCard } from '@/showcase/components/StoryCard';
 import { StoryFiltersBar } from '@/showcase/components/StoryFiltersBar';
+import { ThreadMark } from '@/showcase/components/ThreadMark';
+import { ThreadPage } from '@/showcase/components/thread/ThreadPage';
 import { useShowcaseConfig } from '@/showcase/config/ShowcaseConfigProvider';
 import { useStoryList } from '@/showcase/hooks/useStoryList';
 import {
@@ -50,20 +52,23 @@ export function HomePage() {
   const narrowed = hasActiveFilters(filters);
 
   return (
-    <>
-      <section className="hero">
+    <ThreadPage>
+      <ThreadMark />
+      <section className="hero thread-col">
         <div className="hero-inner">
           <p className="hero-eyebrow">
             {config?.siteName
               ? t('home.eyebrowWithSite', { siteName: config.siteName })
               : t('home.eyebrow')}
           </p>
-          <h1 className="hero-title">{t('home.title')}</h1>
+          <h1 className="hero-title" data-thread-knot>
+            {t('home.title')}
+          </h1>
           <p className="hero-text">{t('home.intro')}</p>
         </div>
       </section>
 
-      <section className="stories" id="stories">
+      <section className="stories thread-col" id="stories">
         <div className="section-head">
           <h2>{t('home.publishedStories')}</h2>
           {stories && (
@@ -92,7 +97,7 @@ export function HomePage() {
         )}
 
         {stories && stories.length > 0 && (
-          <div className="story-grid">
+          <div className="entry-list">
             {stories.map((story) => (
               <StoryCard key={story.storyId} story={story} />
             ))}
@@ -107,6 +112,6 @@ export function HomePage() {
           </div>
         )}
       </section>
-    </>
+    </ThreadPage>
   );
 }

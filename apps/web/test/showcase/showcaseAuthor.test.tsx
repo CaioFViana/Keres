@@ -171,7 +171,7 @@ describe('the author page', () => {
   it('is reached from the author of a story card without opening the story', async () => {
     const { container, unmount } = await renderAt('/');
 
-    const owner = container.querySelector('.story-card .owner-link') as HTMLElement;
+    const owner = container.querySelector('.story-card .owner') as HTMLElement;
     await click(owner);
     await flush();
 
@@ -215,23 +215,6 @@ describe('the directory of authors', () => {
 });
 
 describe('the rest of the author pages', () => {
-  it('opens the author of a story card from the keyboard, with Enter only', async () => {
-    const { container, unmount } = await renderAt('/');
-    const owner = container.querySelector('.story-card .owner-link') as HTMLElement;
-
-    await act(async () => {
-      owner.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
-    });
-    expect(mocks.fetchAuthor).not.toHaveBeenCalled();
-    await act(async () => {
-      owner.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    });
-    await flush();
-
-    expect(mocks.fetchAuthor).toHaveBeenCalledWith('ana');
-    await unmount();
-  });
-
   it('shows a link whose address does not parse without a host', async () => {
     mocks.fetchAuthor.mockResolvedValue({
       ...page,

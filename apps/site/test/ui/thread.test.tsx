@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
-import { ThreadPage } from '../../src/components/thread/ThreadPage';
+import { ThreadFork, ThreadPage } from '../../src/components/thread/ThreadPage';
 import { render } from '../helpers/react';
 
 /** jsdom lays nothing out: each marked element says where it would be, as `data-rect="x,y,width,height"`. */
@@ -204,6 +204,123 @@ describe('the thread', () => {
 
     expect(frame.className).toBe('thread-page themed');
     expect(frame.style.getPropertyValue('--page-tint')).toBe('#123456');
+    await unmount();
+  });
+});
+
+describe('the thread on pages that start differently', () => {
+  it('starts at its first marker when there is no mark to leave from, and stops at an empty fork', async () => {
+    const { container, unmount } = await render(
+      <ThreadPage style={rail}>
+        <div data-thread-fork data-rect="0,100,900,200" />
+        <h2 data-thread-end data-rect="76,400,300,40">
+          End
+        </h2>
+      </ThreadPage>,
+    );
+
+    // The fork's entry and exit, and the end: nodes with no branch between them.
+    expect(count(container, '.thread-dot')).toBe(3);
+    await unmount();
+  });
+
+  it('leaves a mark that gives no place to leave from at its middle and bottom', async () => {
+    const { container, unmount } = await render(
+      <ThreadPage style={rail}>
+        <div data-thread-origin data-rect="0,0,80,80" />
+        <h2 data-thread-knot data-rect="76,200,300,40">
+          Knot
+        </h2>
+      </ThreadPage>,
+    );
+
+    expect(container.querySelector('.thread-base')?.getAttribute('d')).toMatch(/^M40,80 C40,98 /);
+    await unmount();
+  });
+
+  it('starts at a heading when nothing came before it', async () => {
+    const { container, unmount } = await render(
+      <ThreadPage style={rail}>
+        <h2 data-thread-knot data-rect="76,200,300,40">
+          Knot
+        </h2>
+      </ThreadPage>,
+    );
+
+    expect(count(container, '.thread-dot')).toBe(1);
+    expect(count(container, '.thread-base')).toBe(0);
+    await unmount();
+  });
+
+  it('redraws when the page changes size, where the browser can say so', async () => {
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          callbacks.push(callback);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const { container, unmount } = await render(<Page />);
+    const before = container.querySelector('svg.thread')?.getAttribute('height');
+
+    // The page grows; the observer tells the thread.
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      return {
+        x: 0,
+        y: 0,
+        width: 900,
+        height: 5000,
+        left: 0,
+        top: 0,
+        right: 900,
+        bottom: 5000,
+        toJSON: () => ({}),
+      } as DOMRect;
+    });
+    await act(async () => {
+      callbacks.forEach((callback) => callback());
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    });
+
+    expect(callbacks).toHaveLength(1);
+    expect(container.querySelector('svg.thread')?.getAttribute('height')).not.toBe(before);
+    await unmount();
+  });
+});
+
+describe('a fork of the thread', () => {
+  it('says how many branches it has, and sits side by side only where there is room for many', async () => {
+    const { container, unmount } = await render(
+      <>
+        <ThreadFork count={1}>
+          <div />
+        </ThreadFork>
+        <ThreadFork count={4} wide className="pillar-grid">
+          <div />
+        </ThreadFork>
+        <ThreadFork count={3}>
+          <div />
+        </ThreadFork>
+      </>,
+    );
+    const [single, wide, plain] = [
+      ...container.querySelectorAll('[data-thread-fork]'),
+    ] as HTMLElement[];
+
+    expect(single.className).toBe('thread-fork is-single');
+    expect(wide.className).toBe('thread-fork is-wide');
+    expect(wide.querySelector('.thread-branches')?.className).toBe('thread-branches pillar-grid');
+    expect(
+      (wide.querySelector('.thread-branches') as HTMLElement).style.getPropertyValue('--cols'),
+    ).toBe('4');
+    expect(plain.className).toBe('thread-fork');
+    expect(plain.querySelector('.thread-branches')?.className).toBe('thread-branches');
     await unmount();
   });
 });

@@ -5,6 +5,8 @@ import type { ShowcaseAuthorCard } from '@keres/shared';
 import { fetchAuthors } from '@/showcase/api/showcaseApi';
 import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 import { AuthorCard } from '@/showcase/components/AuthorCard';
+import { ThreadMark } from '@/showcase/components/ThreadMark';
+import { ThreadPage } from '@/showcase/components/thread/ThreadPage';
 
 /** How many authors a page of the directory holds; "show more" asks for another one on top. */
 const AUTHOR_PAGE_SIZE = 48;
@@ -58,15 +60,18 @@ export function AuthorsPage() {
   }, [q, pages, authStatus, t]);
 
   return (
-    <>
-      <section className="hero">
+    <ThreadPage>
+      <ThreadMark />
+      <section className="hero thread-col">
         <div className="hero-inner">
-          <h1 className="hero-title">{t('authors.title')}</h1>
+          <h1 className="hero-title" data-thread-knot>
+            {t('authors.title')}
+          </h1>
           <p className="hero-text">{t('authors.intro')}</p>
         </div>
       </section>
 
-      <section className="stories">
+      <section className="stories thread-col">
         <div className="section-head">
           <h2>{t('authors.title')}</h2>
           {authors && <span className="count">{total}</span>}
@@ -89,7 +94,7 @@ export function AuthorsPage() {
           <p className="empty">{t(q ? 'authors.noResults' : 'authors.empty')}</p>
         )}
         {authors && authors.length > 0 && (
-          <div className="author-grid">
+          <div className="entry-list">
             {authors.map((author) => (
               <AuthorCard key={author.owner.username} author={author} />
             ))}
@@ -107,6 +112,6 @@ export function AuthorsPage() {
           </div>
         )}
       </section>
-    </>
+    </ThreadPage>
   );
 }

@@ -2,6 +2,11 @@ import type { PackContentSummary } from '@keres/shared';
 
 /** Formatting shared by the listing and the story page. */
 
+/** Where an author's page lives on the site. */
+export function authorPath(username: string): string {
+  return `/author/${encodeURIComponent(username)}`;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ['KB', 'MB', 'GB'];

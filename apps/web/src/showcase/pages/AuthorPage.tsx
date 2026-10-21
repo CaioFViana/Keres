@@ -6,6 +6,8 @@ import { fetchAuthor } from '@/showcase/api/showcaseApi';
 import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 import { OwnerAvatar } from '@/showcase/components/OwnerAvatar';
 import { StoryCard } from '@/showcase/components/StoryCard';
+import { ThreadMark } from '@/showcase/components/ThreadMark';
+import { ThreadFork, ThreadPage } from '@/showcase/components/thread/ThreadPage';
 import { storyCountLabel } from '@/showcase/format';
 import { paletteVars } from '@/showcase/theme/paletteVars';
 import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
@@ -22,7 +24,8 @@ function hostOf(link: ProfileLink): string {
 /**
  * An author's page: who they are in their own words and every story they have on show. The texts are plain text
  * the author wrote for this page (shown as typed, line breaks kept, never read as markup), and the page wears the
- * palette the author chose for it - only this page, the site's frame stays the site's.
+ * palette the author chose for it - its thread, its nodes and its accents; the site's frame stays the site's.
+ * The links leave the thread as one branch with a tile per destination.
  */
 export function AuthorPage() {
   const { username = '' } = useParams();
@@ -64,63 +67,66 @@ export function AuthorPage() {
   }
 
   const { owner, biography, links, stories } = page;
+  const vars = page.theme ? paletteVars(page.theme, resolved) : undefined;
   return (
-    <section
+    <ThreadPage
       className={page.theme ? 'author-page themed' : 'author-page'}
-      style={page.theme ? paletteVars(page.theme, resolved) : undefined}
-      data-testid="author-page"
+      {...(vars ? { style: vars } : {})}
+      testId="author-page"
     >
-      <Link to="/authors" className="back-link">
-        {t('author.back')}
-      </Link>
+      <ThreadMark />
 
-      <header className="author-head">
+      <section className="hero thread-col author-head">
+        <Link to="/authors" className="back-link">
+          {t('author.back')}
+        </Link>
         <OwnerAvatar owner={owner} size={72} />
-        <div>
-          <h1>{owner.username}</h1>
-          <p className="muted">
-            #{owner.tag} · {storyCountLabel(t, stories.length)}
-          </p>
-        </div>
-      </header>
-
-      {biography && (
-        <section className="author-about">
-          <h2>{t('author.aboutTitle')}</h2>
-          <p className="author-biography">{biography}</p>
-        </section>
-      )}
+        <h1 className="hero-title" data-thread-knot data-thread-tint={vars?.['--story-primary']}>
+          {owner.username}
+        </h1>
+        <p className="muted">
+          #{owner.tag} · {storyCountLabel(t, stories.length)}
+        </p>
+        {biography && <p className="author-biography">{biography}</p>}
+      </section>
 
       {links.length > 0 && (
-        <section className="author-links-block">
-          <h2>{t('author.linksTitle')}</h2>
-          <ul className="author-links">
-            {links.map((link) => (
-              <li key={`${link.label}|${link.url}`}>
-                {/* Written by the author, so: a new tab that knows nothing of this one, and no endorsement. */}
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow ugc"
-                  title={t('author.linkOpens')}
-                >
-                  <span className="author-link-label">{link.label}</span>
-                  <span className="author-link-host">{hostOf(link)}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <ThreadFork count={1}>
+          <section className="card author-links-block" data-thread-branch>
+            <h2 data-thread-title>{t('author.linksTitle')}</h2>
+            <ul className="author-links">
+              {links.map((link) => (
+                <li key={`${link.label}|${link.url}`}>
+                  {/* Written by the author, so: a new tab that knows nothing of this one, and no endorsement. */}
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow ugc"
+                    title={t('author.linkOpens')}
+                  >
+                    <span className="author-link-label">{link.label}</span>
+                    <span className="author-link-host">{hostOf(link)}</span>
+                    <span className="author-link-arrow" aria-hidden="true">
+                      ↗
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </ThreadFork>
       )}
 
-      <section className="author-stories">
-        <h2>{t('author.storiesTitle')}</h2>
-        <div className="story-grid">
+      <section className="author-stories thread-col">
+        <h2 data-thread-knot data-thread-tint={vars?.['--story-primary']}>
+          {t('author.storiesTitle')}
+        </h2>
+        <div className="entry-list">
           {stories.map((story) => (
             <StoryCard key={story.storyId} story={story} />
           ))}
         </div>
       </section>
-    </section>
+    </ThreadPage>
   );
 }

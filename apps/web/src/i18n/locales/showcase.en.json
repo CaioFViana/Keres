@@ -228,7 +228,9 @@
       "storyboard": "Storyboard",
       "campaign": "Campaign"
     },
-    "workCover": "Cover of {{title}}"
+    "workCover": "Cover of {{title}}",
+    "aboutTitle": "About the story",
+    "newest": "Latest"
   },
   "theme": {
     "system": "Theme: System",

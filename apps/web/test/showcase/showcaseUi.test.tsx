@@ -107,7 +107,8 @@ describe('showcase home', () => {
     const { container, unmount } = await renderAt('/');
     await flush();
 
-    const link = container.querySelector('a.story-card');
+    // The title is the link; the card is an entry on the thread, not a link around everything.
+    const link = container.querySelector('.story-card .entry-title a');
     expect(link?.getAttribute('href')).toBe('/story/story-1');
     await unmount();
   });
@@ -120,7 +121,7 @@ describe('showcase home', () => {
     const { container, unmount } = await renderAt('/');
     await flush();
 
-    const cards = [...container.querySelectorAll('a.story-card')];
+    const cards = [...container.querySelectorAll('article.story-card')];
     expect(cards).toHaveLength(2);
     expect(cards[0]?.querySelector('.badge-adult')).not.toBeNull();
     expect(cards[1]?.querySelector('.badge-adult')).toBeNull();
@@ -295,7 +296,7 @@ describe('author and uploader', () => {
     const { container, unmount } = await renderAt('/');
     await flush();
 
-    const foot = container.querySelector('.story-card-foot')?.textContent ?? '';
+    const foot = container.querySelector('.story-card .owner')?.textContent ?? '';
     expect(foot).toContain('ana');
     expect(foot).toContain('published by this account');
     await unmount();

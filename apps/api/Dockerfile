@@ -140,7 +140,7 @@ COPY --from=site-landing-build /app/apps/site/dist-landing ./apps/site/dist-land
 # 25 MB of web bundles at every boot, and it does not keep compressed copies of them in memory. It runs here, as
 # root and before the chown below, so the copies belong to the same user as the files they sit next to.
 COPY apps/api/scripts/precompress-dist.ts ./apps/api/scripts/precompress-dist.ts
-RUN bun apps/api/scripts/precompress-dist.ts apps/admin/dist apps/admin/dist-showcase apps/client/dist-hosted apps/site/dist-landing
+RUN bun apps/api/scripts/precompress-dist.ts --web-bundles
 
 WORKDIR /app/apps/api
 

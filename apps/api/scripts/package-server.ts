@@ -21,6 +21,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import pngToIco from 'png-to-ico';
+import { WEB_BUNDLES } from '@/config/resourceRoot';
 
 const apiRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = path.join(apiRoot, '..', '..');
@@ -70,18 +71,21 @@ function libsqlNativePackage(): string {
 }
 
 /**
- * Copies one of the four web bundles (panel, showcase, client, landing) and requires an
- * `index.html` at the destination: a missing or half-built `dist` only showed up later, as the
- * server answering 404 - the client's copy was once conditional and a release shipped without
- * it with not a single line of warning.
+ * Copies every web bundle the API serves (`WEB_BUNDLES`: panel, showcase, landing, client) from where
+ * its build left it to its packaged folder, and requires an `index.html` in each: a missing or
+ * half-built `dist` only showed up later, as the server answering 404 - the client's copy was once
+ * conditional and a release shipped without it with not a single line of warning.
  */
-function copyWebBundle(source: string, bundleFolder: string, buildScript: string): void {
-  if (!existsSync(path.join(source, 'index.html'))) {
-    throw new Error(
-      `Bundle web ausente em ${source} - \`bun run ${buildScript}\` não produziu index.html.`,
-    );
+function copyWebBundles(): void {
+  for (const bundle of Object.values(WEB_BUNDLES)) {
+    const source = path.join(repoRoot, 'apps', ...bundle.checkout);
+    if (!existsSync(path.join(source, 'index.html'))) {
+      throw new Error(
+        `Bundle web ausente em ${source} - \`bun run ${bundle.buildScript}\` não produziu index.html.`,
+      );
+    }
+    cpSync(source, path.join(bundleDir, bundle.packaged), { recursive: true });
   }
-  cpSync(source, path.join(bundleDir, bundleFolder), { recursive: true });
 }
 
 async function ensureRcedit(): Promise<string> {
@@ -121,9 +125,9 @@ async function applyWindowsIcon(exePath: string): Promise<void> {
 rmSync(outRoot, { recursive: true, force: true });
 mkdirSync(bundleDir, { recursive: true });
 
-// The web bundles (panel, showcase, client, landing) come from the API's `prebuild` - see the
+// The web bundles (`WEB_BUNDLES`) come from the API's `prebuild` - see the
 // `package.json` here. This script packages, it does not build; if a bundle is missing,
-// `copyWebBundle` says which one and how to generate it, instead of the zip coming out
+// `copyWebBundles` says which one and how to generate it, instead of the zip coming out
 // half-empty and the server answering 404.
 
 const exePath = path.join(bundleDir, exeName);
@@ -144,24 +148,7 @@ cpSync(path.join(apiRoot, 'drizzle'), path.join(bundleDir, 'drizzle'), { recursi
 cpSync(path.join(apiRoot, 'drizzle-sqlite'), path.join(bundleDir, 'drizzle-sqlite'), {
   recursive: true,
 });
-copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'dist-admin', 'admin:build');
-copyWebBundle(
-  path.join(repoRoot, 'apps', 'admin', 'dist-showcase'),
-  'dist-showcase',
-  'admin:build',
-);
-// The export made for /client (not the `dist` of the desktop shell, which is made for the root).
-copyWebBundle(
-  path.join(repoRoot, 'apps', 'client', 'dist-hosted'),
-  'dist-client',
-  'client:build:hosted',
-);
-// The landing page served at / (not the `dist` GitHub Pages publishes, made for `/Keres/`).
-copyWebBundle(
-  path.join(repoRoot, 'apps', 'site', 'dist-landing'),
-  'dist-landing',
-  'site:build:landing',
-);
+copyWebBundles();
 cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),

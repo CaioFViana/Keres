@@ -10,7 +10,7 @@ export const THEME_PREFERENCE_KEY = 'keres_admin_theme_preference';
 export const THEME_PALETTE_KEY = 'keres_admin_theme_palette';
 
 /**
- * `key` exists because the public site (apps/admin/src/showcase) uses exactly these mechanics with
+ * `key` exists because the public site (apps/web/src/showcase) uses exactly these mechanics with
  * a key of its own - panel and site are separate things and each remembers its own choice.
  */
 export function readThemePreference(key: string = THEME_PREFERENCE_KEY): ThemePreference {

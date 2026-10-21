@@ -21,7 +21,7 @@ O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras d
 | `apps/client` | React Native, Expo, SQLite | Aplicação principal para Android, iOS e web |
 | `apps/desktop` | Electron | Distribuição desktop do mesmo cliente web |
 | `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Autenticação, sincronização, colaboração e mídia |
-| `apps/admin` | React, Vite | Painel administrativo servido pela própria API em `/admin` |
+| `apps/web` | React, Vite | Painel administrativo (`/admin`) e vitrine pública (`/showcase`), ambos servidos pela própria API |
 | `apps/site` | React, Vite | Landing pública publicada no GitHub Pages |
 | `packages/shared` | TypeScript, Zod | Entidades, contratos e metadados compartilhados |
 
@@ -83,7 +83,7 @@ bun install --frozen-lockfile
 3. Em um terminal, compile o painel e inicie a API:
 
    ```bash
-   bun run admin:build
+   bun run web:build
    bun run api:start
    ```
 
@@ -113,7 +113,7 @@ Serviços disponíveis:
 - Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/client/` — precisa de `bun run client:build:hosted` (um export feito para `/client`, não o de `client:build`)
 - Vitrine de histórias publicadas: `http://localhost:3000/showcase`
 - Landing page na raiz (opcional, desligada por padrão): ative no painel em Configurações → Páginas hospedadas — precisa de `bun run site:build:landing`
-- Painel administrativo com hot reload: `bun run admin:start` e abra `http://localhost:5173/admin/`
+- Painel administrativo com hot reload: `bun run web:start` e abra `http://localhost:5173/admin/`
 
 ### Stack Docker local
 
@@ -293,7 +293,7 @@ Na raiz, cada projeto é chamado por `<projeto>:<verbo>`:
 ```bash
 bun run client:start      # Expo
 bun run api:start         # API em Postgres
-bun run admin:start       # painel com hot reload
+bun run web:start       # painel com hot reload
 bun run site:start        # landing
 bun run desktop:start     # Electron
 bun run api:build         # zip do Keres Server (constrói painel e cliente antes)

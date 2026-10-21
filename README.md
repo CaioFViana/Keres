@@ -21,7 +21,7 @@ Keres brings characters, locations, chapters, scenes, choices, items, world rule
 | `apps/client` | React Native, Expo, SQLite | Main application for Android, iOS, and web |
 | `apps/desktop` | Electron | Desktop distribution of the same web client |
 | `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Authentication, synchronization, collaboration, and media |
-| `apps/admin` | React, Vite | Administration panel served by the API at `/admin` |
+| `apps/web` | React, Vite | Administration panel (`/admin`) and public showcase (`/showcase`), both served by the API |
 | `apps/site` | React, Vite | Public landing page published on GitHub Pages |
 | `packages/shared` | TypeScript, Zod | Shared entities, contracts, and metadata |
 
@@ -83,7 +83,7 @@ bun install --frozen-lockfile
 3. In one terminal, build the admin panel and start the API:
 
    ```bash
-   bun run admin:build
+   bun run web:build
    bun run api:start
    ```
 
@@ -113,7 +113,7 @@ Available services:
 - Hosted web client (same origin, COOP/COEP): `http://localhost:3000/client/` — requires `bun run client:build:hosted` (an export made for `/client`, not the `client:build` one)
 - Published-story showcase: `http://localhost:3000/showcase`
 - Landing page at the root (opt-in, off by default): enable it in the admin panel under Settings → Hosted Pages — requires `bun run site:build:landing`
-- Administration panel with hot reload: `bun run admin:start`, then open `http://localhost:5173/admin/`
+- Administration panel with hot reload: `bun run web:start`, then open `http://localhost:5173/admin/`
 
 ### Local Docker stack
 
@@ -293,7 +293,7 @@ At the root, each project is called as `<project>:<verb>`:
 ```bash
 bun run client:start      # Expo
 bun run api:start         # API on Postgres
-bun run admin:start       # admin panel with hot reload
+bun run web:start       # admin panel with hot reload
 bun run site:start        # landing page
 bun run desktop:start     # Electron
 bun run api:build         # Keres Server zip (builds panel and client first)

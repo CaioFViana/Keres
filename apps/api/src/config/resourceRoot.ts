@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
  * are not `apps/api`. Candidates, in order:
  *   1. `KERES_RESOURCE_ROOT` (packager / tests);
  *   2. the executable's folder (the zip's layout: `drizzle/`, `dist-admin/`, …);
- *   3. the monorepo tree from this file (`src/config` → `apps/api` / `apps/admin`).
+ *   3. the monorepo tree from this file (`src/config` → `apps/api` / `apps/web`).
  */
 
 const thisDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -73,11 +73,11 @@ export function migrationsFolder(usingSqlite: boolean): string {
  * the landing page's is not the one GitHub Pages publishes.
  */
 export const WEB_BUNDLES = {
-  admin: { packaged: 'dist-admin', checkout: ['admin', 'dist'], buildScript: 'admin:build' },
+  admin: { packaged: 'dist-admin', checkout: ['web', 'dist'], buildScript: 'web:build' },
   showcase: {
     packaged: 'dist-showcase',
-    checkout: ['admin', 'dist-showcase'],
-    buildScript: 'admin:build',
+    checkout: ['web', 'dist-showcase'],
+    buildScript: 'web:build',
   },
   landing: {
     packaged: 'dist-landing',

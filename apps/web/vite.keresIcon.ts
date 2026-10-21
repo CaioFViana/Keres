@@ -8,7 +8,7 @@ import type { Plugin } from 'vite';
  * The Keres icon, for both web apps in this project.
  *
  * There is a single source - `apps/client/assets/images/desktop_icon.png`, the same one
- * electron-builder converts into the desktop app's icon. Nothing is copied into `apps/admin`: the
+ * electron-builder converts into the desktop app's icon. Nothing is copied into `apps/web`: the
  * panel already generated its `favicon.ico` from it at build time, and the public site does the
  * same, plus a scaled-down version for the wordmark in the header and the footer.
  *
@@ -270,7 +270,7 @@ const DEV_LOGO_URL = '/keres-logo.png';
  * Publishes the scaled-down wordmark as `virtual:keres-logo`, whose default export is the image's URL.
  *
  * A virtual module rather than a directly imported file because the image does not exist on disk
- * inside `apps/admin` - it is derived from the client's icon at build time.
+ * inside `apps/web` - it is derived from the client's icon at build time.
  */
 export function keresLogo(): Plugin {
   let logoPromise: Promise<Buffer> | null = null;

@@ -15,7 +15,7 @@ const applications: [name: string, path: string][] = [
   ['Shared', 'packages/shared'],
   ['API', 'apps/api'],
   ['Payments', 'apps/payments'],
-  ['ADM', 'apps/admin'],
+  ['ADM', 'apps/web'],
   ['Client', 'apps/client'],
   ['Desktop', 'apps/desktop'],
   ['Site', 'apps/site'],

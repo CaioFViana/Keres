@@ -5,7 +5,7 @@ import avatarIconNames from './avatarIcons.json';
  *
  * It lives here, rather than in the app, because three places have to agree about it: the app
  * (where the person chooses), the API (which stores `avatarColor`/`avatarIcon`) and the Showcase
- * under `apps/admin` (which draws the same avatar for whoever published a story). With the list
+ * under `apps/web` (which draws the same avatar for whoever published a story). With the list
  * duplicated, a new icon picked in the app would become an empty square on the Showcase.
  */
 

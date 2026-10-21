@@ -1,13 +1,13 @@
 {
-  "name": "@keres/admin",
+  "name": "@keres/web",
   "version": "1.10.1",
   "private": true,
   "license": "MPL-2.0",
   "type": "module",
   "scripts": {
     "start": "vite",
-    "start:showcase": "vite --config vite.showcase.config.ts",
-    "build": "tsc -b && vite build && vite build --config vite.showcase.config.ts",
+    "start:showcase": "vite --mode showcase",
+    "build": "tsc -b && vite build && vite build --mode showcase",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts vite.alias.ts --ext .ts,.tsx --max-warnings 0 --cache --cache-strategy content --cache-location node_modules/.cache/eslint/.eslintcache",
     "test": "vitest run",

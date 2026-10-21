@@ -18,7 +18,7 @@ export default defineConfig({
       include: ['src/**'],
       // Low because the 5 React pages were left out of scope; what is covered is the API layer. A
       // floor, not a target - see the ratchet rule in docs/structure/testing.md.
-      thresholds: coverageThresholds.admin,
+      thresholds: coverageThresholds.web,
     },
   },
 });

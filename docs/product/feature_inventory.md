@@ -26,7 +26,7 @@ Monorepo (`package.json`, v1.10.1, MPL-2.0):
 | --- | --- | --- |
 | `apps/client` | React Native + Expo (Android/iOS/web), SQLite local-first | main app, 129 screens |
 | `apps/api` | Elysia (Bun), Drizzle over Postgres/SQLite, Zod | REST + sync + hosting |
-| `apps/admin` | React + Vite, dual build | admin panel (`/admin`) + showcase (`/showcase`) |
+| `apps/web` | React + Vite, dual build | admin panel (`/admin`) + showcase (`/showcase`) |
 | `apps/payments` | Bun service | separate payment connector (PayPal, Google Pay via Stripe, Play Billing) |
 | `apps/verification` | Bun service | separate age-verification service with a human review step |
 | `apps/desktop` | Electron 43, win/mac/linux (`electron-builder`) | desktop wrapper of the client web build |

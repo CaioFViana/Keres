@@ -34,7 +34,7 @@ const projects: [name: string, path: string, runs: ProjectRun[]][] = [
     ],
   ],
   ['payments', 'apps/payments', [['test:coverage', 'coverage']]],
-  ['admin', 'apps/admin', [['test:coverage', 'coverage']]],
+  ['web', 'apps/web', [['test:coverage', 'coverage']]],
   ['desktop', 'apps/desktop', [['test:coverage', 'coverage']]],
   ['site', 'apps/site', [['test:coverage', 'coverage']]],
 ];
@@ -50,7 +50,7 @@ const ratchets: Record<string, Record<CoverageKind, number> | undefined> = {
   client: configuredThresholds.client,
   api: configuredThresholds.apiCombined,
   payments: configuredThresholds.payments,
-  admin: configuredThresholds.admin,
+  web: configuredThresholds.web,
   desktop: configuredThresholds.desktop,
   site: configuredThresholds.site,
 };

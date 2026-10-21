@@ -7,7 +7,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { adminAliases } from './vite.alias';
 import { keresAvatarIcons, keresFavicon, keresLogo } from './vite.keresIcon';
 
-const adminDirectory = path.dirname(fileURLToPath(import.meta.url));
+const webDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * The entry point is called `showcase.html` so it can live alongside the panel's `index.html` in
@@ -17,10 +17,8 @@ const adminDirectory = path.dirname(fileURLToPath(import.meta.url));
 function emitAsIndexHtml(): Plugin {
   return {
     name: 'keres-showcase-index',
-    // After the whole build: the HTML is emitted by Vite's own HTML plugin, so renaming in
-    // `generateBundle` would race it for hook order. Renaming the already-written file is deterministic.
     async closeBundle() {
-      const outDir = path.resolve(adminDirectory, 'dist-showcase');
+      const outDir = path.resolve(webDirectory, 'dist-showcase');
       const source = path.join(outDir, 'showcase.html');
       if (existsSync(source)) {
         await rename(source, path.join(outDir, 'index.html'));
@@ -42,7 +40,6 @@ function serveShowcaseHtmlInDev(): Plugin {
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
         const url = req.url?.split('?')[0];
-        // Navigation only: any module or asset request follows the normal path.
         if (url && !url.includes('.') && req.headers.accept?.includes('text/html')) {
           req.url = '/showcase.html';
         }
@@ -53,18 +50,19 @@ function serveShowcaseHtmlInDev(): Plugin {
 }
 
 /**
- * This same project's second build output: the public site (Showcase).
+ * This project's second build: the public site (Showcase), picked with `--mode showcase`
+ * (`vite.config.ts`).
  *
  * `base: '/_showcase/'` with the *pages* at `/showcase` is deliberate. Mounting the static files
  * directly at `/` would shadow the web client (and the API routes); its own prefix serves the
- * assets under `/_showcase/` and the HTML at `/showcase` (see apps/api/src/index.ts).
+ * assets under `/_showcase/` and the HTML at `/showcase` (see apps/api/src/web/webRoutes.ts).
  *
  * The admin panel still builds into `dist/` with `base: '/admin/'`, untouched.
  *
  * Favicon and wordmark come from the same desktop app icon the panel already uses - see
  * vite.keresIcon.ts.
  */
-export default defineConfig(({ command }) => ({
+export const showcaseConfig = defineConfig(({ command }) => ({
   resolve: { alias: adminAliases },
   plugins: [
     react(),
@@ -74,22 +72,18 @@ export default defineConfig(({ command }) => ({
     keresLogo(),
     keresAvatarIcons(),
   ],
-  // The prefix only exists because of how the API mounts the static files in production. In
-  // development the site has a port to itself, and using the prefix here would make the pages answer
-  // on a path that is not the real one.
   base: command === 'build' ? '/_showcase/' : '/',
   build: {
     outDir: 'dist-showcase',
     emptyOutDir: true,
     rollupOptions: {
-      input: path.resolve(adminDirectory, 'showcase.html'),
+      input: path.resolve(webDirectory, 'showcase.html'),
     },
   },
   server: {
     port: 5174,
     proxy: {
-      // The site only talks to `/public/*` - there is no authenticated route here.
-      '/public': {
+      '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
         changeOrigin: true,
       },

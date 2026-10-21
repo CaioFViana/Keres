@@ -190,7 +190,7 @@ export function HomePage() {
                 <strong>apps/api.</strong> {t('stack.api')}
               </li>
               <li>
-                <strong>apps/admin.</strong> {t('stack.admin')}
+                <strong>apps/web.</strong> {t('stack.admin')}
               </li>
               <li>
                 <strong>packages/shared.</strong> {t('stack.shared')}

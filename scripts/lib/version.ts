@@ -12,7 +12,7 @@ export const VERSIONED_JSON_FILES = [
   'apps/api/package.json',
   'apps/client/package.json',
   'apps/desktop/package.json',
-  'apps/admin/package.json',
+  'apps/web/package.json',
   'apps/site/package.json',
   'apps/payments/package.json',
   'packages/shared/package.json',

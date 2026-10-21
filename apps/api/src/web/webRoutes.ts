@@ -275,7 +275,7 @@ export function webPageRoutes(surfaces: WebSurfaces) {
         {
           detail: {
             summary: 'Admin panel (single-page app)',
-            description: 'Serves the built apps/admin SPA and its client-side routes.',
+            description: 'Serves the built apps/web SPA and its client-side routes.',
             tags: ['Admin'],
           },
         },

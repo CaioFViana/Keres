@@ -39,7 +39,7 @@
       ],
       "ignoreDependencies": ["expo-updates"]
     },
-    "apps/admin": {
+    "apps/web": {
       "entry": ["vite*.ts", "test/**/*.test.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"]
     },

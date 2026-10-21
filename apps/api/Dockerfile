@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/api/package.json apps/api/package.json
-COPY apps/admin/package.json apps/admin/package.json
+COPY apps/web/package.json apps/web/package.json
 # patchedDependencies (root package.json) applies repo-wide during install, regardless of
 # whether this particular image ends up using the patched package - bun still needs the
 # .patch file on disk to apply it. Neither patch here (expo-sqlite, drizzle-orm/expo-sqlite)
@@ -19,16 +19,16 @@ COPY patches patches
 # toolchain), so a strict frozen check on this partial workspace always fails.
 RUN bun install
 
-# ---- admin-build: painel (`dist/`) e vitrine pública (`dist-showcase/`) ----
-# O `build` do admin faz os dois Vite: o painel (`dist/`) e a vitrine pública. Sem o
+# ---- web-build: painel (`dist/`) e vitrine pública (`dist-showcase/`) ----
+# O `build` do apps/web faz os dois Vite: o painel (`dist/`) e a vitrine pública. Sem o
 # segundo, a API sobe com o warn "Showcase UI not built" e `/showcase` fica fora do ar.
 # Os dois usam o mesmo ícone do desktop (vite.keresIcon.ts); sem o PNG no contexto,
 # png-to-ico relata "not a valid PNG" no lugar de ENOENT.
-FROM deps AS admin-build
+FROM deps AS web-build
 COPY packages/shared packages/shared
-COPY apps/admin apps/admin
+COPY apps/web apps/web
 COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
-RUN cd apps/admin && bun run build
+RUN cd apps/web && bun run build
 
 # ---- client-web-build: Expo web export served by the API at /client ----
 # Só client + shared. Copiar o workspace inteiro (desktop/site/api/admin) faz o `bun install`
@@ -40,8 +40,8 @@ FROM oven/bun:latest AS client-web-build
 WORKDIR /app
 # BuildKit paraleliza estágios independentes. Sem esta barreira, `deps` (bun install da
 # API) e este estágio (bun install do grafo Expo) correm juntos e o WSL2 esgota a RAM
-# do host. Copiar um artefato do admin-build serializa: deps → admin → client.
-COPY --from=admin-build /app/apps/admin/dist/index.html /tmp/.admin-built
+# do host. Copiar um artefato do web-build serializa: deps → admin → client.
+COPY --from=web-build /app/apps/web/dist/index.html /tmp/.web-built
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/client/package.json apps/client/package.json
@@ -63,9 +63,9 @@ RUN bun scripts/generate-indexes.ts \
  && bun scripts/inject-web-preloads.ts dist-hosted
 
 # ---- site-landing-build: the landing page the API serves at / ----
-# Só site. Como o admin-build (e ao contrário do client acima), precisa das devDependencies
+# Só site. Como o web-build (e ao contrário do client acima), precisa das devDependencies
 # (o `vite build` é o próprio toolchain) - por isso o install aqui é completo, não `--production`.
-# O PNG do ícone entra pelo mesmo motivo do admin-build: favicon e wordmark são gerados dele.
+# O PNG do ícone entra pelo mesmo motivo do web-build: favicon e wordmark são gerados dele.
 FROM oven/bun:latest AS site-landing-build
 WORKDIR /app
 # A mesma barreira de serialização do estágio do client: deps → admin → client → site.
@@ -81,7 +81,7 @@ WORKDIR /app/apps/site
 RUN bun run build:landing
 
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
-# Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
+# Deliberately does NOT copy apps/web/package.json: admin is already built to static files by
 # this point, so its React/Vite toolchain (and every dependency it pulls in) has no reason to
 # exist in the running API's node_modules. `--production` additionally drops devDependencies -
 # apps/api's own `drizzle-kit`/`typescript` are build/CLI-only tools, never imported by
@@ -94,7 +94,7 @@ WORKDIR /app
 # bun.lock deliberately NOT copied here: `bun install --production` refuses to proceed if the
 # resolved graph would differ at all from a lockfile it can see (even without --frozen-lockfile
 # passed explicitly) - and a lockfile generated for the full workspace always differs once
-# apps/admin's package.json is out of the picture. Without a lockfile to compare against, bun
+# apps/web's package.json is out of the picture. Without a lockfile to compare against, bun
 # just resolves apps/api + packages/shared's own dependency ranges directly.
 COPY package.json ./
 COPY packages/shared/package.json packages/shared/package.json
@@ -123,10 +123,10 @@ COPY apps/api/src ./apps/api/src
 COPY apps/api/drizzle ./apps/api/drizzle
 COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 
-# `resourceRoot` resolve estes dois a partir de import.meta.dir (apps/admin/dist e
-# apps/admin/dist-showcase), independente de process.cwd().
-COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
-COPY --from=admin-build /app/apps/admin/dist-showcase ./apps/admin/dist-showcase
+# `resourceRoot` resolve estes dois a partir de import.meta.dir (apps/web/dist e
+# apps/web/dist-showcase), independente de process.cwd().
+COPY --from=web-build /app/apps/web/dist ./apps/web/dist
+COPY --from=web-build /app/apps/web/dist-showcase ./apps/web/dist-showcase
 # Cliente web co-hospedado em /client: um export próprio (baseUrl=/client), não o `dist` que o
 # Electron empacota, que é feito para a raiz. Sem este estágio a API sobe, só o /client 404. Expo
 # fica isolado deste stage para o runtime continuar só com Bun.

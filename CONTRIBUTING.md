@@ -22,7 +22,7 @@ The product's boundaries (what Keres will not become) are in [`docs/product/FEAT
 - `packages/shared` - the contract both sides agree on: entities, Zod schemas, pure rules and engines. No app imports here, and no framework.
 - `apps/api` - the server. Routes in `src/modules`, logic in `src/services`, sync handlers in `src/services/entity-sync-handlers`.
 - `apps/client` - the app. Screens call hooks; hooks call services; services own the database and the log. A screen does not import another screen.
-- `apps/admin`, `apps/site`, `apps/desktop` - the admin panel and showcase, the landing page, the Electron shell.
+- `apps/web`, `apps/site`, `apps/desktop` - the admin panel and showcase, the landing page, the Electron shell.
 
 Folders are `kebab-case`, imports use the aliases (`@/src/...`), never `../`, and a file stays under 600 lines of code. These are enforced by tests, not by taste.
 
@@ -41,7 +41,7 @@ Folders are `kebab-case`, imports use the aliases (`@/src/...`), never `../`, an
 
    On a small machine run one workspace at a time (`bun run --cwd apps/client test`); the client suite is already limited to two workers.
 3. Read a failing architecture test as a message: its name says what you forgot (see the table in [`docs/procedures/adding_an_entity.md`](docs/procedures/adding_an_entity.md)). Do not weaken a test to make it pass; coverage floors only go up ([`docs/structure/testing.md`](docs/structure/testing.md)).
-4. Commit messages are one short line with an area prefix: `(APP)`, `(API)`, `(SHRD)` for the shared package, `(ADMIN)`, `(SITE)`, `(DESKTOP)`, `(DOCS)`, `(REPO)` for tooling. Combine areas with a slash when a change really spans two (`(APP/API)`).
+4. Commit messages are one short line with an area prefix: `(APP)`, `(API)`, `(SHRD)` for the shared package, `(WEB)` for the admin panel and the showcase, `(SITE)`, `(DESKTOP)`, `(DOCS)`, `(REPO)` for tooling. Combine areas with a slash when a change really spans two (`(APP/API)`).
 5. Update the document that describes what you changed in the same commit. A document that disagrees with the code is worse than none.
 
 ## Rules that are easy to break

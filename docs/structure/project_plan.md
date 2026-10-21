@@ -353,7 +353,7 @@ graph LR
 
 ## 🔗 Architecture flow
 
-- **Other services:** `apps/payments` is the separate payment connector service, and `apps/verification` the separate age-verification service; both talk to the API through signed contracts ([`payment_connectors.md`](../compliance/payment_connectors.md), [`age_verification.md`](../compliance/age_verification.md)). `apps/admin` serves the admin panel and the public showcase; `apps/site` is the landing page.
+- **Other services:** `apps/payments` is the separate payment connector service, and `apps/verification` the separate age-verification service; both talk to the API through signed contracts ([`payment_connectors.md`](../compliance/payment_connectors.md), [`age_verification.md`](../compliance/age_verification.md)). `apps/web` serves the admin panel and the public showcase; `apps/site` is the landing page.
 - **API** (`apps/api`)
   - Elysia (Bun) exposes REST/JSON routes.
   - Zod validates inputs/outputs.

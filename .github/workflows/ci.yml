@@ -31,7 +31,7 @@ jobs:
           - name: client
           - name: api
           - name: payments
-          - name: admin
+          - name: web
           - name: desktop
           - name: site
     name: verify (${{ matrix.name }})
@@ -44,23 +44,23 @@ jobs:
       # `--only` runs the script in one package (see scripts/run-all.ts), skipping cleanly
       # when the package does not declare it.
       - run: bun scripts/run-all.ts typecheck --only ${{ matrix.name }}
-      # Lint here is ESLint, in the client and the admin only: Biome's packages are checked once, for
+      # Lint here is ESLint, in the client and the web app only: Biome's packages are checked once, for
       # all of them, by the `static` job below. The client's ESLint is the slow one - minutes from
-      # cold - so its cache, and the admin's, are restored first. Both scripts ask ESLint to key the
+      # cold - so its cache, and the web app's, are restored first. Both scripts ask ESLint to key the
       # cache by file content (`--cache-strategy content`): a checkout gives every file a fresh
       # mtime, which would make the default strategy miss on every run. A stale cache only costs
       # time, never a wrong result.
-      - if: matrix.name == 'client' || matrix.name == 'admin'
+      - if: matrix.name == 'client' || matrix.name == 'web'
         uses: actions/cache@v4
         with:
           path: |
             apps/client/.expo/cache/eslint
-            apps/admin/node_modules/.cache/eslint
+            apps/web/node_modules/.cache/eslint
           key: eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
             eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-
             eslint-${{ matrix.name }}-
-      - if: matrix.name == 'client' || matrix.name == 'admin'
+      - if: matrix.name == 'client' || matrix.name == 'web'
         run: bun scripts/run-all.ts lint --only ${{ matrix.name }}
       # With coverage, not `bun run test`: that is what enforces the thresholds set in each
       # workspace. Without it the floors would sit in the file and never be checked. `CI` is set

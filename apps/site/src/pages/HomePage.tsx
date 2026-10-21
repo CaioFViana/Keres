@@ -12,7 +12,7 @@ import {
   HOSTED_CLIENT_URL,
   WEB_CLIENT_URL,
 } from '../content/links';
-import { isLandingBuild, SITE_TEXT_CONTEXT } from '../variant';
+import { isLandingBuild, siteText } from '../variant';
 import keresLogoUrl from 'virtual:keres-logo';
 
 const DOWNLOAD_HREFS: Record<(typeof DOWNLOADS)[number], string> = {
@@ -75,9 +75,7 @@ export function HomePage() {
             </a>
           </div>
           <p className="muted hero-note">
-            {isLandingBuild
-              ? t('hero.landingTryNote', { context: SITE_TEXT_CONTEXT })
-              : t('hero.tryNote')}
+            {isLandingBuild ? siteText(t, 'hero.landingTryNote') : t('hero.tryNote')}
           </p>
         </div>
       </section>
@@ -215,7 +213,7 @@ export function HomePage() {
                     points at this server's own /showcase instead of someone else's. */}
                 <p>
                   {item === 'showcase' && isLandingBuild
-                    ? t('faq.items.showcase.aLanding', { context: SITE_TEXT_CONTEXT })
+                    ? siteText(t, 'faq.items.showcase.aLanding')
                     : t(`faq.items.${item}.a`)}
                 </p>
               </details>

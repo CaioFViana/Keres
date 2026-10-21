@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { HOSTED_CLIENT_URL, KERES_OFFICIAL_CLIENT_URL, KERES_OFFICIAL_URL } from '../content/links';
-import { isOfficialSite, SITE_TEXT_CONTEXT } from '../variant';
+import { isOfficialSite, siteText } from '../variant';
 
 /**
  * Elsewhere this presents keres.me as the official server. On keres.me itself it presents the page's own
@@ -14,8 +14,8 @@ export function OfficialSection() {
     <section className="band" id="official">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{t('official.title', { context: SITE_TEXT_CONTEXT })}</h2>
-          <p>{t('official.lead', { context: SITE_TEXT_CONTEXT })}</p>
+          <h2>{siteText(t, 'official.title')}</h2>
+          <p>{siteText(t, 'official.lead')}</p>
         </header>
         <div className="hero-actions">
           {!isOfficialSite && (
@@ -33,7 +33,7 @@ export function OfficialSection() {
             href={isOfficialSite ? HOSTED_CLIENT_URL : KERES_OFFICIAL_CLIENT_URL}
             {...(isOfficialSite ? {} : { rel: 'noreferrer', target: '_blank' })}
           >
-            {t('official.openClient', { context: SITE_TEXT_CONTEXT })}
+            {siteText(t, 'official.openClient')}
           </a>
         </div>
       </div>

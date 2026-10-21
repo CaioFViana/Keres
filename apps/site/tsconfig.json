@@ -13,6 +13,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true,
     // A type import is written as one, and the compiler does not guess: what is written is what
     // is left in the bundle. Complements `@typescript-eslint/consistent-type-imports`, which
     // already asks for the same thing line by line.

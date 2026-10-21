@@ -1,7 +1,7 @@
 # Keres feature inventory
 
 **Status:** code-grounded inventory (companion to `docs/structure/project_plan.md`)
-**Generated:** 2026-09-23, from a full read of the repository. **Last updated:** 2026-10-20,
+**Generated:** 2026-09-23, from a full read of the repository. **Last updated:** 2026-10-21,
 for version 1.10.1 (counts, services, music, scene pages, per-work publishing, accounts).
 The code is the source of truth; file pointers below are the evidence. When a feature
 changes, update the section here and, if it affects the data model or sync,
@@ -263,6 +263,9 @@ Monorepo (`package.json`, v1.10.1, MPL-2.0):
   mirrors `storySimulation`, with inventory, path, back and a saves list).
   Served sandboxed (`Content-Security-Policy: sandbox allow-scripts`), embedded
   by the showcase in a sandboxed frame that keeps its saves.
+- **Import from a link** (client): the same importer takes a package that was downloaded
+  instead of picked - `importStoryFromSource` / `importStoryZipBytes`
+  (`StoryImportService`), shared by the "Import a story" screen and the in-app showcase.
 - **Map exports**: SVG standalone + PNG raster; plot-coverage SVG.
 
 ## 12. Publishing and Showcase
@@ -292,6 +295,24 @@ Monorepo (`package.json`, v1.10.1, MPL-2.0):
   (a line that leaves the Keres mark, passes every heading and splits where the
   page offers choices); on a story's or an author's page it takes their palette,
   and a story's versions are nodes on it, the newest first.
+- **Showcase in the app** (client, `ShowcaseDrawer` in the Server group; absent in a
+  serverless build): a server's public site read from inside the app, over the same public
+  API. **Paste a link** (field, clipboard button, Ctrl+V anywhere on the web) - `parseShowcaseLink`
+  reads a story, a reader, an author, a pack, the lists or the bare server, forgiving of what
+  surrounds it and strict about what it is (https, or http on the device/local network);
+  `resolveShowcaseLink` tells a **registered server** (compared like server addresses
+  everywhere) from a **guest** one (read as a visitor, nothing of the person sent; asks
+  `/public/config` first; offers to register it). **Browse** a registered server: stories
+  (search, genre/language/structure/form/order filters with facet counts, paged), authors,
+  an author's page (biography, web links, stories) and packs (searched in the app). **A story**:
+  versions grouped by work, a **password gate** (unlock token kept in the screen, 1 h),
+  **Read online** (the site's own reader in the browser; a direct signed reader address when
+  the story is behind a password or adults-only), **Download package** (.zip, via a signed
+  address fetched without the session), **Manuscript** (the published format) and **Import a
+  copy** (a new local story, confirmed first). **Packs**: summary chips and install through
+  `PackService.importRemotePack` (kept private). No native reader and no OS deep links:
+  the hosted client pins its address bar to `/client/`. Shortcuts: story list header, a
+  server's page, and the friend's page (their author page and stories open in the app).
 - **Author page texts** (`PUT /user/public-profile`, edited in the app under
   Manage Servers > Author page): biography (4000 characters), up to 8 links and a
   palette, apart from the short bio friends see; erased with the account, in the

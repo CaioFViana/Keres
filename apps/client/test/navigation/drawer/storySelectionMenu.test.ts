@@ -17,6 +17,7 @@ describe('the menu outside a story', () => {
     ]);
     expect(menu.groups[1].leaves.map((leaf) => leaf.id)).toEqual([
       'ServerManagementDrawer',
+      'ShowcaseDrawer',
       'FriendshipDrawer',
     ]);
     expect(menu.footer.map((leaf) => leaf.id)).toEqual(['HelpDrawer', 'Settings']);

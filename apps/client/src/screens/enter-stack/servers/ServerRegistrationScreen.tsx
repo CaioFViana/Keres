@@ -56,7 +56,7 @@ import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/auth/serverU
 import { logger } from '@/src/utils/logging/logger';
 
 type RootStackParamList = {
-  ServerRegistration: { serverId?: string };
+  ServerRegistration: { serverId?: string; address?: string };
   ServerManagement: undefined;
   ServerVerification: { serverId: string };
 };
@@ -77,7 +77,7 @@ const ServerRegistrationScreen = () => {
   const navigation = useNavigation<ServerRegistrationScreenNavigationProp>();
   const route =
     useRoute<NativeStackScreenProps<RootStackParamList, 'ServerRegistration'>['route']>();
-  const { serverId } = route.params || {};
+  const { serverId, address: suggestedAddress } = route.params || {};
   useScreenHeader({
     target: 'parent',
     title: serverId ? t('edit_server') : t('register_new_server'),
@@ -89,7 +89,7 @@ const ServerRegistrationScreen = () => {
   const { setActiveServer } = useUserSettingsStore();
 
   const [mode, setMode] = useState<ServerAuthMode>('login');
-  const [serverAddress, setServerAddress] = useState('');
+  const [serverAddress, setServerAddress] = useState(suggestedAddress ?? '');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

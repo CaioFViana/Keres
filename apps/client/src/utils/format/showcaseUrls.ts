@@ -5,12 +5,35 @@
  * nothing to ask the server.
  */
 
+function showcaseBase(serverUrl: string): string {
+  return `${serverUrl.replace(/\/+$/, '')}/showcase`;
+}
+
 /** An author's public page. */
 export function buildAuthorPublicUrl(serverUrl: string, username: string): string {
-  return `${serverUrl.replace(/\/+$/, '')}/showcase/author/${encodeURIComponent(username)}`;
+  return `${showcaseBase(serverUrl)}/author/${encodeURIComponent(username)}`;
 }
 
 /** A story's public page. */
 export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {
-  return `${serverUrl.replace(/\/+$/, '')}/showcase/story/${storyId}`;
+  return `${showcaseBase(serverUrl)}/story/${storyId}`;
+}
+
+/** A version's online reader, inside the site's own page. */
+export function buildStoryReaderUrl(
+  serverUrl: string,
+  storyId: string,
+  publicationId: string,
+): string {
+  return `${buildStoryPublicUrl(serverUrl, storyId)}/read/${publicationId}`;
+}
+
+/** A pack's public page. */
+export function buildPackPublicUrl(serverUrl: string, packId: string): string {
+  return `${showcaseBase(serverUrl)}/pack/${packId}`;
+}
+
+/** The front page of a server's showcase. */
+export function buildShowcaseUrl(serverUrl: string): string {
+  return showcaseBase(serverUrl);
 }

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { importStoryFromSource } from '@/src/services/storymanagement/story-lifecycle/StoryImportService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryListStore } from '@/src/state/story/storyListStore';
@@ -15,9 +15,9 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { createULID } from '@/src/utils/entity/entityUtils';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { pickStoryExportFile, StoryImportError } from '@/src/utils/io/storyTransfer';
+import { storyImportMessageKey } from '@/src/utils/io/StoryImportError';
 import { logger } from '@/src/utils/logging/logger';
 
 /**
@@ -52,52 +52,15 @@ const ImportStoryScreen = () => {
       if (!picked) {
         return; // The user cancelled the picker; it is not an error.
       }
-      const { story: storyExport, media } = picked;
+      // A local copy: linking it to a server is a separate decision, made on the story selection screen.
+      const { title } = await importStoryFromSource(drizzleDb, userId, picked);
 
-      const storyService = createStoryService(drizzleDb);
-
-      // The importer inserts with remade ids, so it can also restore a parallel backup.
-      const importedStoryId = createULID();
-
-      // It writes the .zip's media files into the device's storage before creating the records - the gallery
-      // is born with the local file, without depending on synchronizing with a server later. Empty for a
-      // `.json`-only import.
-      const localMediaPaths = new Map<string, string>();
-      for (const item of media) {
-        const localPath = await mediaFileService.writeDownloaded(
-          importedStoryId,
-          item.hash,
-          item.mimeType,
-          item.bytes,
-        );
-        localMediaPaths.set(item.hash, localPath);
-      }
-
-      // A null `serverId`: the file is a local copy. Linking it to a server is a separate decision, made on
-      // the story selection screen.
-      await storyService.importFullStory(
-        userId,
-        storyExport,
-        null,
-        null,
-        localMediaPaths,
-        importedStoryId,
-      );
-
-      showNotification(t('import_story_success', { title: storyExport.story.title }), 'success');
-      fetchStoryList(storyService); // Keeps the story selection screen up to date.
+      showNotification(t('import_story_success', { title }), 'success');
+      fetchStoryList(createStoryService(drizzleDb)); // Keeps the story selection screen up to date.
     } catch (importError) {
       if (importError instanceof StoryImportError) {
         logger.debug('ImportStoryScreen: import rejected.', importError.message);
-        const messageKey =
-          importError.reason === 'future_format_version'
-            ? 'import_story_future_version'
-            : importError.reason === 'invalid_format'
-              ? 'import_story_invalid_file'
-              : importError.reason === 'corrupt_content'
-                ? 'import_story_corrupt_content'
-                : 'import_story_unreadable_file';
-        showNotification(t(messageKey), 'error');
+        showNotification(t(storyImportMessageKey(importError.reason)), 'error');
         return;
       }
       logger.debug('ImportStoryScreen: failed to import story.', importError);

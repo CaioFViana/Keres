@@ -195,8 +195,7 @@
   },
   "story": {
     "back": "← All stories",
-    "publishedThis": "published this story",
-    "publishedThisShort": "published this",
+    "publishedThis": "published by this account",
     "publishedBy": "published by {{username}}#{{tag}}",
     "author": "Author",
     "genre": "Genre",

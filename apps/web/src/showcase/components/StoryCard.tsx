@@ -64,7 +64,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
                 <>
                   {owner.username}
                   <span className="owner-tag">
-                    #{owner.tag} · {t('story.publishedThisShort')}
+                    #{owner.tag} · {t('story.publishedThis')}
                   </span>
                 </>
               )}

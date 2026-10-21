@@ -195,8 +195,7 @@
   },
   "story": {
     "back": "← Todas as histórias",
-    "publishedThis": "publicou esta história",
-    "publishedThisShort": "publicou esta",
+    "publishedThis": "publicado por esta conta",
     "publishedBy": "publicado por {{username}}#{{tag}}",
     "author": "Autoria",
     "genre": "Gênero",

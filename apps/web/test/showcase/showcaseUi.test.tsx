@@ -264,7 +264,7 @@ describe('author and uploader', () => {
 
     const text = container.textContent ?? '';
     expect(text).toContain('Ana'); // autor declarado na história
-    expect(text).toContain('published this story'); // conta que publicou
+    expect(text).toContain('published by this account'); // conta que publicou
     expect(text).toContain('#ana');
     await unmount();
   });
@@ -282,7 +282,7 @@ describe('author and uploader', () => {
     const facts = container.querySelector('.story-facts')?.textContent ?? '';
     expect(facts).not.toContain('Author');
     // The publisher is still stated - that is a fact about the page.
-    expect(container.textContent).toContain('published this story');
+    expect(container.textContent).toContain('published by this account');
     await unmount();
   });
 
@@ -297,7 +297,7 @@ describe('author and uploader', () => {
 
     const foot = container.querySelector('.story-card-foot')?.textContent ?? '';
     expect(foot).toContain('ana');
-    expect(foot).toContain('published this');
+    expect(foot).toContain('published by this account');
     await unmount();
   });
 });

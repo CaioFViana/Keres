@@ -275,11 +275,26 @@ Monorepo (`package.json`, v1.10.1, MPL-2.0):
   as long as a manuscript and/or the reader is published - the publish screen
   asks to select at least one, the API refuses an empty version (400), and the
   showcase offers no package download for one; offline-diff notice on reconnect.
-- **Showcase** (admin dual build, served at `/showcase`): public story pages
+- **Showcase** (`apps/web` showcase build, served at `/showcase`): public story pages
   with author palette theming + configurable branding (name/logo/palette/title,
   Keres fallback); password gate learns nothing before unlock; ETag caching.
-- **Public API** (`public.route.ts`, no login): config, story list (passworded
-  excluded), packs, password unlock (rate-limited, 1h JWT per story), full-zip
+  **Search and filters** on the home page (text over title/description/author/
+  genre/language/publisher/work titles, ignoring case and accents; genre,
+  language, structure and work medium; order by newest/title/author; paged),
+  kept in the address so a search can be shared; the filter options come from
+  `/stories/facets`, counted over what the viewer may see.
+  **Authors**: a directory (`/authors`, searchable) and an author page
+  (`/author/:username`) with the biography, links and palette the author wrote
+  for it (`OwnPublicProfile`: plain text, http(s) links only, opened in a new
+  tab with `nofollow ugc`) and every story they have on show. **Works** (arcs)
+  released on their own show their cover on the story page.
+- **Author page texts** (`PUT /user/public-profile`, edited in the app under
+  Manage Servers > Author page): biography (4000 characters), up to 8 links and a
+  palette, apart from the short bio friends see; erased with the account, in the
+  LGPD export, and clearable by an administrator (audited).
+- **Public API** (`public.route.ts` and `publicDirectory.route.ts`, no login):
+  config, story list with search/filters/paging (passworded excluded; the match
+  count in `X-Total-Count`), facets, authors and their pages, work covers, packs, password unlock (rate-limited, 1h JWT per story), full-zip
   download (S3 presigned), 60s download URLs for `<a>` tags; private → 404,
   no session → 401.
 

@@ -286,7 +286,7 @@ export const adminUserRoutes = new Elysia()
       detail: {
         summary: "Clear a user's author page",
         description:
-          "Empties the biography, links and theme the user wrote for their public author page. The account, its short bio and its stories stay as they are, and the user may write the page again.",
+          'Empties the biography, links and theme the user wrote for their public author page. The account, its short bio and its stories stay as they are, and the user may write the page again.',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

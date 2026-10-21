@@ -1137,7 +1137,7 @@ code {
 /* Legal. The two documents switch in tabs; the text itself reads like the FAQ -
    headed sections with breathing room, capped in width so long lines stay readable. */
 .legal-version {
-  margin: 14px 0 0;
+  margin: 14px 0 18px;
 }
 
 /* A document on a page of its own: each section a knot of the thread, with room to breathe. */

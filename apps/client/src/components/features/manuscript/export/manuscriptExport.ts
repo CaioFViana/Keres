@@ -52,10 +52,11 @@ const FORMAT_FILES: Record<
 export const SCREENPLAY_EXPORT_FORMATS: ManuscriptExportFormat[] = ['fountain', 'screenplay-pdf'];
 
 /**
- * Hands an already-compiled screenplay (Fountain text or the industry PDF) to the share sheet, named
- * like every manuscript: the title, the date.
+ * Hands the bytes of an already-made manuscript, in any of its formats, to the share sheet, named like
+ * every manuscript: the title, the date. For one that was rendered elsewhere - a screenplay compiled here, or
+ * the manuscript a server published.
  */
-export async function deliverScreenplay({
+export async function deliverManuscriptBytes({
   storyTitle,
   bytes,
   format,
@@ -70,6 +71,9 @@ export async function deliverScreenplay({
   const fileName = buildManuscriptFileName(storyTitle, file.extension, new Date(), language);
   return deliverFile(bytes, fileName, file.mimeType, file.uti);
 }
+
+/** A compiled screenplay (Fountain text or the industry PDF), handed over like any manuscript. */
+export const deliverScreenplay = deliverManuscriptBytes;
 
 export type ManuscriptExportLabels = {
   goToPage: string;

@@ -22,6 +22,7 @@ import ImportStoryScreen from '@/src/screens/enter-stack/story-entry/ImportStory
 import ShowcaseAuthorScreen from '@/src/screens/showcase/ShowcaseAuthorScreen';
 import ShowcaseBrowseScreen from '@/src/screens/showcase/ShowcaseBrowseScreen';
 import ShowcaseHomeScreen from '@/src/screens/showcase/ShowcaseHomeScreen';
+import ShowcasePackScreen from '@/src/screens/showcase/ShowcasePackScreen';
 import ShowcaseStoryScreen from '@/src/screens/showcase/ShowcaseStoryScreen';
 import PackBrowseScreen from '@/src/screens/packs/PackBrowseScreen';
 import PackFormScreen from '@/src/screens/packs/PackFormScreen';
@@ -102,14 +103,15 @@ export type ShowcaseSourceParams = { serverId?: string; guestOrigin?: string };
  * The showcase stack: the public sites of servers, read from inside the app. Stories open *from* the home (where
  * a link is pasted) and belong behind it, for the same reason as the packs' screens.
  */
-export type ShowcaseTab = 'stories' | 'authors';
+export type ShowcaseTab = 'stories' | 'authors' | 'packs';
 
 export type ShowcaseStackParamList = {
   ShowcaseHome: undefined;
-  /** The lists of one server's public site: its stories and its authors. */
+  /** The lists of one server's public site: its stories, its authors and its packs. */
   ShowcaseBrowse: ShowcaseSourceParams & { tab?: ShowcaseTab };
   ShowcaseStory: ShowcaseSourceParams & { storyId: string };
   ShowcaseAuthor: ShowcaseSourceParams & { username: string };
+  ShowcasePack: ShowcaseSourceParams & { packId: string };
 };
 
 /**
@@ -338,6 +340,11 @@ const ShowcaseStackNavigator = () => {
         name="ShowcaseAuthor"
         component={ShowcaseAuthorScreen}
         options={{ headerTitle: t('showcase_author_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcasePack"
+        component={ShowcasePackScreen}
+        options={{ headerTitle: t('showcase_pack_title') }}
       />
       <ShowcaseStack.Screen
         name="ShowcaseStory"

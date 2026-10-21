@@ -196,6 +196,8 @@ describe('ShowcaseHomeScreen', () => {
       'ShowcaseBrowse',
       { serverId: 'srv-1', tab: 'authors' },
     ],
+    ['https://keres.example/showcase/pack/K1', 'ShowcasePack', { serverId: 'srv-1', packId: 'K1' }],
+    ['https://keres.example/showcase/packs', 'ShowcaseBrowse', { serverId: 'srv-1', tab: 'packs' }],
     ['https://keres.example/showcase', 'ShowcaseBrowse', { serverId: 'srv-1', tab: 'stories' }],
     ['https://keres.example', 'ShowcaseBrowse', { serverId: 'srv-1', tab: 'stories' }],
     [
@@ -211,19 +213,6 @@ describe('ShowcaseHomeScreen', () => {
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(screen, params));
     expect(openUrl).not.toHaveBeenCalled();
-  });
-
-  it('sends the pages the app does not draw yet (packs) to the browser', async () => {
-    const view = await render(<ShowcaseHomeScreen />);
-
-    await typeLink(view, 'https://keres.example/showcase/pack/K1');
-    await waitFor(() => expect(view.getByText('showcase_link_registered')).toBeTruthy());
-    await fireEvent.press(view.getByTestId('showcase-link-open'));
-
-    await waitFor(() =>
-      expect(openUrl).toHaveBeenCalledWith('https://keres.example/showcase/pack/K1'),
-    );
-    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it("lists the person's servers, and browses the one that is tapped", async () => {

@@ -9,6 +9,7 @@ const mockGetServerById = jest.fn();
 const mockListStories = jest.fn();
 const mockListAuthors = jest.fn();
 const mockGetFacets = jest.fn();
+const mockListPacks = jest.fn();
 const mockRoute: { params: Record<string, unknown> } = { params: {} };
 
 jest.mock('react-i18next', () => ({
@@ -82,6 +83,10 @@ jest.mock('@/src/services/servers/ServerService', () => ({
     getServerById: (...args: unknown[]) => mockGetServerById(...args),
   }),
 }));
+jest.mock('@/src/services/api/apiClient', () => ({
+  isNotFoundError: () => false,
+  isOfflineError: () => false,
+}));
 jest.mock('@/src/services/api/ShowcaseApiService', () => ({
   showcaseSourceUrl: (source: { kind: string; origin?: string; server?: { url: string } }) =>
     source.kind === 'server' ? source.server!.url : source.origin,
@@ -90,6 +95,7 @@ jest.mock('@/src/services/api/ShowcaseApiService', () => ({
     listStories: (...args: unknown[]) => mockListStories(...args),
     listAuthors: (...args: unknown[]) => mockListAuthors(...args),
     getFacets: (...args: unknown[]) => mockGetFacets(...args),
+    listPacks: (...args: unknown[]) => mockListPacks(...args),
   },
 }));
 
@@ -104,6 +110,33 @@ const card = (id: string, overrides: Record<string, unknown> = {}) => ({
   versionCount: 2,
   ...overrides,
 });
+const packCard = (id: string, name: string) => ({
+  id,
+  name,
+  description: `About ${name}`,
+  language: 'en',
+  authorName: 'Ana',
+  version: 1,
+  owner: { username: 'ana', tag: 'ana', avatarColor: null, avatarIcon: null },
+  summary: {
+    fieldCount: 1,
+    suggestionCount: 0,
+    tagCount: 0,
+    statCount: 0,
+    hasVocabulary: false,
+    statSystem: false,
+    statNotation: 'numeric',
+    chapterCount: 0,
+    sceneCount: 0,
+    characterCount: 0,
+    locationCount: 0,
+    worldRuleCount: 0,
+    noteCount: 0,
+    boardCount: 0,
+    locationMapCount: 0,
+  },
+  updatedAt: '2026-10-01T10:00:00Z',
+});
 const authorCard = (name: string) => ({
   owner: { username: name, tag: name, avatarColor: null, avatarIcon: null },
   storyCount: 3,
@@ -117,6 +150,10 @@ describe('ShowcaseBrowseScreen', () => {
     mockGetServerById.mockResolvedValue(server);
     mockListStories.mockResolvedValue({ items: [card('S1'), card('S2')], total: 2 });
     mockListAuthors.mockResolvedValue({ items: [authorCard('ana'), authorCard('mei')], total: 2 });
+    mockListPacks.mockResolvedValue([
+      packCard('K1', 'Tabletop Starter'),
+      packCard('K2', 'Comic Kit'),
+    ]);
     mockGetFacets.mockResolvedValue({
       genres: [{ value: 'Fantasy', count: 2 }],
       languages: [{ value: 'en', count: 2 }],
@@ -169,6 +206,60 @@ describe('ShowcaseBrowseScreen', () => {
       { kind: 'server', server },
       { q: '', limit: 24, offset: 0 },
     );
+  });
+
+  describe('the packs', () => {
+    it('lists them whole, and opens one in the same site', async () => {
+      const view = await render(<ShowcaseBrowseScreen />);
+      await waitFor(() => expect(view.getByText('Story S1')).toBeTruthy());
+      // Nobody asks for the packs until their tab is open.
+      expect(mockListPacks).not.toHaveBeenCalled();
+
+      await fireEvent.press(view.getByTestId('showcase-tab-packs'));
+      await waitFor(() => expect(view.getByText('Tabletop Starter')).toBeTruthy());
+      expect(view.getByText('Comic Kit')).toBeTruthy();
+      expect(mockListPacks).toHaveBeenCalledWith({ kind: 'server', server });
+      expect(view.queryByTestId('showcase-filters')).toBeNull();
+      expect(view.queryByTestId('showcase-more')).toBeNull();
+
+      await fireEvent.press(view.getByTestId('showcase-pack-K2'));
+      expect(mockNavigate).toHaveBeenCalledWith('ShowcasePack', {
+        serverId: 'srv-1',
+        guestOrigin: undefined,
+        packId: 'K2',
+      });
+    });
+
+    it('opens on the packs when asked, and narrows them as the person types', async () => {
+      mockRoute.params = { serverId: 'srv-1', tab: 'packs' };
+      const view = await render(<ShowcaseBrowseScreen />);
+      await waitFor(() => expect(view.getByText('Comic Kit')).toBeTruthy());
+      expect(mockListStories).not.toHaveBeenCalled();
+
+      await fireEvent.changeText(view.getByTestId('showcase-search'), 'comic');
+
+      await waitFor(() => expect(view.queryByText('Tabletop Starter')).toBeNull());
+      expect(view.getByText('Comic Kit')).toBeTruthy();
+      expect(mockListPacks).toHaveBeenCalledTimes(1);
+
+      await fireEvent.changeText(view.getByTestId('showcase-search'), 'zzz');
+      await waitFor(() => expect(view.getByText('showcase_empty_filtered')).toBeTruthy());
+    });
+
+    it('says there is none, and when they could not be loaded', async () => {
+      mockRoute.params = { serverId: 'srv-1', tab: 'packs' };
+      mockListPacks.mockResolvedValueOnce([]);
+      const view = await render(<ShowcaseBrowseScreen />);
+      await waitFor(() => expect(view.getByText('showcase_empty_packs')).toBeTruthy());
+      await view.unmount();
+
+      mockListPacks.mockRejectedValueOnce(new Error('down'));
+      const failing = await render(<ShowcaseBrowseScreen />);
+      await waitFor(() => expect(failing.getByText('showcase_list_failed')).toBeTruthy());
+
+      await fireEvent.press(failing.getByTestId('showcase-retry'));
+      await waitFor(() => expect(failing.getByText('Comic Kit')).toBeTruthy());
+    });
   });
 
   it('opens on the tab it was asked for', async () => {

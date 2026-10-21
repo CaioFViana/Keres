@@ -12,6 +12,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ShowcaseAuthorRow from '@/src/components/features/showcase/ShowcaseAuthorRow';
+import ShowcasePackRow from '@/src/components/features/showcase/ShowcasePackRow';
 import ShowcaseFiltersBar from '@/src/components/features/showcase/ShowcaseFiltersBar';
 import ShowcaseGuestBanner from '@/src/components/features/showcase/ShowcaseGuestBanner';
 import ShowcaseStoryRow from '@/src/components/features/showcase/ShowcaseStoryRow';
@@ -36,8 +37,10 @@ import {
   NO_SHOWCASE_FILTERS,
   storyQueryOf,
 } from '@/src/utils/format/showcaseFilters';
+import { packMatches } from '@/src/utils/format/showcasePacks';
 import { logger } from '@/src/utils/logging/logger';
 import { usePagedShowcase } from './usePagedShowcase';
+import { useShowcasePacks } from './useShowcasePacks';
 import { useShowcaseSource } from './useShowcaseSource';
 
 type Route = RouteProp<ShowcaseStackParamList, 'ShowcaseBrowse'>;
@@ -97,7 +100,26 @@ const ShowcaseBrowseScreen = () => {
       showcaseApiService.listAuthors(source!, { q: settledQuery.trim(), limit, offset }),
     !!source && tab === 'authors',
   );
-  const list = tab === 'stories' ? stories : authors;
+  const packs = useShowcasePacks(source, tab === 'packs');
+  const shownPacks = useMemo(
+    () => packs.packs.filter((pack) => packMatches(pack, settledQuery)),
+    [packs.packs, settledQuery],
+  );
+  // The packs come whole, so they are one page: no total to show, nothing more to ask for.
+  const list =
+    tab === 'stories'
+      ? stories
+      : tab === 'authors'
+        ? authors
+        : {
+            loading: packs.loading,
+            failed: packs.failed,
+            total: packs.loading || packs.failed ? null : shownPacks.length,
+            hasMore: false,
+            loadingMore: false,
+            loadMore: () => {},
+            reload: packs.reload,
+          };
   const sourceParams = { serverId, guestOrigin };
 
   if (missing) {
@@ -108,6 +130,14 @@ const ShowcaseBrowseScreen = () => {
   }
 
   const filtered = tab === 'stories' ? hasActiveShowcaseFilters(settled) : !!settledQuery.trim();
+  const countText =
+    list.total === null
+      ? null
+      : tab === 'stories'
+        ? t('showcase_story_count', { count: list.total })
+        : tab === 'authors'
+          ? t('showcase_author_count', { count: list.total })
+          : t('showcase_pack_count', { count: list.total });
 
   const header = (
     <View style={styles.header}>
@@ -126,6 +156,7 @@ const ShowcaseBrowseScreen = () => {
         tabs={[
           { key: 'stories', label: t('showcase_tab_stories') },
           { key: 'authors', label: t('showcase_tab_authors') },
+          { key: 'packs', label: t('showcase_tab_packs') },
         ]}
         value={tab}
         onChange={setTab}
@@ -134,7 +165,7 @@ const ShowcaseBrowseScreen = () => {
         style={styles.search}
         value={filters.q}
         onChangeText={(q) => setFilters((current) => ({ ...current, q }))}
-        placeholder={t(tab === 'stories' ? 'showcase_search_stories' : 'showcase_search_authors')}
+        placeholder={t(`showcase_search_${tab}`)}
         accessibilityLabel={t('showcase_search')}
         autoCapitalize="none"
         autoCorrect={false}
@@ -146,9 +177,7 @@ const ShowcaseBrowseScreen = () => {
       ) : null}
       {list.total !== null && !list.loading && !list.failed ? (
         <Text style={styles.count} testID="showcase-count">
-          {t(tab === 'stories' ? 'showcase_story_count' : 'showcase_author_count', {
-            count: list.total,
-          })}
+          {countText}
         </Text>
       ) : null}
     </View>
@@ -181,13 +210,7 @@ const ShowcaseBrowseScreen = () => {
     </View>
   ) : (
     <Text style={[styles.state, styles.stateText]} testID="showcase-empty">
-      {t(
-        filtered
-          ? 'showcase_empty_filtered'
-          : tab === 'stories'
-            ? 'showcase_empty_stories'
-            : 'showcase_empty_authors',
-      )}
+      {t(filtered ? 'showcase_empty_filtered' : `showcase_empty_${tab}`)}
     </Text>
   );
 
@@ -207,6 +230,26 @@ const ShowcaseBrowseScreen = () => {
             coverUrl={item.hasCover ? showcaseCoverUrl(source, item.storyId) : null}
             onPress={() =>
               navigation.navigate('ShowcaseStory', { ...sourceParams, storyId: item.storyId })
+            }
+          />
+        )}
+      />
+    );
+  }
+  if (tab === 'packs') {
+    return (
+      <FlatList
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        data={shownPacks}
+        keyExtractor={(pack) => pack.id}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        renderItem={({ item }) => (
+          <ShowcasePackRow
+            pack={item}
+            onPress={() =>
+              navigation.navigate('ShowcasePack', { ...sourceParams, packId: item.id })
             }
           />
         )}

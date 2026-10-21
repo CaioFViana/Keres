@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { ShowcaseVersion } from '@keres/shared';
+import { FORMAT_META } from '@keres/shared';
 import Button from '@/src/components/common/controls/Button/Button';
 import { useTheme } from '@/src/theme';
 import { formatBytes } from '@/src/utils/format/formatBytes';
@@ -12,11 +13,12 @@ interface ShowcaseVersionRowProps {
   /** The first of the list, which the site calls the newest. */
   newest: boolean;
   /** What is happening to this version right now (and how far along, 0–1, when the server says). */
-  busy: { action: 'read' | 'download' | 'import'; progress: number | null } | null;
+  busy: { action: 'read' | 'download' | 'manuscript' | 'import'; progress: number | null } | null;
   /** Another version is being worked on: this one waits. */
   disabled: boolean;
   onRead: () => void;
   onDownload: () => void;
+  onManuscript: () => void;
   onImport: () => void;
 }
 
@@ -28,13 +30,14 @@ const ShowcaseVersionRow: React.FC<ShowcaseVersionRowProps> = ({
   disabled,
   onRead,
   onDownload,
+  onManuscript,
   onImport,
 }) => {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
   const hasPackage = version.packageIncluded !== false;
   const percent = busy?.progress != null ? ` ${Math.round(busy.progress * 100)}%` : '';
-  const label = (action: 'download' | 'import', idle: string, working: string) =>
+  const label = (action: 'download' | 'manuscript' | 'import', idle: string, working: string) =>
     busy?.action === action ? `${working}${percent}` : idle;
 
   return (
@@ -77,6 +80,24 @@ const ShowcaseVersionRow: React.FC<ShowcaseVersionRowProps> = ({
             testID={`showcase-read-${version.id}`}
           >
             {t('showcase_read_online')}
+          </Button>
+        ) : null}
+        {version.manuscript ? (
+          <Button
+            variant="secondary"
+            icon="document-text-outline"
+            onPress={onManuscript}
+            disabled={disabled}
+            testID={`showcase-manuscript-${version.id}`}
+          >
+            {label(
+              'manuscript',
+              t('showcase_download_manuscript', {
+                format: FORMAT_META[version.manuscript.format].extension.toUpperCase(),
+                size: formatBytes(version.manuscript.byteSize),
+              }),
+              t('showcase_downloading'),
+            )}
           </Button>
         ) : null}
         {hasPackage ? (

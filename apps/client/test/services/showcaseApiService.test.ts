@@ -23,6 +23,11 @@ jest.mock('@/src/services/api/apiClient', () => ({
   getServerAccessToken: (...args: unknown[]) => mockSessionToken(...args),
 }));
 jest.mock('@/src/services/auth/AuthTokenManager', () => ({ authTokenManager: {} }));
+const mockValidatePack = jest.fn();
+jest.mock('@keres/shared', () => ({
+  __esModule: true,
+  validatePackContent: (...args: unknown[]) => mockValidatePack(...args),
+}));
 
 const server = { id: 'srv', url: 'https://keres.example' } as never;
 const registered: ShowcaseSource = { kind: 'server', server };
@@ -34,6 +39,7 @@ beforeEach(() => {
   (createKeresAxiosInstance as jest.Mock).mockReturnValue(mockClient);
   (createPlainAxiosInstance as jest.Mock).mockReturnValue(mockPlain);
   mockSessionToken.mockReturnValue(null);
+  mockValidatePack.mockImplementation((content) => ({ ...content, valid: true }));
 });
 
 describe('showcaseSourceUrl', () => {
@@ -312,6 +318,61 @@ describe('showcaseCoverUrl', () => {
     );
     expect(showcaseCoverUrl({ kind: 'guest', origin: 'https://other.example/' }, 'S1', 'W1')).toBe(
       'https://other.example/api/public/stories/S1/works/W1/cover',
+    );
+  });
+});
+
+describe('packs', () => {
+  it('lists the packs on show', async () => {
+    mockClient.get.mockResolvedValue({ data: [{ id: 'K1' }] });
+
+    await expect(service.listPacks(guest)).resolves.toEqual([{ id: 'K1' }]);
+    expect(mockClient.get).toHaveBeenCalledWith('/public/packs');
+  });
+
+  it('hands back a pack with its content checked', async () => {
+    mockClient.get.mockResolvedValue({ data: { id: 'K 1', content: { fields: [] } } });
+
+    await expect(service.getPack(guest, 'K 1')).resolves.toEqual({
+      id: 'K 1',
+      content: { fields: [], valid: true },
+    });
+    expect(mockClient.get).toHaveBeenCalledWith('/public/packs/K%201');
+  });
+
+  it('does not hand over a pack this app cannot read', async () => {
+    mockClient.get.mockResolvedValue({ data: { id: 'K1', content: { weird: true } } });
+    mockValidatePack.mockImplementation(() => {
+      throw new Error('invalid pack');
+    });
+
+    await expect(service.getPack(guest, 'K1')).rejects.toThrow('invalid pack');
+  });
+
+  it('lets a pack that is not there (a 404) reach the caller', async () => {
+    mockClient.get.mockRejectedValue({ response: { status: 404 } });
+    await expect(service.getPack(guest, 'nope')).rejects.toEqual({ response: { status: 404 } });
+  });
+});
+
+describe('downloadManuscript', () => {
+  it('asks for the signed address of the manuscript and fetches it with nothing of the session', async () => {
+    mockClient.post.mockResolvedValue({
+      data: { url: '/api/public/stories/S1/publications/P1/manuscript/download?access=abc' },
+    });
+    mockPlain.get.mockResolvedValue({ data: new Uint8Array([37, 80, 68, 70]).buffer });
+
+    const bytes = await service.downloadManuscript(guest, 'S1', 'P1', 'tok');
+
+    expect(Array.from(bytes)).toEqual([37, 80, 68, 70]);
+    expect(mockClient.post).toHaveBeenCalledWith(
+      '/public/stories/S1/publications/P1/manuscript/download-url',
+      undefined,
+      { headers: { Authorization: 'Showcase tok' } },
+    );
+    expect(mockPlain.get).toHaveBeenCalledWith(
+      'https://other.example/api/public/stories/S1/publications/P1/manuscript/download?access=abc',
+      expect.objectContaining({ responseType: 'arraybuffer' }),
     );
   });
 });

@@ -81,6 +81,7 @@ const OpenStory = ({ source, story, unlockToken }: OpenStoryProps) => {
               disabled={actions.busy !== null}
               onRead={() => void actions.readOnline(version)}
               onDownload={() => void actions.downloadPackage(version)}
+              onManuscript={() => void actions.downloadManuscript(version)}
               onImport={() => actions.importCopy(version)}
             />
           ))}

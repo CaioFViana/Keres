@@ -15,11 +15,16 @@ import { useStoryListStore } from '@/src/state/story/storyListStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { buildStoryReaderUrl } from '@/src/utils/format/showcaseUrls';
+import { deliverManuscriptBytes } from '@/src/components/features/manuscript/export/manuscriptExport';
 import { StoryImportError, storyImportMessageKey } from '@/src/utils/io/StoryImportError';
-import { buildExportZipFileName, deliverStoryZipExport } from '@/src/utils/io/storyTransfer';
+import {
+  buildExportZipFileName,
+  deliverStoryZipExport,
+  exportFileLanguage,
+} from '@/src/utils/io/storyTransfer';
 import { logger } from '@/src/utils/logging/logger';
 
-export type ShowcaseVersionAction = 'read' | 'download' | 'import';
+export type ShowcaseVersionAction = 'read' | 'download' | 'manuscript' | 'import';
 
 /** What is going on with a version right now: which one, doing what, and how far along when that is known. */
 export interface BusyShowcaseVersion {
@@ -39,7 +44,7 @@ interface Options {
  * browser), take its Keres package as a file, or import a copy of it as a story of their own. One at a time.
  */
 export function useShowcaseVersionActions({ source, story, unlockToken }: Options) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const db = useDrizzle();
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
@@ -127,6 +132,38 @@ export function useShowcaseVersionActions({ source, story, unlockToken }: Option
     [run, source, fetchPackage, fileNameOf, showNotification, t],
   );
 
+  const downloadManuscript = useCallback(
+    (version: ShowcaseVersion) => {
+      if (!source || !version.manuscript) return Promise.resolve();
+      const { format } = version.manuscript;
+      return run(
+        version,
+        'manuscript',
+        async (progress) => {
+          const bytes = await showcaseApiService.downloadManuscript(
+            source,
+            story.storyId,
+            version.id,
+            unlockToken,
+            { onProgress: progress },
+          );
+          const delivery = await deliverManuscriptBytes({
+            storyTitle: story.snapshot.title,
+            bytes,
+            format,
+            language: exportFileLanguage(i18n.language),
+          });
+          showNotification(
+            t(delivery.delivered ? 'showcase_download_done' : 'showcase_download_no_share'),
+            delivery.delivered ? 'success' : 'info',
+          );
+        },
+        'showcase_manuscript_failed',
+      );
+    },
+    [run, source, story, unlockToken, i18n.language, showNotification, t],
+  );
+
   const importCopy = useCallback(
     (version: ShowcaseVersion) => {
       if (!source) return;
@@ -180,5 +217,5 @@ export function useShowcaseVersionActions({ source, story, unlockToken }: Option
     ],
   );
 
-  return { busy, readOnline, downloadPackage, importCopy };
+  return { busy, readOnline, downloadPackage, downloadManuscript, importCopy };
 }

@@ -93,6 +93,10 @@ jest.mock('@/src/screens/showcase/ShowcaseBrowseScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('@/src/screens/showcase/ShowcasePackScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('@/src/screens/showcase/ShowcaseAuthorScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -349,6 +353,7 @@ describe('the showcase stack', () => {
       'ShowcaseHome',
       'ShowcaseBrowse',
       'ShowcaseAuthor',
+      'ShowcasePack',
       'ShowcaseStory',
     ]);
   });

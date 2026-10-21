@@ -1,7 +1,10 @@
+import { validatePackContent } from '@keres/shared';
 import type {
   ShowcaseAuthorCard,
   ShowcaseAuthorPage,
   ShowcaseFacets,
+  ShowcasePackCard,
+  ShowcasePackDetail,
   ShowcaseSearchQuery,
   ShowcaseStoryCard,
   ShowcaseStoryResponse,
@@ -202,6 +205,23 @@ export class ShowcaseApiService {
     return response.data;
   }
 
+  /** The packs on show on the server, most recently updated first. */
+  async listPacks(source: ShowcaseSource): Promise<ShowcasePackCard[]> {
+    const response = await this.clientFor(source).get<ShowcasePackCard[]>('/public/packs');
+    return response.data;
+  }
+
+  /**
+   * A pack whole. Its content is checked (and migrated, when it is of an older format) before it is handed
+   * over: a payload this app cannot read fails here, far from the story it would have broken.
+   */
+  async getPack(source: ShowcaseSource, packId: string): Promise<ShowcasePackDetail> {
+    const response = await this.clientFor(source).get<ShowcasePackDetail>(
+      `/public/packs/${encodeURIComponent(packId)}`,
+    );
+    return { ...response.data, content: validatePackContent(response.data.content) };
+  }
+
   /**
    * The address of a version's online reader, absolute. For a story behind a password (or an adults-only one)
    * it carries a token that lasts a minute, so it is asked for when the reader is about to be opened.
@@ -224,6 +244,24 @@ export class ShowcaseApiService {
     options: DownloadOptions = {},
   ): Promise<Uint8Array> {
     const url = await this.signedUrl(source, storyId, publicationId, 'download-url', unlockToken);
+    return this.fetchBytes(url, options);
+  }
+
+  /** A version's manuscript, in the one format its author published it in. */
+  async downloadManuscript(
+    source: ShowcaseSource,
+    storyId: string,
+    publicationId: string,
+    unlockToken?: string | null,
+    options: DownloadOptions = {},
+  ): Promise<Uint8Array> {
+    const url = await this.signedUrl(
+      source,
+      storyId,
+      publicationId,
+      'manuscript/download-url',
+      unlockToken,
+    );
     return this.fetchBytes(url, options);
   }
 

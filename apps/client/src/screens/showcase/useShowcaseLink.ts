@@ -110,13 +110,16 @@ export function useShowcaseLink() {
         case 'authors':
           navigation.navigate('ShowcaseBrowse', { ...source, tab: 'authors' });
           return;
+        case 'packs':
+          navigation.navigate('ShowcaseBrowse', { ...source, tab: 'packs' });
+          return;
+        case 'pack':
+          navigation.navigate('ShowcasePack', { ...source, packId: target.packId });
+          return;
         case 'server':
         case 'stories':
           navigation.navigate('ShowcaseBrowse', { ...source, tab: 'stories' });
           return;
-        default:
-          // What the app does not draw yet (packs): the page itself, in the browser.
-          await Linking.openURL(link.url);
       }
     },
     [navigation, t],

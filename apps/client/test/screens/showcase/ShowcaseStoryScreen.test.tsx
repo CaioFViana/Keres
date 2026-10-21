@@ -14,6 +14,8 @@ const mockGetStory = jest.fn();
 const mockUnlockStory = jest.fn();
 const mockGetReaderUrl = jest.fn();
 const mockDownloadPackage = jest.fn();
+const mockDownloadManuscript = jest.fn();
+const mockDeliverManuscript = jest.fn();
 const mockImportZip = jest.fn();
 const mockDeliver = jest.fn();
 const mockRoute: { params: Record<string, unknown> } = { params: {} };
@@ -86,7 +88,11 @@ jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => (
 jest.mock('@/src/services/storymanagement/story-lifecycle/StoryImportService', () => ({
   importStoryZipBytes: (...args: unknown[]) => mockImportZip(...args),
 }));
+jest.mock('@/src/components/features/manuscript/export/manuscriptExport', () => ({
+  deliverManuscriptBytes: (...args: unknown[]) => mockDeliverManuscript(...args),
+}));
 jest.mock('@/src/utils/io/storyTransfer', () => ({
+  exportFileLanguage: (language: string) => (language === 'pt' ? 'pt' : 'en'),
   buildExportZipFileName: (title: string) => `${title}.zip`,
   deliverStoryZipExport: (...args: unknown[]) => mockDeliver(...args),
 }));
@@ -112,6 +118,7 @@ jest.mock('@/src/services/api/ShowcaseApiService', () => {
       unlockStory: (...args: unknown[]) => mockUnlockStory(...args),
       getReaderUrl: (...args: unknown[]) => mockGetReaderUrl(...args),
       downloadPackage: (...args: unknown[]) => mockDownloadPackage(...args),
+      downloadManuscript: (...args: unknown[]) => mockDownloadManuscript(...args),
     },
   };
 });
@@ -168,6 +175,8 @@ describe('ShowcaseStoryScreen', () => {
     mockGetStory.mockResolvedValue(story());
     mockDownloadPackage.mockResolvedValue(new Uint8Array([80, 75]));
     mockImportZip.mockResolvedValue({ storyId: 'new', title: 'Casa' });
+    mockDownloadManuscript.mockResolvedValue(new Uint8Array([37, 80]));
+    mockDeliverManuscript.mockResolvedValue({ delivered: true, fileName: 'casa.pdf' });
     mockDeliver.mockResolvedValue({ delivered: true, fileName: 'Casa.zip' });
     openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
   });
@@ -342,6 +351,79 @@ describe('ShowcaseStoryScreen', () => {
           expect(mockNotify).toHaveBeenCalledWith('showcase_download_failed', 'error'),
         );
         expect(mockDeliver).not.toHaveBeenCalled();
+      }));
+  });
+
+  describe('taking the manuscript', () => {
+    const withManuscript = () =>
+      story({
+        versions: [
+          version('M', { manuscript: { format: 'pdf', byteSize: 1_500_000 } }),
+          version('N'),
+        ],
+      });
+
+    it('offers it only for a version that has one, saying its format and size', async () => {
+      mockGetStory.mockResolvedValue(withManuscript());
+      const view = await render(<ShowcaseStoryScreen />);
+      await openStory(view);
+
+      expect(view.getByTestId('showcase-manuscript-M')).toBeTruthy();
+      expect(view.queryByTestId('showcase-manuscript-N')).toBeNull();
+      expect(view.getByText('showcase_download_manuscript')).toBeTruthy();
+    });
+
+    it('downloads it and hands it over under the story title, in its own format', async () => {
+      mockGetStory.mockResolvedValue(withManuscript());
+      const view = await render(<ShowcaseStoryScreen />);
+      await openStory(view);
+
+      await fireEvent.press(view.getByTestId('showcase-manuscript-M'));
+
+      await waitFor(() =>
+        expect(mockDeliverManuscript).toHaveBeenCalledWith({
+          storyTitle: 'Casa',
+          bytes: new Uint8Array([37, 80]),
+          format: 'pdf',
+          language: 'en',
+        }),
+      );
+      expect(mockDownloadManuscript).toHaveBeenCalledWith(
+        { kind: 'server', server },
+        'S1',
+        'M',
+        null,
+        expect.any(Object),
+      );
+      expect(mockNotify).toHaveBeenCalledWith('showcase_download_done', 'success');
+    });
+
+    it('says when the file was kept but cannot be shared from this device', async () => {
+      mockGetStory.mockResolvedValue(withManuscript());
+      mockDeliverManuscript.mockResolvedValue({ delivered: false, fileName: 'x.pdf' });
+      const view = await render(<ShowcaseStoryScreen />);
+      await openStory(view);
+
+      await fireEvent.press(view.getByTestId('showcase-manuscript-M'));
+
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('showcase_download_no_share', 'info'),
+      );
+    });
+
+    it('says when the manuscript could not be downloaded', () =>
+      withSilencedConsole(['error'], async () => {
+        mockGetStory.mockResolvedValue(withManuscript());
+        mockDownloadManuscript.mockRejectedValue(new Error('down'));
+        const view = await render(<ShowcaseStoryScreen />);
+        await openStory(view);
+
+        await fireEvent.press(view.getByTestId('showcase-manuscript-M'));
+
+        await waitFor(() =>
+          expect(mockNotify).toHaveBeenCalledWith('showcase_manuscript_failed', 'error'),
+        );
+        expect(mockDeliverManuscript).not.toHaveBeenCalled();
       }));
   });
 

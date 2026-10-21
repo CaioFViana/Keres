@@ -299,6 +299,7 @@ const PublicProfileScreen = () => {
       <ThemePickerModal
         visible={themePickerOpen}
         value={theme}
+        description={t('author_page_theme_picker_description')}
         onPreview={() => {}}
         onConfirm={(name) => {
           setTheme(name);

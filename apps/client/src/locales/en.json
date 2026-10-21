@@ -231,6 +231,7 @@
   "author_page_saved": "Your author page was updated.",
   "author_page_showcase_off": "This server's public showcase is turned off, so nobody can see your page for now.",
   "author_page_theme": "Theme",
+  "author_page_theme_picker_description": "Pick the palette your author page wears, then Save. Your stories keep their own.",
   "author_page_theme_clear": "Use the site's look",
   "author_page_theme_hint": "The palette your page wears. Your stories keep their own.",
   "author_page_theme_site": "The site's own look",

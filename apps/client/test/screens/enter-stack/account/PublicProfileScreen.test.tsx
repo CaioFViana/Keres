@@ -109,17 +109,23 @@ jest.mock('@/src/components/common/inputs/ThemePickerModal/ThemePickerModal', ()
     __esModule: true,
     default: ({
       visible,
+      description,
       onConfirm,
       onPreview,
     }: {
       visible: boolean;
+      description?: string;
       onConfirm: (name: string) => void;
       onPreview: (name: string) => void;
     }) => {
       // The screen must not let a preview repaint the app: it hands over a function that does nothing.
       onPreview('ocean');
       return visible ? (
-        <Text testID="theme-picker" onPress={() => onConfirm('ocean')}>
+        <Text
+          testID="theme-picker"
+          accessibilityHint={description}
+          onPress={() => onConfirm('ocean')}
+        >
           theme-picker
         </Text>
       ) : null;
@@ -240,6 +246,10 @@ describe('PublicProfileScreen', () => {
     await fireEvent.changeText(view.getByTestId('author-page-link-url-0'), 'example.org/me');
     await fireEvent.press(view.getByTestId('author-page-add-link'));
     await fireEvent.press(view.getByTestId('author-page-theme-select'));
+    // The picker speaks of the author page, not of a story.
+    expect(view.getByTestId('theme-picker').props.accessibilityHint).toBe(
+      'author_page_theme_picker_description',
+    );
     await fireEvent.press(view.getByTestId('theme-picker'));
     await fireEvent.press(view.getByTestId('author-page-save'));
 

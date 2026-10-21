@@ -51,6 +51,21 @@ describe('GET /public/config', () => {
     expect(data.showcaseEnabled).toBe(true);
   });
 
+  it('says whether the landing page is on, so the showcase knows if there is a way back to it', async () => {
+    expect((await request('GET', '/public/config')).data.landingEnabled).toBe(false);
+
+    await db
+      .insert(showcaseSettings)
+      .values({
+        id: SHOWCASE_SETTINGS_SINGLETON_ID,
+        isShowcaseEnabled: true,
+        isLandingEnabled: true,
+      })
+      .onConflictDoUpdate({ target: showcaseSettings.id, set: { isLandingEnabled: true } });
+
+    expect((await request('GET', '/public/config')).data.landingEnabled).toBe(true);
+  });
+
   it('advertises client-compiled uploads', async () => {
     const { data } = await request('GET', '/public/config');
     expect(data.compiledUpload).toBe(true);

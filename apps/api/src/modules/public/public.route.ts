@@ -75,6 +75,8 @@ export const publicRoutes = new Elysia()
       const settings = await showcaseSettingsService.getOrCreate();
       return {
         showcaseEnabled: settings.isShowcaseEnabled,
+        // Whether the root of this server is the landing page: the showcase offers its way back only then.
+        landingEnabled: settings.isLandingEnabled,
         // Absent on older servers: a client that finds no such field publishes the legacy way.
         // A constant, not a setting: this server always takes client-compiled bytes.
         compiledUpload: true,
@@ -90,6 +92,7 @@ export const publicRoutes = new Elysia()
     {
       response: t.Object({
         showcaseEnabled: t.Boolean(),
+        landingEnabled: t.Boolean(),
         compiledUpload: t.Boolean(),
         serverVersion: t.String(),
         siteName: t.String(),

@@ -1,7 +1,7 @@
 # Guided tours
 
-Short first-open tours, one per screen. Rationale and rollout history live in
-`.agents/plans/2026-09-19-guided-onboarding-first-story.md`; this note is the
+Short first-open tours, one per screen. The rationale and the rollout history are in the
+commits that introduced them (`git log -- apps/client/src/guides`); this note is the
 how-to for adding the next one.
 
 ## Rules (from the onboarding research)

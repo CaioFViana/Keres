@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -11,6 +12,11 @@ import * as path from 'path';
  * starts at a known top-level folder and ends in `/`. Spans with `<placeholders>`, `*` globs, `...` or `{}` are
  * patterns, not paths. A path written as `src/services/...` is relative to a workspace, so it passes when
  * it exists under the repository root or under any `apps/*` or `packages/*` workspace.
+ *
+ * "Exists" means the repository has it: a tracked file or folder, not whatever happens to be on the disk of the one
+ * machine running the check (a local-only plan under `.agents/`, an old build output), or the result would depend on the
+ * machine. The one exception is a build output folder (`dist`, `dist-server`...): a document may say where a build
+ * writes, and that folder is ignored by git by design.
  *
  * Plans under `docs/decisions/` and `docs/extras/` are history: they describe the code as it was when they
  * were written, so they are not held to this.
@@ -57,11 +63,33 @@ function workspaceRoots(): string[] {
 
 const ROOTS = workspaceRoots();
 
+const TRACKED = new Set(
+  execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 })
+    .split('\n')
+    .filter(Boolean),
+);
+
+function isTracked(repoRelative: string): boolean {
+  const key = repoRelative.split(path.sep).join('/').replace(/\/$/, '');
+  if (TRACKED.has(key)) return true;
+  const prefix = `${key}/`;
+  for (const file of TRACKED) if (file.startsWith(prefix)) return true;
+  return false;
+}
+
+/** A path through a build output folder: ignored by git on purpose, and absent from a fresh checkout. */
+const isBuildOutput = (repoRelative: string) =>
+  repoRelative.split(/[\\/]/).some((segment) => /^dist(-[\w-]+)?$/.test(segment));
+
 function exists(candidate: string, from: string): boolean {
   const clean = candidate.replace(/[#?].*$/, '').replace(/:\d+(-\d+)?$/, '');
   if (!clean) return true;
-  if (fs.existsSync(path.resolve(path.dirname(from), clean))) return true;
-  return ROOTS.some((root) => fs.existsSync(path.join(root, clean)));
+  const bases = [path.dirname(from), ...ROOTS];
+  return bases.some((base) => {
+    const repoRelative = path.relative(ROOT, path.resolve(base, clean));
+    if (repoRelative.startsWith('..')) return false;
+    return isTracked(repoRelative) || isBuildOutput(repoRelative);
+  });
 }
 
 function looksLikePath(span: string): boolean {

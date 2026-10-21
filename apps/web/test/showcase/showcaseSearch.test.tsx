@@ -183,3 +183,60 @@ describe('the search of the home page', () => {
     await unmount();
   });
 });
+
+describe('every control of the filter bar', () => {
+  it('asks again for each of the filters and for the order, and shows how many of the whole are loaded', async () => {
+    mocks.fetchStories.mockResolvedValue({ stories: [card], etag: 'W/"9"', total: 30 });
+    const { container, unmount } = await renderAt('/?genre=Fantasia');
+
+    await changeInput(select(container, 'Language'), 'Português');
+    expect(lastFilters()).toMatchObject({ language: 'Português' });
+    await changeInput(select(container, 'Structure'), 'branching');
+    expect(lastFilters()).toMatchObject({ type: 'branching', language: 'Português' });
+    await changeInput(select(container, 'Work'), 'comic');
+    expect(lastFilters()).toMatchObject({ medium: 'comic' });
+    await changeInput(select(container, 'Order'), 'title');
+    expect(lastFilters()).toMatchObject({ sort: 'title' });
+
+    // Narrowed, and only part of the match on screen: "1 of 30".
+    expect(container.querySelector('.count')?.textContent).toBe('1 of 30');
+    await unmount();
+  });
+
+  it('keeps a filter from the address in its select even when the server no longer offers it', async () => {
+    const { container, unmount } = await renderAt('/?genre=Horror');
+
+    const genre = select(container, 'Genre');
+    expect(genre.value).toBe('Horror');
+    expect([...genre.options].map((option) => option.textContent)).toContain('Horror');
+    await unmount();
+  });
+});
+
+describe('a slow answer to a question that was already changed', () => {
+  it('is dropped: the list shows the answer to the question now asked', async () => {
+    const stale = { stories: [{ ...card, storyId: 'stale' }], etag: 'W/"old"', total: 1 };
+    let resolveOld: (value: unknown) => void = () => {};
+    mocks.fetchStories.mockReset();
+    mocks.fetchStories.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveOld = resolve)),
+    );
+    mocks.fetchStories.mockResolvedValue({
+      stories: [{ ...card, storyId: 'fresh', snapshot: { ...card.snapshot, title: 'Fresh one' } }],
+      etag: 'W/"new"',
+      total: 1,
+    });
+    const { container, unmount } = await renderAt('/');
+
+    await changeInput(select(container, 'Genre'), 'Romance');
+    await flush();
+    await act(async () => {
+      resolveOld(stale);
+    });
+    await flush();
+
+    expect(container.textContent).toContain('Fresh one');
+    expect(container.textContent).not.toContain('O Vale Silencioso');
+    await unmount();
+  });
+});

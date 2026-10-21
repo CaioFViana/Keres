@@ -16,7 +16,7 @@ export function OwnerLink({
   children,
 }: {
   username: string;
-  className?: string;
+  className: string;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export function OwnerLink({
     <span
       role="link"
       tabIndex={0}
-      className={className ? `${className} owner-link` : 'owner-link'}
+      className={`${className} owner-link`}
       onClick={open}
       onKeyDown={(event) => {
         if (event.key === 'Enter') open(event);

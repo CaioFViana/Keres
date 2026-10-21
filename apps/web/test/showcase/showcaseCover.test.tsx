@@ -118,3 +118,22 @@ describe('the cover on the showcase', () => {
     await view.unmount();
   });
 });
+
+describe('the cover of a released work', () => {
+  it('asks for the work, not for the story, and gives the address back when the page is gone first', async () => {
+    let resolveCover: (address: string) => void = () => {};
+    mocks.fetchCoverUrl.mockReturnValue(new Promise<string>((resolve) => (resolveCover = resolve)));
+    const view = await render(
+      <StoryCover storyId="story-1" workId="arc-1" hasCover className="work-cover" />,
+    );
+    expect(mocks.fetchCoverUrl).toHaveBeenCalledWith('story-1', 'arc-1');
+
+    // The picture arrives after the page was left: nothing may keep its address.
+    await view.unmount();
+    resolveCover('blob:late');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(revoke).toHaveBeenCalledWith('blob:late');
+  });
+});

@@ -1,3 +1,4 @@
+import { act } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseAuthorPage, ShowcaseStoryCard } from '@keres/shared';
@@ -209,6 +210,80 @@ describe('the directory of authors', () => {
     const { container, unmount } = await renderAt('/authors');
 
     expect(container.textContent).toContain('No author has published anything yet.');
+    await unmount();
+  });
+});
+
+describe('the rest of the author pages', () => {
+  it('opens the author of a story card from the keyboard, with Enter only', async () => {
+    const { container, unmount } = await renderAt('/');
+    const owner = container.querySelector('.story-card .owner-link') as HTMLElement;
+
+    await act(async () => {
+      owner.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+    });
+    expect(mocks.fetchAuthor).not.toHaveBeenCalled();
+    await act(async () => {
+      owner.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    await flush();
+
+    expect(mocks.fetchAuthor).toHaveBeenCalledWith('ana');
+    await unmount();
+  });
+
+  it('shows a link whose address does not parse without a host', async () => {
+    mocks.fetchAuthor.mockResolvedValue({
+      ...page,
+      links: [{ label: 'Odd', url: 'not a url' }],
+    });
+    const { container, unmount } = await renderAt('/author/ana');
+
+    expect(container.querySelector('.author-link-host')?.textContent).toBe('');
+    await unmount();
+  });
+
+  it('offers more authors when there are more than loaded, and asks for the next page', async () => {
+    mocks.fetchAuthors.mockResolvedValue({
+      authors: [{ owner, storyCount: 2, updatedAt: '2026-08-01T10:00:00.000Z' }],
+      total: 100,
+    });
+    const { container, unmount } = await renderAt('/authors');
+
+    const more = [...container.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Show more authors',
+    ) as HTMLButtonElement;
+    await click(more);
+    await flush();
+
+    expect(mocks.fetchAuthors.mock.calls.at(-1)).toEqual(['', 96]);
+    await unmount();
+  });
+
+  it('reports a failure to load the directory, and says nothing matched a search', async () => {
+    mocks.fetchAuthors.mockRejectedValue(new Error('down'));
+    const failed = await renderAt('/authors');
+    expect(failed.container.textContent).toContain('down');
+    await failed.unmount();
+
+    mocks.fetchAuthors.mockResolvedValue({ authors: [], total: 0 });
+    const none = await renderAt('/authors?q=zzz');
+    expect(none.container.textContent).toContain('No author matches this search.');
+    await none.unmount();
+  });
+});
+
+describe('the search form of the directory', () => {
+  it('does not reload the page when it is submitted', async () => {
+    const { container, unmount } = await renderAt('/authors');
+    const form = container.querySelector('form') as HTMLFormElement;
+
+    const event = new Event('submit', { bubbles: true, cancelable: true });
+    await act(async () => {
+      form.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
     await unmount();
   });
 });

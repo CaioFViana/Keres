@@ -288,6 +288,10 @@ Monorepo (`package.json`, v1.10.1, MPL-2.0):
   for it (`OwnPublicProfile`: plain text, http(s) links only, opened in a new
   tab with `nofollow ugc`) and every story they have on show. **Works** (arcs)
   released on their own show their cover on the story page.
+  **Look**: the landing, the list, the authors and the story page are one thread
+  (a line that leaves the Keres mark, passes every heading and splits where the
+  page offers choices); on a story's or an author's page it takes their palette,
+  and a story's versions are nodes on it, the newest first.
 - **Author page texts** (`PUT /user/public-profile`, edited in the app under
   Manage Servers > Author page): biography (4000 characters), up to 8 links and a
   palette, apart from the short bio friends see; erased with the account, in the

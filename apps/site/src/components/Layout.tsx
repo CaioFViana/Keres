@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import keresLogoUrl from 'virtual:keres-logo';
 import { LANDING_NAV_SECTIONS, NAV_SECTIONS } from '../content/catalog';
-import { legalPath } from '../content/legalPages';
+import { LEGAL_PAGES, legalPath } from '../content/legalPages';
 import { GITHUB_README_URL, GITHUB_REPO_URL, HOSTED_SHOWCASE_URL } from '../content/links';
 import { useShowcaseAvailable } from './ShowcaseAvailability';
 import { isLandingBuild } from '../variant';
@@ -28,6 +28,63 @@ function ThemeToggle() {
       </span>
       <span className="theme-toggle-text">{label}</span>
     </button>
+  );
+}
+
+/**
+ * The server's two legal documents, one entry of the menu: each is a page of its own, and the page it opens has a link
+ * to the other. Closes when the reader goes elsewhere or presses Escape.
+ */
+function LegalMenu({ onNavigate }: { onNavigate: () => void }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: MouseEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  return (
+    <div className="nav-menu" ref={box}>
+      <button
+        type="button"
+        className="nav-menu-button"
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((current) => !current)}
+      >
+        {t('nav.legal')}
+      </button>
+      {open && (
+        <div className="nav-menu-list">
+          {LEGAL_PAGES.map((page) => (
+            <a
+              key={page}
+              href={legalPath(page)}
+              data-testid={`nav-${page}`}
+              onClick={() => {
+                setOpen(false);
+                onNavigate();
+              }}
+            >
+              {t(`legal.tabs.${page}`)}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -68,6 +125,7 @@ export function Layout({ children, home = true }: { children: ReactNode; home?: 
                   {t(`nav.${section}`)}
                 </a>
               ))}
+              {isLandingBuild && <LegalMenu onNavigate={() => setMenuOpen(false)} />}
               {showcaseAvailable && (
                 <a href={HOSTED_SHOWCASE_URL} data-testid="nav-showcase">
                   {t('nav.showcase')}

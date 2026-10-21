@@ -141,6 +141,55 @@ a {
   color: var(--color-text);
 }
 
+/* The legal entry: one place in the menu that opens both documents. */
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nav-menu-button::after {
+  content: "▾";
+  margin-left: 4px;
+  font-size: 0.8em;
+}
+
+.nav-menu-button:hover,
+.nav-menu-button[aria-expanded="true"] {
+  color: var(--color-text);
+}
+
+.nav-menu-list {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 200px;
+  padding: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.nav-menu-list a {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.nav-menu-list a:hover {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
 .nav-toggle {
   display: none;
   padding: 6px 12px;
@@ -628,6 +677,22 @@ code {
   .nav-links a {
     padding: 10px 12px;
     border-radius: var(--radius-sm);
+  }
+
+  /* In the collapsed menu the two documents are listed in place, not in a floating box. */
+  .nav-menu-button {
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .nav-menu-list {
+    position: static;
+    min-width: 0;
+    padding: 0 0 0 12px;
+    background: none;
+    border: 0;
+    box-shadow: none;
   }
 
   .site-header {

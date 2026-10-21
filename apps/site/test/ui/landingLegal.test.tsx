@@ -228,3 +228,72 @@ describe('the legal pages of the landing', () => {
     }
   });
 });
+
+describe('the legal entry of the menu', () => {
+  const menuButton = (container: HTMLElement) =>
+    container.querySelector<HTMLButtonElement>('.nav-menu-button')!;
+  const links = (container: HTMLElement) =>
+    [...container.querySelectorAll('.nav-menu-list a')].map((a) => [
+      a.textContent,
+      a.getAttribute('href'),
+    ]);
+
+  it('opens both documents from the header, on the landing and on a legal page', async () => {
+    for (const path of ['/', '/privacy']) {
+      const { container, unmount } = await renderAt(path);
+
+      expect(menuButton(container).textContent).toBe(siteEn.nav.legal);
+      expect(container.querySelector('.nav-menu-list')).toBeNull();
+      await click(menuButton(container));
+      expect(menuButton(container).getAttribute('aria-expanded')).toBe('true');
+      expect(links(container)).toEqual([
+        [siteEn.legal.tabs.terms, '/terms'],
+        [siteEn.legal.tabs.privacy, '/privacy'],
+      ]);
+
+      await unmount();
+    }
+  });
+
+  it('closes when a document is chosen, when the reader goes elsewhere and on Escape', async () => {
+    const { container, unmount } = await renderAt('/');
+    const open = async () => {
+      if (!container.querySelector('.nav-menu-list')) await click(menuButton(container));
+    };
+
+    await open();
+    await click(container.querySelector('.nav-menu-list a')!);
+    expect(container.querySelector('.nav-menu-list')).toBeNull();
+
+    await open();
+    await act(async () => {
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    });
+    expect(container.querySelector('.nav-menu-list')).toBeNull();
+
+    await open();
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+    expect(container.querySelector('.nav-menu-list')).not.toBeNull();
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(container.querySelector('.nav-menu-list')).toBeNull();
+
+    await unmount();
+  });
+
+  it('is not in the project site, which has no legal documents', async () => {
+    window.history.replaceState(null, '', '/');
+    vi.resetModules();
+    vi.stubEnv('VITE_SITE_VARIANT', 'pages');
+    const { SiteApp } = await import('../../src/App');
+    const { render } = await import('../helpers/react');
+    const { container, unmount } = await render(<SiteApp />);
+
+    expect(container.querySelector('.nav-menu')).toBeNull();
+
+    await unmount();
+  });
+});

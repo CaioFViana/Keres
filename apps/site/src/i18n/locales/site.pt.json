@@ -87,6 +87,8 @@
     }
   },
   "features": {
+    "title": "O que o Keres guarda e conecta",
+    "lead": "Quatro frentes, um só espaço de trabalho: abra qualquer item para ler o que ele faz.",
     "universe": {
       "title": "O universo narrativo",
       "lead": "Tudo o que uma história precisa guardar, ligado entre si.",
@@ -208,7 +210,10 @@
     "landingTryNote_official": "Conectado ao Keres, com sincronização, colaboração e publicação.",
     "ctaDownload": "Baixar",
     "ctaGithub": "Ver no GitHub",
-    "ctaFeatures": "Ver o que inclui"
+    "ctaFeatures": "Ver o que inclui",
+    "choice": "Toda história começa com uma escolha.",
+    "showcaseNote": "Histórias publicadas aqui por quem as escreveu: para ler, baixar e importar.",
+    "downloadNote": "Android, iOS, Windows, macOS e Linux, ou o seu próprio servidor."
   },
   "language": {
     "label": "Idioma"
@@ -404,5 +409,9 @@
     "contributorsPerStory": "Colaboradores por história",
     "unlimited": "Ilimitado",
     "none": "Nenhuma"
+  },
+  "end": {
+    "title": "Fim. Ou o começo da sua.",
+    "lead": "O fio acaba onde você decidir cortá-lo. Até lá, ele passa por tudo o que você escrever."
   }
 }

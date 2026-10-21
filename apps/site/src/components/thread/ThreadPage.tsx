@@ -41,3 +41,31 @@ export function ThreadPage({
     </div>
   );
 }
+
+/**
+ * A fork: the thread splits to each branch (a child marked `data-thread-branch`) and gathers again after them.
+ * `wide` is for four or more: they sit side by side only where there is room, and stack on the rail otherwise.
+ */
+export function ThreadFork({
+  children,
+  count,
+  wide = false,
+  className,
+}: {
+  children: ReactNode;
+  count: number;
+  wide?: boolean;
+  className?: string;
+}) {
+  const classes = ['thread-fork', count === 1 ? 'is-single' : null, wide ? 'is-wide' : null];
+  return (
+    <div className={classes.filter(Boolean).join(' ')} data-thread-fork>
+      <div
+        className={className ? `thread-branches ${className}` : 'thread-branches'}
+        style={{ '--cols': count } as CSSProperties}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}

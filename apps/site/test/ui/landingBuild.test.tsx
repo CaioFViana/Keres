@@ -80,7 +80,7 @@ describe('landing build', () => {
     const { container, unmount } = await renderLanding();
 
     const link = container.querySelector<HTMLAnchorElement>('[data-testid="try-web-client"]')!;
-    expect(link.textContent).toBe(siteEn.hero.landingCtaTry);
+    expect(link.querySelector('h3')?.textContent).toBe(siteEn.hero.landingCtaTry);
     expect(link.getAttribute('href')).toBe('/client/');
     expect(container.textContent).toContain(siteEn.hero.landingTryNote);
 
@@ -125,7 +125,7 @@ describe('landing build', () => {
         (anchor) => anchor.getAttribute('href') === '/showcase',
       );
 
-    it('is offered in the hero, the menu and the footer once the server has it on', async () => {
+    it('is offered among the first choices, the menu, the end and the footer once the server has it on', async () => {
       answerConfig({ showcaseEnabled: true });
       const { container, unmount } = await renderLanding();
       await flush();
@@ -134,13 +134,13 @@ describe('landing build', () => {
         '/api/public/config',
         expect.objectContaining({ headers: { accept: 'application/json' } }),
       );
-      expect(container.querySelector('[data-testid="browse-showcase"]')?.textContent).toBe(
+      expect(container.querySelector('[data-testid="browse-showcase"] h3')?.textContent).toBe(
         siteEn.hero.ctaShowcase,
       );
       expect(container.querySelector('[data-testid="nav-showcase"]')?.textContent).toBe(
         siteEn.nav.showcase,
       );
-      expect(showcaseLinks(container)).toHaveLength(3);
+      expect(showcaseLinks(container)).toHaveLength(4);
 
       await unmount();
     });

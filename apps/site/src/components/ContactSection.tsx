@@ -73,7 +73,7 @@ export function ContactSection() {
     <section className="band" id="contact">
       <div className="section-inner contact-layout">
         <header className="section-head contact-intro">
-          <h2>{siteText(t, 'contact.title')}</h2>
+          <h2 data-thread-knot>{siteText(t, 'contact.title')}</h2>
           <p>{siteText(t, 'contact.lead')}</p>
           <ul className="contact-points">
             {POINTS.map((point) => (

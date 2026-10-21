@@ -14,7 +14,7 @@ export function OfficialSection() {
     <section className="band" id="official">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{siteText(t, 'official.title')}</h2>
+          <h2 data-thread-knot>{siteText(t, 'official.title')}</h2>
           <p>{siteText(t, 'official.lead')}</p>
         </header>
         <div className="hero-actions">

@@ -3,6 +3,8 @@ import { ContactSection } from '../components/ContactSection';
 import { LegalSection } from '../components/LegalSection';
 import { OfficialSection } from '../components/OfficialSection';
 import { Showcase } from '../components/Showcase';
+import { useShowcaseAvailable } from '../components/ShowcaseAvailability';
+import { ThreadFork, ThreadPage } from '../components/thread/ThreadPage';
 import { TiersSection } from '../components/TiersSection';
 import { DOWNLOADS, FAQ_ITEMS, FEATURE_GROUPS, PILLARS, PLATFORMS } from '../content/catalog';
 import {
@@ -13,7 +15,6 @@ import {
   HOSTED_SHOWCASE_URL,
   WEB_CLIENT_URL,
 } from '../content/links';
-import { useShowcaseAvailable } from '../components/ShowcaseAvailability';
 import { isLandingBuild, siteText } from '../variant';
 import keresLogoUrl from 'virtual:keres-logo';
 
@@ -24,56 +25,30 @@ const DOWNLOAD_HREFS: Record<(typeof DOWNLOADS)[number], string> = {
   source: GITHUB_REPO_URL,
 };
 
+/**
+ * The landing page, as one thread: it leaves the hair of the Keres mark, passes through every heading and splits
+ * wherever the page offers choices - how to start, the three pillars, the four fronts of the product, the platforms
+ * and the ways to download - and it is cut at the end. See `components/thread`.
+ */
 export function HomePage() {
   const { t } = useTranslation();
   const showcaseAvailable = useShowcaseAvailable();
+  const clientUrl = isLandingBuild ? HOSTED_CLIENT_URL : WEB_CLIENT_URL;
+  const choices = showcaseAvailable ? 3 : 2;
 
   return (
-    <>
-      <section className="hero" id="top">
+    <ThreadPage>
+      {/* Plain links, not the router: the client and the showcase are their own apps, served from sibling folders. */}
+      <div className="thread-origin" data-thread-origin data-ox="0.569" data-oy="0.98">
+        <img src={keresLogoUrl} alt="" aria-hidden="true" />
+      </div>
+
+      <section className="hero thread-col" id="top">
         <div className="hero-inner">
-          <img
-            src={keresLogoUrl}
-            width={88}
-            height={88}
-            alt=""
-            className="hero-mark"
-            aria-hidden="true"
-          />
           <p className="hero-eyebrow">{t('hero.eyebrow')}</p>
           <h1 className="hero-title">{t('hero.title')}</h1>
           <p className="hero-text">{t('hero.lead')}</p>
           <div className="hero-actions">
-            {/* Plain link, not the router: the client is its own app, served from a sibling folder. */}
-            {isLandingBuild ? (
-              <a
-                className="button button-primary"
-                href={HOSTED_CLIENT_URL}
-                data-testid="try-web-client"
-              >
-                {t('hero.landingCtaTry')}
-              </a>
-            ) : (
-              <a
-                className="button button-primary"
-                href={WEB_CLIENT_URL}
-                data-testid="try-web-client"
-              >
-                {t('hero.ctaTry')}
-              </a>
-            )}
-            {showcaseAvailable && (
-              <a
-                className="button button-primary"
-                href={HOSTED_SHOWCASE_URL}
-                data-testid="browse-showcase"
-              >
-                {t('hero.ctaShowcase')}
-              </a>
-            )}
-            <a className="button button-primary" href="#download">
-              {t('hero.ctaDownload')}
-            </a>
             <a
               className="button button-ghost"
               href={GITHUB_REPO_URL}
@@ -86,109 +61,157 @@ export function HomePage() {
               {t('hero.ctaFeatures')}
             </a>
           </div>
-          <p className="muted hero-note">
-            {isLandingBuild ? siteText(t, 'hero.landingTryNote') : t('hero.tryNote')}
-          </p>
+          <p className="hero-choice">{t('hero.choice')}</p>
         </div>
       </section>
+
+      <ThreadFork count={choices}>
+        <a className="card choice" href={clientUrl} data-testid="try-web-client" data-thread-branch>
+          <span className="card-number" aria-hidden="true">
+            01
+          </span>
+          <h3 data-thread-title>{isLandingBuild ? t('hero.landingCtaTry') : t('hero.ctaTry')}</h3>
+          <p>{isLandingBuild ? siteText(t, 'hero.landingTryNote') : t('hero.tryNote')}</p>
+        </a>
+        {showcaseAvailable && (
+          <a
+            className="card choice"
+            href={HOSTED_SHOWCASE_URL}
+            data-testid="browse-showcase"
+            data-thread-branch
+          >
+            <span className="card-number" aria-hidden="true">
+              02
+            </span>
+            <h3 data-thread-title>{t('hero.ctaShowcase')}</h3>
+            <p>{t('hero.showcaseNote')}</p>
+          </a>
+        )}
+        <a className="card choice" href="#download" data-thread-branch>
+          <span className="card-number" aria-hidden="true">
+            {showcaseAvailable ? '03' : '02'}
+          </span>
+          <h3 data-thread-title>{t('hero.ctaDownload')}</h3>
+          <p>{t('hero.downloadNote')}</p>
+        </a>
+      </ThreadFork>
 
       {isLandingBuild && <OfficialSection />}
 
       <section className="band" id="product">
         <div className="section-inner">
           <header className="section-head">
-            <h2>{t('product.title')}</h2>
+            <h2 data-thread-knot>{t('product.title')}</h2>
             <p>{t('product.lead')}</p>
           </header>
-          <div className="pillar-grid">
-            {PILLARS.map((pillar) => (
-              <article key={pillar} className="card">
-                <h3>{t(`pillars.${pillar}.title`)}</h3>
-                <p>{t(`pillars.${pillar}.body`)}</p>
-              </article>
-            ))}
-          </div>
         </div>
       </section>
 
+      <ThreadFork count={PILLARS.length} className="pillar-grid">
+        {PILLARS.map((pillar) => (
+          <article key={pillar} className="card" data-thread-branch>
+            <h3 data-thread-title>{t(`pillars.${pillar}.title`)}</h3>
+            <p>{t(`pillars.${pillar}.body`)}</p>
+          </article>
+        ))}
+      </ThreadFork>
+
       <Showcase />
 
-      {FEATURE_GROUPS.map((group) => (
-        <section
-          key={group.id}
-          className="band"
-          id={group.id === 'universe' ? 'universe' : group.id}
-        >
-          <div className="section-inner">
-            <header className="section-head">
-              <h2>{t(`features.${group.id}.title`)}</h2>
-              <p>{t(`features.${group.id}.lead`)}</p>
-            </header>
-            <div className="feature-grid" data-count={group.items.length}>
+      <section className="band" id="universe">
+        <div className="section-inner">
+          <header className="section-head">
+            <h2 data-thread-knot>{t('features.title')}</h2>
+            <p>{t('features.lead')}</p>
+          </header>
+        </div>
+      </section>
+
+      <ThreadFork count={FEATURE_GROUPS.length} wide className="group-grid">
+        {FEATURE_GROUPS.map((group, index) => (
+          <article
+            key={group.id}
+            className="card group-card"
+            id={group.id === 'universe' ? undefined : group.id}
+            data-thread-branch
+          >
+            <span className="card-number" aria-hidden="true">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <h3 data-thread-title>{t(`features.${group.id}.title`)}</h3>
+            <p>{t(`features.${group.id}.lead`)}</p>
+            {/* Each item is a bead on a short thread of its own; its text opens under it. */}
+            <ul className="beads">
               {group.items.map((item) => (
-                <article key={item} className="feature-card">
-                  <h3>{t(`features.${group.id}.items.${item}.title`)}</h3>
-                  <p>{t(`features.${group.id}.items.${item}.body`)}</p>
-                </article>
+                <li key={item}>
+                  <details>
+                    <summary>{t(`features.${group.id}.items.${item}.title`)}</summary>
+                    <p>{t(`features.${group.id}.items.${item}.body`)}</p>
+                  </details>
+                </li>
               ))}
-            </div>
-          </div>
-        </section>
-      ))}
+            </ul>
+          </article>
+        ))}
+      </ThreadFork>
 
       <section className="band" id="platforms">
         <div className="section-inner">
           <header className="section-head">
-            <h2>{t('platforms.title')}</h2>
+            <h2 data-thread-knot>{t('platforms.title')}</h2>
             <p>{t('platforms.lead')}</p>
           </header>
-          <div className="feature-grid" data-count={PLATFORMS.length}>
-            {PLATFORMS.map((platform) => (
-              <article key={platform} className="feature-card">
-                <h3>{t(`platforms.items.${platform}.title`)}</h3>
-                <p>{t(`platforms.items.${platform}.body`)}</p>
-              </article>
-            ))}
-          </div>
         </div>
       </section>
+
+      <ThreadFork count={PLATFORMS.length} wide>
+        {PLATFORMS.map((platform) => (
+          <article key={platform} className="card" data-thread-branch>
+            <h3 data-thread-title>{t(`platforms.items.${platform}.title`)}</h3>
+            <p>{t(`platforms.items.${platform}.body`)}</p>
+          </article>
+        ))}
+      </ThreadFork>
 
       {isLandingBuild && <TiersSection />}
 
       <section className="band" id="download">
         <div className="section-inner">
           <header className="section-head">
-            <h2>{t('download.title')}</h2>
+            <h2 data-thread-knot>{t('download.title')}</h2>
             <p>{t('download.lead')}</p>
           </header>
-          <div className="download-grid">
-            {DOWNLOADS.map((item) => (
-              <article key={item} className="card download-card">
-                <h3>{t(`download.items.${item}.title`)}</h3>
-                <p>{t(`download.items.${item}.body`)}</p>
-                <a
-                  className="button button-primary"
-                  href={DOWNLOAD_HREFS[item]}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {t(`download.items.${item}.cta`)}
-                </a>
-              </article>
-            ))}
-          </div>
-          <p className="muted docker-hint">
-            <code>{`docker pull ${DOCKER_IMAGE}:latest`}</code>
-          </p>
         </div>
       </section>
+
+      <ThreadFork count={DOWNLOADS.length} wide className="download-grid">
+        {DOWNLOADS.map((item) => (
+          <article key={item} className="card download-card" data-thread-branch>
+            <h3 data-thread-title>{t(`download.items.${item}.title`)}</h3>
+            <p>{t(`download.items.${item}.body`)}</p>
+            <a
+              className="button button-primary"
+              href={DOWNLOAD_HREFS[item]}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {t(`download.items.${item}.cta`)}
+            </a>
+          </article>
+        ))}
+      </ThreadFork>
+      <div className="section-inner">
+        <p className="muted docker-hint">
+          <code>{`docker pull ${DOCKER_IMAGE}:latest`}</code>
+        </p>
+      </div>
 
       {/* Developer internals: only the GitHub Pages project site names the monorepo pieces. */}
       {!isLandingBuild && (
         <section className="band" id="stack">
           <div className="section-inner">
             <header className="section-head">
-              <h2>{t('stack.title')}</h2>
+              <h2 data-thread-knot>{t('stack.title')}</h2>
               <p>{t('stack.lead')}</p>
             </header>
             <ul className="stack-list">
@@ -215,7 +238,7 @@ export function HomePage() {
       <section className="band" id="faq">
         <div className="section-inner">
           <header className="section-head">
-            <h2>{t('faq.title')}</h2>
+            <h2 data-thread-knot>{t('faq.title')}</h2>
           </header>
           <div className="faq-list">
             {FAQ_ITEMS.map((item) => (
@@ -236,6 +259,26 @@ export function HomePage() {
 
       {isLandingBuild && <ContactSection />}
       {isLandingBuild && <LegalSection />}
-    </>
+
+      <section className="band end" id="end">
+        <div className="section-inner">
+          <h2 data-thread-end>{t('end.title')}</h2>
+          <p className="end-lead">{t('end.lead')}</p>
+          <div className="hero-actions">
+            <a className="button button-primary" href={clientUrl}>
+              {isLandingBuild ? t('hero.landingCtaTry') : t('hero.ctaTry')}
+            </a>
+            {showcaseAvailable && (
+              <a className="button button-ghost" href={HOSTED_SHOWCASE_URL}>
+                {t('hero.ctaShowcase')}
+              </a>
+            )}
+            <a className="button button-ghost" href="#download">
+              {t('hero.ctaDownload')}
+            </a>
+          </div>
+        </div>
+      </section>
+    </ThreadPage>
   );
 }

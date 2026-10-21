@@ -133,7 +133,7 @@ export function TiersSection() {
     <section className="band" id="tiers">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{infoOnly ? t('tiers.infoTitle') : t('tiers.title')}</h2>
+          <h2 data-thread-knot>{infoOnly ? t('tiers.infoTitle') : t('tiers.title')}</h2>
           <p>{infoOnly ? t('tiers.infoLead') : siteText(t, 'tiers.lead')}</p>
         </header>
         {state.status === 'loading' && <p className="muted">{t('tiers.loading')}</p>}

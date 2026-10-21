@@ -108,7 +108,7 @@ export function LegalSection() {
     <section ref={sectionRef} className="band" id="legal">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{t('legal.title')}</h2>
+          <h2 data-thread-knot>{t('legal.title')}</h2>
           <p>{t('legal.lead')}</p>
         </header>
         {state.status === 'loading' && <p className="muted">{t('legal.loading')}</p>}

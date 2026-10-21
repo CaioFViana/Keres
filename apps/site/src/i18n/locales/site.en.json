@@ -87,6 +87,8 @@
     }
   },
   "features": {
+    "title": "What Keres keeps and connects",
+    "lead": "Four fronts, one workspace: open any item to read what it does.",
     "universe": {
       "title": "The narrative universe",
       "lead": "Everything a story needs to keep, linked together.",
@@ -208,7 +210,10 @@
     "landingTryNote_official": "Connected to Keres, with sync, collaboration, and publishing.",
     "ctaDownload": "Download",
     "ctaGithub": "View on GitHub",
-    "ctaFeatures": "See what's included"
+    "ctaFeatures": "See what's included",
+    "choice": "Every story starts with a choice.",
+    "showcaseNote": "Stories published here by the people who wrote them: to read, download and import.",
+    "downloadNote": "Android, iOS, Windows, macOS and Linux, or your own server."
   },
   "language": {
     "label": "Language"
@@ -404,5 +409,9 @@
     "contributorsPerStory": "Collaborators per story",
     "unlimited": "Unlimited",
     "none": "None"
+  },
+  "end": {
+    "title": "The end. Or the start of yours.",
+    "lead": "The thread stops where you decide to cut it. Until then, it runs through everything you write."
   }
 }

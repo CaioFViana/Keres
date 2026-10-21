@@ -9,6 +9,7 @@ How Keres is tested, what the coverage floors mean and how to add a test. The hi
 | `bun run test:report` | Every suite, with coverage, and a summary table per workspace. Prefer it over reading the raw output of `bun run test`. |
 | `bun run --cwd apps/client test` | The client (Jest). Already limited to two workers and a 512 MB idle limit. |
 | `bun run --cwd apps/api test` | API unit tests (Vitest). |
+| `bun run test:sync-fuzz-api` | The client's sync engine against the real API (Postgres up first): three devices edit one story at random and must converge. Runs in CI as the `sync-fuzz` job; `SYNC_FUZZ_SEEDS=200` for a deeper local run. |
 | `bun run test:integration` | API integration tests on a real Postgres and a real SQLite. Start the disposable database first: `docker compose -f apps/api/docker-compose.test.yml up -d`. |
 | `bun run check` | Formatting and static checks for the whole repository (Biome). |
 

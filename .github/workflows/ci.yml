@@ -186,3 +186,40 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun run --cwd apps/api test:integration:sqlite
+
+  # The client's sync engine against the real API, not against its in-memory reference model: three
+  # devices of one user edit one story at random and have to converge on the server's rows. The unit and
+  # integration suites each test one side; this is the one run where the two meet over HTTP. The local
+  # equivalent is `docker compose -f apps/api/docker-compose.test.yml up -d && bun run test:sync-fuzz-api`
+  # (`SYNC_FUZZ_SEEDS=200` for a deeper run; a failing seed is reproduced with `SYNC_FUZZ_FIRST_SEED`).
+  sync-fuzz:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: keres_test
+          POSTGRES_PASSWORD: keres_test
+          POSTGRES_DB: keres_test
+        ports:
+          - 45432:5432
+        options: >-
+          --tmpfs /var/lib/postgresql/data:rw
+          --health-cmd "pg_isready -U keres_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keres_test:keres_test@127.0.0.1:45432/keres_test
+      JWT_SECRET: ci-jwt-secret-that-is-at-least-thirty-two-characters
+      JWT_SECRET_REFRESH: ci-refresh-secret-that-is-at-least-thirty-two-characters
+      # 24 seeds of 40 steps is the test's own default: about two minutes. Pinned here so a change of the
+      # default for local use does not silently change what CI checks.
+      SYNC_FUZZ_SEEDS: '24'
+      SYNC_FUZZ_STEPS: '40'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run test:sync-fuzz-api

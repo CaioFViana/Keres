@@ -1,4 +1,5 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { collectProblems, dismissTour, enterFirstTime, waitForIsolation } from './support/app';
 
 /**
  * The first visit to the web client, as a person has it: the page isolates itself and reloads once, the
@@ -9,54 +10,15 @@ import { expect, type Page, test } from '@playwright/test';
 
 const STORY_TITLE = 'Smoke Story';
 
-/** The page isolates itself with a service worker and reloads once; the app is usable only after that. */
-async function waitForIsolation(page: Page) {
-  await page.waitForFunction(() => window.crossOriginIsolated, null, { timeout: 60_000 });
-}
-
-/** Reading the terms and the privacy notice is required before the name can be sent: scroll, wait, accept. */
-async function acceptDocument(page: Page, which: 'terms' | 'privacy') {
-  await page.getByTestId(`welcome-${which}-button`).click();
-  const scroll = page.getByTestId(`welcome-${which}-modal-scroll`);
-  await scroll.waitFor();
-  const accept = page.getByTestId(`welcome-${which}-modal-accept`);
-  // The accept button stays disabled until the text was scrolled to its end and a reading time has passed.
-  await expect(async () => {
-    await scroll.evaluate((node) => {
-      node.scrollTop = node.scrollHeight;
-    });
-    await expect(accept).toBeEnabled({ timeout: 1_000 });
-  }).toPass({ timeout: 60_000 });
-  await accept.click();
-  await scroll.waitFor({ state: 'detached' });
-}
-
 test('first visit: welcome, first story, and it is still there after a reload', async ({
   page,
 }) => {
-  const problems: string[] = [];
-  page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
-  page.on('console', (message) => {
-    if (message.type() === 'error') problems.push(`console error: ${message.text()}`);
-  });
+  const problems = collectProblems(page);
 
-  await page.goto('./');
-  await waitForIsolation(page);
+  await enterFirstTime(page);
 
-  // Welcome: what Keres is, where the stories live, and the name.
-  await page.getByTestId('welcome-pager').waitFor({ timeout: 60_000 });
-  await page.getByTestId('welcome-next').click();
-  await page.getByTestId('welcome-next').click();
-  await page.getByPlaceholder('Enter your username').fill('Ana');
-  await acceptDocument(page, 'terms');
-  await acceptDocument(page, 'privacy');
-  await page.getByRole('button', { name: 'Proceed' }).click();
-
-  // The first screen offers three ways to start, under a tour that is dismissed first.
-  await page.getByTestId('first-story-banner').waitFor({ timeout: 60_000 });
-  await page.getByTestId('guide-skip').click();
   await page.getByTestId('first-story-blank-action').click();
-
+  await dismissTour(page);
   await page.getByPlaceholder('Enter story title').fill(STORY_TITLE);
   await page.getByRole('button', { name: 'Create Story' }).click();
   await expect(page.getByText(STORY_TITLE).first()).toBeVisible();

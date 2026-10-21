@@ -26,9 +26,10 @@ The API figure that counts is the **union** of its unit and integration suites: 
 
 ## End-to-end
 
-`apps/e2e` is the one place that opens the built client in a browser. It exists for what Jest cannot see by construction, because Jest runs on `better-sqlite3` with the native modules mocked: the bundle under the deploy path, the cross-origin isolation the web SQLite needs, the migrations on the WASM database and persistence across a reload. Each of those has broken a release. It is not where behaviour is tested: a rule that a screen follows belongs in a Jest test, and this folder stays a short list of journeys a person makes.
+`apps/e2e` is the one place that opens the built client in a browser. It exists for what Jest cannot see by construction, because Jest runs on `better-sqlite3` with the native modules mocked: the bundle under the deploy path, the cross-origin isolation the web SQLite needs, the migrations on the WASM database and persistence across a reload. Each of those has broken a release. Two journeys today: a first visit (welcome, a first story, a reload that keeps it) and an example story taken through its map (a Skia canvas whose pixels are read, not just found), a Markdown manuscript, a JSON backup and the import of that same file. It is not where behaviour is tested: a rule that a screen follows belongs in a Jest test, and this folder stays a short list of journeys a person makes.
 
 - The build is not made by the tests: they serve `apps/client/dist-pages` through `apps/e2e/static-server.ts`, which sends **no** COOP/COEP headers, as Pages does, so a failure of the service worker (`public/coi-sw.js`) is not hidden by the server.
+- The moves every journey repeats (the welcome, dismissing a tour, installing the example) live in `apps/e2e/tests/support/app.ts`.
 - Select by `data-testid` (the client's `testID`) or by role and visible English text; the browser is started in `en-US`.
 - A first visit shows a tour over the first screen: dismiss it (`guide-skip`) before acting. Reading the terms and the privacy notice takes about twelve seconds each: wait for the accept button to enable, do not sleep.
 - **Building the client for this is heavy** (Metro starts several workers; one local build reached 5 GB). Reuse a `dist-pages` that is already built when the UI has not changed.

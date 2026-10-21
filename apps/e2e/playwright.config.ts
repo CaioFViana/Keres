@@ -1,8 +1,46 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
+
+type WebServer = Extract<NonNullable<PlaywrightTestConfig['webServer']>, unknown[]>[number];
 
 const PAGES_PORT = Number(process.env.E2E_PORT ?? 4173);
 const BASE = process.env.E2E_BASE ?? '/Keres/client';
 const API_PORT = Number(process.env.E2E_API_PORT ?? 3399);
+
+/**
+ * The projects this run was asked for (`--project online` or `--project=online`); all of them when none was named.
+ * A server is started only for a project that runs: the pages server answers 404 until `build:pages` has run, which
+ * Playwright reads as "not up" and waits out the whole timeout - so the online job, which builds only the hosted
+ * client, failed on a server it never needed.
+ */
+function selectedProjects(argv: string[]): string[] {
+  const names: string[] = [];
+  argv.forEach((argument, index) => {
+    if (argument === '--project' && argv[index + 1]) names.push(argv[index + 1]);
+    else if (argument.startsWith('--project=')) names.push(argument.slice('--project='.length));
+  });
+  return names;
+}
+const asked = selectedProjects(process.argv);
+const runs = (project: string) => asked.length === 0 || asked.includes(project);
+
+const SERVERS: (WebServer & { project: string })[] = [
+  {
+    project: 'pages',
+    command: 'bun static-server.ts',
+    url: `http://127.0.0.1:${PAGES_PORT}${BASE}/`,
+    reuseExistingServer: !process.env.CI,
+    env: { E2E_PORT: String(PAGES_PORT), E2E_BASE: BASE },
+  },
+  {
+    project: 'online',
+    command: 'bun api-server.ts',
+    url: `http://127.0.0.1:${API_PORT}/api/public/config`,
+    // A fresh database on every run: reusing a server would carry the accounts of the last one.
+    reuseExistingServer: false,
+    timeout: 60_000,
+    env: { E2E_API_PORT: String(API_PORT) },
+  },
+];
 
 /**
  * Two builds of the web client, each opened in a real browser:
@@ -45,20 +83,7 @@ export default defineConfig({
       use: { baseURL: `http://127.0.0.1:${API_PORT}/client/` },
     },
   ],
-  webServer: [
-    {
-      command: 'bun static-server.ts',
-      url: `http://127.0.0.1:${PAGES_PORT}${BASE}/`,
-      reuseExistingServer: !process.env.CI,
-      env: { E2E_PORT: String(PAGES_PORT), E2E_BASE: BASE },
-    },
-    {
-      command: 'bun api-server.ts',
-      url: `http://127.0.0.1:${API_PORT}/api/public/config`,
-      // A fresh database on every run: reusing a server would carry the accounts of the last one.
-      reuseExistingServer: false,
-      timeout: 60_000,
-      env: { E2E_API_PORT: String(API_PORT) },
-    },
-  ],
+  webServer: SERVERS.filter(({ project }) => runs(project)).map(
+    ({ project: _project, ...server }) => server,
+  ),
 });

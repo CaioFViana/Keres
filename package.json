@@ -46,6 +46,7 @@
     "test:sync-fuzz-api": "bun scripts/sync-fuzz-api.ts",
     "coverage:update": "bun scripts/coverage-update.ts",
     "locales:audit": "bun scripts/verify-translations.ts",
+    "docs:audit": "bun scripts/verify-doc-paths.ts",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome ci --error-on-warnings .",

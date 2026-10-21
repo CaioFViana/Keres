@@ -358,7 +358,7 @@ Isso grava `apps/site/public/showcase/screens/<tela>.<idioma>.<tema>.png`, que f
 no repositório - o build da landing não roda a captura. Rode de novo quando uma tela da vitrine
 mudar de forma. As telas, histórias e tamanhos de janela ficam em
 `apps/desktop/scripts/capture-screens.ts`; o modo de URL que leva o app direto a uma tela fica
-em `apps/client/src/showcase/`.
+em `apps/client/src/services/showcase/`.
 
 O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` (a branch padrão). O environment `github-pages` recusa outras branches. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
 

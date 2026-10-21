@@ -28,6 +28,7 @@ The API figure that counts is the **union** of its unit and integration suites: 
 | `bun run typecheck` | Type errors in every package and in the repository's own scripts. |
 | `bun run lint` | The linter of each package (ESLint for the client and the admin panel, Biome elsewhere). |
 | `bun run check` | Formatting for the whole repository, and the Biome rules where they are enabled. |
+| `bun run docs:audit` | A path in backticks or a relative link in `README.md`, `CONTRIBUTING.md`, `docs/` (history in `docs/decisions/` and `docs/extras/` aside) and the workspaces' READMEs that points at a file or folder that no longer exists. Run in CI next to `knip`. |
 | `bun run knip` | Unused files, exports and types; dependencies that are used but not declared (or declared and not used); binaries nobody declared. Configured in `knip.json` and run in CI. |
 
 Read a `knip` finding as a question, not an order. It does not see code that is loaded by name or by path, so check with `grep` before deleting anything. The exceptions in `knip.json` are the cases it cannot see, each with its reason:
@@ -115,4 +116,4 @@ Reuse the infrastructure that exists rather than inventing.
 - **API, anything touching the database:** the integration helpers and the disposable Postgres. Unit tests that mock the ORM prove nothing about a query.
 - **API, Bun-only APIs in Node:** `apps/api/test/helpers/bunShim.ts`.
 - **Sync:** a new synchronizable type must be modelled in the convergence fuzz (`apps/client/test/helpers/syncFuzz*.ts`); a test fails when one is not.
-- **Architecture rules:** suites in `test/architecture/` enforce layering, import boundaries, import style, the 600-line file ceiling and entity completeness. A new violation is a test failure, not a review comment - extend those suites rather than writing a new guard.
+- **Architecture rules:** suites in `test/architecture/` enforce layering, import boundaries, import style, the 600-line file ceiling and entity completeness. The admin panel and the landing site have their own `test/architecture/layering.test.ts`: each folder of `src/` is a layer and imports only the layers below it in the list at the top of the test, one admin page does not import another, and the network is touched only in an `api` folder. A new violation is a test failure, not a review comment - extend those suites rather than writing a new guard.

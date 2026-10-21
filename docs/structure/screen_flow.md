@@ -1,6 +1,6 @@
 # Keres screen flow
 
-> The real navigation lives in `apps/client/src/navigation/`. This document summarises what is there, not the other way round; if they diverge, the code wins. The drawer menus are built by `drawer/mainDrawerMenu.ts` and `drawer/storySelectionMenu.ts`.
+> The real navigation lives in `apps/client/src/navigation/`. This document summarises what is there, not the other way round; if they diverge, the code wins. The drawer menus are built by `navigation/drawer/mainDrawerMenu.ts` and `navigation/drawer/storySelectionMenu.ts`.
 
 Screens in React Navigation work through stacks. The main system is a drawer on top of several nested stacks, and the drawer is a grouped menu (groups remember being open or shut, per story).
 

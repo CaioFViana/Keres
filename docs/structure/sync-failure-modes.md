@@ -511,7 +511,7 @@ test file that covers it. Paths are relative to the repo root.
     goes (steps never landed are dropped, landed ones deleted) and one decision is
     recorded on the route: keep mine replaces the path with this device's again,
     keep the server's closes it. Never two paths mixed, never a step-by-step
-    question (`sync/routePaths.ts`). Test: `SyncConvergence.test.ts` (`one route,
+    question (`services/sync/routePaths.ts`). Test: `SyncConvergence.test.ts` (`one route,
     two new paths`). Area: push + conflicts.
 
 55. **Offering a choice that cannot land** — keeping this device's version is not

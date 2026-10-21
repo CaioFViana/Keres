@@ -84,6 +84,8 @@ jobs:
       - run: bun run check
       # Dead code and undeclared dependencies (`knip.json`). Runs in the same job: it needs no build.
       - run: bun run knip
+      # Every file and link the documents name has to exist (`scripts/verify-doc-paths.ts`).
+      - run: bun run docs:audit
 
   # The repository's own scripts are not a package, but they are TypeScript. `run-all.ts`
   # checks them on unfiltered local `typecheck` runs; here they get their own tiny job so the

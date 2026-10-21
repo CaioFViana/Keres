@@ -52,9 +52,9 @@ Monorepo (`package.json`, v1.10.1, MPL-2.0):
   alone (manuscript and/or online reader, never the zip) under the tier ceiling
   `maxPublishedArcs` (`docs/decisions/arc_medium_plan.md`).
 - **Per-story vocabulary**: rename visible entity terms without duplicating the
-  model (`customization/VocabularyScreen.tsx`).
+  model (`screens/customization/VocabularyScreen.tsx`).
 - **Appearance/theme**: per-story branding, light/dark palettes
-  (`story-settings/StorySettingsAppearanceScreen.tsx`, `commonStyles.ts`,
+  (`screens/story-settings/StorySettingsAppearanceScreen.tsx`, `commonStyles.ts`,
   `showcaseBranding`, `paletteVars.ts` → CSS `--story-*` vars).
 - **Story settings & dashboard & analysis**
   (`MainDashboardScreen`, `StorySettingsScreen`, `StoryAnalysisScreen`).

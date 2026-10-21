@@ -6,8 +6,8 @@ money-related happens between the provider and the person paying; Keres asks the
 listens to what the provider reports.
 
 The contract is `packages/shared/payments/PaymentConnector.ts` (types only) plus the wire schemas in
-`packages/shared/schemas/payments/PaymentConnectorSchemas.ts`, also published as JSON Schema under
-`docs/payment_connector/` for implementations in any language. A connector imports nothing of Keres.
+`packages/shared/schemas/payments/PaymentConnectorSchemas.ts`. The protocol below is what an implementation in any
+language follows; the Zod schemas are the reference for the exact shapes. A connector imports nothing of Keres.
 
 A server with no connector works exactly as before: plans are handed out by assigning them to users in the admin
 panel, every payments route answers "not enabled", and no client shows anything about payments. A connector that

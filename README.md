@@ -358,7 +358,7 @@ That writes `apps/site/public/showcase/screens/<screen>.<lang>.<theme>.png`, whi
 to the repository - the landing build does not run the capture. Re-run it when a screen in the
 showcase changes shape. The screens, stories and viewports live in
 `apps/desktop/scripts/capture-screens.ts`; the URL mode that puts the app straight into a
-given screen lives in `apps/client/src/showcase/`.
+given screen lives in `apps/client/src/services/showcase/`.
 
 The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` (the default branch). The `github-pages` environment rejects other branches. The first time, under Settings → Pages, set the source to **GitHub Actions**.
 

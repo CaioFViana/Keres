@@ -10,8 +10,10 @@ import {
   GITHUB_RELEASES_URL,
   GITHUB_REPO_URL,
   HOSTED_CLIENT_URL,
+  HOSTED_SHOWCASE_URL,
   WEB_CLIENT_URL,
 } from '../content/links';
+import { useShowcaseAvailable } from '../components/ShowcaseAvailability';
 import { isLandingBuild, siteText } from '../variant';
 import keresLogoUrl from 'virtual:keres-logo';
 
@@ -24,6 +26,7 @@ const DOWNLOAD_HREFS: Record<(typeof DOWNLOADS)[number], string> = {
 
 export function HomePage() {
   const { t } = useTranslation();
+  const showcaseAvailable = useShowcaseAvailable();
 
   return (
     <>
@@ -57,6 +60,15 @@ export function HomePage() {
                 data-testid="try-web-client"
               >
                 {t('hero.ctaTry')}
+              </a>
+            )}
+            {showcaseAvailable && (
+              <a
+                className="button button-primary"
+                href={HOSTED_SHOWCASE_URL}
+                data-testid="browse-showcase"
+              >
+                {t('hero.ctaShowcase')}
               </a>
             )}
             <a className="button button-primary" href="#download">

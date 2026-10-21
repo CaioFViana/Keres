@@ -2,7 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import keresLogoUrl from 'virtual:keres-logo';
 import { LANDING_NAV_SECTIONS, NAV_SECTIONS } from '../content/catalog';
-import { GITHUB_README_URL, GITHUB_REPO_URL } from '../content/links';
+import { GITHUB_README_URL, GITHUB_REPO_URL, HOSTED_SHOWCASE_URL } from '../content/links';
+import { useShowcaseAvailable } from './ShowcaseAvailability';
 import { isLandingBuild } from '../variant';
 import { LanguageSelect } from '../i18n/LanguageSelect';
 import { SITE_LANGUAGE_KEY } from '../i18n';
@@ -32,6 +33,7 @@ function ThemeToggle() {
 export function Layout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const showcaseAvailable = useShowcaseAvailable();
 
   return (
     <div className="site">
@@ -57,6 +59,11 @@ export function Layout({ children }: { children: ReactNode }) {
                   {t(`nav.${section}`)}
                 </a>
               ))}
+              {showcaseAvailable && (
+                <a href={HOSTED_SHOWCASE_URL} data-testid="nav-showcase">
+                  {t('nav.showcase')}
+                </a>
+              )}
               <a href={GITHUB_REPO_URL} rel="noreferrer" target="_blank">
                 {t('nav.github')}
               </a>
@@ -88,6 +95,12 @@ export function Layout({ children }: { children: ReactNode }) {
                 no server's policy as its own. */}
             {isLandingBuild && (
               <>
+                {showcaseAvailable && (
+                  <>
+                    <span aria-hidden="true"> · </span>
+                    <a href={HOSTED_SHOWCASE_URL}>{t('footer.showcase')}</a>
+                  </>
+                )}
                 <span aria-hidden="true"> · </span>
                 <a href="#terms">{t('footer.terms')}</a>
                 <span aria-hidden="true"> · </span>

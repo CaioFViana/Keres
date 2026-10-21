@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Layout } from './components/Layout';
+import { ShowcaseAvailabilityProvider } from './components/ShowcaseAvailability';
 import { HomePage } from './pages/HomePage';
 import { SiteThemeProvider } from './theme/SiteThemeProvider';
 import { siteText } from './variant';
@@ -25,9 +26,11 @@ export function SiteApp() {
 
   return (
     <SiteThemeProvider>
-      <Layout>
-        <HomePage />
-      </Layout>
+      <ShowcaseAvailabilityProvider>
+        <Layout>
+          <HomePage />
+        </Layout>
+      </ShowcaseAvailabilityProvider>
     </SiteThemeProvider>
   );
 }

@@ -98,6 +98,22 @@ export async function fetchLegalDocument(
   };
 }
 
+/**
+ * Whether this server's public showcase is on (`GET /api/public/config`, the one showcase route that
+ * answers while it is off). Any failure reads as off: a link to a page that may not exist is worse than
+ * none, and the landing never depended on this answer to work.
+ */
+export async function fetchShowcaseEnabled(): Promise<boolean> {
+  try {
+    const response = await fetch('/api/public/config', { headers: { accept: 'application/json' } });
+    if (!response.ok) return false;
+    const data = (await response.json()) as { showcaseEnabled?: unknown };
+    return data.showcaseEnabled === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchLandingTiers(): Promise<LandingTiersResponse> {
   const response = await fetch('/api/public/tiers', { headers: { accept: 'application/json' } });
   if (!response.ok) {

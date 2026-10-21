@@ -19,6 +19,9 @@ export const WEB_CLIENT_URL = `${import.meta.env.BASE_URL}client/`;
  */
 export const HOSTED_CLIENT_URL = '/client/';
 
+/** The public showcase of the server this landing build is served by: same origin, relative on purpose. */
+export const HOSTED_SHOWCASE_URL = '/showcase';
+
 /** The official Keres server, presented as such by the landing build. */
 export const KERES_OFFICIAL_URL = 'https://keres.me';
 export const KERES_OFFICIAL_CLIENT_URL = `${KERES_OFFICIAL_URL}/client/`;

@@ -113,6 +113,80 @@ describe('landing build', () => {
     await unmount();
   });
 
+  describe('the showcase of this server', () => {
+    const answerConfig = (config: unknown, status = 200) =>
+      fetchMock.mockImplementation(async (url: string) =>
+        url === '/api/public/config'
+          ? jsonResponse(config, status)
+          : jsonResponse({ currency: 'BRL', tiers: [] }),
+      );
+    const showcaseLinks = (container: HTMLElement) =>
+      [...container.querySelectorAll('a')].filter(
+        (anchor) => anchor.getAttribute('href') === '/showcase',
+      );
+
+    it('is offered in the hero, the menu and the footer once the server has it on', async () => {
+      answerConfig({ showcaseEnabled: true });
+      const { container, unmount } = await renderLanding();
+      await flush();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/public/config',
+        expect.objectContaining({ headers: { accept: 'application/json' } }),
+      );
+      expect(container.querySelector('[data-testid="browse-showcase"]')?.textContent).toBe(
+        siteEn.hero.ctaShowcase,
+      );
+      expect(container.querySelector('[data-testid="nav-showcase"]')?.textContent).toBe(
+        siteEn.nav.showcase,
+      );
+      expect(showcaseLinks(container)).toHaveLength(3);
+
+      await unmount();
+    });
+
+    it('is not offered while the server has it off', async () => {
+      answerConfig({ showcaseEnabled: false });
+      const { container, unmount } = await renderLanding();
+      await flush();
+
+      expect(showcaseLinks(container)).toHaveLength(0);
+
+      await unmount();
+    });
+
+    it('is not offered when the server cannot say, nor when it answers with an error', async () => {
+      fetchMock.mockImplementation(async (url: string) => {
+        if (url === '/api/public/config') throw new Error('down');
+        return jsonResponse({ currency: 'BRL', tiers: [] });
+      });
+      const down = await renderLanding();
+      await flush();
+      expect(showcaseLinks(down.container)).toHaveLength(0);
+      await down.unmount();
+
+      answerConfig({ message: 'boom' }, 500);
+      const failed = await renderLanding();
+      await flush();
+      expect(showcaseLinks(failed.container)).toHaveLength(0);
+      await failed.unmount();
+    });
+
+    it('is never asked about on the project site, which has no server', async () => {
+      vi.resetModules();
+      vi.stubEnv('VITE_SITE_VARIANT', 'pages');
+      const { SiteApp } = await import('../../src/App');
+      const { render } = await import('../helpers/react');
+      const { container, unmount } = await render(<SiteApp />);
+      await flush();
+
+      expect(fetchMock).not.toHaveBeenCalledWith('/api/public/config', expect.anything());
+      expect(showcaseLinks(container)).toHaveLength(0);
+
+      await unmount();
+    });
+  });
+
   it('renders the server tiers with prices, discount and limits', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ currency: 'BRL', tiers: [freeTier, paidTier] }));
     const { container, unmount } = await renderLanding();

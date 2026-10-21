@@ -192,6 +192,7 @@
     "tagline": "A writing companion for planning stories.",
     "source": "Open source on GitHub",
     "docs": "Documentation in the repository",
+    "showcase": "Showcase",
     "terms": "Terms",
     "privacy": "Privacy"
   },
@@ -201,6 +202,7 @@
     "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
     "ctaTry": "Try it now, offline",
     "tryNote": "Runs in your browser with no server and no account: your stories stay on this device. Server features (sync, collaboration, publishing) are not part of this version.",
+    "ctaShowcase": "Browse the showcase",
     "landingCtaTry": "Open the web client",
     "landingTryNote": "Connected to this server, with sync, collaboration, and publishing.",
     "landingTryNote_official": "Connected to Keres, with sync, collaboration, and publishing.",
@@ -238,6 +240,7 @@
     "download": "Download",
     "contact": "Contact",
     "legal": "Legal",
+    "showcase": "Showcase",
     "github": "GitHub",
     "menu": "Menu"
   },

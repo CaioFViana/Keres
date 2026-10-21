@@ -28,20 +28,8 @@ export function formatDate(isoDate: string, language?: string): string {
   });
 }
 
-/**
- * `stories.genre` is free text in the app - whoever writes separates it however they like.
- * Splitting on comma, slash and semicolon covers what people actually type without inventing a new
- * rule.
- *
- * It is not translated: it is content written by the story's author.
- */
-export function genreList(genre: string | null): string[] {
-  if (!genre) return [];
-  return genre
-    .split(/[,;/]/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
+// The server filters by the same split, so the chips and the filter agree on what a genre is.
+export { genreList } from '@keres/shared';
 
 /**
  * What a pack contains, as short phrases.

@@ -137,6 +137,11 @@ jest.mock('@/src/screens/enter-stack/story-entry/ImportStoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('@/src/screens/enter-stack/account/PublicProfileScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('@/src/screens/enter-stack/account/MyProfileScreen', () => ({
   __esModule: true,
   default: () => null,

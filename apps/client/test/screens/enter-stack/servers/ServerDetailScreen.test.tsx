@@ -262,12 +262,14 @@ describe('ServerDetailScreen', () => {
     expect(view.getByText('Main')).toBeTruthy();
   });
 
-  it('opens profile, password and connection from their own rows', async () => {
+  it('opens profile, author page, password and connection from their own rows', async () => {
     const view = await render(<ServerDetailScreen />);
     await view.findByText('Main');
 
     await fireEvent.press(view.getByTestId('server-action-profile'));
     expect(mockNavigate).toHaveBeenCalledWith('MyProfile', { serverId: 'srv-1' });
+    await fireEvent.press(view.getByTestId('server-action-author-page'));
+    expect(mockNavigate).toHaveBeenCalledWith('PublicProfile', { serverId: 'srv-1' });
     await fireEvent.press(view.getByTestId('server-action-password'));
     expect(mockNavigate).toHaveBeenCalledWith('ChangePassword', { serverId: 'srv-1' });
     await fireEvent.press(view.getByTestId('server-action-connection'));

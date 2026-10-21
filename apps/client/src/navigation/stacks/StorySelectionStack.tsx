@@ -24,6 +24,7 @@ import PackFormScreen from '@/src/screens/packs/PackFormScreen';
 import PackListScreen from '@/src/screens/packs/PackListScreen';
 import ShippedPacksScreen from '@/src/screens/packs/ShippedPacksScreen';
 import MyProfileScreen from '@/src/screens/enter-stack/account/MyProfileScreen';
+import PublicProfileScreen from '@/src/screens/enter-stack/account/PublicProfileScreen';
 import ServerDetailScreen from '@/src/screens/enter-stack/servers/ServerDetailScreen';
 import ServerManagementScreen from '@/src/screens/enter-stack/servers/ServerManagementScreen';
 import ServerPaymentHistoryScreen from '@/src/screens/enter-stack/servers/ServerPaymentHistoryScreen';
@@ -59,6 +60,7 @@ export type ServerManagementStackParamList = {
   /** The age check of a pending account on this server; opened by registration or login, back returns to the server list. */
   ServerVerification: { serverId: string };
   MyProfile: { serverId: string };
+  PublicProfile: { serverId: string };
   ChangePassword: { serverId: string };
 };
 
@@ -197,6 +199,11 @@ const ServerManagementStackNavigator = () => {
         name="MyProfile"
         component={MyProfileScreen}
         options={{ headerTitle: t('my_profile_title') }}
+      />
+      <ServerManagementStack.Screen
+        name="PublicProfile"
+        component={PublicProfileScreen}
+        options={{ headerTitle: t('author_page_title') }}
       />
       <ServerManagementStack.Screen
         name="ChangePassword"

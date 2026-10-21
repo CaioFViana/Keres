@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'your-profile',
   title: 'Seu perfil',
   summary: 'Escolha como sua conta aparece em cada servidor.',
-  keywords: ['perfil', 'avatar', 'bio', 'tag'],
+  keywords: ['perfil', 'avatar', 'bio', 'tag', 'página de autor', 'biografia', 'links', 'vitrine'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
@@ -24,6 +24,19 @@ const page: HelpPage = {
         'No servidor desejado, toque no ícone de perfil.',
         'Escolha Cor do avatar, Ícone do avatar e escreva a Bio, com até 200 caracteres.',
         'Salve. Para alterar sua @tag, toque nela na lista de servidores e confirme a edição. Uma tag tem de 3 a 20 letras minúsculas, números ou sublinhados - o que mais você digitar (maiúsculas, espaços) é ajustado ao salvar, e a tag mostrada depois é a que vale.',
+      ],
+    },
+    { type: 'heading', level: 2, text: 'Sua página de autor' },
+    {
+      type: 'paragraph',
+      text: 'Depois que você publica uma história em um servidor, ela ganha uma página de autor na vitrine pública desse servidor. Além da bio curta, você pode escrever uma Biografia mais longa, adicionar até 8 Links (um site, uma loja, um perfil social) e escolher um Tema - a paleta que a página veste. Nada aparece até você escrever, e todo campo pode ser apagado.',
+    },
+    {
+      type: 'steps',
+      items: [
+        'Abra Gerenciar Servidores, escolha o servidor e toque em Página de autor.',
+        'Escreva sua Biografia, adicione seus Links (um endereço digitado sem https:// é completado para você) e escolha um Tema, ou mantenha o visual do próprio site.',
+        'Salve e toque em Ver minha página para conferir como os visitantes a veem.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

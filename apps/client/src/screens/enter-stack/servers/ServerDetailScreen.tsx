@@ -470,6 +470,13 @@ const ServerDetailScreen = () => {
         testID="server-action-profile"
       />
       <ServerActionRow
+        icon="newspaper-outline"
+        title={t('server_action_author_page')}
+        description={t('server_action_author_page_hint')}
+        onPress={() => navigation.navigate('PublicProfile', { serverId })}
+        testID="server-action-author-page"
+      />
+      <ServerActionRow
         icon="key-outline"
         title={t('server_action_password')}
         description={t('server_action_password_hint')}

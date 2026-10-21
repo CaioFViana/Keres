@@ -30,6 +30,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   ServerRegistration: 'add-server',
   ServerVerification: 'what-is-a-server',
   MyProfile: 'your-profile',
+  PublicProfile: 'your-profile',
   ChangePassword: 'change-password',
   FriendshipDrawer: 'friends',
   FriendshipList: 'friends',

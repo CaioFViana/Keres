@@ -93,6 +93,7 @@
     "label": "Language"
   },
   "nav": {
+    "home": "Home",
     "stories": "Stories",
     "about": "About",
     "packs": "Packs",

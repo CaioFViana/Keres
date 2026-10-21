@@ -79,6 +79,12 @@ export function Layout({ children }: { children: ReactNode }) {
             <span className="brand-name">{siteName}</span>
           </Link>
           <nav className="site-nav">
+            {/* The landing is another app, at the root of the server: a plain link, and only when there is one. */}
+            {config?.landingEnabled && (
+              <a href="/" data-testid="nav-landing">
+                {t('nav.home')}
+              </a>
+            )}
             <Link to="/">{t('nav.stories')}</Link>
             <Link to="/authors">{t('nav.authors')}</Link>
             <Link to="/packs">{t('nav.packs')}</Link>

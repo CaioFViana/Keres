@@ -75,6 +75,8 @@ async function readError(response: Response): Promise<string> {
 /** Mirrors the API's public `/config`; `logoUrl` is null until a logo is uploaded. */
 export interface ShowcaseConfig {
   showcaseEnabled: boolean;
+  /** Whether the root of the server is its landing page. Absent on servers that predate it: no way back is offered. */
+  landingEnabled?: boolean;
   serverVersion: string;
   siteName: string;
   sitePalette: string;

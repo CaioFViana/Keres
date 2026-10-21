@@ -227,4 +227,24 @@ describe('showcase branding', () => {
     expect(cssVar('--color-primary')).toBe('');
     await view.unmount();
   });
+
+  it('offers the way back to the landing page only when the server has one', async () => {
+    mocks.fetchConfig.mockResolvedValue({ ...brandedConfig, landingEnabled: true });
+    const withLanding = await renderAt('/');
+    await flush();
+    await flush();
+    const back = withLanding.container.querySelector('.site-nav [data-testid="nav-landing"]');
+    expect(back?.getAttribute('href')).toBe('/');
+    expect(back?.textContent).toBe('Home');
+    await withLanding.unmount();
+
+    for (const config of [{ ...brandedConfig, landingEnabled: false }, brandedConfig]) {
+      mocks.fetchConfig.mockResolvedValue(config);
+      const without = await renderAt('/');
+      await flush();
+      await flush();
+      expect(without.container.querySelector('[data-testid="nav-landing"]')).toBeNull();
+      await without.unmount();
+    }
+  });
 });

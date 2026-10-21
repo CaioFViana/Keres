@@ -137,7 +137,7 @@ A backend in **Elysia** (an HTTP framework for **Bun**), **Drizzle ORM** over **
 
 An **Electron** wrapper around `apps/client`'s web export. `main.ts`:
 
-- Points `CLIENT_DIST` at the client's web build (`../../client/dist` in dev, `resourcesPath/client-dist` when packaged) and serves it through a custom `app://` protocol, with COOP/COEP headers - required by `expo-sqlite`'s WASM/OPFS driver in the browser (SharedArrayBuffer is only allowed on a "cross-origin isolated" page).
+- Points `CLIENT_DIST` at the client's web build (`../../client/dist` in dev, `resourcesPath/dist-client` when packaged) and serves it through a custom `app://` protocol, with COOP/COEP headers - required by `expo-sqlite`'s WASM/OPFS driver in the browser (SharedArrayBuffer is only allowed on a "cross-origin isolated" page).
 - Creates the `BrowserWindow` and keeps the window title in sync with the dynamic title the client itself already sets per screen (`DocumentTitleSync`/`setDocumentTitle`, see `apps/client/src/utils/nav/documentTitle.ts`).
 - Exposes media IPC (`media:write/read/delete-file/delete-directory/list-all`) to write/read imported media files on the real file system (outside Chromium's sandbox), unlike SQLite, which stays in OPFS.
 

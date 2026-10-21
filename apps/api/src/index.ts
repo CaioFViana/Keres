@@ -51,7 +51,7 @@ import type { JWTPayload } from './types/jwtPayload';
  * only the panel is unavailable, the API carries on as usual.
  *
  * Resolved by `resourceRoot` (not `process.cwd()`): in the checkout it points at `apps/admin/dist`;
- * in the Keres Server zip, at the `admin-dist` next to the executable.
+ * in the Keres Server zip, at the `dist-admin` next to the executable.
  */
 const adminDistPath = resolveAdminDistPath();
 const adminDistIndexPath = path.join(adminDistPath, 'index.html');

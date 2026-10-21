@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
  * It does not use `process.cwd()`: Docker, shortcuts and the compiled binary start from folders that
  * are not `apps/api`. Candidates, in order:
  *   1. `KERES_RESOURCE_ROOT` (packager / tests);
- *   2. the executable's folder (the zip's layout: `drizzle/`, `admin-dist/`, …);
+ *   2. the executable's folder (the zip's layout: `drizzle/`, `dist-admin/`, …);
  *   3. the monorepo tree from this file (`src/config` → `apps/api` / `apps/admin`).
  */
 
@@ -65,9 +65,9 @@ export function adminDistPath(): string {
   return (
     firstExistingPath(
       [
-        override ? path.join(override, 'admin-dist') : undefined,
+        override ? path.join(override, 'dist-admin') : undefined,
         override ? path.join(override, 'admin', 'dist') : undefined,
-        path.join(executableDirectory(), 'admin-dist'),
+        path.join(executableDirectory(), 'dist-admin'),
         path.join(executableDirectory(), 'admin', 'dist'),
         path.join(thisDirectory, '..', '..', '..', 'admin', 'dist'),
       ].filter((value): value is string => Boolean(value)),
@@ -100,9 +100,9 @@ export function landingDistPath(): string {
   return (
     firstExistingPath(
       [
-        override ? path.join(override, 'landing-dist') : undefined,
+        override ? path.join(override, 'dist-landing') : undefined,
         override ? path.join(override, 'site', 'dist-landing') : undefined,
-        path.join(executableDirectory(), 'landing-dist'),
+        path.join(executableDirectory(), 'dist-landing'),
         path.join(executableDirectory(), 'site', 'dist-landing'),
         path.join(thisDirectory, '..', '..', '..', 'site', 'dist-landing'),
       ].filter((value): value is string => Boolean(value)),
@@ -120,9 +120,9 @@ export function clientDistPath(): string {
   return (
     firstExistingPath(
       [
-        override ? path.join(override, 'client-dist') : undefined,
+        override ? path.join(override, 'dist-client') : undefined,
         override ? path.join(override, 'client', 'dist-hosted') : undefined,
-        path.join(executableDirectory(), 'client-dist'),
+        path.join(executableDirectory(), 'dist-client'),
         path.join(executableDirectory(), 'client', 'dist-hosted'),
         path.join(thisDirectory, '..', '..', '..', 'client', 'dist-hosted'),
       ].filter((value): value is string => Boolean(value)),

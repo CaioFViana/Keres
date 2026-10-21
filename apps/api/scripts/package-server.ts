@@ -144,7 +144,7 @@ cpSync(path.join(apiRoot, 'drizzle'), path.join(bundleDir, 'drizzle'), { recursi
 cpSync(path.join(apiRoot, 'drizzle-sqlite'), path.join(bundleDir, 'drizzle-sqlite'), {
   recursive: true,
 });
-copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'admin-dist', 'admin:build');
+copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'dist-admin', 'admin:build');
 copyWebBundle(
   path.join(repoRoot, 'apps', 'admin', 'dist-showcase'),
   'dist-showcase',
@@ -153,13 +153,13 @@ copyWebBundle(
 // The export made for /client (not the `dist` of the desktop shell, which is made for the root).
 copyWebBundle(
   path.join(repoRoot, 'apps', 'client', 'dist-hosted'),
-  'client-dist',
+  'dist-client',
   'client:build:hosted',
 );
 // The landing page served at / (not the `dist` GitHub Pages publishes, made for `/Keres/`).
 copyWebBundle(
   path.join(repoRoot, 'apps', 'site', 'dist-landing'),
-  'landing-dist',
+  'dist-landing',
   'site:build:landing',
 );
 cpSync(

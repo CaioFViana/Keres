@@ -58,10 +58,10 @@ app.commandLine.appendSwitch('password-store', 'gnome-libsecret');
  * completely unmodified, SQLite driver included.
  */
 // Dev: apps/desktop/dist-electron/main.js -> ../../client/dist.
-// Packaged: electron-builder's extraResources puts it at resourcesPath/client-dist
+// Packaged: electron-builder's extraResources puts it at resourcesPath/dist-client
 // (see electron-builder.yml) since the source tree isn't shipped in the installer.
 const CLIENT_DIST = app.isPackaged
-  ? path.join(process.resourcesPath, 'client-dist')
+  ? path.join(process.resourcesPath, 'dist-client')
   : path.join(__dirname, '..', '..', 'client', 'dist');
 
 // Same reasoning as CLIENT_DIST above. This is only for the *runtime* window/dock icon

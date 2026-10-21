@@ -1066,7 +1066,13 @@ a.download-button {
 
 /* ---------- authors ---------- */
 
+/* The back link, the avatar and the name are one above the other: both are inline by default and would share a line. */
+.author-head .back-link {
+  display: block;
+}
+
 .author-head .avatar {
+  display: flex;
   margin-bottom: 14px;
 }
 

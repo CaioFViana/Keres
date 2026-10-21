@@ -808,19 +808,18 @@ a.download-button {
 /* ---------- prose / misc ---------- */
 
 .prose {
-  padding-top: 48px;
+  padding-top: 24px;
   max-width: 68ch;
 }
 
-.prose h1 {
-  font-size: 2rem;
+.prose h2 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
   letter-spacing: -0.02em;
-  margin-bottom: 8px;
 }
 
-.prose h2 {
-  font-size: 1.15rem;
-  margin-top: 32px;
+.about-page .prose:last-of-type {
+  padding-bottom: 40px;
 }
 
 .prose p {

@@ -1,91 +1,10 @@
-import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { ItemJourney } from '@keres/shared/entities/narrative/Item';
-import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
-import { logger } from '@/src/utils/logging/logger';
+import { TableClientSyncHandler } from './TableClientSyncHandler';
 
-export class ItemJourneyClientSyncHandler implements ClientSyncEntityHandler {
-  entityName: string = 'ItemJourney';
-  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
-
-  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
-    this.dbInstance = dbInstance;
-  }
-
-  private get db(): AppDrizzleClient | AppDrizzleTransaction {
-    if (!this.dbInstance) {
-      throw new Error('ItemJourneyClientSyncHandler: Drizzle client (db) not set.');
-    }
-    return this.dbInstance;
-  }
-
-  async applyCreate(update: CreateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
-
-    if (!update.id) {
-      logger.error(`Missing ID for create operation on ${this.entityName}`);
-      return;
-    }
-
-    const data = update.data as ItemJourney;
-
-    await this.db.insert(schema.itemJourneys).values({
-      ...data,
-      id: update.id,
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
-    });
-    logger.debug(`Applied create for ItemJourney ${update.id}`);
-  }
-
-  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
-
-    if (!update.id || !update.changes) {
-      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
-      return;
-    }
-
-    const changes = update.changes as Partial<ItemJourney>;
-
-    await this.db
-      .update(schema.itemJourneys)
-      .set({
-        ...changes,
-        updatedAt: new Date(),
-        createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
-        deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
-      })
-      .where(eq(schema.itemJourneys.id, update.id));
-    logger.debug(`Applied update for ItemJourney ${update.id}`);
-  }
-
-  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
-
-    if (!update.id) {
-      logger.error(`Missing ID for delete operation on ${this.entityName}`);
-      return;
-    }
-
-    await this.db
-      .update(schema.itemJourneys)
-      .set({
-        isDeleted: true,
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.itemJourneys.id, update.id));
-    logger.debug(`Applied delete for ItemJourney ${update.id}`);
-  }
-
-  async getById(id: string): Promise<ItemJourney | undefined> {
-    const entity = await this.db.query.itemJourneys.findFirst({
-      where: eq(schema.itemJourneys.id, id),
-    });
-    return entity;
-  }
+/** Applies ItemJourney operations received from the server to the local table. */
+export class ItemJourneyClientSyncHandler extends TableClientSyncHandler<
+  typeof schema.itemJourneys
+> {
+  readonly entityName = 'ItemJourney';
+  protected readonly table = schema.itemJourneys;
 }

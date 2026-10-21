@@ -1,96 +1,11 @@
-import type {
-  CreateStoryUpdate,
-  DeleteStoryUpdate,
-  GalleryRelation,
-  UpdateStoryUpdate,
-} from '@keres/shared';
-import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import type { GalleryRelationSelect } from '@/src/db/schema';
-import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
-import { logger } from '@/src/utils/logging/logger';
+import { TableClientSyncHandler } from './TableClientSyncHandler';
 
-export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler {
-  entityName: string = 'GalleryRelation';
-  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
-
-  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
-    this.dbInstance = dbInstance;
-  }
-
-  private get db(): AppDrizzleClient | AppDrizzleTransaction {
-    if (!this.dbInstance) {
-      throw new Error('GalleryRelationClientSyncHandler: Drizzle client (db) not set.');
-    }
-    return this.dbInstance;
-  }
-
-  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
-    if (update.entity !== this.entityName) return;
-
-    if (!update.id) {
-      logger.error(`Missing ID for create operation on ${this.entityName}`);
-      return;
-    }
-
-    const data = update.data as GalleryRelation;
-
-    await this.db.insert(schema.galleryRelations).values({
-      ...data,
-      id: update.id,
-      storyId: storyId,
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
-    });
-    logger.debug(`Applied create for GalleryRelation ${update.id} in story ${storyId}`);
-  }
-
-  async applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void> {
-    if (update.entity !== this.entityName) return;
-
-    if (!update.id || !update.changes) {
-      logger.error(`Missing ID or changes for update operation on ${this.entityName}`);
-      return;
-    }
-
-    const changes = update.changes as Partial<GalleryRelation>;
-
-    await this.db
-      .update(schema.galleryRelations)
-      .set({
-        ...changes,
-        updatedAt: new Date(),
-        createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
-        deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
-      })
-      .where(eq(schema.galleryRelations.id, update.id));
-    logger.debug(`Applied update for GalleryRelation ${update.id} in story ${storyId}`);
-  }
-
-  async applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void> {
-    if (update.entity !== this.entityName) return;
-
-    if (!update.id) {
-      logger.error(`Missing ID for delete operation on ${this.entityName}`);
-      return;
-    }
-
-    await this.db
-      .update(schema.galleryRelations)
-      .set({
-        isDeleted: true,
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.galleryRelations.id, update.id));
-    logger.debug(`Applied delete for GalleryRelation ${update.id} in story ${storyId}`);
-  }
-
-  async getById(id: string): Promise<GalleryRelationSelect | undefined> {
-    return this.db.query.galleryRelations.findFirst({
-      where: eq(schema.galleryRelations.id, id),
-    });
-  }
+/** Applies GalleryRelation operations received from the server to the local table. */
+export class GalleryRelationClientSyncHandler extends TableClientSyncHandler<
+  typeof schema.galleryRelations
+> {
+  readonly entityName = 'GalleryRelation';
+  protected readonly table = schema.galleryRelations;
+  protected override readonly behavior = { stampStoryId: { create: true } };
 }

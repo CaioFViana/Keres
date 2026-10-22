@@ -1,8 +1,8 @@
 import type { ShowcaseAuthorPage } from '@keres/shared';
-import { useEffect, useState } from 'react';
-import { isNotFoundError, isOfflineError } from '@/src/services/api/apiClient';
+import { useMemo } from 'react';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { showcaseApiService, type ShowcaseSource } from '@/src/services/api/ShowcaseApiService';
-import { logger } from '@/src/utils/logging/logger';
+import { showcaseReadFailure } from './showcaseReadStatus';
 
 export type ShowcaseAuthorState =
   | { status: 'loading' }
@@ -16,31 +16,24 @@ export function useShowcaseAuthor(
   source: ShowcaseSource | null,
   username: string,
 ): ShowcaseAuthorState {
-  const [state, setState] = useState<ShowcaseAuthorState>({ status: 'loading' });
+  const load = useMemo(
+    () => (source ? () => showcaseApiService.getAuthor(source, username) : null),
+    [source, username],
+  );
+  const { data, failed, error } = useLoadedResource<ShowcaseAuthorPage | null>({
+    load,
+    initial: null,
+    label: 'the author page',
+    quiet: true,
+  });
 
-  useEffect(() => {
-    if (!source) return undefined;
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- going back to "loading" belongs to starting the read.
-    setState({ status: 'loading' });
-    showcaseApiService
-      .getAuthor(source, username)
-      .then((page) => !cancelled && setState({ status: 'ready', page }))
-      .catch((error) => {
-        if (cancelled) return;
-        logger.debug('useShowcaseAuthor: could not read the page.', error);
-        setState({
-          status: isNotFoundError(error)
-            ? 'not_found'
-            : isOfflineError(error)
-              ? 'unreachable'
-              : 'failed',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [source, username]);
-
-  return state;
+  return useMemo(
+    () =>
+      data
+        ? { status: 'ready', page: data }
+        : failed
+          ? { status: showcaseReadFailure(error) }
+          : { status: 'loading' },
+    [data, failed, error],
+  );
 }

@@ -39,6 +39,9 @@ let mockListProps: {
 } | null = null;
 let mockLinkModalVisible = false;
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
@@ -155,7 +158,7 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
     );
   },
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),

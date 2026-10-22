@@ -7,16 +7,16 @@ import {
   WORLD_PIECE_SECTION_APPEARANCE,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { useDrizzle, worldRules } from '@/src/db';
 import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
-import { logger } from '@/src/utils/logging/logger';
 
 export interface SeeAlsoEntityOption {
   label: string;
@@ -41,6 +41,8 @@ export function decodeSeeAlsoValue(value: string): SeeAlsoEntityRef | null {
   return { entityType, entityId };
 }
 
+const NO_OPTIONS: SeeAlsoEntityOption[] = [];
+
 /**
  * Candidates for the "See also" picker, excluding the current entity. Entity
  * titles come from `loadEntityOptions`, the same registry used by references
@@ -54,69 +56,63 @@ export function useSeeAlsoEntityOptions(
   const db = useDrizzle();
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
-  const [options, setOptions] = useState<SeeAlsoEntityOption[]>([]);
-  const [loading, setLoading] = useState(false);
+  const load = useMemo(
+    () =>
+      storyId
+        ? async (): Promise<SeeAlsoEntityOption[]> => {
+            const [optionsByType, worldPieceRows] = await Promise.all([
+              Promise.all(
+                SEE_ALSO_ENTITY_TYPES.map(
+                  async (entityType) =>
+                    [entityType, await loadEntityOptions(db, storyId, entityType)] as const,
+                ),
+              ),
+              db
+                .select({ id: worldRules.id, section: worldRules.section })
+                .from(worldRules)
+                .where(and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)))
+                .all(),
+            ]);
+            const sectionByWorldPieceId = new Map(
+              worldPieceRows.map((piece) => [piece.id, piece.section]),
+            );
 
-  const load = useCallback(async () => {
-    if (!storyId) {
-      setOptions([]);
-      return;
-    }
+            const collected: SeeAlsoEntityOption[] = [];
+            for (const [entityType, rows] of optionsByType) {
+              for (const row of rows) {
+                if (entityType === excludeEntityType && row.id === excludeEntityId) continue;
+                const name = row.name || t('unnamed');
+                const worldPieceSection =
+                  entityType === 'WorldRule' ? sectionByWorldPieceId.get(row.id) : undefined;
+                collected.push({
+                  label: `${label(entityType)}: ${name}`,
+                  name,
+                  value: encodeSeeAlsoValue(entityType, row.id),
+                  entityType,
+                  entityId: row.id,
+                  worldPieceSection,
+                  // A World Piece section is more specific than its underlying WorldRule entity.
+                  color: worldPieceSection
+                    ? getWorldPieceSectionAppearance(worldPieceSection).color
+                    : getEntityAppearance(entityType).color,
+                });
+              }
+            }
 
-    setLoading(true);
-    try {
-      const [optionsByType, worldPieceRows] = await Promise.all([
-        Promise.all(
-          SEE_ALSO_ENTITY_TYPES.map(
-            async (entityType) =>
-              [entityType, await loadEntityOptions(db, storyId, entityType)] as const,
-          ),
-        ),
-        db
-          .select({ id: worldRules.id, section: worldRules.section })
-          .from(worldRules)
-          .where(and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)))
-          .all(),
-      ]);
-      const sectionByWorldPieceId = new Map(
-        worldPieceRows.map((piece) => [piece.id, piece.section]),
-      );
-
-      const collected: SeeAlsoEntityOption[] = [];
-      for (const [entityType, rows] of optionsByType) {
-        for (const row of rows) {
-          if (entityType === excludeEntityType && row.id === excludeEntityId) continue;
-          const name = row.name || t('unnamed');
-          const worldPieceSection =
-            entityType === 'WorldRule' ? sectionByWorldPieceId.get(row.id) : undefined;
-          collected.push({
-            label: `${label(entityType)}: ${name}`,
-            name,
-            value: encodeSeeAlsoValue(entityType, row.id),
-            entityType,
-            entityId: row.id,
-            worldPieceSection,
-            // A World Piece section is more specific than its underlying WorldRule entity.
-            color: worldPieceSection
-              ? getWorldPieceSectionAppearance(worldPieceSection).color
-              : getEntityAppearance(entityType).color,
-          });
-        }
-      }
-
-      setOptions(collected);
-    } catch (error) {
-      logger.error('Failed to load See Also entity options:', error);
-      setOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [db, storyId, excludeEntityType, excludeEntityId, t, label]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` clears synchronously only when no story is selected (and sets loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
-    load();
-  }, [load]);
+            return collected;
+          }
+        : null,
+    [db, storyId, excludeEntityType, excludeEntityId, t, label],
+  );
+  const {
+    data: options,
+    loading,
+    reload,
+  } = useLoadedResource({
+    load,
+    initial: NO_OPTIONS,
+    label: 'See Also entity options',
+  });
 
   const optionsByValue = useMemo(
     () => new Map(options.map((option) => [option.value, option])),
@@ -159,5 +155,5 @@ export function useSeeAlsoEntityOptions(
     return groups;
   }, [label, options, t]);
 
-  return { options, optionsByValue, groupedOptions, loading, reload: load };
+  return { options, optionsByValue, groupedOptions, loading, reload };
 }

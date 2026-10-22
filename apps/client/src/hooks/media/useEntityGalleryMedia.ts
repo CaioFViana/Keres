@@ -1,8 +1,9 @@
 import type { GalleryOwnerEntity } from '@keres/shared';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { GallerySelect } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { importPickedMediaAssets } from '@/src/services/media/galleryMediaImport';
 import { createGalleryLink } from '@/src/services/media/galleryLink';
 import { mediaFileService } from '@/src/services/media/MediaFileService';
@@ -10,8 +11,9 @@ import { createGalleryRelationService } from '@/src/services/storymanagement/rel
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { logger } from '@/src/utils/logging/logger';
+
+const NO_MEDIA: GallerySelect[] = [];
+const GALLERY_EVENTS = ['gallery_changed', 'gallery_relation_changed'] as const;
 
 /**
  * The media linked to an entity (a character, location, note, scene, item or World Piece), with the means
@@ -37,43 +39,26 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     };
   }, [drizzleDb]);
 
-  const [media, setMedia] = useState<GallerySelect[]>([]);
-  const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
 
-  const refresh = useCallback(async () => {
-    if (!services || !storyId || !ownerId) {
-      setMedia([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      setMedia(await services.gallery.getGalleriesForOwner(storyId, ownerId, ownerType));
-    } catch (err) {
-      logger.error(`Failed to fetch gallery media for ${ownerType} ${ownerId}:`, err);
-    } finally {
-      setLoading(false);
-    }
-  }, [services, storyId, ownerId, ownerType]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `refresh` clears synchronously only when services/ids are missing (and sets loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
-    refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    const handleChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) {
-        refresh();
-      }
-    };
-    entityEventEmitter.on('gallery_changed', handleChange);
-    entityEventEmitter.on('gallery_relation_changed', handleChange);
-    return () => {
-      entityEventEmitter.off('gallery_changed', handleChange);
-      entityEventEmitter.off('gallery_relation_changed', handleChange);
-    };
-  }, [storyId, refresh]);
+  const load = useMemo(
+    () =>
+      services && storyId && ownerId
+        ? () => services.gallery.getGalleriesForOwner(storyId, ownerId, ownerType)
+        : null,
+    [services, storyId, ownerId, ownerType],
+  );
+  const {
+    data: media,
+    loading,
+    reload: refresh,
+  } = useLoadedResource({
+    load,
+    initial: NO_MEDIA,
+    events: GALLERY_EVENTS,
+    storyId,
+    label: `gallery media for ${ownerType} ${ownerId}`,
+  });
 
   const linkImported = useCallback(
     async (galleryIds: string[]) => {
@@ -179,9 +164,9 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
         ownerId,
         ownerType,
       });
-      setMedia((prev) => prev.filter((item) => item.id !== galleryId));
+      await refresh();
     },
-    [services, storyId, userId, ownerId, ownerType],
+    [refresh, services, storyId, userId, ownerId, ownerType],
   );
 
   return {

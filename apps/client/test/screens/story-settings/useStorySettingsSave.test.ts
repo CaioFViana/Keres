@@ -7,13 +7,16 @@ const mockUpdateStory = jest.fn();
 const mockSyncStoryNow = jest.fn();
 const mockSetSelectedStory = jest.fn();
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ goBack: (...args: unknown[]) => mockGoBack(...args) }),
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockStableDb }));
 jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,

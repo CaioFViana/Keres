@@ -1,12 +1,14 @@
 import type { MediaType } from '@keres/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { GallerySelect, SketchSelect } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { logger } from '@/src/utils/logging/logger';
 
 const IMAGE_TYPES: readonly MediaType[] = ['image'];
+const NO_MEDIA: GallerySelect[] = [];
 
 /** One Gallery medium by id: `null` while loading, when there is none, and when it was deleted. */
 export function useGalleryRow(galleryId: string | null | undefined): GallerySelect | null {
@@ -40,32 +42,24 @@ export function useGalleryMedia(
   mediaTypes: readonly MediaType[],
 ) {
   const db = useDrizzle();
-  const [media, setMedia] = useState<GallerySelect[]>([]);
-  const [loading, setLoading] = useState(false);
   // The kinds are compared by value, so a caller can pass a fresh array every render.
   const kinds = mediaTypes.join(',');
-
-  useEffect(() => {
-    if (!enabled || !storyId) return;
-    let alive = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- the spinner shows while the media load; everything else waits for `await`.
-    setLoading(true);
-    void createGalleryService(db)
-      .getGalleriesByStoryId(storyId, { mediaTypes: kinds.split(',') as MediaType[] })
-      .then((rows) => {
-        if (alive) setMedia(rows);
-      })
-      .catch(() => {
-        if (alive) setMedia([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db, enabled, kinds, storyId]);
-
+  const load = useMemo(
+    () =>
+      enabled && storyId
+        ? () =>
+            createGalleryService(db).getGalleriesByStoryId(storyId, {
+              mediaTypes: kinds.split(',') as MediaType[],
+            })
+        : null,
+    [db, enabled, kinds, storyId],
+  );
+  const { data: media, loading } = useLoadedResource({
+    load,
+    initial: NO_MEDIA,
+    label: 'the Gallery media',
+    quiet: true,
+  });
   return { media, loading };
 }
 

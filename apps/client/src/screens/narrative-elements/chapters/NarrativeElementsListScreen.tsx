@@ -53,6 +53,7 @@ import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -123,10 +124,7 @@ const NarrativeElementsListScreen = () => {
     setChoices(loadedChoices.filter((choice) => !choice.isDeleted));
   }, [db, storyId]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadOutline` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-    loadOutline();
-  }, [loadOutline]);
+  useEntityInitialLoad(loadOutline);
 
   const advancedMatches = useAdvancedNarrativeMatches({
     storyId,
@@ -162,10 +160,7 @@ const NarrativeElementsListScreen = () => {
     setTagsBySceneId(new Map(scenes.map((scene, index) => [scene.id, sceneTags[index]])));
   }, [db, outlineChapters, scenes, storyId]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    loadTags();
-  }, [loadTags]);
+  useEntityInitialLoad(loadTags);
 
   useTagChangeReload(storyId, loadTags);
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -40,12 +40,15 @@ const InviteToStoryModal: React.FC<InviteToStoryModalProps> = ({
   const [storyId, setStoryId] = useState<string | null>(null);
   const [role, setRole] = useState<Role>('reader');
 
-  useEffect(() => {
-    if (!visible) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- a fresh choice each time the dialog opens.
-    setStoryId(null);
-    setRole('reader');
-  }, [visible]);
+  // A fresh choice each time the dialog opens.
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) {
+      setStoryId(null);
+      setRole('reader');
+    }
+  }
 
   const noStories = stories !== null && stories.length === 0;
 

@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ScenePageSelect, SketchSelect } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createScenePageService } from '@/src/services/storymanagement/scenes-chapters/ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { logger } from '@/src/utils/logging/logger';
+
+const NO_PAGES: ScenePageView[] = [];
+const PAGE_EVENTS = ['scene_page_changed', 'sketch_changed', 'gallery_changed'] as const;
 
 /** A page with what it shows: the Gallery medium to draw, or the Sketch to draw, and its name. */
 export interface ScenePageView {
@@ -67,41 +69,27 @@ export async function scenePageViewOf(
  */
 export function useScenePages(sceneId: string | undefined, storyId: string | undefined) {
   const db = useDrizzle();
-  const [pages, setPages] = useState<ScenePageView[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const reload = useCallback(async () => {
-    if (!sceneId) {
-      setPages([]);
-      setLoading(false);
-      return;
-    }
-    try {
-      const rows = await createScenePageService(db).getPagesForScene(sceneId);
-      setPages(await Promise.all(rows.map((row) => scenePageViewOf(db, row))));
-    } catch (error) {
-      logger.debug('useScenePages: failed to load the pages.', error);
-      setPages([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [db, sceneId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no scene is given; everything else waits for `await`.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const onChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    const events = ['scene_page_changed', 'sketch_changed', 'gallery_changed'] as const;
-    for (const event of events) entityEventEmitter.on(event, onChange);
-    return () => {
-      for (const event of events) entityEventEmitter.off(event, onChange);
-    };
-  }, [reload, storyId]);
+  const load = useMemo(
+    () =>
+      sceneId
+        ? async () => {
+            const rows = await createScenePageService(db).getPagesForScene(sceneId);
+            return Promise.all(rows.map((row) => scenePageViewOf(db, row)));
+          }
+        : null,
+    [db, sceneId],
+  );
+  const {
+    data: pages,
+    loading,
+    reload,
+  } = useLoadedResource({
+    load,
+    initial: NO_PAGES,
+    events: PAGE_EVENTS,
+    storyId,
+    label: 'scene pages',
+  });
 
   return { pages, loading, reload };
 }

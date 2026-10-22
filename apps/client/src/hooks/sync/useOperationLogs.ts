@@ -175,12 +175,10 @@ export function useOperationLogs({
     }
   }
 
-  useEffect(() => {
-    if (shouldRefetch) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchLogs` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-      fetchLogs(1);
-    }
+  const refetchFirstPage = useCallback(() => {
+    if (shouldRefetch) void fetchLogs(1);
   }, [fetchLogs, shouldRefetch]);
+  useEntityInitialLoad(refetchFirstPage);
 
   const loadMore = useCallback(() => {
     if (paginated && !loading && logs.length < totalLogs) {

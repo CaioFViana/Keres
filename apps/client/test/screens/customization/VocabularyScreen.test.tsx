@@ -12,6 +12,9 @@ let mockSelectedStory: { id: string; vocabulary: null } | null = {
   vocabulary: null,
 };
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
@@ -51,7 +54,7 @@ jest.mock('@/src/state/story/storyStore', () => ({
     setSelectedStory: mockSetSelectedStory,
   }),
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({}),

@@ -27,6 +27,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -125,11 +126,14 @@ const StorySelectionScreen = () => {
     if (isFocused) {
       fetchStoriesData();
       fetchSummary();
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchServerNames` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-      fetchServerNames();
       setTheme('default');
     }
-  }, [isFocused, setTheme, fetchStoriesData, fetchSummary, fetchServerNames]);
+  }, [isFocused, setTheme, fetchStoriesData, fetchSummary]);
+
+  const refreshServerNames = useCallback(async () => {
+    if (isFocused) await fetchServerNames();
+  }, [isFocused, fetchServerNames]);
+  useEntityInitialLoad(refreshServerNames);
 
   const handleSelectStory = useCallback(
     (story: Story) => {

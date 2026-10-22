@@ -64,6 +64,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /** Placeholder until the row loads; never rendered or saved. */
 const EMPTY_DOC: SketchDocument = {
@@ -236,10 +237,7 @@ const SketchCanvasScreen = () => {
     }
   }, [clearSelection, db, resetDoc, showNotification, sketchId, storyId, t]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    void load();
-  }, [load]);
+  useEntityInitialLoad(load);
 
   const save = useCallback(async () => {
     if (!userId || !sketch) return;

@@ -6,13 +6,12 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { stripManuscriptMarkers } from '@keres/shared';
-import { readStoredSceneBodyText } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
@@ -32,6 +31,7 @@ import type { NarrativeElementsScreenNavigationProp } from '@/src/screens/narrat
 import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';
 import { useSceneDetailLists } from './useSceneDetailLists';
+import { useSceneDraftFlag } from './useSceneDraftFlag';
 import { useSceneDetailServices } from './useSceneDetailServices';
 
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
@@ -110,7 +110,7 @@ const SceneDetailScreen = () => {
     isLinear: selectedStory?.type === 'linear',
     isBranching,
   });
-  const [hasBodyDraft, setHasBodyDraft] = useState(false);
+  const hasBodyDraft = useSceneDraftFlag(scene?.storyId, sceneId, scene?.body);
 
   const styles = useThemedStyles(createStyles);
 
@@ -121,31 +121,6 @@ const SceneDetailScreen = () => {
       : failure === 'failed'
         ? t('error')
         : t('loading');
-
-  // The draft flag refreshes on focus too: leaving the editor without saving emits no
-  // scene event, so data alone would leave a stale indicator behind.
-  // The flag means "a stored draft exists AND differs from the saved body": a draft that
-  // already matches (saved elsewhere, then revisited) reads clean, and corrupt or missing
-  // rows read as no flag rather than failing the screen.
-  const refreshBodyDraftFlag = useCallback(async () => {
-    if (!scene?.storyId) {
-      setHasBodyDraft(false);
-      return;
-    }
-    const draft = await readStoredSceneBodyText(scene.storyId, sceneId);
-    setHasBodyDraft(!!draft && draft !== (scene.body ?? ''));
-  }, [scene?.storyId, scene?.body, sceneId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `refreshBodyDraftFlag` clears synchronously only when no scene is loaded; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    void refreshBodyDraftFlag();
-  }, [refreshBodyDraftFlag]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshBodyDraftFlag();
-    }, [refreshBodyDraftFlag]),
-  );
 
   const openEditor = useCallback(() => {
     navigation.navigate('SceneEditor', { sceneId });

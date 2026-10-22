@@ -51,6 +51,7 @@ import { buildBoardMapFileName, deliverMapExport } from '@/src/utils/io/storyTra
 import { buildStandaloneBoardSvg } from '@/src/utils/io/storyMapSvgExport';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -177,10 +178,7 @@ const BoardCanvasScreen = () => {
     }
   }, [boardId, db, showNotification, storyId, t]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    void load();
-  }, [load]);
+  useEntityInitialLoad(load);
 
   const [prevStoryId, setPrevStoryId] = useState(storyId);
   const styles = useThemedStyles(createStyles);

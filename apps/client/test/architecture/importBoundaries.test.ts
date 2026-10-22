@@ -101,7 +101,7 @@ const ENTITY_DETAIL_SCREEN =
 const SHARED_REFRESH_LIFECYCLE_OWNERS = [
   'components/features/app/SyncInitializer.tsx',
   'hooks/lists/useDetailRecord.ts',
-  'hooks/lists/useStoryEntities.ts',
+  'hooks/lists/useLoadedResource.ts',
   'hooks/arcs/useAppearsInArcs.ts',
   'hooks/arcs/useEntityArcIds.ts',
   'hooks/entity/useCustomAttributeValues.ts',

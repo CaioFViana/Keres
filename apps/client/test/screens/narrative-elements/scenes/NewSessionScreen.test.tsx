@@ -8,6 +8,9 @@ const mockNotify = jest.fn();
 let mockCanEdit = true;
 let mockHeader: { title: string } | null = null;
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ replace: (...args: unknown[]) => mockReplace(...args) }),
@@ -27,7 +30,7 @@ jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,

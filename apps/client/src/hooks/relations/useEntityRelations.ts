@@ -24,6 +24,7 @@ import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 export interface UseEntityRelationsOptions {
   /** The entity these relations hang off, e.g. `'WorldRule'`. */
@@ -259,10 +260,7 @@ export function useEntityRelations({
     ]);
   }, [refreshAvailableTags, refreshSelectedTags, refreshNotes, refreshNoteRelations]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- the sub-refreshes clear synchronously only when services/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    refresh();
-  }, [refresh]);
+  useEntityInitialLoad(refresh);
 
   // Keep tags and note pickers current when they change elsewhere in the app.
   useEffect(() => {

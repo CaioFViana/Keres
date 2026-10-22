@@ -30,6 +30,8 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -92,10 +94,7 @@ const OperationLogDetailScreen: React.FC = () => {
     }
   }, [operationLogService, logId, t, userId]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchOperationLogDetails` resets loading/error synchronously for immediate feedback; the log itself arrives after `await`. The rule cannot verify across the callback boundary.
-    fetchOperationLogDetails();
-  }, [fetchOperationLogDetails]);
+  useEntityInitialLoad(fetchOperationLogDetails);
 
   // Without this, the Synchronization Status shown is only a snapshot of the moment the screen opened -
   // if the push/pull finishes synchronizing this operation seconds later (the common case, since
@@ -372,27 +371,18 @@ const ResolvedFieldValue: React.FC<{
 }> = ({ entityType, entityId, storyId, style }) => {
   const db = useDrizzle();
   const { t } = useTranslation();
-  const [name, setName] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronous loading feedback for the async `getEntityIdentifier` chain below; the name itself arrives in `.then`/`.finally`.
-    setLoading(true);
-    EntityService.getEntityIdentifier(db, entityType.toLowerCase(), entityId, storyId, t)
-      .then((resolved) => {
-        if (isMounted) setName(resolved);
-      })
-      .catch(() => {
-        if (isMounted) setName(undefined);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [db, entityType, entityId, storyId, t]);
+  const load = useMemo(
+    () => () =>
+      EntityService.getEntityIdentifier(db, entityType.toLowerCase(), entityId, storyId, t).catch(
+        () => undefined,
+      ),
+    [db, entityType, entityId, storyId, t],
+  );
+  const { data: name, loading } = useLoadedResource<string | undefined>({
+    load,
+    initial: undefined,
+    label: 'the entity name',
+  });
 
   return <Text style={style}>{loading ? '…' : name || entityId}</Text>;
 };

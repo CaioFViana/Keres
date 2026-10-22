@@ -9,11 +9,14 @@ const mockDeliverZipExport = jest.fn();
 const mockNotify = jest.fn();
 const mockNotificationState = { showNotification: (...args: unknown[]) => mockNotify(...args) };
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({

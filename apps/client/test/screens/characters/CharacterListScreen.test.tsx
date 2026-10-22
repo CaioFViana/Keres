@@ -146,7 +146,9 @@ jest.mock('@/src/components/features/relations/CharacterRelationRows', () => ({
     );
   },
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+// One database for every render, as the real context gives: a new one would be a new resource each time.
+const mockDb = {};
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,

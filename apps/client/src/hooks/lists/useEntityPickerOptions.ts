@@ -1,9 +1,11 @@
 import type { StorySchemaEntityType } from '@keres/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { EntityOption } from '@/src/services/entity-solvers/entityOptions';
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
-import { logger } from '@/src/utils/logging/logger';
+import { useLoadedResource } from './useLoadedResource';
+
+const NO_OPTIONS: EntityOption[] = [];
 
 /** Options for a picker whose target type is fixed by a Story Schema field. */
 export function useEntityPickerOptions(
@@ -11,30 +13,19 @@ export function useEntityPickerOptions(
   entityType: StorySchemaEntityType | null | undefined,
 ) {
   const db = useDrizzle();
-  const [options, setOptions] = useState<EntityOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const reload = useCallback(async () => {
-    if (!storyId || !entityType) {
-      setOptions([]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      setOptions(await loadEntityOptions(db, storyId, entityType));
-    } catch (error) {
-      logger.error(`Failed to load ${entityType} picker options:`, error);
-      setOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [db, storyId, entityType]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    reload();
-  }, [reload]);
+  const load = useMemo(
+    () => (storyId && entityType ? () => loadEntityOptions(db, storyId, entityType) : null),
+    [db, storyId, entityType],
+  );
+  const {
+    data: options,
+    loading,
+    reload,
+  } = useLoadedResource({
+    load,
+    initial: NO_OPTIONS,
+    label: `${entityType ?? 'entity'} picker options`,
+  });
 
   return { options, loading, reload };
 }

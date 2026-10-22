@@ -44,6 +44,7 @@ import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
@@ -278,10 +279,7 @@ const SuggestionsScreen = () => {
       loadValues();
     }, [loadGroups, loadValues]),
   );
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadValues` clears synchronously only when no story/type is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    loadValues();
-  }, [loadValues]);
+  useEntityInitialLoad(loadValues);
   const [prevSelectedType, setPrevSelectedType] = useState(selectedType);
   if (selectedType !== prevSelectedType) {
     setPrevSelectedType(selectedType);

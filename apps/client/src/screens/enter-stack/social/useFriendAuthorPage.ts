@@ -1,6 +1,7 @@
 import type { ShowcaseAuthorPage } from '@keres/shared';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import type { ServerSelect } from '@/src/db/schemas/servers';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { publicationApiService } from '@/src/services/api/PublicationApiService';
 
 /**
@@ -14,22 +15,15 @@ export function useFriendAuthorPage(
   username: string | null,
   refreshKey: unknown,
 ): ShowcaseAuthorPage | null {
-  const [page, setPage] = useState<ShowcaseAuthorPage | null>(null);
-
-  useEffect(() => {
-    if (!server || !username) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing what belongs to a friend who no longer applies.
-      setPage(null);
-      return undefined;
-    }
-    let cancelled = false;
-    void publicationApiService.getAuthorPage(server, username).then((found) => {
-      if (!cancelled) setPage(found);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [server, username, refreshKey]);
-
-  return page;
+  const load = useMemo(
+    () => (server && username ? () => publicationApiService.getAuthorPage(server, username) : null),
+    [server, username],
+  );
+  return useLoadedResource<ShowcaseAuthorPage | null>({
+    load,
+    initial: null,
+    refreshKey,
+    label: 'the friend author page',
+    quiet: true,
+  }).data;
 }

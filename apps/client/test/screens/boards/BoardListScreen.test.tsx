@@ -15,6 +15,9 @@ const mockUseScreenTour = jest.fn();
 let mockStoryId: string | undefined = 'story-1';
 let mockCanEdit = true;
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
   useRoute: () => ({ params: {} }),
@@ -117,7 +120,7 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler:
 jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
-jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockStableDb }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));

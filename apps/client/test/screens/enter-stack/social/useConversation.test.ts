@@ -17,6 +17,9 @@ const mockMarkSeen = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
 const mockFocus = { value: true };
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useIsFocused: () => mockFocus.value,
@@ -25,7 +28,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),

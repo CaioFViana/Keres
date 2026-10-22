@@ -5,14 +5,14 @@ import {
   WORLD_PIECE_SECTIONS,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { useDrizzle } from '@/src/db';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import * as schema from '@/src/db/schema';
 import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
-import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story's entities a media file can be linked to, ready for a picker.
@@ -53,104 +53,114 @@ export function decodeOwnerValue(
   return { ownerType, ownerId };
 }
 
+const NO_OPTIONS: GalleryOwnerOption[] = [];
+
 export function useGalleryOwnerOptions(storyId: string | undefined) {
   const db = useDrizzle();
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
-  const [options, setOptions] = useState<GalleryOwnerOption[]>([]);
-  const [loading, setLoading] = useState(false);
+  const load = useMemo(
+    () =>
+      storyId
+        ? async (): Promise<GalleryOwnerOption[]> => {
+            const [characters, locations, notes, scenes, items, worldRules, songs] =
+              await Promise.all([
+                db
+                  .select({ id: schema.characters.id, name: schema.characters.name })
+                  .from(schema.characters)
+                  .where(
+                    and(
+                      eq(schema.characters.storyId, storyId),
+                      eq(schema.characters.isDeleted, false),
+                    ),
+                  ),
+                db
+                  .select({ id: schema.locations.id, name: schema.locations.name })
+                  .from(schema.locations)
+                  .where(
+                    and(
+                      eq(schema.locations.storyId, storyId),
+                      eq(schema.locations.isDeleted, false),
+                    ),
+                  ),
+                // Notas usam `title` onde as outras usam `name`.
+                db
+                  .select({ id: schema.notes.id, name: schema.notes.title })
+                  .from(schema.notes)
+                  .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false))),
+                db
+                  .select({ id: schema.scenes.id, name: schema.scenes.name })
+                  .from(schema.scenes)
+                  .where(
+                    and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false)),
+                  ),
+                db
+                  .select({ id: schema.items.id, name: schema.items.name })
+                  .from(schema.items)
+                  .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
+                db
+                  .select({
+                    id: schema.worldRules.id,
+                    name: schema.worldRules.title,
+                    section: schema.worldRules.section,
+                  })
+                  .from(schema.worldRules)
+                  .where(
+                    and(
+                      eq(schema.worldRules.storyId, storyId),
+                      eq(schema.worldRules.isDeleted, false),
+                    ),
+                  ),
+                db
+                  .select({ id: schema.songs.id, name: schema.songs.title })
+                  .from(schema.songs)
+                  .where(and(eq(schema.songs.storyId, storyId), eq(schema.songs.isDeleted, false))),
+              ]);
 
-  const load = useCallback(async () => {
-    if (!storyId) {
-      setOptions([]);
-      return;
-    }
+            const byType: Record<
+              GalleryOwnerEntity,
+              { id: string; name: string | null; section?: WorldPieceSection }[]
+            > = {
+              Character: characters,
+              Location: locations,
+              Note: notes,
+              Scene: scenes,
+              Item: items,
+              WorldRule: worldRules,
+              Song: songs,
+            };
 
-    setLoading(true);
-    try {
-      const [characters, locations, notes, scenes, items, worldRules, songs] = await Promise.all([
-        db
-          .select({ id: schema.characters.id, name: schema.characters.name })
-          .from(schema.characters)
-          .where(
-            and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
-          ),
-        db
-          .select({ id: schema.locations.id, name: schema.locations.name })
-          .from(schema.locations)
-          .where(and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false))),
-        // Notas usam `title` onde as outras usam `name`.
-        db
-          .select({ id: schema.notes.id, name: schema.notes.title })
-          .from(schema.notes)
-          .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false))),
-        db
-          .select({ id: schema.scenes.id, name: schema.scenes.name })
-          .from(schema.scenes)
-          .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false))),
-        db
-          .select({ id: schema.items.id, name: schema.items.name })
-          .from(schema.items)
-          .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
-        db
-          .select({
-            id: schema.worldRules.id,
-            name: schema.worldRules.title,
-            section: schema.worldRules.section,
-          })
-          .from(schema.worldRules)
-          .where(
-            and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
-          ),
-        db
-          .select({ id: schema.songs.id, name: schema.songs.title })
-          .from(schema.songs)
-          .where(and(eq(schema.songs.storyId, storyId), eq(schema.songs.isDeleted, false))),
-      ]);
+            const collected: GalleryOwnerOption[] = [];
+            for (const ownerType of GALLERY_OWNER_ENTITIES) {
+              for (const row of byType[ownerType]) {
+                const name = row.name || t('unnamed');
+                collected.push({
+                  // The type goes into the label because the flat list mixes entity types: without it, two identical names
+                  // on different entities would be indistinguishable.
+                  label: `${label(ownerType)}: ${name}`,
+                  name,
+                  value: encodeOwnerValue(ownerType, row.id),
+                  ownerId: row.id,
+                  ownerType,
+                  worldPieceSection: ownerType === 'WorldRule' ? row.section : undefined,
+                });
+              }
+            }
 
-      const byType: Record<
-        GalleryOwnerEntity,
-        { id: string; name: string | null; section?: WorldPieceSection }[]
-      > = {
-        Character: characters,
-        Location: locations,
-        Note: notes,
-        Scene: scenes,
-        Item: items,
-        WorldRule: worldRules,
-        Song: songs,
-      };
-
-      const collected: GalleryOwnerOption[] = [];
-      for (const ownerType of GALLERY_OWNER_ENTITIES) {
-        for (const row of byType[ownerType]) {
-          const name = row.name || t('unnamed');
-          collected.push({
-            // The type goes into the label because the flat list mixes entity types: without it, two identical names
-            // on different entities would be indistinguishable.
-            label: `${label(ownerType)}: ${name}`,
-            name,
-            value: encodeOwnerValue(ownerType, row.id),
-            ownerId: row.id,
-            ownerType,
-            worldPieceSection: ownerType === 'WorldRule' ? row.section : undefined,
-          });
-        }
-      }
-
-      setOptions(collected);
-    } catch (error) {
-      logger.error('Failed to load gallery owner options:', error);
-      setOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [db, label, storyId, t]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` clears synchronously only when no story is selected (and sets loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
-    load();
-  }, [load]);
+            return collected;
+          }
+        : null,
+    [db, label, storyId, t],
+  );
+  const {
+    data: options,
+    loading,
+    reload,
+  } = useLoadedResource({
+    load,
+    initial: NO_OPTIONS,
+    label: 'gallery owner options',
+  });
 
   const optionsByValue = useMemo(
     () => new Map(options.map((option) => [option.value, option])),
@@ -190,5 +200,5 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
     return [...standardGroups, ...worldPieceGroups].filter((group) => group.options.length > 0);
   }, [label, options, t]);
 
-  return { options, optionsByValue, groupedOptions, loading, reload: load };
+  return { options, optionsByValue, groupedOptions, loading, reload };
 }

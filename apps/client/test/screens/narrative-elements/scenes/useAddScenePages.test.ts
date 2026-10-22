@@ -8,11 +8,14 @@ const mockGalleryService = {};
 const mockT = (key: string) => key;
 const mockTranslation = { t: mockT };
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockTranslation,
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/services/storymanagement/media-music/SketchService', () => ({
   __esModule: true,
   createSketchService: () => ({ createSketch: mockCreateSketch }),

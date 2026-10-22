@@ -33,6 +33,9 @@ let mockUseSceneBodyDraftOptions: {
   persist: (body: string | null) => Promise<void>;
 } | null = null;
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => {
   const route = { params: { sceneId: 'scene-1' } };
   let navigation: { navigate: (...args: never[]) => void; goBack: () => void } | null = null;
@@ -160,7 +163,7 @@ jest.mock('@/src/screens/narrative-elements/scenes/useSceneBodyDraft', () => ({
 
 jest.mock('@/src/db', () => ({
   __esModule: true,
-  useDrizzle: () => ({}),
+  useDrizzle: () => mockStableDb,
 }));
 
 jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({

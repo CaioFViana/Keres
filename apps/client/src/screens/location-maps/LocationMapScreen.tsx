@@ -54,6 +54,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { removeLocationMapPoint } from '@/src/utils/location-map/locationMapContent';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -168,10 +169,7 @@ const LocationMapScreen = () => {
       setLoading(false);
     }
   }, [db, mapId, showNotification, storyId, t]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    void load();
-  }, [load]);
+  useEntityInitialLoad(load);
   useEffect(() => {
     if (!storyId || !map || map.id !== mapId) return;
     useLocationMapDraftStore.getState().remember({

@@ -51,6 +51,8 @@ it('loads an owner media list and unlinks only the selected media', async () => 
   const { result } = await renderHook(() => useEntityGalleryMedia('character', 'Character'));
   await waitFor(() => expect(result.current.media).toEqual([{ id: 'media-1' }]));
 
+  // Once unlinked, the owner's media no longer include it when read again.
+  gallery.getGalleriesForOwner.mockResolvedValue([]);
   await act(async () => result.current.removeMedia('media-1'));
   expect(relation.unlinkGalleryFromOwner).toHaveBeenCalledWith('user', 'story', 'media-1', {
     ownerId: 'character',

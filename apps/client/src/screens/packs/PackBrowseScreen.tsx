@@ -24,6 +24,7 @@ import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /**
  * Packs shared on a server.
@@ -75,10 +76,7 @@ const PackBrowseScreen = () => {
     }
   }, [server, showNotification, t]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadRemote` sets loading synchronously for immediate feedback; the pack list itself arrives after `await`. The rule cannot verify across the callback boundary.
-    loadRemote();
-  }, [loadRemote]);
+  useEntityInitialLoad(loadRemote);
 
   const download = useCallback(
     async (pack: RemotePack) => {

@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import type { EntityEventName } from '@/src/state/events/entityEvents';
-import { logger } from '@/src/utils/logging/logger';
-import { useEntityEventSubscriptions, useEntityInitialLoad } from './useEntityRefreshLifecycle';
+import { useLoadedResource } from './useLoadedResource';
 
 const NO_ENTITIES: never[] = [];
 
@@ -24,57 +23,37 @@ interface StoryEntitiesOptions<T> {
 }
 
 /**
- * A read-only list of every row of a kind in one story, kept fresh by entity events.
+ * A read-only list of every row of a kind in one story, kept fresh by entity events (see
+ * `useLoadedResource` for how reads are guarded). Rows of another story are never returned, even
+ * for the render between a story change and the first read.
  *
- * A reload that answers after a newer one (or after the story changed, or the screen left) is
- * dropped, so a slow read can never overwrite fresher rows. A failed read keeps the last rows and
- * is logged. Rows of another story are never returned, even for the render between a story change
- * and the first read.
+ * Besides the rows it says whether the first read failed (`failed`: "could not read" is not
+ * "empty") and hands out `reload` for the screens that change the list themselves.
  */
-export function useStoryEntities<T>({
+export function useStoryList<T>({
   storyId,
   load,
   events,
   label,
   entityId,
   enabled = true,
-}: StoryEntitiesOptions<T>): T[] {
-  const [loaded, setLoaded] = useState<{ storyId: string; rows: T[] } | null>(null);
-  const generation = useRef(0);
-
-  const reload = useCallback(async () => {
-    if (!storyId || !enabled) return;
-    const current = ++generation.current;
-    try {
-      const rows = await load(storyId);
-      if (current === generation.current) setLoaded({ storyId, rows });
-    } catch (error) {
-      logger.error(`Failed to fetch ${label}:`, error);
-    }
-  }, [storyId, enabled, load, label]);
-
-  useEntityInitialLoad(reload);
-  // Whatever is still in flight when the read changes or the screen leaves no longer counts.
-  useEffect(
-    () => () => {
-      generation.current += 1;
-    },
-    [reload],
+}: StoryEntitiesOptions<T>) {
+  const read = useMemo(
+    () => (storyId && enabled ? () => load(storyId) : null),
+    [storyId, enabled, load],
   );
+  const { data, loading, failed, reload } = useLoadedResource<T[]>({
+    load: read,
+    initial: NO_ENTITIES,
+    events,
+    storyId,
+    entityId,
+    label,
+  });
+  return { items: data, loading, failed, reload };
+}
 
-  const subscriptions = useMemo(
-    () =>
-      events.map((event) => ({
-        event,
-        listener: (changedStoryId: string, changedEntityId?: string) => {
-          const mine =
-            changedStoryId === storyId && (entityId === undefined || changedEntityId === entityId);
-          if (mine) void reload();
-        },
-      })),
-    [events, storyId, entityId, reload],
-  );
-  useEntityEventSubscriptions(subscriptions);
-
-  return enabled && loaded && loaded.storyId === storyId ? loaded.rows : NO_ENTITIES;
+/** The rows of `useStoryList`, for the callers that need nothing else. */
+export function useStoryEntities<T>(options: StoryEntitiesOptions<T>): T[] {
+  return useStoryList(options).items;
 }

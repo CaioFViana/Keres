@@ -1,7 +1,7 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -21,6 +21,7 @@ import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOptions';
 import type { CharacterWithTags } from '@/src/services/storymanagement/entities/CharacterService';
 import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
@@ -29,9 +30,14 @@ import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
 import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+
+const RELATION_EVENTS = ['character_relation_changed'] as const;
+const NO_RELATION_DATA: {
+  relations: CharacterRelation[];
+  allCharacters: CharacterSelect[];
+} = { relations: [], allCharacters: [] };
 
 const CharactersScreen = () => {
   useBackButtonHandler();
@@ -74,39 +80,31 @@ const CharactersScreen = () => {
     findMatching,
   });
 
-  const [relations, setRelations] = useState<CharacterRelation[]>([]);
-  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
   const { canEdit } = useStoryRole(storyId);
   const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
-  // Styles are always defined at the top
-
-  const fetchRelations = useCallback(async () => {
-    if (!storyId) {
-      setRelations([]);
-      setAllCharacters([]);
-      return;
-    }
-    const [loadedRelations, loadedCharacters] = await Promise.all([
-      createCharacterRelationService(drizzleDb).getCharacterRelationsByStoryId(storyId),
-      createCharacterService(drizzleDb).getAllByStoryId(storyId),
-    ]);
-    setRelations(loadedRelations);
-    setAllCharacters(loadedCharacters);
-  }, [drizzleDb, storyId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchRelations` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchRelations();
-  }, [fetchRelations]);
-
-  useEffect(() => {
-    const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchRelations();
-    };
-    entityEventEmitter.on('character_relation_changed', refresh);
-    return () => entityEventEmitter.off('character_relation_changed', refresh);
-  }, [fetchRelations, storyId]);
+  const loadRelations = useMemo(
+    () =>
+      storyId
+        ? async () => {
+            const [relations, allCharacters] = await Promise.all([
+              createCharacterRelationService(drizzleDb).getCharacterRelationsByStoryId(storyId),
+              createCharacterService(drizzleDb).getAllByStoryId(storyId),
+            ]);
+            return { relations, allCharacters };
+          }
+        : null,
+    [drizzleDb, storyId],
+  );
+  const {
+    data: { relations, allCharacters },
+  } = useLoadedResource({
+    load: loadRelations,
+    initial: NO_RELATION_DATA,
+    events: RELATION_EVENTS,
+    storyId,
+    label: 'character relations',
+  });
 
   useScreenHeader({
     target: 'parent',

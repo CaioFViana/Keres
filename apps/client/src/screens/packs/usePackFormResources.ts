@@ -12,6 +12,7 @@ import {
 } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /** Owns pack/story services and the source-story lookup list. */
 export function usePackFormResources(userId?: string | null) {
@@ -29,20 +30,23 @@ export function usePackFormResources(userId?: string | null) {
   }, [drizzleDb]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        if (!storyServiceRef.current) {
-          storyServiceRef.current = createStoryService(drizzleDb);
+    fireAndLog(
+      (async () => {
+        try {
+          if (!storyServiceRef.current) {
+            storyServiceRef.current = createStoryService(drizzleDb);
+          }
+          const list = await storyServiceRef.current.getAllStories(userId ?? undefined);
+          setStories(list);
+        } catch (error) {
+          logger.error('PackFormScreen: failed to load.', error);
+          showNotification(t('packs_load_failed'), 'error');
+        } finally {
+          setStoriesLoading(false);
         }
-        const list = await storyServiceRef.current.getAllStories(userId ?? undefined);
-        setStories(list);
-      } catch (error) {
-        logger.error('PackFormScreen: failed to load.', error);
-        showNotification(t('packs_load_failed'), 'error');
-      } finally {
-        setStoriesLoading(false);
-      }
-    })();
+      })(),
+      'usePackFormResources',
+    );
   }, [drizzleDb, userId, showNotification, t]);
 
   return {

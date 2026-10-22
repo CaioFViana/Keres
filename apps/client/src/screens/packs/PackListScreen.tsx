@@ -34,6 +34,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -77,7 +78,7 @@ const PackListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      fireAndLog(load(), 'load');
       createServerService(drizzleDb)
         .getAllServers()
         .then(setServers)

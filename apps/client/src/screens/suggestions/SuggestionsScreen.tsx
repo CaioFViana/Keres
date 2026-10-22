@@ -45,6 +45,7 @@ import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
@@ -275,8 +276,8 @@ const SuggestionsScreen = () => {
   });
   useFocusEffect(
     useCallback(() => {
-      loadGroups();
-      loadValues();
+      fireAndLog(loadGroups(), 'loadGroups');
+      fireAndLog(loadValues(), 'loadValues');
     }, [loadGroups, loadValues]),
   );
   useEntityInitialLoad(loadValues);
@@ -288,7 +289,7 @@ const SuggestionsScreen = () => {
   }
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadValues();
+      if (changedStoryId === storyId) fireAndLog(loadValues(), 'loadValues');
     };
     entityEventEmitter.on('suggestion_changed', refresh);
     SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.on(event, refresh));

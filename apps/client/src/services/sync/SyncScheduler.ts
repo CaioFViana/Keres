@@ -133,7 +133,7 @@ export class SyncScheduler {
     this.arm = (delayMs) => {
       if (this.timer) clearTimeout(this.timer);
       this.timerDueAt = Date.now() + delayMs;
-      this.timer = setTimeout(runCycle, delayMs);
+      this.timer = setTimeout(() => void runCycle(), delayMs);
     };
 
     void runCycle();

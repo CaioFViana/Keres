@@ -32,6 +32,7 @@ import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 import { logger } from '@/src/utils/logging/logger';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -104,7 +105,7 @@ const OperationLogDetailScreen: React.FC = () => {
   useEffect(() => {
     const handleOperationLogUpdated = (updatedStoryId: string) => {
       if (!operationLog || operationLog.storyId === updatedStoryId) {
-        fetchOperationLogDetails();
+        fireAndLog(fetchOperationLogDetails(), 'fetchOperationLogDetails');
       }
     };
     entityEventEmitter.on('operation_log_updated', handleOperationLogUpdated);

@@ -7,6 +7,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export interface SeeAlsoLink {
   relationId: string;
@@ -106,7 +107,7 @@ export function useSeeAlsoRelations(
   useEffect(() => {
     const handleChange = (changedStoryId: string, changedEntityId?: string) => {
       if (changedStoryId === storyId && (!changedEntityId || changedEntityId === entityId)) {
-        refresh();
+        fireAndLog(refresh(), 'refresh');
       }
     };
     entityEventEmitter.on('see_also_relation_changed', handleChange);

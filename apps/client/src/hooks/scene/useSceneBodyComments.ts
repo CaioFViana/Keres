@@ -8,6 +8,7 @@ import type {
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useCommentSurface } from '@/src/hooks/comments/useCommentSurface';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * Body comments for every scene on a reading surface (the manuscript), fetched with
@@ -48,7 +49,7 @@ export function useSceneBodyComments(storyId: string | undefined, sceneIds: stri
 
   useEffect(() => {
     const handleChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) refresh();
+      if (changedStoryId === storyId) fireAndLog(refresh(), 'refresh');
     };
     entityEventEmitter.on('comment_changed', handleChange);
     return () => {

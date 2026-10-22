@@ -29,6 +29,7 @@ import StorySelectionStack, {
 } from './stacks/StorySelectionStack';
 import { attachWebHistoryBack, hasScreenBehind } from './links/webHistoryBack';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
@@ -156,7 +157,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
       }
     };
 
-    checkColdInstall();
+    fireAndLog(checkColdInstall(), 'checkColdInstall');
   }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb, showcase]);
 
   if (isLoading) {

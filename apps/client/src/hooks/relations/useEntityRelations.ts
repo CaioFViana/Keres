@@ -25,6 +25,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export interface UseEntityRelationsOptions {
   /** The entity these relations hang off, e.g. `'WorldRule'`. */
@@ -266,12 +267,12 @@ export function useEntityRelations({
   useEffect(() => {
     const handleNoteChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) {
-        refreshNotes();
+        fireAndLog(refreshNotes(), 'refreshNotes');
       }
     };
     const handleNoteRelationChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) {
-        refreshNoteRelations();
+        fireAndLog(refreshNoteRelations(), 'refreshNoteRelations');
       }
     };
     const handleTagRelationChange = (changedStoryId: string, changedEntityId?: string) => {
@@ -280,12 +281,12 @@ export function useEntityRelations({
         changedStoryId === storyId &&
         (!changedEntityId || changedEntityId === hydrationEntityId)
       ) {
-        refreshSelectedTags();
+        fireAndLog(refreshSelectedTags(), 'refreshSelectedTags');
       }
     };
     const handleTagChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) {
-        refreshAvailableTags();
+        fireAndLog(refreshAvailableTags(), 'refreshAvailableTags');
       }
     };
 

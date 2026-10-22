@@ -58,6 +58,7 @@ import { isServerless } from '@/src/utils/platform/clientFlavor';
 import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
 import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   SettingsStackParamList,
@@ -122,40 +123,43 @@ const SettingsScreen = () => {
   const handleLanguageChange = (newLanguage: string | null) => {
     // If newLanguage is null, default to 'en' or keep current language
     const languageToSet = newLanguage || 'en'; // Assuming 'en' as a sensible default
-    setLanguage(drizzleClient, languageToSet);
-    i18n.changeLanguage(languageToSet);
+    fireAndLog(setLanguage(drizzleClient, languageToSet), 'setLanguage');
+    fireAndLog(i18n.changeLanguage(languageToSet), 'changeLanguage');
   };
 
   const handleDarkModeToggle = (value: boolean) => {
-    setDarkMode(drizzleClient, value);
+    fireAndLog(setDarkMode(drizzleClient, value), 'setDarkMode');
   };
 
   const handleTimeFormatToggle = (value: boolean) => {
-    setUse24HourTime(drizzleClient, value);
+    fireAndLog(setUse24HourTime(drizzleClient, value), 'setUse24HourTime');
   };
 
   const handleDateDisplayFormatChange = (value: string | null) => {
     if (value === 'iso' || value === 'dmy' || value === 'mdy') {
-      setDateDisplayFormat(drizzleClient, value as GregorianDateDisplayFormat);
+      fireAndLog(
+        setDateDisplayFormat(drizzleClient, value as GregorianDateDisplayFormat),
+        'setDateDisplayFormat',
+      );
     }
   };
 
   const handleExportFormatChange = (value: string | null) => {
     if (value === 'svg' || value === 'png') {
-      setExportFormat(drizzleClient, value as MapExportFormat);
+      fireAndLog(setExportFormat(drizzleClient, value as MapExportFormat), 'setExportFormat');
     }
   };
 
   const handleContextualHelpToggle = (value: boolean) => {
-    setShowContextualHelp(drizzleClient, value);
+    fireAndLog(setShowContextualHelp(drizzleClient, value), 'setShowContextualHelp');
   };
 
   const handleShowTutorialsToggle = (value: boolean) => {
-    setShowTutorials(drizzleClient, value);
+    fireAndLog(setShowTutorials(drizzleClient, value), 'setShowTutorials');
   };
 
   const handleWarnPaymentDueToggle = (value: boolean) => {
-    setWarnPaymentDue(drizzleClient, value);
+    fireAndLog(setWarnPaymentDue(drizzleClient, value), 'setWarnPaymentDue');
   };
 
   // The downloadable CJK serif for PDF exports: app-private fonts dir on
@@ -163,7 +167,10 @@ const SettingsScreen = () => {
   // export flow.
   const [cjkPack, setCjkPack] = useState<'missing' | 'ready' | 'working'>('missing');
   useEffect(() => {
-    cjkPackState().then((state) => setCjkPack(state));
+    fireAndLog(
+      cjkPackState().then((state) => setCjkPack(state)),
+      'cjkPackState',
+    );
   }, []);
 
   const handleCjkInstall = async () => {
@@ -210,7 +217,7 @@ const SettingsScreen = () => {
   const setMusicTools = useMusicToolsStore((state) => state.setEnabled);
 
   const handleLiteraryDevicesToggle = (value: boolean) => {
-    setSuggestLiteraryDevices(drizzleClient, value);
+    fireAndLog(setSuggestLiteraryDevices(drizzleClient, value), 'setSuggestLiteraryDevices');
   };
 
   const handleResetApplication = () => {

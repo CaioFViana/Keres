@@ -6,7 +6,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 type UseFormResetHeaderActionOptions = {
   isEditing: boolean;
   isDirty: boolean;
-  resetForm: () => void;
+  resetForm: () => void | Promise<void>;
 };
 
 /**
@@ -32,7 +32,7 @@ export function useFormResetHeaderAction({
             t(isEditing ? 'form_reset_edit_message' : 'form_reset_create_message'),
             [
               { text: t('cancel'), style: 'cancel' },
-              { text: t('reset'), style: 'destructive', onPress: () => void resetForm() },
+              { text: t('reset'), style: 'destructive', onPress: resetForm },
             ],
           );
         },

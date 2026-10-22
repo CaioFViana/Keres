@@ -32,6 +32,7 @@ import { typography } from '@/src/theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const BIO_MAX_LENGTH = 200;
 
@@ -67,39 +68,42 @@ const MyProfileScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedServer = await createServerService(drizzleDb).getServerById(serverId);
-        if (!fetchedServer) {
-          if (!cancelled) setError(t('server_not_found'));
-          return;
-        }
-        if (cancelled) return;
-        setServer(fetchedServer);
+    fireAndLog(
+      (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const fetchedServer = await createServerService(drizzleDb).getServerById(serverId);
+          if (!fetchedServer) {
+            if (!cancelled) setError(t('server_not_found'));
+            return;
+          }
+          if (cancelled) return;
+          setServer(fetchedServer);
 
-        const profile = await userApiService.getOwnProfile(fetchedServer);
-        if (cancelled) return;
-        if (profile) {
-          setAvatarColor(profile.avatarColor);
-          setAvatarIcon(profile.avatarIcon);
-          setBio(profile.bio || '');
-        }
+          const profile = await userApiService.getOwnProfile(fetchedServer);
+          if (cancelled) return;
+          if (profile) {
+            setAvatarColor(profile.avatarColor);
+            setAvatarIcon(profile.avatarIcon);
+            setBio(profile.bio || '');
+          }
 
-        const loaded = await userApiService.getPreferences(fetchedServer);
-        if (cancelled) return;
-        setPreferences(loaded);
-        setShowNsfw(loaded?.showNsfw ?? false);
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Failed to load profile:', err);
-          setError(isOfflineError(err) ? t('server_unreachable') : t('failed_to_load_profile'));
+          const loaded = await userApiService.getPreferences(fetchedServer);
+          if (cancelled) return;
+          setPreferences(loaded);
+          setShowNsfw(loaded?.showNsfw ?? false);
+        } catch (err) {
+          if (!cancelled) {
+            logger.error('Failed to load profile:', err);
+            setError(isOfflineError(err) ? t('server_unreachable') : t('failed_to_load_profile'));
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+      })(),
+      'MyProfileScreen',
+    );
     return () => {
       cancelled = true;
     };

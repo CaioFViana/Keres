@@ -4,6 +4,7 @@ import { useDrizzle } from '@/src/db';
 import { servers, stories } from '@/src/db/schema';
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /** Resolves author profiles for a story's comments, using that story's server when needed. */
 export function useAuthorProfiles(
@@ -33,22 +34,25 @@ export function useAuthorProfiles(
       return;
     }
     let cancelled = false;
-    (async () => {
-      const story = await db.query.stories.findFirst({
-        where: eq(stories.id, storyId),
-        columns: { serverId: true },
-      });
-      const storyServer = story?.serverId
-        ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
-        : undefined;
-      const uniqueIds = idsKey ? idsKey.split(',') : [];
-      const resolved = await Promise.all(
-        uniqueIds.map((userId) => resolveProfile(userId, storyServer)),
-      );
-      if (!cancelled) {
-        setProfiles(Object.fromEntries(resolved.map((profile) => [profile.id, profile])));
-      }
-    })();
+    fireAndLog(
+      (async () => {
+        const story = await db.query.stories.findFirst({
+          where: eq(stories.id, storyId),
+          columns: { serverId: true },
+        });
+        const storyServer = story?.serverId
+          ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
+          : undefined;
+        const uniqueIds = idsKey ? idsKey.split(',') : [];
+        const resolved = await Promise.all(
+          uniqueIds.map((userId) => resolveProfile(userId, storyServer)),
+        );
+        if (!cancelled) {
+          setProfiles(Object.fromEntries(resolved.map((profile) => [profile.id, profile])));
+        }
+      })(),
+      'useAuthorProfiles',
+    );
     return () => {
       cancelled = true;
     };

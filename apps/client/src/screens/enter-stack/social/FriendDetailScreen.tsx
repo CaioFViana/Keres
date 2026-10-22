@@ -182,7 +182,7 @@ const FriendDetailScreen = () => {
   useEntityInitialLoad(load);
 
   useEffect(() => {
-    const unsubscribeFocus = navigation.addListener('focus', load);
+    const unsubscribeFocus = navigation.addListener('focus', () => void load());
     entityEventEmitter.on('friendship_changed', load);
     return () => {
       unsubscribeFocus();

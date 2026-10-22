@@ -52,6 +52,7 @@ import { buildStandaloneBoardSvg } from '@/src/utils/io/storyMapSvgExport';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { logger } from '@/src/utils/logging/logger';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -194,20 +195,23 @@ const BoardCanvasScreen = () => {
       return;
     }
     let cancelled = false;
-    (async () => {
-      const rows = await createGalleryService(db).getGalleriesByStoryId(storyId);
-      if (cancelled) return;
-      const next: Record<string, BoardGalleryMedia> = {};
-      for (const row of rows) {
-        next[row.id] = {
-          mediaType: row.mediaType,
-          mimeType: row.mimeType,
-          localPath: row.localPath,
-          thumbnailPath: row.thumbnailPath ?? null,
-        };
-      }
-      setGalleryMediaById(next);
-    })();
+    fireAndLog(
+      (async () => {
+        const rows = await createGalleryService(db).getGalleriesByStoryId(storyId);
+        if (cancelled) return;
+        const next: Record<string, BoardGalleryMedia> = {};
+        for (const row of rows) {
+          next[row.id] = {
+            mediaType: row.mediaType,
+            mimeType: row.mimeType,
+            localPath: row.localPath,
+            thumbnailPath: row.thumbnailPath ?? null,
+          };
+        }
+        setGalleryMediaById(next);
+      })(),
+      'BoardCanvasScreen',
+    );
     return () => {
       cancelled = true;
     };
@@ -224,14 +228,17 @@ const BoardCanvasScreen = () => {
   useEffect(() => {
     let cancelled = false;
     if (!selected || selected.kind !== 'entity') return;
-    (async () => {
-      const summary = await loadBoardEntitySummary(
-        db,
-        selected.entityType as BoardPinEntity,
-        selected.entityId,
-      );
-      if (!cancelled) setSelectedSummary(summary);
-    })();
+    fireAndLog(
+      (async () => {
+        const summary = await loadBoardEntitySummary(
+          db,
+          selected.entityType as BoardPinEntity,
+          selected.entityId,
+        );
+        if (!cancelled) setSelectedSummary(summary);
+      })(),
+      'BoardCanvasScreen',
+    );
     return () => {
       cancelled = true;
     };

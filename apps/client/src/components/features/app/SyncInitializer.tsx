@@ -28,6 +28,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface SyncInitializerProps {
   children: React.ReactNode;
@@ -187,7 +188,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
                 storyPreview.role,
               );
               logger.debug(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
-              fetchStoryList(storyService); // Refresh the story list after import
+              fireAndLog(fetchStoryList(storyService), 'fetchStoryList'); // Refresh the story list after import
             } catch (downloadError) {
               if (isOfflineError(downloadError)) {
                 logger.debug(

@@ -5,7 +5,7 @@ type UseEntityFormHeaderOptions = {
   title: string;
   isEditing: boolean;
   isDirty: boolean;
-  resetForm: () => void;
+  resetForm: () => void | Promise<void>;
 };
 
 /**

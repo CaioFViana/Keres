@@ -5,6 +5,7 @@ import {
   resolveBlobUri,
 } from '@/src/services/platform-web/webMediaStore';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const uniqueOf = (paths: (string | null | undefined)[]) => [
   ...new Set(paths.filter((path): path is string => Boolean(path))),
@@ -39,24 +40,27 @@ export function useResolvedMediaUris(
       return;
     }
     let cancelled = false;
-    (async () => {
-      const next: Record<string, string | null> = {};
-      await Promise.all(
-        uniquePaths.map(async (path) => {
-          if (Platform.OS !== 'web' || !path.startsWith(DESKTOP_MEDIA_URI_PREFIX)) {
-            next[path] = path;
-            return;
-          }
-          try {
-            next[path] = await resolveBlobUri(path);
-          } catch (error) {
-            logger.warn('useResolvedMediaUris: failed to resolve', path, error);
-            next[path] = null;
-          }
-        }),
-      );
-      if (!cancelled) setResolved(next);
-    })();
+    fireAndLog(
+      (async () => {
+        const next: Record<string, string | null> = {};
+        await Promise.all(
+          uniquePaths.map(async (path) => {
+            if (Platform.OS !== 'web' || !path.startsWith(DESKTOP_MEDIA_URI_PREFIX)) {
+              next[path] = path;
+              return;
+            }
+            try {
+              next[path] = await resolveBlobUri(path);
+            } catch (error) {
+              logger.warn('useResolvedMediaUris: failed to resolve', path, error);
+              next[path] = null;
+            }
+          }),
+        );
+        if (!cancelled) setResolved(next);
+      })(),
+      'useResolvedMediaUris',
+    );
     return () => {
       cancelled = true;
     };

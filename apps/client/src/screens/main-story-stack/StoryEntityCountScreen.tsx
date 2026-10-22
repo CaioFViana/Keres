@@ -23,6 +23,7 @@ import { ENTITY_COUNT_LABEL_KEYS } from '@/src/utils/entity/entityCountLabels';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * How many entities the story has, by type, and - for a story on a server - against the owner's plan.
@@ -81,7 +82,7 @@ const StoryEntityCountScreen = () => {
   // Reloaded on every focus: the person comes here after writing, to see what it came to.
   useFocusEffect(
     useCallback(() => {
-      load();
+      fireAndLog(load(), 'load');
     }, [load]),
   );
 

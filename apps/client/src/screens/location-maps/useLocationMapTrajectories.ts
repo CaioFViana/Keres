@@ -22,6 +22,7 @@ import { createItemJourneyService } from '@/src/services/storymanagement/entitie
 import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
 import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface UseLocationMapTrajectoriesOptions {
   storyId: string | undefined;
@@ -56,43 +57,46 @@ export function useLocationMapTrajectories({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      if (!storyId) return;
-      const routeService = createRouteService(db);
-      const [
-        loadedScenes,
-        loadedChapters,
-        loadedAppearances,
-        loadedItems,
-        loadedJourneys,
-        loadedCharacters,
-        loadedRoutes,
-      ] = await Promise.all([
-        createSceneService(db).getAllByStoryId(storyId),
-        createChapterService(db).getAllByStoryId(storyId),
-        createCharacterSceneService(db).getRelationsByStoryId(storyId),
-        createItemService(db).getAllByStoryId(storyId),
-        createItemJourneyService(db).getAllByStoryId(storyId),
-        createCharacterService(db).getAllByStoryId(storyId),
-        storyType === 'branching' ? routeService.getAllByStoryId(storyId) : Promise.resolve([]),
-      ]);
-      const loadedSteps: Record<string, RouteStepSelect[]> = {};
-      for (const route of loadedRoutes) {
-        if (route.isDeleted) continue;
-        loadedSteps[route.id] = (await routeService.getSteps(route.id)).filter(
-          (step) => !step.isDeleted,
-        );
-      }
-      if (cancelled) return;
-      setScenes(loadedScenes.filter((scene) => !scene.isDeleted));
-      setChapters(loadedChapters.filter((chapter) => !chapter.isDeleted));
-      setAppearances(loadedAppearances.filter((appearance) => !appearance.isDeleted));
-      setItems(loadedItems.filter((item) => !item.isDeleted));
-      setJourneys(loadedJourneys.filter((journey) => !journey.isDeleted));
-      setCharacters(loadedCharacters.filter((character) => !character.isDeleted));
-      setRoutes(loadedRoutes.filter((route) => !route.isDeleted));
-      setStepsByRoute(loadedSteps);
-    })();
+    fireAndLog(
+      (async () => {
+        if (!storyId) return;
+        const routeService = createRouteService(db);
+        const [
+          loadedScenes,
+          loadedChapters,
+          loadedAppearances,
+          loadedItems,
+          loadedJourneys,
+          loadedCharacters,
+          loadedRoutes,
+        ] = await Promise.all([
+          createSceneService(db).getAllByStoryId(storyId),
+          createChapterService(db).getAllByStoryId(storyId),
+          createCharacterSceneService(db).getRelationsByStoryId(storyId),
+          createItemService(db).getAllByStoryId(storyId),
+          createItemJourneyService(db).getAllByStoryId(storyId),
+          createCharacterService(db).getAllByStoryId(storyId),
+          storyType === 'branching' ? routeService.getAllByStoryId(storyId) : Promise.resolve([]),
+        ]);
+        const loadedSteps: Record<string, RouteStepSelect[]> = {};
+        for (const route of loadedRoutes) {
+          if (route.isDeleted) continue;
+          loadedSteps[route.id] = (await routeService.getSteps(route.id)).filter(
+            (step) => !step.isDeleted,
+          );
+        }
+        if (cancelled) return;
+        setScenes(loadedScenes.filter((scene) => !scene.isDeleted));
+        setChapters(loadedChapters.filter((chapter) => !chapter.isDeleted));
+        setAppearances(loadedAppearances.filter((appearance) => !appearance.isDeleted));
+        setItems(loadedItems.filter((item) => !item.isDeleted));
+        setJourneys(loadedJourneys.filter((journey) => !journey.isDeleted));
+        setCharacters(loadedCharacters.filter((character) => !character.isDeleted));
+        setRoutes(loadedRoutes.filter((route) => !route.isDeleted));
+        setStepsByRoute(loadedSteps);
+      })(),
+      'useLocationMapTrajectories',
+    );
     return () => {
       cancelled = true;
     };

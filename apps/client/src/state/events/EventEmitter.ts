@@ -1,6 +1,10 @@
+import { logger } from '@/src/utils/logging/logger';
 import type { EntityEventName, EntityEventPayloads } from './entityEvents';
 
-type Listener<E extends EntityEventName> = (...args: EntityEventPayloads[E]) => void;
+/** A listener may be `async`: `emit` does not wait for it, but a rejection is logged, not lost. */
+type Listener<E extends EntityEventName> = (
+  ...args: EntityEventPayloads[E]
+) => void | Promise<void>;
 
 /**
  * The app's global event bus. Events and their arguments are declared in `entityEvents.ts`; nothing
@@ -27,7 +31,12 @@ class EventEmitter {
     if (!this.listeners[event]) {
       return;
     }
-    this.listeners[event].forEach((listener) => (listener as Listener<E>)(...args));
+    this.listeners[event].forEach((listener) => {
+      const result = (listener as Listener<E>)(...args);
+      if (result instanceof Promise) {
+        result.catch((error) => logger.error(`A listener of '${event}' failed:`, error));
+      }
+    });
   }
 
   async emitAsync<E extends EntityEventName>(

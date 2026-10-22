@@ -29,10 +29,10 @@ export function useChoiceFormResources(storyId?: string) {
     if (!storyId) return;
     setSceneDbAndStoryId(drizzleDb, storyId);
     initializeSceneService();
-    fetchScenes();
+    void fetchScenes();
     setItemDbAndStoryId(drizzleDb, storyId);
     initializeItemService();
-    fetchItems();
+    void fetchItems();
   }, [
     drizzleDb,
     storyId,

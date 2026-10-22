@@ -12,6 +12,7 @@ import {
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useSeeAlsoRelations } from '@/src/hooks/relations/useSeeAlsoRelations';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface SeeAlsoManagerProps {
   storyId: string;
@@ -82,7 +83,7 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
         const targets = selected
           .map(decodeSeeAlsoValue)
           .filter((ref): ref is NonNullable<typeof ref> => ref !== null);
-        save(targets);
+        fireAndLog(save(targets), 'save');
       },
       [save],
     );

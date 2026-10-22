@@ -34,6 +34,7 @@ import i18n from './utils/format/i18n';
 import { keepPageOutOfBackForwardCache } from './utils/ui/pageLifecycle';
 import { isServerless } from './utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
@@ -142,7 +143,7 @@ const DatabaseInitializer = () => {
 
         const settings = await initializeUserSettings(initializedDrizzle);
         if (settings?.language) {
-          i18n.changeLanguage(settings.language);
+          fireAndLog(i18n.changeLanguage(settings.language), 'changeLanguage');
           logger.debug(`DatabaseInitializer: Language set to ${settings.language}`);
         }
         setUserSettingsLoaded(true);
@@ -153,7 +154,7 @@ const DatabaseInitializer = () => {
     };
 
     if (db) {
-      initialize();
+      fireAndLog(initialize(), 'initialize');
     } else {
       logger.debug('DatabaseInitializer: db context is null, waiting...');
     }

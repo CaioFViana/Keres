@@ -4,6 +4,7 @@ import HeaderActions, {
   type HeaderAction,
 } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
 import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type ScreenHeaderOptions = {
   title: string;
@@ -42,7 +43,7 @@ export function useScreenHeader({
       onPress: () => {
         const current = actionsRef.current?.find((candidate) => candidate.id === action.id);
         if (current && current.visible !== false && !current.disabled && !current.busy)
-          current.onPress();
+          fireAndLog(current.onPress(), 'onPress');
       },
     }));
     return function ScreenHeaderActions() {

@@ -25,6 +25,7 @@ import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks
 import { useResumeScene } from '@/src/hooks/scene/useResumeScene';
 import { MainDashboardContent } from './MainDashboardContent';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const MainDashboardScreen = () => {
   useScreenTour('MainDashboard');
@@ -165,8 +166,8 @@ const MainDashboardScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchCounts();
-      runAnalysis();
+      fireAndLog(fetchCounts(), 'fetchCounts');
+      fireAndLog(runAnalysis(), 'runAnalysis');
     }, [fetchCounts, runAnalysis]),
   );
 
@@ -187,8 +188,8 @@ const MainDashboardScreen = () => {
   useEffect(() => {
     const handleRemoteChange = (change: { storyId?: string }) => {
       if (change?.storyId === selectedStory?.id) {
-        fetchCounts();
-        runAnalysis();
+        fireAndLog(fetchCounts(), 'fetchCounts');
+        fireAndLog(runAnalysis(), 'runAnalysis');
       }
     };
     entityEventEmitter.on('story_data_changed', handleRemoteChange);

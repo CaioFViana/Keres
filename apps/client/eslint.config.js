@@ -54,7 +54,20 @@ module.exports = defineConfig([
     // The app's code and its build scripts; tests are off in their own block below. The example-story scripts name
     // their loose rows once (`scripts/lib/exampleStoryTypes.ts`).
     files: ['src/**/*.ts', 'src/**/*.tsx', 'scripts/**/*.ts'],
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: __dirname } },
     rules: {
+      /**
+       * A promise nobody awaits, returns or catches fails silently: the rejection reaches no one, and the
+       * screen keeps showing whatever it had. Await it, return it, `.catch` it, or say "fire and forget" with
+       * `void` - and then the function must handle its own failure.
+       */
+      '@typescript-eslint/no-floating-promises': 'error',
+      /**
+       * An `async` function where a callback that returns nothing is expected (a timer, an event listener, an
+       * array method) drops its rejection the same way. JSX handlers (`onPress={async () => ...}`) are the
+       * ordinary shape in React Native and stay allowed.
+       */
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
       /**
        * `any` switches the checker off for everything it touches. Use `unknown` and narrow, or the real type;
        * where a library's own generics leave no honest type, suppress the line and say why.

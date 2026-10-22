@@ -28,6 +28,7 @@ import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -124,8 +125,8 @@ const StorySelectionScreen = () => {
 
   useEffect(() => {
     if (isFocused) {
-      fetchStoriesData();
-      fetchSummary();
+      fireAndLog(fetchStoriesData(), 'fetchStoriesData');
+      fireAndLog(fetchSummary(), 'fetchSummary');
       setTheme('default');
     }
   }, [isFocused, setTheme, fetchStoriesData, fetchSummary]);

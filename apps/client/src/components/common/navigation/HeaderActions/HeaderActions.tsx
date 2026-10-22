@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -26,7 +27,7 @@ export interface HeaderAction {
   id: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
   visible?: boolean;
   disabled?: boolean;
   busy?: boolean;
@@ -91,7 +92,7 @@ export default function HeaderActions({ actions }: { actions: readonly HeaderAct
               busy: !!action.busy,
             }}
             disabled={action.disabled || action.busy}
-            onPress={action.onPress}
+            onPress={() => fireAndLog(action.onPress(), 'A header action')}
             style={({ pressed }) => [
               styles.action,
               { opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1 },
@@ -185,7 +186,7 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
                   disabled={locked}
                   onPress={() => {
                     setOpen(false);
-                    action.onPress();
+                    fireAndLog(action.onPress(), 'A header action');
                   }}
                   style={({ pressed }) => [
                     styles.menuItem,

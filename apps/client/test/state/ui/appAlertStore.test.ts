@@ -1,7 +1,8 @@
 /**
  * @jest-environment node
  */
-import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
+import { logger } from '@/src/utils/logging/logger';
+import { pressAlertButton, useAppAlertStore } from '@/src/state/ui/appAlertStore';
 
 const store = () => useAppAlertStore.getState();
 
@@ -104,5 +105,31 @@ describe('dismiss', () => {
     store().dismiss();
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('pressAlertButton', () => {
+  it('runs the handler with the value', () => {
+    const onPress = jest.fn();
+
+    pressAlertButton({ text: 'OK', onPress }, 'typed');
+
+    expect(onPress).toHaveBeenCalledWith('typed');
+  });
+
+  it('does nothing for a button without a handler', () => {
+    expect(() => pressAlertButton({ text: 'OK' })).not.toThrow();
+  });
+
+  it('logs the rejection of an async handler instead of losing it', async () => {
+    const failure = new Error('save failed');
+    const logged = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+
+    pressAlertButton({ text: 'Save', onPress: () => Promise.reject(failure) });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(logged).toHaveBeenCalledWith('An alert button failed:', failure);
+    logged.mockRestore();
   });
 });

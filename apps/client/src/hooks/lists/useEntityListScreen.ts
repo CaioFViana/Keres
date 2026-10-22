@@ -177,7 +177,7 @@ export function useEntityListScreen<
 
   const handleEntityChange = useCallback(
     (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchItems();
+      if (changedStoryId === storyId) void fetchItems();
     },
     [fetchItems, storyId],
   );

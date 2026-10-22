@@ -100,15 +100,15 @@ const ItemJourneyDetailScreen = () => {
     if (drizzleDb && selectedStory?.id) {
       setItemDbAndStoryId(drizzleDb, selectedStory.id);
       initializeItemService();
-      fetchItems();
+      void fetchItems();
 
       setSceneDbAndStoryId(drizzleDb, selectedStory.id);
       initializeSceneService();
-      fetchScenes();
+      void fetchScenes();
 
       setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
       initializeCharacterService();
-      fetchCharacters();
+      void fetchCharacters();
     }
   }, [
     drizzleDb,

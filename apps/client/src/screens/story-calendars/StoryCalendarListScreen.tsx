@@ -367,7 +367,7 @@ const StoryCalendarListScreen = () => {
     });
 
   /** Saves an epoch, and clears the one that is set; the save waits while `saveDisabled`. */
-  const renderEpochActions = (onSave: () => void, saveDisabled: boolean) => (
+  const renderEpochActions = (onSave: () => void | Promise<void>, saveDisabled: boolean) => (
     <View style={styles.actions}>
       <TouchableOpacity style={styles.action} onPress={onSave} disabled={saveDisabled}>
         <Ionicons name="save-outline" size={17} color={colors.primary} />

@@ -15,6 +15,7 @@ import {
 } from '@/src/services/social/accessRevocation';
 import { importNewServerStories } from '@/src/services/sync/importNewServerStories';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const RETRY_MS = 5_000;
 /** How often the silence of the socket is checked. */
@@ -138,13 +139,15 @@ export class ServerRealtimeService {
     await Promise.allSettled(Array.from(this.activeTasks));
   }
 
-  private track<T>(task: Promise<T>): Promise<T> {
+  private track(task: Promise<unknown>): void {
     this.activeTasks.add(task);
     void task.then(
       () => this.activeTasks.delete(task),
-      () => this.activeTasks.delete(task),
+      (error) => {
+        this.activeTasks.delete(task);
+        logger.error('ServerRealtimeService: a background task failed.', error);
+      },
     );
-    return task;
   }
 
   private async connect(): Promise<void> {
@@ -309,14 +312,17 @@ export class ServerRealtimeService {
 
   private scheduleReconnect(): void {
     if (this.stopped || this.retryTimer) return;
-    this.retryTimer = setTimeout(async () => {
-      this.retryTimer = null;
-      try {
-        await fetch(apiUrl(this.server.url, '/kerescheck'));
-      } catch {
-        /* retry below */
-      }
-      if (!this.stopped) this.track(this.connect());
-    }, RETRY_MS);
+    this.retryTimer = setTimeout(() => void this.retry(), RETRY_MS);
+  }
+
+  /** Probes the server, then connects again whatever the probe said; never rejects. */
+  private async retry(): Promise<void> {
+    this.retryTimer = null;
+    try {
+      await fetch(apiUrl(this.server.url, '/kerescheck'));
+    } catch {
+      /* retry below */
+    }
+    if (!this.stopped) fireAndLog(this.track(this.connect()), 'track');
   }
 }

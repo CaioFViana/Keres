@@ -32,7 +32,7 @@ export function useSceneDetailServices(storyId?: string) {
     if (!storyId) return;
     setDbAndStoryId(drizzleDb, storyId);
     initializeService();
-    fetchCharacters();
+    void fetchCharacters();
   }, [drizzleDb, storyId, setDbAndStoryId, initializeService, fetchCharacters]);
 
   return { characters, ...services };

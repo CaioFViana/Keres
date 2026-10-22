@@ -53,6 +53,7 @@ import { getClientFlavor } from '@/src/utils/platform/clientFlavor';
 import { useDocumentTitle } from '@/src/utils/nav/documentTitle';
 import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
 import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -238,7 +239,7 @@ const ColdInstallScreen = () => {
     // Choosing nothing is not an option here: the language already shown stays.
     if (!itemValue) return;
     setSelectedLanguage(itemValue);
-    i18n.changeLanguage(itemValue);
+    fireAndLog(i18n.changeLanguage(itemValue), 'changeLanguage');
     // No need to call setStoreLanguage here, as it will be set during handleProceed
   };
 

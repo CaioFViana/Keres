@@ -9,6 +9,7 @@ import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycl
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /** Public-favorite roster for one entity. Hidden when the story does not publish who starred it. */
 export function useFavoriters(storyId: string, entityId: string, entityType: FavoriteEntityType) {
@@ -66,14 +67,14 @@ export function useFavoriters(storyId: string, entityId: string, entityType: Fav
         changedEntityType === entityType &&
         changedEntityId === entityId
       ) {
-        fetchFavoriters();
+        fireAndLog(fetchFavoriters(), 'fetchFavoriters');
       }
     };
     const handleStoryChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchFavoriters();
+      if (changedStoryId === storyId) fireAndLog(fetchFavoriters(), 'fetchFavoriters');
     };
     const handleFriendshipChange = () => {
-      fetchFavoriters();
+      fireAndLog(fetchFavoriters(), 'fetchFavoriters');
     };
     entityEventEmitter.on('favorite_changed', handleFavoriteChange);
     entityEventEmitter.on('story_changed', handleStoryChange);

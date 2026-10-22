@@ -104,7 +104,7 @@ const FriendshipListScreen = () => {
 
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
-      fetchFriendshipsAndServers();
+      void fetchFriendshipsAndServers();
     });
     entityEventEmitter.on('friendship_changed', fetchFriendshipsAndServers);
 

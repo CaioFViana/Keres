@@ -75,7 +75,7 @@ export function useServerStatuses(serverId?: string) {
 
   useEffect(() => {
     if (!isFocused) return;
-    const intervalId = setInterval(loadAndPingServers, REFRESH_INTERVAL_MS);
+    const intervalId = setInterval(() => void loadAndPingServers(), REFRESH_INTERVAL_MS);
     return () => clearInterval(intervalId);
   }, [isFocused, loadAndPingServers]);
 

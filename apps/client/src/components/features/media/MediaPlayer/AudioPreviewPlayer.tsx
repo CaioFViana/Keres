@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-nativ
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface AudioPreviewPlayerProps {
   uri: string;
@@ -45,7 +46,7 @@ const AudioPreviewPlayer: React.FC<AudioPreviewPlayerProps> = ({ uri }) => {
     // Without this, playing again after the end does nothing visible - the person would think
     // the button had jammed.
     if (status.duration > 0 && status.currentTime >= status.duration) {
-      player.seekTo(0);
+      fireAndLog(player.seekTo(0), 'seekTo');
     }
     player.play();
   }, [player, status.playing, status.currentTime, status.duration]);
@@ -56,7 +57,7 @@ const AudioPreviewPlayer: React.FC<AudioPreviewPlayerProps> = ({ uri }) => {
         return;
       }
       const ratio = Math.min(Math.max(event.nativeEvent.locationX / trackWidth, 0), 1);
-      player.seekTo(ratio * status.duration);
+      fireAndLog(player.seekTo(ratio * status.duration), 'seekTo');
     },
     [player, status.isLoaded, status.duration, trackWidth],
   );

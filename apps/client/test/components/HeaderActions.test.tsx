@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import HeaderActions from '@/src/components/common/navigation/HeaderActions/HeaderActions';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { logger } from '@/src/utils/logging/logger';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -264,5 +265,39 @@ describe('a badge on an action', () => {
     );
 
     expect(screen.queryByTestId('header-actions-menu-badge')).toBeNull();
+  });
+});
+
+describe('an action that is async', () => {
+  it('logs the failure of its press, in the row and in the compact menu', async () => {
+    const failure = new Error('could not export');
+    const logged = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const onPress = jest.fn().mockRejectedValue(failure);
+
+    const row = await render(
+      <HeaderActions
+        actions={[{ id: 'export', icon: 'share-outline', label: 'Export', onPress }]}
+      />,
+    );
+    await fireEvent.press(row.getByLabelText('Export'));
+    await Promise.resolve();
+    expect(logged).toHaveBeenCalledWith('A header action failed:', failure);
+    await row.unmount();
+
+    logged.mockClear();
+    mockLayout.mockReturnValue(COMPACT);
+    const menu = await render(
+      <HeaderActions
+        actions={[
+          { id: 'export', icon: 'share-outline', label: 'Export', onPress },
+          { id: 'edit', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+    await fireEvent.press(menu.getByTestId('header-actions-menu'));
+    await fireEvent.press(menu.getByText('Export'));
+    await Promise.resolve();
+    expect(logged).toHaveBeenCalledWith('A header action failed:', failure);
+    logged.mockRestore();
   });
 });

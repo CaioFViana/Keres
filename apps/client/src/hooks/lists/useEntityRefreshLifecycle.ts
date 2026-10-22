@@ -7,10 +7,12 @@ export interface EntityEventSubscription {
   // The payload depends on `event`, and a list of subscriptions mixes events, which a single listener
   // type cannot correlate: any listener is accepted here (`never` arguments), and the emitter's own
   // typing holds the ones that are called.
-  listener: (...args: never[]) => void;
+  listener: (...args: never[]) => void | Promise<void>;
 }
 
-type ListenerOf<E extends EntityEventName> = (...args: EntityEventPayloads[E]) => void;
+type ListenerOf<E extends EntityEventName> = (
+  ...args: EntityEventPayloads[E]
+) => void | Promise<void>;
 
 /**
  * Standard lifecycle for screens that display locally cached entities.

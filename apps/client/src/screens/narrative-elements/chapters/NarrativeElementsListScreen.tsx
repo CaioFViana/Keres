@@ -54,6 +54,7 @@ import { useVisibleChapters } from './useVisibleChapters';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -167,12 +168,12 @@ const NarrativeElementsListScreen = () => {
     if (storyId) {
       setSceneDbAndStoryId(db, storyId);
       initializeSceneService();
-      fetchStoredScenes();
+      void fetchStoredScenes();
     }
   }, [db, fetchStoredScenes, initializeSceneService, setSceneDbAndStoryId, storyId]);
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadOutline();
+      if (changedStoryId === storyId) fireAndLog(loadOutline(), 'loadOutline');
     };
     entityEventEmitter.on('scene_changed', refresh);
     entityEventEmitter.on('chapter_changed', refresh);

@@ -36,13 +36,13 @@ export function useItemJourneyFormResources(storyId?: string) {
     if (!storyId) return;
     setItemDbAndStoryId(drizzleDb, storyId);
     initializeItemService();
-    fetchItems();
+    void fetchItems();
     setSceneDbAndStoryId(drizzleDb, storyId);
     initializeSceneService();
-    fetchScenes();
+    void fetchScenes();
     setCharacterDbAndStoryId(drizzleDb, storyId);
     initializeCharacterService();
-    fetchCharacters();
+    void fetchCharacters();
   }, [
     drizzleDb,
     storyId,

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type RouteService = ReturnType<typeof createRouteService>;
 
@@ -55,17 +56,20 @@ export function useRouteFormState({ routeId, storyId, routeServiceRef }: UseRout
       setLoading(false);
       return;
     }
-    routeServiceRef.current
-      .getById(routeId)
-      .then((route) => {
-        if (route) {
-          setName(route.name);
-          setDetails(route.details ?? '');
-          setLoadedPristine({ name: route.name, details: route.details ?? '' });
-          setLoadedUpdatedAt(route.updatedAt?.toISOString?.() ?? null);
-        }
-      })
-      .finally(() => setLoading(false));
+    fireAndLog(
+      routeServiceRef.current
+        .getById(routeId)
+        .then((route) => {
+          if (route) {
+            setName(route.name);
+            setDetails(route.details ?? '');
+            setLoadedPristine({ name: route.name, details: route.details ?? '' });
+            setLoadedUpdatedAt(route.updatedAt?.toISOString?.() ?? null);
+          }
+        })
+        .finally(() => setLoading(false)),
+      'Loading the route',
+    );
   }, [routeId, routeServiceRef]);
 
   const restoreDraftFields = useCallback((fields: RouteFormDraftFields) => {

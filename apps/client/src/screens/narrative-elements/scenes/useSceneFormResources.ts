@@ -43,16 +43,16 @@ export function useSceneFormResources(storyId?: string) {
     if (!storyId) return;
     setChapterDb(drizzleDb, storyId);
     initChapter();
-    fetchChapters();
+    void fetchChapters();
     setLocationDb(drizzleDb, storyId);
     initLocation();
-    fetchLocations();
+    void fetchLocations();
     setCharacterDb(drizzleDb, storyId);
     initCharacter();
-    fetchCharacters();
+    void fetchCharacters();
     setItemDb(drizzleDb, storyId);
     initItem();
-    fetchItems();
+    void fetchItems();
   }, [
     drizzleDb,
     storyId,

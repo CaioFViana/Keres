@@ -1,3 +1,4 @@
+import { logger } from '@/src/utils/logging/logger';
 import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
@@ -95,5 +96,20 @@ describe('entityEventEmitter', () => {
         'listener failed',
       );
     });
+  });
+
+  it('logs the rejection of an async listener instead of losing it, and still calls the others', async () => {
+    const failure = new Error('listener failed');
+    const logged = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    listen('character_changed', jest.fn().mockRejectedValue(failure));
+    const other = listen('character_changed', jest.fn());
+
+    entityEventEmitter.emit('character_changed', 'story-1');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(other).toHaveBeenCalledWith('story-1');
+    expect(logged).toHaveBeenCalledWith("A listener of 'character_changed' failed:", failure);
+    logged.mockRestore();
   });
 });

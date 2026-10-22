@@ -137,7 +137,17 @@ const NarrativeElementsListScreen = () => {
     storyId,
     label: 'the narrative outline',
   });
-  const { chapters: outlineChapters, scenes, choices } = outline;
+  const { scenes, choices } = outline;
+  // The outline rows carry no per-person favourite state; the chapter store does, and flips it
+  // the moment the star is pressed.
+  const storedChapters = useChapterStore((state) => state.chapters);
+  const outlineChapters = useMemo(() => {
+    const favoriteById = new Map(storedChapters.map((chapter) => [chapter.id, chapter.isFavorite]));
+    return outline.chapters.map((chapter) => ({
+      ...chapter,
+      isFavorite: favoriteById.get(chapter.id) ?? chapter.isFavorite,
+    }));
+  }, [outline.chapters, storedChapters]);
 
   const advancedMatches = useAdvancedNarrativeMatches({
     storyId,

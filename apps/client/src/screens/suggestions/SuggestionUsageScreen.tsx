@@ -6,7 +6,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -39,9 +39,13 @@ import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 
 type UsageSection = { title: string; data: SuggestionUsage[] };
+
+type UsageRead = { usages: SuggestionUsage[]; storedId: string | null; storedValues: string[] };
+
+const NO_USAGE: UsageRead = { usages: [], storedId: null, storedValues: [] };
 
 const SECTION_LABELS: Record<SuggestionUsage['entityType'], string> = {
   Character: 'characters_title',
@@ -73,10 +77,6 @@ const SuggestionUsageScreen = () => {
   const { userId } = useUserSettingsStore();
   const { canEdit } = useStoryRole(storyId);
   const service = useMemo(() => createSuggestionService(db), [db]);
-  const [usages, setUsages] = useState<SuggestionUsage[]>([]);
-  const [storedId, setStoredId] = useState<string | null>(null);
-  const [storedValues, setStoredValues] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [renaming, setRenaming] = useState(false);
   const [newValue, setNewValue] = useState(value);
   const [renameUsages, setRenameUsages] = useState(false);
@@ -84,23 +84,27 @@ const SuggestionUsageScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const catalogOnly = isNamedListType(type);
 
-  const load = useCallback(async () => {
-    if (!storyId) return;
-    setLoading(true);
-    try {
-      const [nextUsages, stored] = await Promise.all([
-        service.getSuggestionUsages(type, storyId, value),
-        service.getStoredSuggestions(type, storyId),
-      ]);
-      setUsages(nextUsages);
-      setStoredId(stored.find((entry) => entry.value === value)?.id ?? null);
-      setStoredValues(stored.map((entry) => entry.value));
-    } finally {
-      setLoading(false);
-    }
-  }, [service, storyId, type, value]);
-
-  useEntityInitialLoad(load);
+  const load = useMemo(
+    () =>
+      storyId
+        ? async (): Promise<UsageRead> => {
+            const [usages, stored] = await Promise.all([
+              service.getSuggestionUsages(type, storyId, value),
+              service.getStoredSuggestions(type, storyId),
+            ]);
+            return {
+              usages,
+              storedId: stored.find((entry) => entry.value === value)?.id ?? null,
+              storedValues: stored.map((entry) => entry.value),
+            };
+          }
+        : null,
+    [service, storyId, type, value],
+  );
+  const {
+    data: { usages, storedId, storedValues },
+    loading,
+  } = useLoadedResource({ load, initial: NO_USAGE, label: 'suggestion usages' });
 
   useScreenHeader({
     target: 'parent',

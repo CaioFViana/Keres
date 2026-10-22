@@ -1,36 +1,32 @@
 import type { FavoriteEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import { servers, stories } from '@/src/db/schema';
 import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import {
+  type EntityEventSubscription,
+  useEntityEventSubscriptions,
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';
-import { logger } from '@/src/utils/logging/logger';
-import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+
+type Roster = { isPublic: boolean; profiles: ResolvedUserProfile[] };
+
+const HIDDEN: Roster = { isPublic: false, profiles: [] };
 
 /** Public-favorite roster for one entity. Hidden when the story does not publish who starred it. */
 export function useFavoriters(storyId: string, entityId: string, entityType: FavoriteEntityType) {
   const db = useDrizzle();
   const resolveProfile = useUserProfileResolver();
-  const [isPublic, setIsPublic] = useState(false);
-  const [profiles, setProfiles] = useState<ResolvedUserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchFavoriters = useCallback(async () => {
-    setLoading(true);
-    try {
+  const load = useMemo(
+    () => async (): Promise<Roster> => {
       const favoriteService = createFavoriteService(db);
       const behavior = await favoriteService.getBehavior(storyId);
-      if (behavior !== 'individual_public') {
-        setIsPublic(false);
-        setProfiles([]);
-        return;
-      }
+      if (behavior !== 'individual_public') return HIDDEN;
 
-      setIsPublic(true);
       const story = await db.query.stories.findFirst({
         where: eq(stories.id, storyId),
         columns: { serverId: true },
@@ -39,52 +35,51 @@ export function useFavoriters(storyId: string, entityId: string, entityType: Fav
         ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
         : undefined;
       const userIds = await favoriteService.getFavoriterIds(storyId, entityId, entityType);
-      const resolved = await Promise.all(
+      const profiles = await Promise.all(
         userIds.map((userId) => resolveProfile(userId, storyServer)),
       );
-      resolved.sort(
+      profiles.sort(
         (a, b) => Number(b.isCurrentUser) - Number(a.isCurrentUser) || a.name.localeCompare(b.name),
       );
-      setProfiles(resolved);
-    } catch (error) {
-      logger.error('Failed to load users who favorited the entity:', error);
-      setProfiles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [db, entityId, entityType, resolveProfile, storyId]);
+      return { isPublic: true, profiles };
+    },
+    [db, entityId, entityType, resolveProfile, storyId],
+  );
+  const { data, loading, reload } = useLoadedResource({
+    load,
+    initial: HIDDEN,
+    label: 'the users who favorited the entity',
+  });
 
-  useEntityInitialLoad(fetchFavoriters);
+  const subscriptions = useMemo<EntityEventSubscription[]>(
+    () => [
+      {
+        event: 'favorite_changed',
+        listener: (
+          changedStoryId: string,
+          changedEntityType: FavoriteEntityType,
+          changedEntityId: string,
+        ) => {
+          if (
+            changedStoryId === storyId &&
+            changedEntityType === entityType &&
+            changedEntityId === entityId
+          ) {
+            void reload();
+          }
+        },
+      },
+      {
+        event: 'story_changed',
+        listener: (changedStoryId: string) => {
+          if (changedStoryId === storyId) void reload();
+        },
+      },
+      { event: 'friendship_changed', listener: () => void reload() },
+    ],
+    [entityId, entityType, reload, storyId],
+  );
+  useEntityEventSubscriptions(subscriptions);
 
-  useEffect(() => {
-    const handleFavoriteChange = (
-      changedStoryId: string,
-      changedEntityType: FavoriteEntityType,
-      changedEntityId: string,
-    ) => {
-      if (
-        changedStoryId === storyId &&
-        changedEntityType === entityType &&
-        changedEntityId === entityId
-      ) {
-        fireAndLog(fetchFavoriters(), 'fetchFavoriters');
-      }
-    };
-    const handleStoryChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fireAndLog(fetchFavoriters(), 'fetchFavoriters');
-    };
-    const handleFriendshipChange = () => {
-      fireAndLog(fetchFavoriters(), 'fetchFavoriters');
-    };
-    entityEventEmitter.on('favorite_changed', handleFavoriteChange);
-    entityEventEmitter.on('story_changed', handleStoryChange);
-    entityEventEmitter.on('friendship_changed', handleFriendshipChange);
-    return () => {
-      entityEventEmitter.off('favorite_changed', handleFavoriteChange);
-      entityEventEmitter.off('story_changed', handleStoryChange);
-      entityEventEmitter.off('friendship_changed', handleFriendshipChange);
-    };
-  }, [entityId, entityType, fetchFavoriters, storyId]);
-
-  return { isPublic, profiles, loading };
+  return { isPublic: data.isPublic, profiles: data.profiles, loading };
 }

@@ -11,6 +11,7 @@ import { AttributeType } from '@keres/shared';
 import React from 'react';
 
 import SuggestionsScreen from '@/src/screens/suggestions/SuggestionsScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockNavigation = { navigate: mockNavigate };
@@ -241,6 +242,31 @@ describe('SuggestionsScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('SuggestionUsage', { type: HERBS, value: 'Sage' });
     await fireEvent.press(view.getByText('Thyme'));
     expect(mockNavigate).toHaveBeenCalledWith('SuggestionUsage', { type: HERBS, value: 'Thyme' });
+  });
+
+  it('reads the values again when this story changes them, and only then', async () => {
+    const view = await render(<SuggestionsScreen />);
+    await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
+    const reads = () => mockGetSuggestionUsageCounts.mock.calls.length;
+    const before = reads();
+
+    mockGetSuggestionUsageCounts.mockImplementation(async () => [['Basil', 2]]);
+    await act(async () => {
+      entityEventEmitter.emit('suggestion_changed', 'another-story');
+    });
+    expect(reads()).toBe(before);
+
+    await act(async () => {
+      entityEventEmitter.emit('suggestion_changed', 'story-1');
+    });
+    await waitFor(() => expect(view.getByText('Basil')).toBeTruthy());
+    expect(view.queryByText('Thyme')).toBeNull();
+
+    mockGetSuggestionUsageCounts.mockImplementation(async () => [['Dill', 1]]);
+    await act(async () => {
+      entityEventEmitter.emit('item_changed', 'story-1');
+    });
+    await waitFor(() => expect(view.getByText('Dill')).toBeTruthy());
   });
 
   it('adds a value to the selected list and reports failures', async () => {

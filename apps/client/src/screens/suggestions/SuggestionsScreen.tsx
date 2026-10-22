@@ -11,7 +11,7 @@ import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/sha
 import { WORLD_PIECE_SECTIONS } from '@keres/shared/entities/narrative/WorldRule';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
@@ -37,17 +37,23 @@ import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/comm
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 type StorySuggestion = [value: string, usageCount: number];
-const SUGGESTION_SOURCE_EVENTS = [
+type ListValues = {
+  stored: SuggestionSelect[];
+  storyValues: StorySuggestion[];
+  usageByValue: Map<string, number>;
+};
+const NO_VALUES: ListValues = { stored: [], storyValues: [], usageByValue: new Map() };
+const VALUE_EVENTS = [
+  'suggestion_changed',
   'character_changed',
   'character_relation_changed',
   'item_changed',
@@ -90,9 +96,6 @@ const SuggestionsScreen = () => {
   const suggestionService = useMemo(() => createSuggestionService(db), [db]);
   const [groups, setGroups] = useState<SuggestionGroup[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [stored, setStored] = useState<SuggestionSelect[]>([]);
-  const [storyValues, setStoryValues] = useState<StorySuggestion[]>([]);
-  const [usageByValue, setUsageByValue] = useState<Map<string, number>>(new Map());
   const [newValue, setNewValue] = useState('');
   const [newListName, setNewListName] = useState('');
   const [creatingList, setCreatingList] = useState(false);
@@ -192,22 +195,34 @@ const SuggestionsScreen = () => {
     );
   }, [db, label, storyId, suggestionService, t]);
 
-  const loadValues = useCallback(async () => {
-    if (!storyId || !selectedType) {
-      setStored([]);
-      setStoryValues([]);
-      setUsageByValue(new Map());
-      return;
-    }
-    const [storedSuggestions, usageCounts] = await Promise.all([
-      suggestionService.getStoredSuggestions(selectedType, storyId),
-      suggestionService.getSuggestionUsageCounts(selectedType, storyId),
-    ]);
-    const storedValues = new Set(storedSuggestions.map((suggestion) => suggestion.value));
-    setStored(storedSuggestions);
-    setUsageByValue(new Map(usageCounts));
-    setStoryValues(usageCounts.filter(([value]) => !storedValues.has(value)));
-  }, [selectedType, storyId, suggestionService]);
+  const loadValues = useMemo(
+    () =>
+      storyId && selectedType
+        ? async (): Promise<ListValues> => {
+            const [stored, usageCounts] = await Promise.all([
+              suggestionService.getStoredSuggestions(selectedType, storyId),
+              suggestionService.getSuggestionUsageCounts(selectedType, storyId),
+            ]);
+            const storedValues = new Set(stored.map((suggestion) => suggestion.value));
+            return {
+              stored,
+              usageByValue: new Map(usageCounts),
+              storyValues: usageCounts.filter(([value]) => !storedValues.has(value)),
+            };
+          }
+        : null,
+    [selectedType, storyId, suggestionService],
+  );
+  const {
+    data: { stored, storyValues, usageByValue },
+    reload: reloadValues,
+  } = useLoadedResource({
+    load: loadValues,
+    initial: NO_VALUES,
+    events: VALUE_EVENTS,
+    storyId,
+    label: 'the suggestion values',
+  });
 
   const selectedGroup = groups.find((group) => group.type === selectedType);
   const copyDestinations = groups.filter((group) => group.type !== selectedType);
@@ -277,27 +292,15 @@ const SuggestionsScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fireAndLog(loadGroups(), 'loadGroups');
-      fireAndLog(loadValues(), 'loadValues');
-    }, [loadGroups, loadValues]),
+      fireAndLog(reloadValues(), 'reloadValues');
+    }, [loadGroups, reloadValues]),
   );
-  useEntityInitialLoad(loadValues);
   const [prevSelectedType, setPrevSelectedType] = useState(selectedType);
   if (selectedType !== prevSelectedType) {
     setPrevSelectedType(selectedType);
     setRenamingList(false);
     setRenameListName('');
   }
-  useEffect(() => {
-    const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fireAndLog(loadValues(), 'loadValues');
-    };
-    entityEventEmitter.on('suggestion_changed', refresh);
-    SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.on(event, refresh));
-    return () => {
-      entityEventEmitter.off('suggestion_changed', refresh);
-      SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.off(event, refresh));
-    };
-  }, [loadValues, storyId]);
 
   const add = async () => {
     if (!userId || !storyId || !selectedType || !newValue.trim()) return;

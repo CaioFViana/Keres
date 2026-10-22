@@ -247,9 +247,11 @@ describe('import boundaries', () => {
       .map(relativeOf)
       .sort();
 
-    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter(
-      (path) => !readFileSync(join(SOURCE_ROOT, path), 'utf8').includes('useEntityInitialLoad('),
-    ).sort();
+    // A shared hook runs the lifecycle itself, or reads through `useLoadedResource`, which does.
+    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter((path) => {
+      const source = readFileSync(join(SOURCE_ROOT, path), 'utf8');
+      return !source.includes('useEntityInitialLoad(') && !source.includes('useLoadedResource(');
+    }).sort();
 
     expect({ missingDetailLifecycle, missingSharedLifecycle }).toEqual({
       missingDetailLifecycle: [],

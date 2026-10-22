@@ -26,7 +26,6 @@ import { chapterBelongsToArc } from '@/src/utils/search/storyArcFilter';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
@@ -37,7 +36,6 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
 import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
@@ -53,8 +51,19 @@ import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
-import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
+
+type Outline = { chapters: ChapterSelect[]; scenes: SceneSelect[]; choices: ChoiceSelect[] };
+type OutlineTags = {
+  allTags: TagSelect[];
+  tagsByChapterId: Map<string, TagSelect[]>;
+  tagsBySceneId: Map<string, TagSelect[]>;
+};
+
+const NO_OUTLINE: Outline = { chapters: [], scenes: [], choices: [] };
+const NO_TAGS: OutlineTags = { allTags: [], tagsByChapterId: new Map(), tagsBySceneId: new Map() };
+const OUTLINE_EVENTS = ['scene_changed', 'chapter_changed', 'choice_changed'] as const;
+const TAG_EVENTS = ['tag_changed', 'tag_relation_changed'] as const;
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -103,29 +112,32 @@ const NarrativeElementsListScreen = () => {
 
   /** Which space the reorder modal is editing - the two are numbered independently. */
   const [reorderingType, setReorderingType] = useState<ChapterType | null>(null);
-  const [outlineChapters, setOutlineChapters] = useState<ChapterSelect[]>([]);
-  const [scenes, setScenes] = useState<SceneSelect[]>([]);
-  const [choices, setChoices] = useState<ChoiceSelect[]>([]);
   const [reorderChapterId, setReorderChapterId] = useState<string | null>(null);
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagsByChapterId, setTagsByChapterId] = useState<Map<string, TagSelect[]>>(new Map());
-  const [tagsBySceneId, setTagsBySceneId] = useState<Map<string, TagSelect[]>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
-  const loadOutline = useCallback(async () => {
-    if (!storyId) return;
-    const [loadedChapters, loadedScenes, loadedChoices] = await Promise.all([
-      // Both kinds: the outline is the story's containers, and the service groups them.
-      createChapterService(db).getAllByStoryId(storyId, null),
-      createSceneService(db).getAllByStoryId(storyId),
-      createChoiceService(db).getAllByStoryId(storyId),
-    ]);
-    setOutlineChapters(loadedChapters);
-    setScenes(loadedScenes);
-    setChoices(loadedChoices.filter((choice) => !choice.isDeleted));
-  }, [db, storyId]);
-
-  useEntityInitialLoad(loadOutline);
+  const readOutline = useMemo(
+    () =>
+      storyId
+        ? async (): Promise<Outline> => {
+            const [chapters, scenes, choices] = await Promise.all([
+              // Both kinds: the outline is the story's containers, and the service groups them.
+              createChapterService(db).getAllByStoryId(storyId, null),
+              createSceneService(db).getAllByStoryId(storyId),
+              createChoiceService(db).getAllByStoryId(storyId),
+            ]);
+            return { chapters, scenes, choices: choices.filter((choice) => !choice.isDeleted) };
+          }
+        : null,
+    [db, storyId],
+  );
+  const { data: outline, reload: loadOutline } = useLoadedResource({
+    load: readOutline,
+    initial: NO_OUTLINE,
+    events: OUTLINE_EVENTS,
+    storyId,
+    label: 'the narrative outline',
+  });
+  const { chapters: outlineChapters, scenes, choices } = outline;
 
   const advancedMatches = useAdvancedNarrativeMatches({
     storyId,
@@ -135,35 +147,47 @@ const NarrativeElementsListScreen = () => {
     choices,
   });
 
-  const loadTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      setTagsByChapterId(new Map());
-      setTagsBySceneId(new Map());
-      return;
-    }
-    const relationService = createTagRelationService(db);
-    const [loadedTags, chapterTags, sceneTags] = await Promise.all([
-      createTagService(db).getTagsByStoryId(storyId),
-      Promise.all(
-        outlineChapters.map((chapter) =>
-          relationService.getTagsForEntity(storyId, chapter.id, 'Chapter'),
-        ),
-      ),
-      Promise.all(
-        scenes.map((scene) => relationService.getTagsForEntity(storyId, scene.id, 'Scene')),
-      ),
-    ]);
-    setAllTags(loadedTags);
-    setTagsByChapterId(
-      new Map(outlineChapters.map((chapter, index) => [chapter.id, chapterTags[index]])),
-    );
-    setTagsBySceneId(new Map(scenes.map((scene, index) => [scene.id, sceneTags[index]])));
-  }, [db, outlineChapters, scenes, storyId]);
+  // The tags of the outline's rows: read again whenever the outline itself is (its data is the
+  // refresh key), without going back to "loading", so the tag filter does not blink.
+  const readTags = useMemo(
+    () =>
+      storyId
+        ? async (key: unknown): Promise<OutlineTags> => {
+            const { chapters, scenes } = key as Outline;
+            const relationService = createTagRelationService(db);
+            const [allTags, chapterTags, sceneTags] = await Promise.all([
+              createTagService(db).getTagsByStoryId(storyId),
+              Promise.all(
+                chapters.map((chapter) =>
+                  relationService.getTagsForEntity(storyId, chapter.id, 'Chapter'),
+                ),
+              ),
+              Promise.all(
+                scenes.map((scene) => relationService.getTagsForEntity(storyId, scene.id, 'Scene')),
+              ),
+            ]);
+            return {
+              allTags,
+              tagsByChapterId: new Map(
+                chapters.map((chapter, index) => [chapter.id, chapterTags[index]]),
+              ),
+              tagsBySceneId: new Map(scenes.map((scene, index) => [scene.id, sceneTags[index]])),
+            };
+          }
+        : null,
+    [db, storyId],
+  );
+  const {
+    data: { allTags, tagsByChapterId, tagsBySceneId },
+  } = useLoadedResource({
+    load: readTags,
+    initial: NO_TAGS,
+    events: TAG_EVENTS,
+    storyId,
+    refreshKey: outline,
+    label: 'the tags of the outline',
+  });
 
-  useEntityInitialLoad(loadTags);
-
-  useTagChangeReload(storyId, loadTags);
   useEffect(() => {
     if (storyId) {
       setSceneDbAndStoryId(db, storyId);
@@ -171,29 +195,11 @@ const NarrativeElementsListScreen = () => {
       void fetchStoredScenes();
     }
   }, [db, fetchStoredScenes, initializeSceneService, setSceneDbAndStoryId, storyId]);
-  useEffect(() => {
-    const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fireAndLog(loadOutline(), 'loadOutline');
-    };
-    entityEventEmitter.on('scene_changed', refresh);
-    entityEventEmitter.on('chapter_changed', refresh);
-    entityEventEmitter.on('choice_changed', refresh);
-    return () => {
-      entityEventEmitter.off('scene_changed', refresh);
-      entityEventEmitter.off('chapter_changed', refresh);
-      entityEventEmitter.off('choice_changed', refresh);
-    };
-  }, [loadOutline, storyId]);
 
   const handleToggleFavorite = useCallback(
     async (chapterId: string, isFavorite: boolean) => {
-      // The outline is rendered independently from the chapter store so it can include scenes.
-      // Update it optimistically too; otherwise the star stays stale until the next reload.
-      setOutlineChapters((previous) =>
-        previous.map((chapter) =>
-          chapter.id === chapterId ? { ...chapter, isFavorite } : chapter,
-        ),
-      );
+      // The outline is rendered independently from the chapter store so it can include scenes:
+      // it is read again once the store has the new star.
       await toggleFavorite(chapterId, isFavorite);
       await loadOutline();
     },
@@ -252,9 +258,7 @@ const NarrativeElementsListScreen = () => {
       : t('unchaptered_scenes');
   const handleToggleSceneFavorite = useCallback(
     async (sceneId: string, isFavorite: boolean) => {
-      setScenes((previous) =>
-        previous.map((scene) => (scene.id === sceneId ? { ...scene, isFavorite } : scene)),
-      );
+      // The star shows at once from the scene store (`scenesWithFavoriteState`); the outline catches up.
       await toggleSceneFavorite(sceneId, isFavorite);
       await loadOutline();
     },

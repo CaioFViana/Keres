@@ -150,6 +150,23 @@ describe('SuggestionUsageScreen', () => {
     await waitFor(() => expect(view.getByText('suggestion_no_usages')).toBeTruthy());
   });
 
+  it('stops loading and shows the empty state when the read fails', async () => {
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockGetSuggestionUsages.mockRejectedValue(new Error('disk'));
+    const view = await render(<SuggestionUsageScreen />);
+
+    await waitFor(() => expect(view.getByText('suggestion_no_usages')).toBeTruthy());
+    expect(logged).toHaveBeenCalledWith('Failed to fetch suggestion usages:', expect.any(Error));
+    logged.mockRestore();
+  });
+
+  it('reads nothing without a selected story', async () => {
+    mockSelectedStoryId.current = undefined;
+    await render(<SuggestionUsageScreen />);
+
+    expect(mockGetSuggestionUsages).not.toHaveBeenCalled();
+  });
+
   it('renames the value and its usages, then goes back', async () => {
     const view = await render(<SuggestionUsageScreen />);
     await waitFor(() => expect(view.getByText('Aria')).toBeTruthy());

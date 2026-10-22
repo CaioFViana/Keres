@@ -12,7 +12,7 @@ import {
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
@@ -27,12 +27,9 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
-import { logger } from '@/src/utils/logging/logger';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityEventSubscriptions } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
-import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -67,52 +64,49 @@ const OperationLogDetailScreen: React.FC = () => {
   const { userId } = useUserSettingsStore();
 
   const drizzleDb = useDrizzle();
-  const [operationLog, setOperationLog] = useState<OperationLogSelect | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const operationLogService = useMemo(
     () => (drizzleDb ? createOperationLogService(drizzleDb) : null),
     [drizzleDb],
   );
 
-  const fetchOperationLogDetails = useCallback(async () => {
-    if (!operationLogService || !logId) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const log = await operationLogService.getOperationLogById(logId, userId ?? undefined);
-      if (log) {
-        setOperationLog(log);
-      } else {
-        setError(t('operation_log_not_found'));
-      }
-    } catch (err) {
-      logger.error('Failed to fetch operation log details:', err);
-      setError(t('failed_to_load_operation_log_details'));
-    } finally {
-      setLoading(false);
-    }
-  }, [operationLogService, logId, t, userId]);
-
-  useEntityInitialLoad(fetchOperationLogDetails);
+  const load = useMemo(
+    () =>
+      operationLogService && logId
+        ? async () =>
+            (await operationLogService.getOperationLogById(logId, userId ?? undefined)) ?? null
+        : null,
+    [operationLogService, logId, userId],
+  );
+  const {
+    data: operationLog,
+    loading,
+    failed,
+    reload,
+  } = useLoadedResource<OperationLogSelect | null>({
+    load,
+    initial: null,
+    label: 'operation log details',
+  });
+  const error = failed ? t('failed_to_load_operation_log_details') : null;
 
   // Without this, the Synchronization Status shown is only a snapshot of the moment the screen opened -
   // if the push/pull finishes synchronizing this operation seconds later (the common case, since
   // the screen tends to be opened before the next sync cycle runs), "Pending (v0)" stays stuck
   // there forever until the person leaves and comes back. The same event OperationLogListScreen already uses
-  // to refresh itself.
-  useEffect(() => {
-    const handleOperationLogUpdated = (updatedStoryId: string) => {
-      if (!operationLog || operationLog.storyId === updatedStoryId) {
-        fireAndLog(fetchOperationLogDetails(), 'fetchOperationLogDetails');
-      }
-    };
-    entityEventEmitter.on('operation_log_updated', handleOperationLogUpdated);
-    return () => {
-      entityEventEmitter.off('operation_log_updated', handleOperationLogUpdated);
-    };
-  }, [operationLog, fetchOperationLogDetails]);
+  // to refresh itself. The story of the log is only known once it is read, so this is not the
+  // resource's own `storyId` filter.
+  const subscriptions = useMemo(
+    () => [
+      {
+        event: 'operation_log_updated' as const,
+        listener: (updatedStoryId: string) => {
+          if (!operationLog || operationLog.storyId === updatedStoryId) void reload();
+        },
+      },
+    ],
+    [operationLog, reload],
+  );
+  useEntityEventSubscriptions(subscriptions);
 
   useScreenHeader({
     target: 'parent',

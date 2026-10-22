@@ -1,6 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -24,7 +24,9 @@ import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { logger } from '@/src/utils/logging/logger';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
+
+const NO_REMOTE_PACKS: RemotePack[] = [];
 
 /**
  * Packs shared on a server.
@@ -46,9 +48,7 @@ const PackBrowseScreen = () => {
 
   const [servers, setServers] = useState<ServerSelect[]>([]);
   const [serverId, setServerId] = useState<string | null>(null);
-  const [remotePacks, setRemotePacks] = useState<RemotePack[]>([]);
   const [localIds, setLocalIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
   const [busyPackId, setBusyPackId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,21 +62,25 @@ const PackBrowseScreen = () => {
 
   const server = servers.find((entry) => entry.id === serverId) ?? null;
 
-  const loadRemote = useCallback(async () => {
-    if (!server) return;
-    setLoading(true);
-    try {
-      setRemotePacks(await packApiService.list(server));
-    } catch (error) {
-      logger.error('PackBrowseScreen: failed to list remote packs.', error);
-      showNotification(t('packs_browse_failed'), 'error');
-      setRemotePacks([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [server, showNotification, t]);
-
-  useEntityInitialLoad(loadRemote);
+  const loadRemote = useMemo(
+    () =>
+      server
+        ? async () => {
+            try {
+              return await packApiService.list(server);
+            } catch (error) {
+              showNotification(t('packs_browse_failed'), 'error');
+              throw error;
+            }
+          }
+        : null,
+    [server, showNotification, t],
+  );
+  const { data: remotePacks, loading } = useLoadedResource({
+    load: loadRemote,
+    initial: NO_REMOTE_PACKS,
+    label: 'remote packs',
+  });
 
   const download = useCallback(
     async (pack: RemotePack) => {

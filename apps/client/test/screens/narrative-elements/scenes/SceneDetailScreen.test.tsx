@@ -42,6 +42,7 @@ let mockHeaderArgs: {
   actions: { id: string; onPress: () => void; visible: boolean }[];
 } | null = null;
 let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
+const mockSubscriptionsByHook = new Map<object, typeof mockSubscriptions>();
 
 jest.mock('@react-navigation/native', () => {
   const route = { params: { sceneId: 'scene-1' } };
@@ -81,7 +82,9 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
     useEntityEventSubscriptions: (
       subs: { event: string; listener: (...args: never[]) => unknown }[],
     ) => {
-      mockSubscriptions = subs;
+      const hook = react.useRef({}).current;
+      mockSubscriptionsByHook.set(hook, subs);
+      mockSubscriptions = [...mockSubscriptionsByHook.values()].flat();
     },
   };
 });
@@ -185,22 +188,18 @@ jest.mock('@/src/screens/narrative-elements/scenes/useSceneDetailServices', () =
     useSceneDetailServices: () =>
       (services ??= {
         characters: [{ id: 'char-1', name: 'Ada' }],
-        sceneServiceRef: {
-          current: {
-            getById: mockGetSceneById,
-            getPreviousNextScenes: mockGetPreviousNextScenes,
-            getAllByStoryId: mockGetAllScenesByStoryId,
-          },
+        sceneService: {
+          getById: mockGetSceneById,
+          getPreviousNextScenes: mockGetPreviousNextScenes,
+          getAllByStoryId: mockGetAllScenesByStoryId,
         },
-        chapterServiceRef: { current: { getById: mockGetChapterById } },
-        choiceServiceRef: { current: { getChoicesByStoryId: mockGetChoicesByStoryId } },
-        characterSceneServiceRef: { current: { getRelationsForScene: mockGetRelationsForScene } },
-        locationServiceRef: { current: { getById: mockGetLocationById } },
-        itemServiceRef: { current: { getItemsByStoryId: mockGetItemsByStoryId } },
-        itemJourneyServiceRef: {
-          current: { getItemJourneysBySceneId: mockGetItemJourneysBySceneId },
-        },
-        effectServiceRef: { current: { getEffectsByEntity: mockGetEffectsByEntity } },
+        chapterService: { getById: mockGetChapterById },
+        choiceService: { getChoicesByStoryId: mockGetChoicesByStoryId },
+        characterSceneService: { getRelationsForScene: mockGetRelationsForScene },
+        locationService: { getById: mockGetLocationById },
+        itemService: { getItemsByStoryId: mockGetItemsByStoryId },
+        itemJourneyService: { getItemJourneysBySceneId: mockGetItemJourneysBySceneId },
+        effectService: { getEffectsByEntity: mockGetEffectsByEntity },
       }),
   };
 });
@@ -377,8 +376,20 @@ beforeEach(() => {
   mockSceneTags = [];
   mockHeaderArgs = null;
   mockSubscriptions = [];
+  mockSubscriptionsByHook.clear();
   mockServicesLoaded();
 });
+
+/** Calls every listener subscribed to the event, the way the emitter would. */
+async function fire(event: string, ...args: string[]) {
+  const listeners = mockSubscriptions.filter((sub) => sub.event === event);
+  expect(listeners.length).toBeGreaterThan(0);
+  await act(async () => {
+    await Promise.all(
+      listeners.map((sub) => (sub.listener as (...received: string[]) => unknown)(...args)),
+    );
+  });
+}
 
 describe('SceneDetailScreen', () => {
   afterEach(async () => {
@@ -615,15 +626,8 @@ describe('SceneDetailScreen', () => {
   it('refreshes the scene on change events', async () => {
     const view = await render(<SceneDetailScreen />);
     await view.findByTestId('scene-content');
-    const sceneChanged = mockSubscriptions.find((sub) => sub.event === 'scene_changed');
-    expect(sceneChanged).toBeTruthy();
     mockGetSceneById.mockResolvedValue(makeScene({ name: 'Rewritten' }));
-    await act(async () => {
-      await (sceneChanged?.listener as (storyId: string, sceneId: string) => Promise<void>)(
-        'story-1',
-        'scene-1',
-      );
-    });
+    await fire('scene_changed', 'story-1', 'scene-1');
     await waitFor(() => expect(jsonOf(view, 'scene-content').scene).toBe('Rewritten'));
     await waitFor(() => expect(mockHeaderArgs?.title).toBe('Rewritten'));
   });
@@ -632,54 +636,33 @@ describe('SceneDetailScreen', () => {
     const view = await render(<SceneDetailScreen />);
     await view.findByTestId('scene-content');
     const calls = mockGetSceneById.mock.calls.length;
-    const sceneChanged = mockSubscriptions.find((sub) => sub.event === 'scene_changed');
-    await (sceneChanged?.listener as (storyId: string, sceneId: string) => Promise<void>)(
-      'story-1',
-      'scene-9',
-    );
+    await fire('scene_changed', 'story-1', 'scene-9');
     expect(mockGetSceneById.mock.calls.length).toBe(calls);
   });
 
   it('navigates back when a change event reports deletion', async () => {
     const view = await render(<SceneDetailScreen />);
     await view.findByTestId('scene-content');
-    const sceneChanged = mockSubscriptions.find((sub) => sub.event === 'scene_changed');
     mockGetSceneById.mockResolvedValue(null);
-    await act(async () => {
-      await (sceneChanged?.listener as (storyId: string, sceneId: string) => Promise<void>)(
-        'story-1',
-        'scene-1',
-      );
-    });
+    await fire('scene_changed', 'story-1', 'scene-1');
     await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
   });
 
   it('reloads relations on auxiliary change events', async () => {
     const view = await render(<SceneDetailScreen />);
     await view.findByTestId('scene-content');
-    const byEvent = (event: string) =>
-      mockSubscriptions.find((sub) => sub.event === event)?.listener as (
-        storyId: string,
-        entityId: string,
-      ) => void;
     const journeys = mockGetItemJourneysBySceneId.mock.calls.length;
-    await act(async () => {
-      byEvent('item_journey_changed')('story-1', 'j-2');
-    });
+    await fire('item_journey_changed', 'story-1', 'j-2');
     expect(mockGetItemJourneysBySceneId.mock.calls.length).toBe(journeys + 1);
-    byEvent('item_journey_changed')('story-2', 'j-2');
+    await fire('item_journey_changed', 'story-2', 'j-2');
     expect(mockGetItemJourneysBySceneId.mock.calls.length).toBe(journeys + 1);
     const items = mockGetItemsByStoryId.mock.calls.length;
-    await act(async () => {
-      byEvent('item_changed')('story-1', 'item-2');
-    });
+    await fire('item_changed', 'story-1', 'item-2');
     expect(mockGetItemsByStoryId.mock.calls.length).toBe(items + 1);
     const relations = mockGetRelationsForScene.mock.calls.length;
-    await act(async () => {
-      byEvent('character_scene_changed')('story-1', 'scene-1');
-    });
+    await fire('character_scene_changed', 'story-1', 'scene-1');
     expect(mockGetRelationsForScene.mock.calls.length).toBe(relations + 1);
-    byEvent('character_scene_changed')('story-1', 'scene-9');
+    await fire('character_scene_changed', 'story-1', 'scene-9');
     expect(mockGetRelationsForScene.mock.calls.length).toBe(relations + 1);
   });
 
@@ -687,18 +670,11 @@ describe('SceneDetailScreen', () => {
     mockSelectedStory = { id: 'story-1', type: 'branching' };
     const view = await render(<SceneDetailScreen />);
     await view.findByTestId('scene-content');
-    const byEvent = (event: string) =>
-      mockSubscriptions.find((sub) => sub.event === event)?.listener as (
-        storyId: string,
-        entityId: string,
-      ) => void;
     const effects = mockGetEffectsByEntity.mock.calls.length;
-    await act(async () => {
-      byEvent('effect_changed')('story-1', 'scene-1');
-    });
+    await fire('effect_changed', 'story-1', 'scene-1');
     expect(mockGetEffectsByEntity.mock.calls.length).toBe(effects + 1);
-    byEvent('effect_changed')('story-1', 'scene-9');
-    byEvent('effect_changed')('story-2', 'scene-1');
+    await fire('effect_changed', 'story-1', 'scene-9');
+    await fire('effect_changed', 'story-2', 'scene-1');
     expect(mockGetEffectsByEntity.mock.calls.length).toBe(effects + 1);
   });
 });

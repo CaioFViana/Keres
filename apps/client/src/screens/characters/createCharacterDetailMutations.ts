@@ -1,6 +1,5 @@
 import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
-import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/relations/CharacterRelationService';
 import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
@@ -9,45 +8,28 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { logger } from '@/src/utils/logging/logger';
 
 export type CharacterDetailMutationsProps = {
-  characterRelationServiceRef: RefObject<CharacterRelationServiceInterface | null>;
-  characterSceneServiceRef: RefObject<CharacterSceneServiceInterface | null>;
+  relationService: CharacterRelationServiceInterface;
+  characterSceneService: CharacterSceneServiceInterface;
   character: { storyId: string } | null | undefined;
   userId: string | null | undefined;
   t: TFunction;
   characterId: string;
-  setCharacterRelations: Dispatch<SetStateAction<CharacterRelation[]>>;
-  setCharacterSceneRelations: Dispatch<SetStateAction<CharacterScene[]>>;
 };
 
+/**
+ * What the character detail can change: its relations and its scenes. Each success is announced with
+ * the change event, which is what reloads the lists on screen.
+ */
 export function createCharacterDetailMutations(props: CharacterDetailMutationsProps) {
-  const {
-    characterRelationServiceRef,
-    characterSceneServiceRef,
-    character,
-    userId,
-    t,
-    characterId,
-    setCharacterRelations,
-    setCharacterSceneRelations,
-  } = props;
+  const { relationService, characterSceneService, character, userId, t, characterId } = props;
   const handleSaveRelation = async (relation: CharacterRelation) => {
-    if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
+    if (!character?.storyId || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
-      const savedRelation = await characterRelationServiceRef.current.saveCharacterRelation(
-        userId,
-        relation,
-      );
-      setCharacterRelations((prev) => {
-        const existingIndex = prev.findIndex((r) => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        }
-        return [...prev, savedRelation];
-      });
-      entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
+      await relationService.saveCharacterRelation(userId, relation);
+      entityEventEmitter.emit('character_relation_changed', character.storyId, characterId);
       AppAlert.alert(t('success'), t('relation_saved_successfully'));
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_save_relation'));
@@ -56,18 +38,14 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
   };
 
   const handleDeleteRelation = async (relationId: string) => {
-    if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
+    if (!character?.storyId || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
-      const success = await characterRelationServiceRef.current.deleteCharacterRelation(
-        userId,
-        relationId,
-      );
+      const success = await relationService.deleteCharacterRelation(userId, relationId);
       if (success) {
-        setCharacterRelations((prev) => prev.filter((r) => r.id !== relationId));
-        entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
+        entityEventEmitter.emit('character_relation_changed', character.storyId, characterId);
         AppAlert.alert(t('success'), t('relation_deleted_successfully'));
       } else {
         AppAlert.alert(t('error'), t('failed_to_delete_relation'));
@@ -79,23 +57,13 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
   };
 
   const handleSaveCharacterScene = async (characterScene: CharacterScene) => {
-    if (!characterSceneServiceRef.current || !character?.storyId || !userId) {
+    if (!character?.storyId || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
-      const savedCharacterScene = await characterSceneServiceRef.current.saveCharacterScene(
-        userId,
-        characterScene,
-      );
-      setCharacterSceneRelations((prev) => {
-        const existingIndex = prev.findIndex((cs) => cs.id === savedCharacterScene.id);
-        if (existingIndex > -1) {
-          return prev.map((cs, index) => (index === existingIndex ? savedCharacterScene : cs));
-        }
-        return [...prev, savedCharacterScene];
-      });
-      entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
+      await characterSceneService.saveCharacterScene(userId, characterScene);
+      entityEventEmitter.emit('character_scene_changed', character.storyId, characterId);
       AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_save_character_scene'));
@@ -104,18 +72,14 @@ export function createCharacterDetailMutations(props: CharacterDetailMutationsPr
   };
 
   const handleDeleteCharacterScene = async (characterSceneId: string) => {
-    if (!characterSceneServiceRef.current || !character?.storyId || !userId) {
+    if (!character?.storyId || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
-      const success = await characterSceneServiceRef.current.deleteCharacterScene(
-        userId,
-        characterSceneId,
-      );
+      const success = await characterSceneService.deleteCharacterScene(userId, characterSceneId);
       if (success) {
-        setCharacterSceneRelations((prev) => prev.filter((cs) => cs.id !== characterSceneId));
-        entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
+        entityEventEmitter.emit('character_scene_changed', character.storyId, characterId);
         AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
       } else {
         AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));

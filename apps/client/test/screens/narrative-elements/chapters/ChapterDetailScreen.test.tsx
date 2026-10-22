@@ -77,7 +77,11 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
     useEntityEventSubscriptions: (
       subs: { event: string; listener: (...args: never[]) => unknown }[],
     ) => {
-      mockSubscriptions = subs;
+      // Several hooks subscribe (the record, each list); keep the newest listener per event.
+      mockSubscriptions = [
+        ...mockSubscriptions.filter((known) => !subs.some((next) => next.event === known.event)),
+        ...subs,
+      ];
     },
   };
 });
@@ -704,7 +708,6 @@ describe('ChapterDetailScreen', () => {
       }),
       makeScene('scene-2', { index: 0 }),
       makeScene('scene-9', { index: 2, chapterId: 'ch-2' }),
-      { ...makeScene('scene-gone', { index: 3 }), isDeleted: true },
     ]);
     const view = await render(<ChapterDetailScreen />);
     await view.findByTestId('detail-title');

@@ -20,32 +20,27 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '@/src/db';
-import type { WorldRuleWithTags } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createWorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
-import { logger } from '@/src/utils/logging/logger';
+import { useWorldRuleDetailServices } from './useWorldRuleDetailServices';
 
 // Define the parameter list for this screen
 export type WorldRuleDetailScreenParamList = {
   WorldRuleDetail: { worldRuleId: string; occurrence?: OccurrenceTarget };
 };
+
+const TAG_EVENTS = ['tag_relation_changed'] as const;
 
 type WorldRuleDetailScreenRouteProp = RouteProp<WorldRuleDetailScreenParamList, 'WorldRuleDetail'>;
 
@@ -57,25 +52,25 @@ const WorldRuleDetailScreen = () => {
   const route = useRoute<WorldRuleDetailScreenRouteProp>();
   const { worldRuleId, occurrence } = route.params;
 
-  const drizzleDb = useDrizzle();
-  const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('WorldRule');
   const { selectedStory } = useStoryStore();
 
-  // Initialize services only once when drizzleDb is available
-  useEffect(() => {
-    if (drizzleDb && !worldRuleServiceRef.current) {
-      worldRuleServiceRef.current = createWorldRuleService(drizzleDb);
-    }
-  }, [drizzleDb]);
-
-  const [worldRule, setWorldRule] = useState<WorldRuleWithTags | null>(null);
+  const { worldRuleService } = useWorldRuleDetailServices();
+  const {
+    record: worldRule,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: worldRuleId,
+    load: worldRuleService.getById,
+    event: 'worldrule_changed',
+    alsoOn: TAG_EVENTS,
+    label: 'world rule details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(worldRule?.storyId);
   const comments = useEntityComments(worldRule?.storyId, 'WorldRule', worldRuleId);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   const {
     allNotes,
@@ -84,72 +79,13 @@ const WorldRuleDetailScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'WorldRule', entityId: worldRuleId });
 
-  const fetchWorldRule = useCallback(async () => {
-    if (!worldRuleServiceRef.current) {
-      logger.warn('WorldRule service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
-      if (fetchedWorldRule && !fetchedWorldRule.isDeleted) {
-        setWorldRule(fetchedWorldRule);
-        setHeaderTitle(fetchedWorldRule.title || copy.detailsTitle);
-      } else if (fetchedWorldRule && fetchedWorldRule.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch world rule details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy, t]);
-
-  const handleWorldRuleChange = useCallback(
-    async (_changedStoryId: string, changedWorldRuleId: string) => {
-      if (changedWorldRuleId === worldRuleId) {
-        if (worldRuleServiceRef.current) {
-          const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
-          if (!updatedWorldRule || updatedWorldRule.isDeleted) {
-            navigation.goBack();
-          } else {
-            setWorldRule(updatedWorldRule);
-            setHeaderTitle(updatedWorldRule.title || copy.detailsTitle);
-          }
-        }
-      }
-    },
-    [worldRuleId, navigation, setWorldRule, setHeaderTitle, copy],
-  );
-
-  const handleTagRelationChange = useCallback(
-    async (_changedStoryId: string, changedEntityId: string) => {
-      if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
-        const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
-        if (updatedWorldRule && !updatedWorldRule.isDeleted) {
-          setWorldRule(updatedWorldRule);
-        }
-      }
-    },
-    [worldRuleId, setWorldRule],
-  );
-
-  useEntityInitialLoad(fetchWorldRule);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'worldrule_changed', listener: handleWorldRuleChange },
-        { event: 'tag_relation_changed', listener: handleTagRelationChange },
-      ],
-      [handleWorldRuleChange, handleTagRelationChange],
-    ),
-  );
+  const headerTitle = worldRule
+    ? worldRule.title || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   useScreenHeader({
     target: 'parent',
@@ -172,8 +108,14 @@ const WorldRuleDetailScreen = () => {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? copy.notFound : copy.failedToLoad}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   if (!worldRule) {

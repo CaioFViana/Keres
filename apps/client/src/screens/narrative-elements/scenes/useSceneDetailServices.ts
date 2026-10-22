@@ -1,77 +1,41 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
-import {
-  createChapterService,
-  type ChapterService,
-} from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import {
-  createCharacterSceneService,
-  type CharacterSceneServiceInterface,
-} from '@/src/services/storymanagement/entities/CharacterSceneService';
-import {
-  createChoiceService,
-  type ChoiceService,
-} from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import {
-  createEffectService,
-  type EffectService,
-} from '@/src/services/storymanagement/choices-stats/EffectService';
-import {
-  createItemJourneyService,
-  type ItemJourneyService,
-} from '@/src/services/storymanagement/entities/ItemJourneyService';
-import {
-  createItemService,
-  type ItemService,
-} from '@/src/services/storymanagement/entities/ItemService';
-import {
-  createLocationService,
-  type LocationService,
-} from '@/src/services/storymanagement/entities/LocationService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useCharacterStore } from '@/src/state/story/characterStore';
 
-/** Owns service lifecycles and the story-scoped character cache used by Scene detail. */
+/** Owns the services Scene detail talks to and the story-scoped character cache it shows. */
 export function useSceneDetailServices(storyId?: string) {
   const drizzleDb = useDrizzle();
-  const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
-  const chapterServiceRef = useRef<ChapterService | null>(null);
-  const choiceServiceRef = useRef<ChoiceService | null>(null);
-  const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null);
-  const locationServiceRef = useRef<LocationService | null>(null);
-  const itemServiceRef = useRef<ItemService | null>(null);
-  const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null);
-  const effectServiceRef = useRef<EffectService | null>(null);
+  const services = useMemo(
+    () => ({
+      sceneService: createSceneService(drizzleDb),
+      chapterService: createChapterService(drizzleDb),
+      choiceService: createChoiceService(drizzleDb),
+      characterSceneService: createCharacterSceneService(drizzleDb),
+      locationService: createLocationService(drizzleDb),
+      itemService: createItemService(drizzleDb),
+      itemJourneyService: createItemJourneyService(drizzleDb),
+      effectService: createEffectService(drizzleDb),
+    }),
+    [drizzleDb],
+  );
   const { characters, fetchCharacters, setDbAndStoryId, initializeService } = useCharacterStore();
 
   useEffect(() => {
-    if (!drizzleDb) return;
-    sceneServiceRef.current ??= createSceneService(drizzleDb);
-    chapterServiceRef.current ??= createChapterService(drizzleDb);
-    choiceServiceRef.current ??= createChoiceService(drizzleDb);
-    characterSceneServiceRef.current ??= createCharacterSceneService(drizzleDb);
-    locationServiceRef.current ??= createLocationService(drizzleDb);
-    itemServiceRef.current ??= createItemService(drizzleDb);
-    itemJourneyServiceRef.current ??= createItemJourneyService(drizzleDb);
-    effectServiceRef.current ??= createEffectService(drizzleDb);
-  }, [drizzleDb]);
-
-  useEffect(() => {
-    if (!drizzleDb || !storyId) return;
+    if (!storyId) return;
     setDbAndStoryId(drizzleDb, storyId);
     initializeService();
     fetchCharacters();
   }, [drizzleDb, storyId, setDbAndStoryId, initializeService, fetchCharacters]);
 
-  return {
-    characters,
-    sceneServiceRef,
-    chapterServiceRef,
-    choiceServiceRef,
-    characterSceneServiceRef,
-    locationServiceRef,
-    itemServiceRef,
-    itemJourneyServiceRef,
-    effectServiceRef,
-  };
+  return { characters, ...services };
 }
+
+export type SceneDetailServices = ReturnType<typeof useSceneDetailServices>;

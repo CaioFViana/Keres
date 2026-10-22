@@ -15,36 +15,22 @@ const relation = { id: 'relation-1' } as any;
 const characterScene = { id: 'scene-relation-1' } as any;
 
 describe('createCharacterDetailMutations', () => {
-  let relations: any[];
-  let characterScenes: any[];
-  let setCharacterRelations: jest.Mock;
-  let setCharacterSceneRelations: jest.Mock;
   let relationService: any;
   let characterSceneService: any;
 
   const createMutations = (overrides: Record<string, unknown> = {}) =>
     createCharacterDetailMutations({
-      characterRelationServiceRef: { current: relationService },
-      characterSceneServiceRef: { current: characterSceneService },
+      relationService,
+      characterSceneService,
       character: { storyId: 'story-1' },
       userId: 'user-1',
       t: ((key: string) => key) as never,
       characterId: 'character-1',
-      setCharacterRelations,
-      setCharacterSceneRelations,
       ...overrides,
     });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    relations = [];
-    characterScenes = [];
-    setCharacterRelations = jest.fn((updater) => {
-      relations = updater(relations);
-    });
-    setCharacterSceneRelations = jest.fn((updater) => {
-      characterScenes = updater(characterScenes);
-    });
     relationService = {
       saveCharacterRelation: jest.fn(async (_userId, value) => value),
       deleteCharacterRelation: jest.fn(async () => true),
@@ -65,17 +51,26 @@ describe('createCharacterDetailMutations', () => {
 
     expect(AppAlert.alert).toHaveBeenCalledTimes(4);
     expect(AppAlert.alert).toHaveBeenLastCalledWith('error', 'service_not_initialized');
+    expect(relationService.saveCharacterRelation).not.toHaveBeenCalled();
+    expect(characterSceneService.saveCharacterScene).not.toHaveBeenCalled();
     expect(entityEventEmitter.emit).not.toHaveBeenCalled();
   });
 
-  it('adds and replaces character relations after saving', async () => {
+  it('reports a missing story the same way', async () => {
+    const mutations = createMutations({ character: null });
+
+    await mutations.handleSaveRelation(relation);
+
+    expect(AppAlert.alert).toHaveBeenCalledWith('error', 'service_not_initialized');
+    expect(relationService.saveCharacterRelation).not.toHaveBeenCalled();
+  });
+
+  it('saves a relation and announces the change so the list reloads', async () => {
     const mutations = createMutations();
 
     await mutations.handleSaveRelation(relation);
-    await mutations.handleSaveRelation({ ...relation, strength: 3 });
 
     expect(relationService.saveCharacterRelation).toHaveBeenCalledWith('user-1', relation);
-    expect(relations).toEqual([{ id: 'relation-1', strength: 3 }]);
     expect(entityEventEmitter.emit).toHaveBeenCalledWith(
       'character_relation_changed',
       'story-1',
@@ -84,28 +79,25 @@ describe('createCharacterDetailMutations', () => {
     expect(AppAlert.alert).toHaveBeenLastCalledWith('success', 'relation_saved_successfully');
   });
 
-  it('removes a relation only when deletion succeeds', async () => {
-    relations = [relation];
+  it('announces a relation deletion only when it succeeds', async () => {
     const mutations = createMutations();
 
     await mutations.handleDeleteRelation(relation.id);
     relationService.deleteCharacterRelation.mockResolvedValueOnce(false);
     await mutations.handleDeleteRelation('missing-relation');
 
-    expect(relations).toEqual([]);
+    expect(relationService.deleteCharacterRelation).toHaveBeenCalledWith('user-1', relation.id);
     expect(entityEventEmitter.emit).toHaveBeenCalledTimes(1);
     expect(AppAlert.alert).toHaveBeenLastCalledWith('error', 'failed_to_delete_relation');
   });
 
-  it('keeps relations unchanged and reports a failed relation deletion', async () => {
-    relations = [relation];
+  it('reports a failed relation deletion without announcing a change', async () => {
     relationService.deleteCharacterRelation.mockRejectedValue(new Error('offline'));
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const mutations = createMutations();
 
     await mutations.handleDeleteRelation(relation.id);
 
-    expect(relations).toEqual([relation]);
     expect(entityEventEmitter.emit).not.toHaveBeenCalled();
     expect(AppAlert.alert).toHaveBeenCalledWith('error', 'failed_to_delete_relation');
     expect(consoleError).toHaveBeenCalledWith(
@@ -126,57 +118,50 @@ describe('createCharacterDetailMutations', () => {
       'user-1',
       characterScene.id,
     );
-    expect(characterScenes).toEqual([]);
     expect(entityEventEmitter.emit).toHaveBeenCalledWith(
       'character_scene_changed',
       'story-1',
       'character-1',
     );
+    expect(entityEventEmitter.emit).toHaveBeenCalledTimes(2);
     expect(AppAlert.alert).toHaveBeenLastCalledWith(
       'success',
       'character_scene_deleted_successfully',
     );
   });
 
-  it('keeps character-scene state when deletion is declined', async () => {
-    characterScenes = [characterScene];
+  it('announces nothing when a character-scene deletion is declined', async () => {
     characterSceneService.deleteCharacterScene.mockResolvedValue(false);
     const mutations = createMutations();
 
     await mutations.handleDeleteCharacterScene(characterScene.id);
 
-    expect(characterScenes).toEqual([characterScene]);
     expect(entityEventEmitter.emit).not.toHaveBeenCalled();
     expect(AppAlert.alert).toHaveBeenCalledWith('error', 'failed_to_delete_character_scene');
   });
 
-  it('replaces an existing character-scene relation after saving', async () => {
-    characterScenes = [characterScene];
+  it('confirms a saved character-scene relation', async () => {
     const mutations = createMutations();
 
     await mutations.handleSaveCharacterScene({ ...characterScene, isPresent: true });
 
-    expect(characterScenes).toEqual([{ id: 'scene-relation-1', isPresent: true }]);
-    expect(entityEventEmitter.emit).toHaveBeenCalledWith(
-      'character_scene_changed',
-      'story-1',
-      'character-1',
-    );
+    expect(characterSceneService.saveCharacterScene).toHaveBeenCalledWith('user-1', {
+      id: 'scene-relation-1',
+      isPresent: true,
+    });
     expect(AppAlert.alert).toHaveBeenLastCalledWith(
       'success',
       'character_scene_saved_successfully',
     );
   });
 
-  it('reports a character-scene deletion failure without changing state', async () => {
-    characterScenes = [characterScene];
+  it('reports a character-scene deletion failure without announcing a change', async () => {
     characterSceneService.deleteCharacterScene.mockRejectedValue(new Error('offline'));
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const mutations = createMutations();
 
     await mutations.handleDeleteCharacterScene(characterScene.id);
 
-    expect(characterScenes).toEqual([characterScene]);
     expect(entityEventEmitter.emit).not.toHaveBeenCalled();
     expect(AppAlert.alert).toHaveBeenCalledWith('error', 'failed_to_delete_character_scene');
     expect(consoleError).toHaveBeenCalledWith(
@@ -186,7 +171,7 @@ describe('createCharacterDetailMutations', () => {
     consoleError.mockRestore();
   });
 
-  it('reports service failures without changing local relation state', async () => {
+  it('reports save failures without announcing a change', async () => {
     const failure = new Error('offline');
     relationService.saveCharacterRelation.mockRejectedValue(failure);
     characterSceneService.saveCharacterScene.mockRejectedValue(failure);
@@ -196,8 +181,6 @@ describe('createCharacterDetailMutations', () => {
     await mutations.handleSaveRelation(relation);
     await mutations.handleSaveCharacterScene(characterScene);
 
-    expect(relations).toEqual([]);
-    expect(characterScenes).toEqual([]);
     expect(entityEventEmitter.emit).not.toHaveBeenCalled();
     expect(AppAlert.alert).toHaveBeenCalledWith('error', 'failed_to_save_relation');
     expect(AppAlert.alert).toHaveBeenCalledWith('error', 'failed_to_save_character_scene');

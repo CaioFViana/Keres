@@ -18,32 +18,18 @@ import CommentableDetailField from '@/src/components/features/comments/Commentab
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '@/src/db';
-import type { ChoiceSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityInitialLoad,
-  useEntityEventSubscriptions,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
-import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
-import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
@@ -55,7 +41,8 @@ import {
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
-import { logger } from '@/src/utils/logging/logger';
+import { useChoiceDetailLists } from './useChoiceDetailLists';
+import { useChoiceDetailServices } from './useChoiceDetailServices';
 
 export type ChoiceDetailScreenParamList = {
   ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
@@ -75,46 +62,19 @@ const ChoiceDetailScreen = () => {
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
 
-  const drizzleDb = useDrizzle();
-  const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
-  const choiceCheckGroupServiceRef = useRef<ReturnType<
-    typeof createChoiceCheckGroupService
-  > | null>(null);
-  const choiceCheckServiceRef = useRef<ReturnType<typeof createChoiceCheckService> | null>(null);
-  const effectServiceRef = useRef<ReturnType<typeof createEffectService> | null>(null);
-  const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
-  const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!choiceServiceRef.current) {
-        choiceServiceRef.current = createChoiceService(drizzleDb);
-      }
-      if (!choiceCheckGroupServiceRef.current) {
-        choiceCheckGroupServiceRef.current = createChoiceCheckGroupService(drizzleDb);
-      }
-      if (!choiceCheckServiceRef.current) {
-        choiceCheckServiceRef.current = createChoiceCheckService(drizzleDb);
-      }
-      if (!effectServiceRef.current) {
-        effectServiceRef.current = createEffectService(drizzleDb);
-      }
-      if (!sceneServiceRef.current) {
-        sceneServiceRef.current = createSceneService(drizzleDb);
-      }
-      if (!itemServiceRef.current) {
-        itemServiceRef.current = createItemService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
-
-  const [choice, setChoice] = useState<ChoiceSelect | null>(null);
+  const services = useChoiceDetailServices();
+  const {
+    record: choice,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: choiceId,
+    load: services.choiceService.getById,
+    event: 'choice_changed',
+    label: 'choice details',
+    onGone: navigation.goBack,
+  });
   const isBranching = selectedStory?.type === 'branching';
-  const [checkGroups, setCheckGroups] = useState<ChoiceCheckGroup[]>([]);
-  const [checks, setChecks] = useState<ChoiceCheck[]>([]);
-  const [choiceEffects, setChoiceEffects] = useState<Effect[]>([]);
-  const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({});
-  const [itemNamesById, setItemNamesById] = useState<Record<string, string>>({});
   const { canEdit } = useStoryRole(choice?.storyId);
   const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
     useEntityComments(choice?.storyId, 'Choice', choiceId);
@@ -126,117 +86,23 @@ const ChoiceDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Choice', entityId: choiceId });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
+  const {
+    checkGroups,
+    checks,
+    effects: choiceEffects,
+    sceneNamesById,
+    itemNamesById,
+  } = useChoiceDetailLists(services, choice?.storyId, choiceId, choice !== null && isBranching);
 
   const styles = useThemedStyles(createStyles);
 
-  const fetchChoice = useCallback(async () => {
-    if (!choiceServiceRef.current) {
-      logger.warn('Choice service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedChoice = await choiceServiceRef.current.getById(choiceId);
-      if (fetchedChoice && !fetchedChoice.isDeleted) {
-        setChoice(fetchedChoice);
-        setHeaderTitle(fetchedChoice.text || copy.detailsTitle);
-      } else if (fetchedChoice && fetchedChoice.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch choice details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [choiceId, navigation, copy, t]);
-
-  const handleChoiceChange = useCallback(
-    async (_changedStoryId: string, changedChoiceId: string) => {
-      if (changedChoiceId === choiceId && choiceServiceRef.current) {
-        const updatedChoice = await choiceServiceRef.current.getById(choiceId);
-        if (!updatedChoice || updatedChoice.isDeleted) {
-          navigation.goBack();
-        } else {
-          setChoice(updatedChoice);
-          setHeaderTitle(updatedChoice.text || copy.detailsTitle);
-        }
-      }
-    },
-    [choiceId, navigation, copy],
-  );
-
-  const fetchChecksAndEffects = useCallback(async () => {
-    if (
-      !choiceCheckGroupServiceRef.current ||
-      !choiceCheckServiceRef.current ||
-      !effectServiceRef.current ||
-      !choice?.storyId
-    ) {
-      return;
-    }
-    try {
-      const groups = await choiceCheckGroupServiceRef.current.getChoiceCheckGroupsByChoiceId(
-        choice.storyId,
-        choiceId,
-      );
-      setCheckGroups(groups);
-      const checksByGroupArrays = await Promise.all(
-        groups.map((group) =>
-          choiceCheckServiceRef.current!.getChoiceChecksByGroupId(choice.storyId, group.id),
-        ),
-      );
-      setChecks(checksByGroupArrays.flat());
-      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(
-        choice.storyId,
-        'Choice',
-        choiceId,
-      );
-      setChoiceEffects(fetchedEffects);
-    } catch (err) {
-      logger.error('Failed to fetch choice checks/effects:', err);
-    }
-  }, [choice?.storyId, choiceId]);
-
-  const fetchNameLookups = useCallback(async () => {
-    if (!sceneServiceRef.current || !itemServiceRef.current || !choice?.storyId) {
-      return;
-    }
-    try {
-      const [allScenes, allItems] = await Promise.all([
-        sceneServiceRef.current.getAllByStoryId(choice.storyId),
-        itemServiceRef.current.getItemsByStoryId(choice.storyId),
-      ]);
-      setSceneNamesById(Object.fromEntries(allScenes.map((scene) => [scene.id, scene.name])));
-      setItemNamesById(Object.fromEntries(allItems.map((item) => [item.id, item.name])));
-    } catch (err) {
-      logger.error('Failed to fetch scene/item name lookups:', err);
-    }
-  }, [choice?.storyId]);
-
-  useEntityInitialLoad(fetchChoice);
-
-  // The choice is loaded above; this effect owns only event subscriptions.
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [{ event: 'choice_changed', listener: handleChoiceChange }],
-      [handleChoiceChange],
-    ),
-  );
-
-  useEffect(() => {
-    if (choice && isBranching) {
-      fetchChecksAndEffects();
-      fetchNameLookups();
-    }
-  }, [choice, isBranching, fetchChecksAndEffects, fetchNameLookups]);
+  const headerTitle = choice
+    ? choice.text || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   const navigateToDetail = useNavigateToEntityDetail();
 
@@ -267,8 +133,14 @@ const ChoiceDetailScreen = () => {
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? copy.notFound : copy.failedToLoad}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
   if (!choice) {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;

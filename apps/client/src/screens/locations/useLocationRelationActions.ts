@@ -1,10 +1,10 @@
 import type { TFunction } from 'i18next';
-import { useCallback, type MutableRefObject } from 'react';
+import { useCallback } from 'react';
 import type { LocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 
 interface LocationRelationActionsParams {
-  relationServiceRef: MutableRefObject<LocationRelationService | null>;
+  relationService: LocationRelationService;
   storyId: string | undefined;
   userId: string | null | undefined;
   locationId: string;
@@ -16,7 +16,7 @@ interface LocationRelationActionsParams {
  * location, remove a relation. Each says so in an alert when the service refuses (a cycle, say).
  */
 export function useLocationRelationActions({
-  relationServiceRef,
+  relationService,
   storyId,
   userId,
   locationId,
@@ -24,9 +24,9 @@ export function useLocationRelationActions({
 }: LocationRelationActionsParams) {
   const handleSetParent = useCallback(
     async (newParentId: string | null) => {
-      if (!relationServiceRef.current || !storyId || !userId) return;
+      if (!storyId || !userId) return;
       try {
-        await relationServiceRef.current.setParent(userId, storyId, locationId, newParentId);
+        await relationService.setParent(userId, storyId, locationId, newParentId);
       } catch (err) {
         AppAlert.alert(
           t('error'),
@@ -34,14 +34,14 @@ export function useLocationRelationActions({
         );
       }
     },
-    [relationServiceRef, storyId, userId, locationId, t],
+    [relationService, storyId, userId, locationId, t],
   );
 
   const handleAddChild = useCallback(
     async (childId: string) => {
-      if (!relationServiceRef.current || !storyId || !userId) return;
+      if (!storyId || !userId) return;
       try {
-        await relationServiceRef.current.setParent(userId, storyId, childId, locationId);
+        await relationService.setParent(userId, storyId, childId, locationId);
       } catch (err) {
         AppAlert.alert(
           t('error'),
@@ -49,19 +49,14 @@ export function useLocationRelationActions({
         );
       }
     },
-    [relationServiceRef, storyId, userId, locationId, t],
+    [relationService, storyId, userId, locationId, t],
   );
 
   const handleAddConnection = useCallback(
     async (otherLocationId: string) => {
-      if (!relationServiceRef.current || !storyId || !userId) return;
+      if (!storyId || !userId) return;
       try {
-        await relationServiceRef.current.addConnection(
-          userId,
-          storyId,
-          locationId,
-          otherLocationId,
-        );
+        await relationService.addConnection(userId, storyId, locationId, otherLocationId);
       } catch (err) {
         AppAlert.alert(
           t('error'),
@@ -69,14 +64,14 @@ export function useLocationRelationActions({
         );
       }
     },
-    [relationServiceRef, storyId, userId, locationId, t],
+    [relationService, storyId, userId, locationId, t],
   );
 
   const handleRemoveLocationRelation = useCallback(
     async (relationId: string) => {
-      if (!relationServiceRef.current || !userId) return;
+      if (!userId) return;
       try {
-        await relationServiceRef.current.removeRelation(userId, relationId);
+        await relationService.removeRelation(userId, relationId);
       } catch (err) {
         AppAlert.alert(
           t('error'),
@@ -84,7 +79,7 @@ export function useLocationRelationActions({
         );
       }
     },
-    [relationServiceRef, userId, t],
+    [relationService, userId, t],
   );
 
   return { handleSetParent, handleAddChild, handleAddConnection, handleRemoveLocationRelation };

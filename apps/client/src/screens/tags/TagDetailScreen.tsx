@@ -8,39 +8,33 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import type { TagRelation } from '@keres/shared/entities/narrative/Tag'; // Import TagRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '@/src/db';
-import type { TagSelect } from '@/src/db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
+import { useStoryEntities } from '@/src/hooks/lists/useStoryEntities';
+import { useRelatedEntityGroups } from '@/src/hooks/relations/useRelatedEntityGroups';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
-import { EntityService } from '@/src/services/entity-solvers/EntityService'; // Import EntityService
-import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService'; // Import createTagRelationService
-import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService'; // Import createTagService
 import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
 import type { ThemeColors } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 import type { TagsScreenNavigationProp } from './TagListScreen';
-import { logger } from '@/src/utils/logging/logger';
+import { useTagDetailServices } from './useTagDetailServices';
 
 // Define the parameter list for this screen
 export type TagDetailScreenParamList = {
   TagDetail: { tagId: string; occurrence?: OccurrenceTarget };
 };
+
+const TAG_RELATION_EVENTS = ['tag_relation_changed'] as const;
 
 type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>;
 
@@ -50,191 +44,44 @@ const TagDetailScreen = () => {
   const route = useRoute<TagDetailScreenRouteProp>();
   const { tagId, occurrence } = route.params;
 
-  const drizzleDb = useDrizzle();
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
 
-  // Initialize tagService only once when drizzleDb is available
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!tagServiceRef.current) {
-        tagServiceRef.current = createTagService(drizzleDb);
-      }
-      if (!tagRelationServiceRef.current) {
-        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
-
-  const [tag, setTag] = useState<TagSelect | null>(null);
-  const comments = useEntityComments(selectedStory?.id, 'Tag', tagId);
-  const [allTagRelations, setAllTagRelations] = useState<TagRelation[]>([]);
-  const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
-    chapter: [],
-    character: [],
-    choice: [],
-    item: [],
-    itemjourney: [],
-    location: [],
-    note: [],
-    operationlog: [],
-    scene: [],
-    story: [],
-    suggestion: [], // Added missing suggestion
-    tag: [],
-    user: [],
-    worldrule: [],
-    characterrelation: [],
-    noterelation: [],
-    tagrelation: [],
-    characterscene: [],
+  const { tagService, tagRelationService } = useTagDetailServices();
+  const {
+    record: tag,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: tagId,
+    load: tagService.getById,
+    event: 'tag_changed',
+    label: 'tag details',
+    onGone: navigation.goBack,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
+  const comments = useEntityComments(selectedStory?.id, 'Tag', tagId);
+  const loadTagRelations = useMemo(
+    () => (storyId: string) => tagRelationService.getRelationsForTag(storyId, tagId),
+    [tagRelationService, tagId],
+  );
+  // A tag relation names the tagged entity, not the tag, so any change in the story may concern it.
+  const tagRelations = useStoryEntities({
+    storyId: selectedStory?.id,
+    load: loadTagRelations,
+    events: TAG_RELATION_EVENTS,
+    label: 'tag relations',
+  });
+  const groupedEntities = useRelatedEntityGroups(selectedStory?.id, tagRelations);
 
-  // Move styles declaration to the top
   const styles = useThemedStyles(createStyles);
 
-  const fetchTag = useCallback(async () => {
-    if (!tagServiceRef.current) {
-      logger.warn('Tag service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedTag = await tagServiceRef.current.getById(tagId);
-      if (fetchedTag && !fetchedTag.isDeleted) {
-        setTag(fetchedTag);
-        setHeaderTitle(fetchedTag.name || t('tag_details_title'));
-      } else if (fetchedTag && fetchedTag.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(t('tag_not_found'));
-        setHeaderTitle(t('tag_not_found'));
-      }
-    } catch (err) {
-      logger.error('Failed to fetch tag details:', err);
-      setError(t('failed_to_load_tag'));
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [tagId, setTag, setLoading, setError, setHeaderTitle, navigation, t]);
-
-  const fetchTagRelations = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id) {
-      logger.warn('Tag relation service or story not initialized.');
-      return;
-    }
-    try {
-      const relations = await tagRelationServiceRef.current.getRelationsForTag(
-        selectedStory.id,
-        tagId,
-      );
-      setAllTagRelations(relations);
-    } catch (err) {
-      logger.error('Failed to fetch tag relations:', err);
-    }
-  }, [tagId, selectedStory?.id]);
-
-  const processTagRelations = useCallback(async () => {
-    if (!drizzleDb || !selectedStory?.id) return;
-
-    const newGroupedEntities: Record<string, RelatedEntityItem[]> = {
-      chapter: [],
-      character: [],
-      choice: [],
-      item: [],
-      itemjourney: [],
-      location: [],
-      note: [],
-      operationlog: [],
-      scene: [],
-      story: [],
-      suggestion: [],
-      tag: [],
-      user: [],
-      worldrule: [],
-      characterrelation: [],
-      noterelation: [],
-      tagrelation: [],
-      characterscene: [],
-    };
-
-    for (const relation of allTagRelations) {
-      const entityName = await EntityService.getEntityIdentifier(
-        drizzleDb,
-        relation.relationType,
-        relation.relationId,
-        selectedStory.id,
-        t,
-      );
-      if (entityName) {
-        newGroupedEntities[relation.relationType.toLowerCase()].push({
-          id: relation.relationId,
-          name: entityName,
-        });
-      }
-    }
-    setGroupedEntities(newGroupedEntities);
-  }, [allTagRelations, drizzleDb, selectedStory?.id, t]);
-
-  const handleTagChange = useCallback(
-    async (_changedStoryId: string, changedTagId: string) => {
-      if (changedTagId === tagId) {
-        // Re-fetch the tag to get the latest status
-        if (tagServiceRef.current) {
-          const updatedTag = await tagServiceRef.current.getById(tagId);
-          if (!updatedTag || updatedTag.isDeleted) {
-            navigation.goBack(); // Tag was deleted or no longer found
-          } else {
-            setTag(updatedTag); // Update state with latest tag data
-            setHeaderTitle(updatedTag.name || t('tag_details_title'));
-          }
-        }
-        fetchTagRelations(); // Also refetch relations if the tag itself changed
-      }
-    },
-    [tagId, navigation, setTag, setHeaderTitle, t, fetchTagRelations],
-  );
-
-  const handleTagRelationChange = useCallback(
-    (_changedStoryId: string, changedTagId: string) => {
-      if (changedTagId === tagId) {
-        fetchTagRelations(); // Refetch relations if a tag relation changed
-      }
-    },
-    [tagId, fetchTagRelations],
-  );
-
-  const loadInitialTagData = useCallback(() => {
-    if (tagServiceRef.current && selectedStory?.id) {
-      void fetchTag();
-      void fetchTagRelations();
-    }
-  }, [fetchTag, fetchTagRelations, selectedStory?.id]);
-
-  useEntityInitialLoad(loadInitialTagData);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'tag_changed', listener: handleTagChange },
-        { event: 'tag_relation_changed', listener: handleTagRelationChange },
-      ],
-      [handleTagChange, handleTagRelationChange],
-    ),
-  );
-
-  useEffect(() => {
-    if (allTagRelations.length > 0 && selectedStory?.id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- `processTagRelations` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-      processTagRelations();
-    }
-  }, [allTagRelations, selectedStory?.id, processTagRelations]);
+  const headerTitle = tag
+    ? tag.name || t('tag_details_title')
+    : failure === 'notFound'
+      ? t('tag_not_found')
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   useScreenHeader({
     target: 'parent',
@@ -253,8 +100,14 @@ const TagDetailScreen = () => {
     return <ScreenLoading padded message={t('loading_tag_details')} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? t('tag_not_found') : t('failed_to_load_tag')}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   if (!tag) {

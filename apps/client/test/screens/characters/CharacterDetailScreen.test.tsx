@@ -1,6 +1,7 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import CharacterDetailScreen from '@/src/screens/characters/CharacterDetailScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -261,10 +262,8 @@ describe('CharacterDetailScreen', () => {
     mockSelectedStory = { id: 'story-1', type: 'linear', statSystem: false };
     mockStatModes = [];
     mockGetCharacterById.mockResolvedValue(makeCharacter());
-    mockGetAllCharactersByStoryId.mockResolvedValue([
-      makeCharacter(),
-      makeCharacter({ id: 'char-2', name: 'Bram', isDeleted: true }),
-    ]);
+    // The service already leaves deleted rows out of the query.
+    mockGetAllCharactersByStoryId.mockResolvedValue([makeCharacter()]);
     mockGetRelationsForCharacter.mockResolvedValue([{ id: 'rel-1' }]);
     mockGetCharacterSceneRelations.mockResolvedValue([]);
     mockGetScenesByStoryId.mockResolvedValue([]);
@@ -337,5 +336,48 @@ describe('CharacterDetailScreen', () => {
     mockGetCharacterById.mockResolvedValue(makeCharacter({ isDeleted: true }));
     await render(<CharacterDetailScreen />);
     await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+  });
+  const lastHeaderTitle = () =>
+    (
+      mockUseScreenHeader.mock.calls[mockUseScreenHeader.mock.calls.length - 1][0] as {
+        title: string;
+      }
+    ).title;
+
+  it('follows a rename in the header and the content when the character changes', async () => {
+    const view = await render(<CharacterDetailScreen />);
+    await waitFor(() => expect(view.queryByTestId('content-marker')).not.toBeNull());
+    expect(lastHeaderTitle()).toBe('Aria');
+
+    mockGetCharacterById.mockResolvedValue(makeCharacter({ name: 'Ariadne' }));
+    await act(async () => {
+      entityEventEmitter.emit('character_changed', 'story-1', 'char-1');
+    });
+    await waitFor(() => expect(jsonOf(view)).toMatchObject({ name: 'Ariadne' }));
+    expect(lastHeaderTitle()).toBe('Ariadne');
+  });
+
+  it('reloads only the character relations when the character relations change', async () => {
+    const view = await render(<CharacterDetailScreen />);
+    await waitFor(() => expect(jsonOf(view)).toMatchObject({ relations: 1 }));
+    mockGetAllCharactersByStoryId.mockClear();
+
+    mockGetRelationsForCharacter.mockResolvedValue([{ id: 'rel-1' }, { id: 'rel-2' }]);
+    await act(async () => {
+      entityEventEmitter.emit('character_relation_changed', 'story-1', 'char-1');
+    });
+    await waitFor(() => expect(jsonOf(view)).toMatchObject({ relations: 2 }));
+    expect(mockGetAllCharactersByStoryId).not.toHaveBeenCalled();
+  });
+
+  it('ignores relation changes of another character', async () => {
+    const view = await render(<CharacterDetailScreen />);
+    await waitFor(() => expect(jsonOf(view)).toMatchObject({ relations: 1 }));
+    mockGetRelationsForCharacter.mockClear();
+
+    await act(async () => {
+      entityEventEmitter.emit('character_relation_changed', 'story-1', 'char-2');
+    });
+    expect(mockGetRelationsForCharacter).not.toHaveBeenCalled();
   });
 });

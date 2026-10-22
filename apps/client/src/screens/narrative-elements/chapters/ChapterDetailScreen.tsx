@@ -22,23 +22,14 @@ import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesLis
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { ChapterType } from '@keres/shared';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { useDrizzle } from '@/src/db';
-import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
+import { useStoryEntities } from '@/src/hooks/lists/useStoryEntities';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { useChapterStore } from '@/src/state/story/chapterStore';
-import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
-import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
-import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
@@ -52,18 +43,21 @@ import {
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
 } from '@/src/utils/scene/sceneTiming';
-import type { Location } from '@keres/shared/entities/narrative/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
 import { logger } from '@/src/utils/logging/logger';
+import { useChapterDetailServices } from './useChapterDetailServices';
 
 export type ChapterDetailScreenParamList = {
   ChapterDetail: { chapterId: string; occurrence?: OccurrenceTarget };
 };
+
+const SCENE_EVENTS = ['scene_changed'] as const;
+const LOCATION_EVENTS = ['location_changed'] as const;
 
 type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'ChapterDetail'>;
 
@@ -80,26 +74,18 @@ const ChapterDetailScreen = () => {
   const { arcs, showSelector } = useStoryArcs();
   const { selectedStory } = useStoryStore();
 
-  const drizzleDb = useDrizzle();
-  const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
-  const sceneServiceRef = useRef<SceneService | null>(null);
-  const locationServiceRef = useRef<LocationService | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!chapterServiceRef.current) {
-        chapterServiceRef.current = createChapterService(drizzleDb);
-      }
-      if (!sceneServiceRef.current) {
-        sceneServiceRef.current = createSceneService(drizzleDb);
-      }
-      if (!locationServiceRef.current) {
-        locationServiceRef.current = createLocationService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
-
-  const [chapter, setChapter] = useState<ChapterSelect | null>(null);
+  const { chapterService, sceneService, locationService } = useChapterDetailServices();
+  const {
+    record: chapter,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: chapterId,
+    load: chapterService.getById,
+    event: 'chapter_changed',
+    label: 'chapter details',
+    onGone: navigation.goBack,
+  });
   const copy = useVocabularyEntityCopy(chapter?.type === 'event' ? 'Event' : 'Chapter');
   const { canEdit } = useStoryRole(chapter?.storyId);
   const { definition: calendar } = useStoryCalendar();
@@ -114,120 +100,30 @@ const ChapterDetailScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Chapter', entityId: chapterId });
 
-  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]);
-  const [allLocations, setAllLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
+  const allScenes = useStoryEntities({
+    storyId: selectedStory?.id,
+    enabled: chapter !== null,
+    load: sceneService.getScenesByStoryId,
+    events: SCENE_EVENTS,
+    label: 'all scenes',
+  });
+  const allLocations = useStoryEntities({
+    storyId: selectedStory?.id,
+    enabled: chapter !== null,
+    load: locationService.getAllByStoryId,
+    events: LOCATION_EVENTS,
+    label: 'all locations',
+  });
 
   const styles = useThemedStyles(createStyles);
 
-  const fetchChapter = useCallback(async () => {
-    if (!chapterServiceRef.current) {
-      logger.warn('Chapter service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedChapter = await chapterServiceRef.current.getById(chapterId);
-      if (fetchedChapter && !fetchedChapter.isDeleted) {
-        setChapter(fetchedChapter);
-        setHeaderTitle(fetchedChapter.name || copy.detailsTitle);
-      } else if (fetchedChapter && fetchedChapter.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch chapter details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, copy, t]);
-
-  const fetchAllScenesInStory = useCallback(async () => {
-    if (!sceneServiceRef.current || !selectedStory?.id) {
-      setAllScenes([]);
-      return;
-    }
-    try {
-      const fetchedScenes = await sceneServiceRef.current.getScenesByStoryId(selectedStory.id);
-      setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all scenes:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllLocationsInStory = useCallback(async () => {
-    if (!locationServiceRef.current || !selectedStory?.id) {
-      setAllLocations([]);
-      return;
-    }
-    try {
-      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all locations:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const handleChapterChange = useCallback(
-    async (_changedStoryId: string, changedChapterId: string) => {
-      if (changedChapterId === chapterId) {
-        if (chapterServiceRef.current) {
-          const updatedChapter = await chapterServiceRef.current.getById(chapterId);
-          if (!updatedChapter || updatedChapter.isDeleted) {
-            navigation.goBack();
-          } else {
-            setChapter(updatedChapter);
-            setHeaderTitle(updatedChapter.name || copy.detailsTitle);
-          }
-        }
-      }
-    },
-    [chapterId, navigation, setChapter, setHeaderTitle, copy.detailsTitle],
-  );
-
-  const handleSceneChange = useCallback(
-    (changedStoryId: string, _changedSceneId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllScenesInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllScenesInStory],
-  );
-
-  const handleLocationChange = useCallback(
-    (changedStoryId: string, _changedLocationId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllLocationsInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllLocationsInStory],
-  );
-
-  useEntityInitialLoad(fetchChapter);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'chapter_changed', listener: handleChapterChange },
-        { event: 'scene_changed', listener: handleSceneChange },
-        { event: 'location_changed', listener: handleLocationChange },
-      ],
-      [handleChapterChange, handleSceneChange, handleLocationChange],
-    ),
-  );
-
-  useEffect(() => {
-    if (chapter) {
-      fetchAllScenesInStory();
-      fetchAllLocationsInStory();
-    }
-  }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
+  const headerTitle = chapter
+    ? chapter.name || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   const [isConvertVisible, setIsConvertVisible] = useState(false);
   const [spine, setSpine] = useState<{ id: string; name: string }[]>([]);
@@ -236,7 +132,7 @@ const ChapterDetailScreen = () => {
   /** The spine as it stands, so the modal can offer the slots a returning chapter may take. */
   useEffect(() => {
     if (!isConvertVisible || !chapter) return;
-    createChapterService(drizzleDb)
+    chapterService
       .getAllByStoryId(chapter.storyId, 'chapter')
       .then((rows) =>
         setSpine(
@@ -244,7 +140,7 @@ const ChapterDetailScreen = () => {
         ),
       )
       .catch((error) => logger.error('ChapterDetailScreen: failed to read the spine.', error));
-  }, [isConvertVisible, chapter, chapterId, drizzleDb]);
+  }, [isConvertVisible, chapter, chapterId, chapterService]);
 
   useScreenHeader({
     target: 'parent',
@@ -274,8 +170,14 @@ const ChapterDetailScreen = () => {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? copy.notFound : copy.failedToLoad}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   if (!chapter) {

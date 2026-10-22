@@ -284,19 +284,20 @@ it('goes back when the change event reports a deletion', async () => {
   await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
 });
 
-it('refetches relations on tag relation changes', async () => {
+it('refetches relations on tag relation changes in its story', async () => {
   const view = await render(<TagDetailScreen />);
 
   await waitFor(() => expect(view.getByTestId('detail-title')).toBeTruthy());
   const callsBefore = mockGetRelationsForTag.mock.calls.length;
 
+  // The event names the tagged entity (not the tag), so only the story tells whether it concerns us.
   await act(async () => {
-    entityEventEmitter.emit('tag_relation_changed', 'story-1', 'other-tag');
+    entityEventEmitter.emit('tag_relation_changed', 'story-2', 'char-1');
   });
   expect(mockGetRelationsForTag.mock.calls.length).toBe(callsBefore);
 
   await act(async () => {
-    entityEventEmitter.emit('tag_relation_changed', 'story-1', 'tag-1');
+    entityEventEmitter.emit('tag_relation_changed', 'story-1', 'char-1');
   });
   await waitFor(() =>
     expect(mockGetRelationsForTag.mock.calls.length).toBeGreaterThan(callsBefore),

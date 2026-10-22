@@ -7,41 +7,19 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
-import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation'; // Import CharacterRelation
-import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene'; // Entity type
-import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item'; // Import Item and ItemJourney entities
-import type { Location } from '@keres/shared/entities/narrative/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useDrizzle } from '@/src/db';
-import type { SceneSelect } from '@/src/db/schema'; // For available scenes
-import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/relations/CharacterRelationService';
-import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService'; // Import CharacterRelationService
-import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Service for CharacterScene
-import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
-import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
-import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
-import { createItemService } from '@/src/services/storymanagement/entities/ItemService'; // Import ItemService
-import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
-import { createLocationService } from '@/src/services/storymanagement/entities/LocationService'; // Import LocationService
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore'; // Import useUserSettingsStore
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
@@ -50,7 +28,8 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';
 import { createCharacterDetailMutations } from './createCharacterDetailMutations';
-import { logger } from '@/src/utils/logging/logger';
+import { useCharacterDetailServices } from './useCharacterDetailServices';
+import { useCharacterStoryLists } from './useCharacterStoryLists';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -73,41 +52,20 @@ const CharacterDetailScreen = () => {
   const copy = useVocabularyEntityCopy('Character');
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const locationCopy = useVocabularyEntityCopy('Location');
-  const { userId } = useUserSettingsStore(); // Get userId from store
+  const { userId } = useUserSettingsStore();
 
-  const drizzleDb = useDrizzle();
-  const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
-  const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
-  const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
-  const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
-  const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null); // Ref for ItemJourneyService
-  const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
-
-  // Initialize services once when drizzleDb is available
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!characterServiceRef.current) {
-        characterServiceRef.current = createCharacterService(drizzleDb);
-      }
-      if (!characterRelationServiceRef.current) {
-        characterRelationServiceRef.current = createCharacterRelationService(drizzleDb);
-      }
-      if (!characterSceneServiceRef.current) {
-        characterSceneServiceRef.current = createCharacterSceneService(drizzleDb);
-      }
-      if (!itemServiceRef.current) {
-        itemServiceRef.current = createItemService(drizzleDb);
-      }
-      if (!itemJourneyServiceRef.current) {
-        itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
-      }
-      if (!locationServiceRef.current) {
-        locationServiceRef.current = createLocationService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
-
-  const [character, setCharacter] = useState<CharacterSelect | null>(null);
+  const services = useCharacterDetailServices();
+  const {
+    record: character,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: characterId,
+    load: services.characterService.getById,
+    event: 'character_changed',
+    label: 'character details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(character?.storyId);
   const { selectedStory } = useStoryStore();
   const statSystemEnabled = !!selectedStory?.statSystem;
@@ -120,8 +78,6 @@ const CharacterDetailScreen = () => {
   );
   const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
     useEntityComments(character?.storyId, 'Character', characterId);
-  const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
-  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
 
   const {
     selectedTags: characterTags,
@@ -131,276 +87,40 @@ const CharacterDetailScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Character', entityId: characterId });
   const appearingArcs = useAppearsInArcs(character?.storyId ?? '', 'character', characterId);
-  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for all scenes in story
-  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
-  const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in story
-  const [allItemJourneys, setAllItemJourneys] = useState<ItemJourney[]>([]); // State for all item journeys in story
-  const [allLocations, setAllLocations] = useState<Location[]>([]); // State for all locations in story
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
+  const {
+    characters: allCharacters,
+    relations: characterRelations,
+    characterScenes: characterSceneRelations,
+    scenes: allScenes,
+    items: allItems,
+    itemJourneys: allItemJourneys,
+    locations: allLocations,
+  } = useCharacterStoryLists(services, character?.storyId, characterId);
 
-  // Move styles declaration to the top
   const styles = useThemedStyles(createStyles);
-
-  const fetchCharacter = useCallback(async () => {
-    if (!characterServiceRef.current) {
-      logger.warn('Character service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedCharacter = await characterServiceRef.current.getById(characterId);
-      if (fetchedCharacter && !fetchedCharacter.isDeleted) {
-        setCharacter(fetchedCharacter);
-        setHeaderTitle(fetchedCharacter.name || copy.detailsTitle);
-      } else if (fetchedCharacter && fetchedCharacter.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch character details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, copy, t]);
-
-  const fetchRelationsForCharacter = useCallback(async () => {
-    if (!characterRelationServiceRef.current || !character?.storyId || !characterId) {
-      setCharacterRelations([]);
-      return;
-    }
-    try {
-      const fetchedRelations = await characterRelationServiceRef.current.getRelationsForCharacter(
-        character.storyId,
-        characterId,
-      );
-      setCharacterRelations(fetchedRelations);
-    } catch (err) {
-      logger.error('Failed to fetch character relations:', err);
-    }
-  }, [character?.storyId, characterId]);
-
-  const fetchAllCharactersInStory = useCallback(async () => {
-    if (!characterServiceRef.current || !character?.storyId) {
-      setAllCharacters([]);
-      return;
-    }
-    try {
-      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(
-        character.storyId,
-      );
-      setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all characters:', err);
-    }
-  }, [character?.storyId]);
-
-  const fetchScenesForCharacter = useCallback(async () => {
-    if (!characterSceneServiceRef.current || !character?.storyId || !characterId) {
-      setCharacterSceneRelations([]);
-      return;
-    }
-    try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForCharacter(
-        character.storyId,
-        characterId,
-      );
-      setCharacterSceneRelations(fetchedRelations);
-    } catch (err) {
-      logger.error('Failed to fetch character scene relations:', err);
-    }
-  }, [character?.storyId, characterId]);
-
-  const fetchAllScenesInStory = useCallback(async () => {
-    if (!drizzleDb || !character?.storyId) {
-      setAllScenes([]);
-      return;
-    }
-    try {
-      const sceneService = createSceneService(drizzleDb);
-      const fetchedScenes = await sceneService.getScenesByStoryId(character.storyId);
-      setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all scenes:', err);
-    }
-  }, [character?.storyId, drizzleDb]);
-
-  const fetchAllItemsInStory = useCallback(async () => {
-    if (!itemServiceRef.current || !character?.storyId) {
-      setAllItems([]);
-      return;
-    }
-    try {
-      const fetchedItems = await itemServiceRef.current.getAllByStoryId(character.storyId);
-      setAllItems(fetchedItems.filter((i) => !i.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all items:', err);
-    }
-  }, [character?.storyId]);
-
-  const fetchAllItemJourneysInStory = useCallback(async () => {
-    if (!itemJourneyServiceRef.current || !character?.storyId) {
-      setAllItemJourneys([]);
-      return;
-    }
-    try {
-      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(
-        character.storyId,
-      );
-      setAllItemJourneys(fetchedItemJourneys.filter((ij) => !ij.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all item journeys:', err);
-    }
-  }, [character?.storyId]);
-
-  const fetchAllLocationsInStory = useCallback(async () => {
-    if (!locationServiceRef.current || !character?.storyId) {
-      setAllLocations([]);
-      return;
-    }
-    try {
-      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(character.storyId);
-      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all locations:', err);
-    }
-  }, [character?.storyId]);
-
-  const handleCharacterChange = useCallback(
-    async (_changedStoryId: string, changedCharacterId: string) => {
-      if (changedCharacterId === characterId) {
-        if (characterServiceRef.current) {
-          const updatedCharacter = await characterServiceRef.current.getById(characterId);
-          if (!updatedCharacter || updatedCharacter.isDeleted) {
-            navigation.goBack();
-          } else {
-            setCharacter(updatedCharacter);
-            setHeaderTitle(updatedCharacter.name || copy.detailsTitle);
-          }
-        }
-      }
-    },
-    [characterId, navigation, setCharacter, setHeaderTitle, copy],
-  );
-
-  const handleCharacterRelationChange = useCallback(
-    (_changedStoryId: string, changedCharacterId: string) => {
-      if (changedCharacterId === characterId) {
-        fetchRelationsForCharacter();
-      }
-    },
-    [characterId, fetchRelationsForCharacter],
-  );
-
-  const handleCharacterSceneChange = useCallback(
-    (_changedStoryId: string, changedCharacterId: string) => {
-      if (changedCharacterId === characterId) {
-        fetchScenesForCharacter();
-      }
-    },
-    [characterId, fetchScenesForCharacter],
-  );
-
-  const handleItemChange = useCallback(
-    (changedStoryId: string, _changedItemId: string) => {
-      if (character?.storyId === changedStoryId) {
-        fetchAllItemsInStory();
-      }
-    },
-    [character?.storyId, fetchAllItemsInStory],
-  );
-
-  const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, _changedItemJourneyId: string) => {
-      if (character?.storyId === changedStoryId) {
-        fetchAllItemJourneysInStory();
-      }
-    },
-    [character?.storyId, fetchAllItemJourneysInStory],
-  );
-
-  const handleLocationChange = useCallback(
-    (changedStoryId: string, _changedLocationId: string) => {
-      if (character?.storyId === changedStoryId) {
-        fetchAllLocationsInStory();
-      }
-    },
-    [character?.storyId, fetchAllLocationsInStory],
-  );
-
-  useEntityInitialLoad(fetchCharacter);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'character_changed', listener: handleCharacterChange },
-        {
-          event: 'character_relation_changed',
-          listener: handleCharacterRelationChange,
-        },
-        {
-          event: 'character_scene_changed',
-          listener: handleCharacterSceneChange,
-        },
-        { event: 'item_changed', listener: handleItemChange },
-        { event: 'item_journey_changed', listener: handleItemJourneyChange },
-        { event: 'location_changed', listener: handleLocationChange },
-      ],
-      [
-        handleCharacterChange,
-        handleCharacterRelationChange,
-        handleCharacterSceneChange,
-        handleItemChange,
-        handleItemJourneyChange,
-        handleLocationChange,
-      ],
-    ),
-  );
-
-  useEffect(() => {
-    if (character) {
-      /* eslint-disable react-hooks/set-state-in-effect -- each fetch clears synchronously only when its service/data is missing and otherwise sets after `await`; the rule cannot verify across the callback boundary. */
-      fetchRelationsForCharacter();
-      fetchAllCharactersInStory(); // Fetch all characters here
-      fetchScenesForCharacter(); // Fetch character scene relations
-      fetchAllScenesInStory(); // Fetch all scenes
-      fetchAllItemsInStory(); // Fetch all items
-      fetchAllItemJourneysInStory(); // Fetch all item journeys
-      fetchAllLocationsInStory(); // Fetch all locations
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-  }, [
-    character,
-    fetchRelationsForCharacter,
-    fetchAllCharactersInStory,
-    fetchScenesForCharacter,
-    fetchAllScenesInStory,
-    fetchAllItemsInStory,
-    fetchAllItemJourneysInStory,
-    fetchAllLocationsInStory,
-  ]);
 
   const {
     handleSaveRelation,
     handleDeleteRelation,
     handleSaveCharacterScene,
     handleDeleteCharacterScene,
-    // eslint-disable-next-line react-hooks/refs -- the factory only closes over the service refs for its async event handlers; nothing is read during the call.
   } = createCharacterDetailMutations({
-    characterRelationServiceRef,
-    characterSceneServiceRef,
+    relationService: services.relationService,
+    characterSceneService: services.characterSceneService,
     character,
     userId,
     t,
     characterId,
-    setCharacterRelations,
-    setCharacterSceneRelations,
   });
+
+  const headerTitle = character
+    ? character.name || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
+
   useScreenHeader({
     target: 'parent',
     title: headerTitle,
@@ -440,8 +160,14 @@ const CharacterDetailScreen = () => {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? copy.notFound : copy.failedToLoad}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   if (!character) {

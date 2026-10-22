@@ -74,7 +74,11 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
     useEntityEventSubscriptions: (
       subs: { event: string; listener: (...args: never[]) => unknown }[],
     ) => {
-      mockSubscriptions = subs;
+      // Several hooks subscribe (the record, each list); keep the newest listener per event.
+      mockSubscriptions = [
+        ...mockSubscriptions.filter((known) => !subs.some((next) => next.event === known.event)),
+        ...subs,
+      ];
     },
   };
 });

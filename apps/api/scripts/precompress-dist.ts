@@ -2,7 +2,9 @@
  * Compresses the static files of the web bundles the API serves (the admin panel, the showcase, the hosted client and
  * the landing page), once, at build time:
  *
- *   bun apps/api/scripts/precompress-dist.ts [--encodings=br,gzip] [--quality=11] <folder>...
+ *   bun apps/api/scripts/precompress-dist.ts [--encodings=br,gzip] [--quality=11] <folder>... | --web-bundles
+ *
+ * `--web-bundles` stands for every bundle that is built (`WEB_BUNDLES`), wherever `resourceRoot` finds it.
  *
  * For each file that compresses, it writes `<file>.br` and `<file>.gz` beside it, and one `precompressed.json` at the
  * root of the folder with the hash of each file's bytes (see `src/services/static-delivery/precompressedAssets.ts`). The server then
@@ -14,10 +16,11 @@
  *
  * Brotli at quality 11 is slow (the server uses 9 on the fly); a build is where that cost belongs.
  */
-import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
+import { WEB_BUNDLES, webBundlePath } from '@/config/resourceRoot';
 import { hostedClientMimeType } from '@/services/static-delivery/hostedClient';
 import {
   PRECOMPRESSED_MANIFEST,
@@ -124,9 +127,16 @@ function megabytes(bytes: number): string {
 function main(argv: string[]): void {
   const encodingsArgument = argv.find((argument) => argument.startsWith('--encodings='));
   const qualityArgument = argv.find((argument) => argument.startsWith('--quality='));
-  const folders = argv.filter((argument) => !argument.startsWith('--'));
+  const bundleFolders = argv.includes('--web-bundles')
+    ? (Object.keys(WEB_BUNDLES) as Array<keyof typeof WEB_BUNDLES>)
+        .map((name) => webBundlePath(name))
+        .filter((folder) => existsSync(path.join(folder, 'index.html')))
+    : [];
+  const folders = [...argv.filter((argument) => !argument.startsWith('--')), ...bundleFolders];
   if (folders.length === 0) {
-    console.error('usage: precompress-dist.ts [--encodings=br,gzip] [--quality=11] <folder>...');
+    console.error(
+      'usage: precompress-dist.ts [--encodings=br,gzip] [--quality=11] <folder>... | --web-bundles',
+    );
     process.exit(1);
   }
   const encodings = encodingsArgument

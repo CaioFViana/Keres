@@ -192,7 +192,7 @@ describe('useChapterFormState durable drafts', () => {
       first.result.current.setName('O Retorno do Rei');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -205,7 +205,7 @@ describe('useChapterFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -227,7 +227,7 @@ describe('useChapterFormState durable drafts', () => {
       first.result.current.setName('A Longa Jornada, revisada');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -257,7 +257,7 @@ describe('useChapterFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -271,7 +271,7 @@ describe('useChapterFormState durable drafts', () => {
       second.result.current.setName('As Duas Torres');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -300,7 +300,7 @@ describe('useChapterFormState durable drafts', () => {
     expect(first.result.current.isEvent).toBe(false);
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -323,7 +323,7 @@ describe('useChapterFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerChapter = {

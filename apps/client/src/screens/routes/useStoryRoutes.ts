@@ -15,6 +15,7 @@ import { createEffectService } from '@/src/services/storymanagement/choices-stat
 import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import {
   type ChoiceCheck,
@@ -23,6 +24,7 @@ import {
   validateRouteSteps,
   validateRouteTraversal,
 } from '@keres/shared';
+import { logger } from '@/src/utils/logging/logger';
 
 interface RouteData {
   routes: RouteSelect[];
@@ -50,6 +52,17 @@ const emptyData = (): RouteData => ({
  * The single read model for Route authoring and reading.  Steps are refreshed together with their
  * scenes, so a renamed/deleted scene never leaves a stale label in a saved route.
  */
+/** What a route's data depends on: the routes themselves and the choices they walk. */
+const ROUTE_EVENTS: readonly EntityEventName[] = [
+  'route_changed',
+  'route_step_changed',
+  'scene_changed',
+  'choice_changed',
+  'choice_check_group_changed',
+  'choice_check_changed',
+  'effect_changed',
+];
+
 export function useStoryRoutes(storyId: string | undefined | null) {
   const db = useDrizzle();
   const [data, setData] = useState<RouteData>(emptyData);
@@ -86,7 +99,7 @@ export function useStoryRoutes(storyId: string | undefined | null) {
         stepsByRouteId: new Map(allSteps),
       });
     } catch (error) {
-      console.error('Failed to load story routes:', error);
+      logger.error('Failed to load story routes:', error);
       setData(emptyData());
     } finally {
       setLoading(false);
@@ -96,27 +109,11 @@ export function useStoryRoutes(storyId: string | undefined | null) {
   useEntityInitialLoad(reload);
 
   useEffect(() => {
-    for (const event of [
-      'route_changed',
-      'route_step_changed',
-      'scene_changed',
-      'choice_changed',
-      'choice_check_group_changed',
-      'choice_check_changed',
-      'effect_changed',
-    ]) {
+    for (const event of ROUTE_EVENTS) {
       entityEventEmitter.on(event, reload);
     }
     return () => {
-      for (const event of [
-        'route_changed',
-        'route_step_changed',
-        'scene_changed',
-        'choice_changed',
-        'choice_check_group_changed',
-        'choice_check_changed',
-        'effect_changed',
-      ]) {
+      for (const event of ROUTE_EVENTS) {
         entityEventEmitter.off(event, reload);
       }
     };

@@ -5,6 +5,7 @@ import type {
   ManuscriptStyle,
   PageLayout,
   PublicationLabelMode,
+  ShowcaseAuthorPage,
   ShowcaseVisibility,
   StoryPublication,
 } from '@keres/shared';
@@ -129,6 +130,22 @@ export class PublicationApiService {
   async isShowcaseEnabled(server: ServerSelect): Promise<boolean | undefined> {
     const config = await this.getPublicConfig(server);
     return typeof config?.showcaseEnabled === 'boolean' ? config.showcaseEnabled : undefined;
+  }
+
+  /**
+   * An author's public page as the showcase draws it, `null` when there is none to show: the server has the
+   * showcase off, the account has nothing on show, or it cannot be reached. The route is public: it needs no
+   * sign-in, and the answer is the one an anonymous visitor gets.
+   */
+  async getAuthorPage(server: ServerSelect, username: string): Promise<ShowcaseAuthorPage | null> {
+    try {
+      const response = await this.clientFor(server).get<ShowcaseAuthorPage>(
+        `/public/authors/${encodeURIComponent(username)}`,
+      );
+      return response.data;
+    } catch {
+      return null;
+    }
   }
 
   /**

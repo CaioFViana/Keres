@@ -57,6 +57,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
 import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
+import { logger } from '@/src/utils/logging/logger';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   SettingsStackParamList,
@@ -244,7 +245,7 @@ const SettingsScreen = () => {
               await mediaFileService.deleteAllMedia();
 
               await resetDatabase(db);
-              console.log('Database reset complete.');
+              logger.debug('Database reset complete.');
 
               // Reset every in-memory store that can retain rows from the deleted database.
               resetAllClientStores();
@@ -252,13 +253,13 @@ const SettingsScreen = () => {
               // Last: the stores above may write their own entries while they reset. What was accepted, the drafts and
               // the downloaded files live outside the database too, and a full reset leaves none of them behind.
               await clearEverythingOutsideDatabase();
-              console.log('Credentials, media, stores and synchronization services reset.');
+              logger.debug('Credentials, media, stores and synchronization services reset.');
 
               // Navigate to ColdInstallScreen and reset navigation stack
               navigation.dispatch(StackActions.replace('ColdInstall'));
-              console.log('Navigated to ColdInstallScreen.');
+              logger.debug('Navigated to ColdInstallScreen.');
             } catch (error) {
-              console.error('Error resetting application:', error);
+              logger.error('Error resetting application:', error);
               AppAlert.alert(t('error'), t('reset_application_error'));
             }
           },

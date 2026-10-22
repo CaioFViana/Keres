@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateSceneMusicDataType,
   CreateStoryUpdate,
@@ -6,7 +6,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateSceneMusicDataSchema, PartialSceneMusicSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { sceneMusic } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -24,7 +24,7 @@ export class SceneMusicSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
+  async create(update: CreateStoryUpdate, { storyId, database = db }: SyncWriteContext) {
     const data: CreateSceneMusicDataType = this.createSchema.parse(update.data);
     await this.assertSceneAlive(storyId, data.sceneId, database, 'music');
     if (await this.findById(update.id!, database)) {
@@ -43,12 +43,11 @@ export class SceneMusicSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ) {
+    const { storyId, database = db } = ctx;
     const changes = update.changes as Record<string, unknown>;
     const next = {
       sceneId: 'sceneId' in changes ? changes.sceneId : current.sceneId,
@@ -63,16 +62,14 @@ export class SceneMusicSyncHandler extends BaseSyncEntityHandler<
     if (next.songId && next.galleryId) {
       throw new SyncConflictError('validation', 'Music is a song or a gallery medium, not both.');
     }
-    await super.update(userId, storyId, update, current, database);
+    await super.update(update, current, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ) {
-    await super.delete(userId, storyId, update, current, database);
+    await super.delete(update, current, ctx);
   }
 }

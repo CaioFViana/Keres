@@ -191,7 +191,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
       first.result.current.handleNameChange('Nível de Poder');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -205,7 +205,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -227,7 +227,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
       first.result.current.handleNameChange('Humor revisado');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -259,7 +259,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
     expect(first.result.current.key).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -273,7 +273,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
       second.result.current.handleNameChange('Cor do Humor');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -303,7 +303,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
     expect(first.result.current.isRequired).toBe(true);
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -326,7 +326,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
       first.result.current.handleNameChange('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerField = {
@@ -353,7 +353,7 @@ describe('useStorySchemaFieldFormState durable drafts', () => {
       first.result.current.handleKeyChange('custom_key');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});

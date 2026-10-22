@@ -5,6 +5,7 @@ import type { PackService } from '@/src/services/storymanagement/packs/PackServi
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { PackFormState } from './usePackFormState';
+import { logger } from '@/src/utils/logging/logger';
 
 type UsePackFormActionsOptions = {
   state: PackFormState;
@@ -63,7 +64,7 @@ export function usePackFormActions({
         }
         navigation.goBack();
       } catch (error) {
-        console.error('PackFormScreen: failed to save pack.', error);
+        logger.error('PackFormScreen: failed to save pack.', error);
         showNotification(t('packs_save_failed'), 'error');
       }
     });

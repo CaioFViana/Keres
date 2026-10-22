@@ -1,8 +1,8 @@
 import type { CreateLocationMapDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateLocationMapDataSchema, PartialLocationMapSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { locationMaps } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 /**
  * Location maps arriving from a client.
@@ -24,12 +24,8 @@ export class LocationMapSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateLocationMapDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

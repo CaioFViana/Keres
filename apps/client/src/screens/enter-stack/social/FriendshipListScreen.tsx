@@ -32,6 +32,7 @@ import {
   type FriendshipListRow,
   groupFriendshipsByServer,
 } from '@/src/services/social/friendshipGroups';
+import { logger } from '@/src/utils/logging/logger';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -71,10 +72,10 @@ const FriendshipListScreen = () => {
       for (const server of allServers) {
         invitationService
           .syncWithServer(server)
-          .catch((error) => console.log('Story invitation sync failed:', error));
+          .catch((error) => logger.debug('Story invitation sync failed:', error));
       }
     } catch (error) {
-      console.error('Error fetching servers:', error);
+      logger.error('Error fetching servers:', error);
       AppAlert.alert(t('error'), t('failed_to_load_servers'));
       return;
     }
@@ -87,7 +88,7 @@ const FriendshipListScreen = () => {
     try {
       setFriendships(await friendshipService.getAllFriendships());
     } catch (error) {
-      console.error('Error fetching friendships:', error);
+      logger.error('Error fetching friendships:', error);
       AppAlert.alert(t('error'), t('failed_to_load_friendships'));
     }
   }, [drizzleClient, friendshipService, serverService, showNotification, t, localUserId]);

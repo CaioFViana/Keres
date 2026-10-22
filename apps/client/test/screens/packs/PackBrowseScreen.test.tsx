@@ -119,8 +119,8 @@ beforeEach(() => {
   mockDownload.mockResolvedValue(makeRemotePack());
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('asks for a server when none is chosen', async () => {

@@ -245,8 +245,8 @@ function makeNote(overrides = {}) {
 }
 
 describe('NoteDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     (console.warn as jest.Mock).mockRestore();
   });
 

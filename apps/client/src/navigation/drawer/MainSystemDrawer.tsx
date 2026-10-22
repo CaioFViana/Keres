@@ -78,13 +78,13 @@ import {
   type TagsStackParamList,
   type WorldRulesStackParamList,
 } from '@/src/navigation/stacks/MainSystemStacks';
+import { logger } from '@/src/utils/logging/logger';
 
 export type {
   BoardStackParamList,
   CharacterStackParamList,
   CommentsStackParamList,
   GalleryStackParamList,
-  ItemDetailScreenParamList,
   ItemStackParamList,
   LocationStackParamList,
   NarrativeElementsStackParamList,
@@ -508,7 +508,7 @@ const MainSystemNavigator = () => {
                   }),
                 );
               } else {
-                console.error(
+                logger.error(
                   'Could not find root stack navigation to dispatch reset action. This is unexpected.',
                 );
                 navigation.dispatch(

@@ -1,4 +1,4 @@
-import type { StoryUpdate } from '@keres/shared';
+import type { FavoriteEntityType, StoryUpdate } from '@keres/shared';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
@@ -7,7 +7,7 @@ import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handler
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import type { SyncNotifier } from './SyncNotifier';
 import type { SyncPull } from './SyncPull';
-import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './syncEvents';
+import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS, type SyncEventPublisher } from './syncEvents';
 import {
   describeIncorporatedOperation,
   type IncorporatedOperation,
@@ -16,6 +16,7 @@ import {
   syncEntityKey,
   withRankProtocol,
 } from './syncPure';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Consecutive apply-failures after which a poisoned remote operation is skipped (recorded, cursor
@@ -44,7 +45,7 @@ export interface SyncPullApplyDependencies {
   ) => Promise<OperationLogSelect[]>;
   entityHandlers: Map<string, ClientSyncEntityHandler>;
   notifier: SyncNotifier;
-  events: { emit(event: string, ...args: unknown[]): void };
+  events: SyncEventPublisher;
 }
 
 export interface SyncPullApplyInput {
@@ -166,7 +167,7 @@ export class SyncPullApply {
         if (update.type === 'create') {
           await pull.applyRemoteCreate(update, handler);
         } else if (update.type === 'update') {
-          await handler.applyUpdate(storyId, update);
+          await handler.applyUpdate(update, storyId);
         } else if (update.type === 'delete') {
           await pull.applyRemoteDelete(update, handler, tx);
         }
@@ -199,7 +200,7 @@ export class SyncPullApply {
       }
     };
 
-    console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
+    logger.debug(`Received ${totalUpdates} remote updates. Applying to local DB...`);
 
     const incorporatedByEntity = await this.loadIncorporatedOperations(db, storyId, remoteUpdates);
     let conflictsDetected = 0;
@@ -220,14 +221,14 @@ export class SyncPullApply {
         // An entity this build cannot store: the server is newer than the app. The pull
         // stays blocked (skipping would lose these operations below the cursor, even after
         // an upgrade), but loudly - as a protocol mismatch, not a silent stall.
-        console.log(`No client sync handler registered for entity type: ${update.entity}`);
+        logger.debug(`No client sync handler registered for entity type: ${update.entity}`);
         notifier.protocolMismatch();
         pullBlocked = true;
         break;
       }
 
       if (update.entity === 'Story' && update.type === 'create' && update.id !== storyId) {
-        console.warn(`Ignoring Story create for ${update.id} while syncing ${storyId}.`);
+        logger.warn(`Ignoring Story create for ${update.id} while syncing ${storyId}.`);
         await pull.recordRemoteOperationLocally(rawUpdate);
         markSuccess(rawUpdate);
         continue;
@@ -252,7 +253,7 @@ export class SyncPullApply {
             incorporated.length > 0 ? maskSupersededUpdate(update, incorporated, true) : update;
           if (masked) await pull.alignEchoedWholeRow(masked, handler);
         }).catch((alignError) => {
-          console.warn(`Could not align ${update.entity} ${update.id} with its echo:`, alignError);
+          logger.warn(`Could not align ${update.entity} ${update.id} with its echo:`, alignError);
         });
         markSuccess(rawUpdate);
         continue;
@@ -263,7 +264,7 @@ export class SyncPullApply {
         // an unknown entity, the pull stays blocked (skipping would lose this operation below
         // the cursor, even after an upgrade), but loudly - as a protocol mismatch, not a
         // silent stall.
-        console.log(`No client sync handler for remote operation type: ${update.type}`);
+        logger.debug(`No client sync handler for remote operation type: ${update.type}`);
         notifier.protocolMismatch();
         pullBlocked = true;
         break;
@@ -296,7 +297,7 @@ export class SyncPullApply {
         // A poisoned operation must not stall the pull forever: after N consecutive failures
         // it is retired like an empty reorder (recorded, cursor advanced) while still reported.
         if (failures >= MAX_REMOTE_OPERATION_FAILURES) {
-          console.warn(
+          logger.warn(
             `Skipping remote ${update.type} for entity ${update.entity} ID ${update.id} after ${failures} consecutive failures.`,
           );
           await pull.recordRemoteOperationLocally(rawUpdate);
@@ -304,7 +305,7 @@ export class SyncPullApply {
           continue;
         }
         pullBlocked = true;
-        console.log(
+        logger.debug(
           `Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`,
           handlerError,
         );
@@ -338,7 +339,7 @@ export class SyncPullApply {
             events.emit(
               'favorite_changed',
               storyId,
-              favorite.entityType,
+              favorite.entityType as FavoriteEntityType,
               favorite.entityId,
               favorite.userId,
             );

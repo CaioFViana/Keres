@@ -47,6 +47,7 @@ import {
   groupScenesByChapter,
   loadStoryGraph,
 } from './storyTypeConversion';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Wipes a story and every entity that belongs to it from the local database. Story
@@ -285,7 +286,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       delete preCheckChanges.updatedAt;
 
       if (Object.keys(preCheckChanges).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for story ${storyId}. Skipping update and operation log.`,
         );
         return;
@@ -441,7 +442,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
       // If the favorite status hasn't actually changed, skip the update and logging
       if (originalStory.isFavorite === isFavorite) {
-        console.log(
+        logger.debug(
           `Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`,
         );
         return;
@@ -480,7 +481,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       });
 
       if (!storyToDelete) {
-        console.warn(`Attempted to delete non-existent story ${storyId}.`);
+        logger.warn(`Attempted to delete non-existent story ${storyId}.`);
         return;
       }
       await assertStoryIsWritable(db, storyId);
@@ -507,13 +508,13 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             // clock that check can safely compare against.
             const conflict = await requestServerStoryDelete(server, storyId);
             if (conflict) {
-              console.warn(
+              logger.warn(
                 `Server rejected deletion for story ${storyId} (proceeding with local deletion regardless): ${conflict.message || conflict.reason}`,
               );
             }
           } catch (err) {
             if (!isOfflineError(err)) {
-              console.warn(
+              logger.warn(
                 `Failed to notify server of deletion for story ${storyId} (proceeding with local deletion regardless):`,
                 (err as Error)?.message || err,
               );

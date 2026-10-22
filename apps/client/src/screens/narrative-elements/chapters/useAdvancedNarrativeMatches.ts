@@ -87,7 +87,6 @@ export function useAdvancedNarrativeMatches(input: {
               undefined,
               undefined,
               undefined,
-              'all',
               choiceCriteria,
             )
           : Promise.resolve(choices),

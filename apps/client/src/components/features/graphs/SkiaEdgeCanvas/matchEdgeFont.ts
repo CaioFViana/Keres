@@ -1,5 +1,6 @@
 import { matchFont } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
+import { logger } from '@/src/utils/logging/logger';
 
 let warned = false;
 
@@ -15,9 +16,7 @@ export function matchEdgeFont(style?: Parameters<typeof matchFont>[0]): SkFont |
   } catch {
     if (!warned) {
       warned = true;
-      console.warn(
-        '[SkiaEdgeCanvas] system font unavailable on this platform; edge labels hidden.',
-      );
+      logger.warn('[SkiaEdgeCanvas] system font unavailable on this platform; edge labels hidden.');
     }
     return null;
   }

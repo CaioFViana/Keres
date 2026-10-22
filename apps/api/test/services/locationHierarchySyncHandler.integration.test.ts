@@ -44,8 +44,6 @@ beforeEach(async () => {
     [hallId, 'Salão'],
   ] as const) {
     await locations.create(
-      userId,
-      storyId,
       create('Location', id, {
         name,
         description: null,
@@ -55,6 +53,7 @@ beforeEach(async () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
   }
 });
@@ -65,22 +64,20 @@ describe('location hierarchy sync handler', () => {
     const olympusContainsPalace = newId();
     const palaceContainsHall = newId();
     await handler.create(
-      userId,
-      storyId,
       create('LocationRelation', olympusContainsPalace, {
         locationAId: olympusId,
         locationBId: palaceId,
         relationType: 'contains',
       }),
+      { userId, storyId },
     );
     await handler.create(
-      userId,
-      storyId,
       create('LocationRelation', palaceContainsHall, {
         locationAId: palaceId,
         locationBId: hallId,
         relationType: 'contains',
       }),
+      { userId, storyId },
     );
     expect(await handler.findByIdOrThrow(palaceContainsHall)).toMatchObject({
       locationAId: palaceId,
@@ -90,24 +87,22 @@ describe('location hierarchy sync handler', () => {
 
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('LocationRelation', newId(), {
           locationAId: hallId,
           locationBId: olympusId,
           relationType: 'contains',
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/cycle/i);
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('LocationRelation', newId(), {
           locationAId: olympusId,
           locationBId: hallId,
           relationType: 'contains',
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already has a parent/i);
   });
@@ -116,18 +111,15 @@ describe('location hierarchy sync handler', () => {
     const handler = new LocationRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      storyId,
       create('LocationRelation', id, {
         locationAId: olympusId,
         locationBId: palaceId,
         relationType: 'contains',
       }),
+      { userId, storyId },
     );
     const current = await handler.findByIdOrThrow(id);
     await handler.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'LocationRelation',
@@ -140,6 +132,7 @@ describe('location hierarchy sync handler', () => {
         },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
     const updated = await handler.findByIdOrThrow(id);
     expect(updated).toMatchObject({
@@ -154,23 +147,21 @@ describe('location hierarchy sync handler', () => {
     const handler = new LocationRelationSyncHandler();
     const firstId = newId();
     await handler.create(
-      userId,
-      storyId,
       create('LocationRelation', firstId, {
         locationAId: palaceId,
         locationBId: olympusId,
         relationType: 'connected_to',
       }),
+      { userId, storyId },
     );
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('LocationRelation', newId(), {
           locationAId: olympusId,
           locationBId: palaceId,
           relationType: 'connected_to',
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already exists/i);
   });
@@ -179,52 +170,46 @@ describe('location hierarchy sync handler', () => {
     const handler = new LocationRelationSyncHandler();
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('LocationRelation', newId(), {
           locationAId: olympusId,
           locationBId: olympusId,
           relationType: 'contains',
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/cannot be identical/i);
     await expect(
       handler.create(
-        userId,
-        storyId,
         create('LocationRelation', newId(), {
           locationAId: olympusId,
           locationBId: newId(),
           relationType: 'connected_to',
         }),
+        { userId, storyId },
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     const olympusContainsPalace = newId();
     const hallContainsOlympus = newId();
     await handler.create(
-      userId,
-      storyId,
       create('LocationRelation', olympusContainsPalace, {
         locationAId: olympusId,
         locationBId: palaceId,
         relationType: 'contains',
       }),
+      { userId, storyId },
     );
     await handler.create(
-      userId,
-      storyId,
       create('LocationRelation', hallContainsOlympus, {
         locationAId: hallId,
         locationBId: olympusId,
         relationType: 'contains',
       }),
+      { userId, storyId },
     );
     const current = await handler.findByIdOrThrow(hallContainsOlympus);
     await expect(
       handler.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity: 'LocationRelation',
@@ -232,6 +217,7 @@ describe('location hierarchy sync handler', () => {
           changes: { locationBId: palaceId, version: current.version },
         } as UpdateStoryUpdate,
         current,
+        { userId, storyId },
       ),
     ).rejects.toThrow(/already has a parent/i);
   });

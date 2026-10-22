@@ -1,10 +1,12 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { eq, sql, type SQL } from 'drizzle-orm';
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
+import { columnsOf } from '@/src/db/entityTableRegistry';
 
 /** Builds predicates for handler-declared native search fields; joins remain in their own services. */
 export function buildNativeAdvancedSearchConditions(
   entityType: string,
-  table: object,
+  table: SQLiteTable,
   criteria: Record<string, unknown> | undefined,
 ): SQL<boolean>[] {
   if (!criteria) return [];
@@ -13,7 +15,7 @@ export function buildNativeAdvancedSearchConditions(
   for (const [field, value] of Object.entries(criteria)) {
     if (value === undefined || value === null || value === '') continue;
     const meta = metadata.find((candidate) => candidate.name === field);
-    const column = (table as any)[field];
+    const column = columnsOf(table)[field];
     if (!meta || !column) continue;
     if (meta.type === 'string' || meta.type === 'id' || meta.type === 'date') {
       conditions.push(sql`${column} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
@@ -33,7 +35,7 @@ export function buildNativeAdvancedSearchConditions(
 /** Adds entity-specific fallback predicates, normally custom-attribute searches. */
 export async function buildAdvancedSearchConditions(
   entityType: string,
-  table: object,
+  table: SQLiteTable,
   criteria: Record<string, unknown> | undefined,
   onUnknown?: (field: string, value: unknown) => Promise<SQL<boolean> | null | undefined>,
 ): Promise<SQL<boolean>[]> {

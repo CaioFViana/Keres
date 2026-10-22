@@ -16,6 +16,7 @@ import {
 } from '@/src/utils/io/storyTransfer';
 import { buildStandaloneLocationMapSvg } from '@/src/utils/io/storyMapSvgExport';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
+import { logger } from '@/src/utils/logging/logger';
 
 type GalleryMediaById = Record<
   string,
@@ -90,7 +91,7 @@ export function useLocationMapExport({
         );
       }
     } catch (exportError) {
-      console.log('LocationMapScreen: failed to export map.', exportError);
+      logger.debug('LocationMapScreen: failed to export map.', exportError);
       showNotification(t('location_map_export_failed'), 'error');
     } finally {
       setExporting(false);

@@ -17,6 +17,8 @@ import boards_en from '@/src/content/help/content/boards/en';
 import boards_pt from '@/src/content/help/content/boards/pt';
 import branchingBasics_en from '@/src/content/help/content/branching-basics/en';
 import branchingBasics_pt from '@/src/content/help/content/branching-basics/pt';
+import browseShowcase_en from '@/src/content/help/content/browse-showcase/en';
+import browseShowcase_pt from '@/src/content/help/content/browse-showcase/pt';
 import calendars_en from '@/src/content/help/content/calendars/en';
 import calendars_pt from '@/src/content/help/content/calendars/pt';
 import changePassword_en from '@/src/content/help/content/change-password/en';
@@ -159,6 +161,7 @@ export type GeneratedHelpPageId =
   | 'arcs'
   | 'boards'
   | 'branching-basics'
+  | 'browse-showcase'
   | 'calendars'
   | 'change-password'
   | 'chapters'
@@ -258,6 +261,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'branching-basics': {
     en: branchingBasics_en,
     pt: branchingBasics_pt,
+  },
+  'browse-showcase': {
+    en: browseShowcase_en,
+    pt: browseShowcase_pt,
   },
   calendars: {
     en: calendars_en,

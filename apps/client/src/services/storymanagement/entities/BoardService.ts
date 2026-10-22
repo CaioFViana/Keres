@@ -14,6 +14,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface BoardService {
   getBoardsForStory(storyId: string): Promise<BoardSelect[]>;
@@ -120,7 +121,7 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
     async deleteBoard(currentUserId, boardId) {
       const original = await db.query.boards.findFirst({ where: eq(boards.id, boardId) });
       if (!original) {
-        console.warn(`Attempted to delete non-existent board ${boardId}.`);
+        logger.warn(`Attempted to delete non-existent board ${boardId}.`);
         return;
       }
       await assertStoryIsWritable(db, original.storyId);

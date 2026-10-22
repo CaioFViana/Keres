@@ -1,6 +1,6 @@
 {
   "name": "keres-monorepo",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "author": "",
   "description": "",
   "keywords": [],
@@ -27,8 +27,8 @@
     "api:db:generate:sqlite": "bun run --cwd apps/api db:generate:sqlite",
     "api:db:migrate": "bun run --cwd apps/api db:migrate",
     "api:coverage:merge": "bun scripts/merge-api-coverage.ts",
-    "admin:start": "bun run --cwd apps/admin start",
-    "admin:build": "bun run --cwd apps/admin build",
+    "web:start": "bun run --cwd apps/web start",
+    "web:build": "bun run --cwd apps/web build",
     "site:start": "bun run --cwd apps/site start",
     "site:start:landing": "bun run --cwd apps/site start:landing",
     "site:build": "bun run --cwd apps/site build",
@@ -46,9 +46,12 @@
     "test:sync-fuzz-api": "bun scripts/sync-fuzz-api.ts",
     "coverage:update": "bun scripts/coverage-update.ts",
     "locales:audit": "bun scripts/verify-translations.ts",
+    "docs:audit": "bun scripts/verify-doc-paths.ts",
+    "deps:audit": "bun scripts/verify-single-versions.ts",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome ci --error-on-warnings .",
+    "knip": "knip --no-progress",
     "release:check": "bun scripts/release-check.ts",
     "version:set": "bun scripts/version-set.ts",
     "code:lines": "bun scripts/count-code-lines.ts",
@@ -65,6 +68,8 @@
     "react-native-enriched-html@1.1.1": "patches/react-native-enriched-html@1.1.1.patch"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.8"
+    "@biomejs/biome": "2.5.8",
+    "dotenv": "^17.2.3",
+    "knip": "6.42.1"
   }
 }

@@ -1,7 +1,15 @@
 import { getTierCountedEntityTypes, getTierFreeEntityTypes } from '@keres/shared';
 import { and, count, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
-import { getEntityTable } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable } from '@/src/db/entityTableRegistry';
+import { stories } from '@/src/db/schema';
+
+/** One story of the person on a server and how many entities the plan sees in it. */
+export interface StoryEntityUsage {
+  id: string;
+  title: string;
+  total: number;
+}
 
 export interface StoryEntityCounts {
   /** The sum of `byType`. */
@@ -21,12 +29,13 @@ async function countTypes(
 ): Promise<StoryEntityCounts> {
   const entries = await Promise.all(
     entityTypes.map(async (entityType) => {
-      const table = getEntityTable(entityType) as any;
+      const table = getEntityTable(entityType);
       if (!table) return [entityType, 0] as const;
+      const columns = columnsOf(table);
       const [row] = (await db
         .select({ value: count() })
         .from(table)
-        .where(and(eq(table.storyId, storyId), eq(table.isDeleted, false)))) as {
+        .where(and(eq(columns.storyId, storyId), eq(columns.isDeleted, false)))) as {
         value: number;
       }[];
       return [entityType, row?.value ?? 0] as const;
@@ -62,5 +71,32 @@ export const createStoryEntityCountService = (db: AppDrizzleClient) => ({
    */
   countFreeForStory(storyId: string): Promise<StoryEntityCounts> {
     return countTypes(db, storyId, getTierFreeEntityTypes());
+  },
+
+  /**
+   * The person's own live stories on a server, each with its count, the fullest first. Only the stories
+   * they own: a shared story answers to its owner's plan, not to theirs. Local counts, so they include
+   * what has not synchronized yet.
+   */
+  async countOwnedOnServer(serverId: string): Promise<StoryEntityUsage[]> {
+    const owned = await db
+      .select({ id: stories.id, title: stories.title })
+      .from(stories)
+      .where(
+        and(
+          eq(stories.serverId, serverId),
+          eq(stories.myRole, 'owner'),
+          eq(stories.isDeleted, false),
+        ),
+      )
+      .all();
+    const usage = await Promise.all(
+      owned.map(async ({ id, title }) => ({
+        id,
+        title,
+        total: (await countTypes(db, id, getTierCountedEntityTypes())).total,
+      })),
+    );
+    return usage.sort((a, b) => b.total - a.total || a.title.localeCompare(b.title));
   },
 });

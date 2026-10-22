@@ -4,7 +4,7 @@ import type { MenuGroup, MenuIconName, MenuLeaf } from './drawerMenuModel';
 
 type IconName = MenuIconName;
 
-export type { MenuGroup, MenuLeaf, NestedFocus } from './drawerMenuModel';
+export type { MenuGroup, MenuLeaf } from './drawerMenuModel';
 export { isLeafActive } from './drawerMenuModel';
 
 export type MenuGroupId = 'write' | 'components' | 'world' | 'material' | 'review';

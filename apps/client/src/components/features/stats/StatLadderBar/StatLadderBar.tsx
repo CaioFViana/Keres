@@ -151,5 +151,3 @@ export function StatLadderBar({ ladder, value }: StatLadderBarProps) {
     </View>
   );
 }
-
-export default StatLadderBar;

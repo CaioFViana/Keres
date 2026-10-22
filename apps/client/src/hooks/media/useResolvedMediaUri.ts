@@ -4,6 +4,7 @@ import {
   DESKTOP_MEDIA_URI_PREFIX,
   resolveBlobUri,
 } from '@/src/services/platform-web/webMediaStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Resolves a media `localPath`/`thumbnailPath` into something `<Image>`/`<video>`/`<audio>` can load.
@@ -45,7 +46,7 @@ export function useResolvedMediaUri(path: string | null | undefined): string | n
         }
       })
       .catch((error) => {
-        console.warn('useResolvedMediaUri: failed to resolve', path, error);
+        logger.warn('useResolvedMediaUri: failed to resolve', path, error);
         if (!cancelled) {
           setResolved(null);
         }

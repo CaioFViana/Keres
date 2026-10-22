@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
  * What `@keres/shared` is allowed to know.
  *
  * It is imported by the client, the API and the admin panel (including the Showcase build under
- * `apps/admin`) - anything it knows about one of those becomes a dependency of the other two.
+ * `apps/web`) - anything it knows about one of those becomes a dependency of the other two.
  * `apps/site` does not depend on this package. Both rules here pass today; they are written so the
  * first violation fails in a test rather than becoming a habit.
  */

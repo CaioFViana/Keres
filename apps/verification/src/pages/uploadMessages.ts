@@ -2,7 +2,7 @@ import type { Lang } from './http';
 
 /**
  * What the person reads on the upload page, in English and Portuguese. The page is about what is collected and who
- * reads it: no sentence here promises more than the service does (see `docs/age_verification.md`).
+ * reads it: no sentence here promises more than the service does (see `docs/compliance/age_verification.md`).
  */
 
 /** Why an upload was refused. The codes are what the page's script reads; the texts are what the person sees. */

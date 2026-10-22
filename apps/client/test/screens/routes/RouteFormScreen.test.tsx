@@ -99,8 +99,8 @@ function formState(overrides: any = {}) {
 }
 
 describe('RouteFormScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

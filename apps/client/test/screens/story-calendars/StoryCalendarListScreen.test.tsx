@@ -210,8 +210,8 @@ function confirmAlert(buttonText: string) {
 }
 
 describe('StoryCalendarListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { AppDrizzleClient } from '@/src/db';
 import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
 import { createSyncConflictService } from '@/src/services/sync/SyncConflictService';
+import { logger } from '@/src/utils/logging/logger';
 
 interface SyncConflictState {
   conflicts: PendingConflict[];
@@ -16,7 +17,7 @@ interface SyncConflictState {
   keepLocal: (
     db: AppDrizzleClient,
     conflictId: string,
-    chosenValues?: Record<string, any>,
+    chosenValues?: Record<string, unknown>,
   ) => Promise<void>;
   keepServer: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   keepServerAndCloneBoard: (
@@ -68,7 +69,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
       if (generation !== refreshGeneration) return;
       set({ conflicts, lastScope: storyId });
     } catch (error) {
-      console.log('useSyncConflictStore: failed to load pending conflicts.', error);
+      logger.debug('useSyncConflictStore: failed to load pending conflicts.', error);
     }
   },
 
@@ -81,7 +82,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     try {
       await createSyncConflictService(db).resolveKeepLocal(conflictId, chosenValues);
     } catch (error) {
-      console.log('useSyncConflictStore: failed to keep local values.', error);
+      logger.debug('useSyncConflictStore: failed to keep local values.', error);
     } finally {
       set((state) => ({
         isResolving: false,
@@ -99,7 +100,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     try {
       await createSyncConflictService(db).resolveKeepServer(conflictId);
     } catch (error) {
-      console.log('useSyncConflictStore: failed to keep server values.', error);
+      logger.debug('useSyncConflictStore: failed to keep server values.', error);
     } finally {
       set((state) => ({
         isResolving: false,
@@ -119,7 +120,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
         cloneName,
       );
     } catch (error) {
-      console.log('useSyncConflictStore: failed to clone the local board.', error);
+      logger.debug('useSyncConflictStore: failed to clone the local board.', error);
     } finally {
       set((state) => ({
         isResolving: false,
@@ -139,7 +140,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
         cloneName,
       );
     } catch (error) {
-      console.log('useSyncConflictStore: failed to clone the local sketch.', error);
+      logger.debug('useSyncConflictStore: failed to clone the local sketch.', error);
     } finally {
       set((state) => ({
         isResolving: false,
@@ -154,7 +155,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     try {
       await createSyncConflictService(db).dismissConflict(conflictId);
     } catch (error) {
-      console.log('useSyncConflictStore: failed to dismiss conflict.', error);
+      logger.debug('useSyncConflictStore: failed to dismiss conflict.', error);
     } finally {
       set((state) => ({
         selectedConflictId:

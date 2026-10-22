@@ -13,7 +13,7 @@ export function useSyncConflictActions() {
   const isResolving = useSyncConflictStore((state) => state.isResolving);
 
   const keepLocal = useCallback(
-    (conflictId: string, chosenValues?: Record<string, any>) =>
+    (conflictId: string, chosenValues?: Record<string, unknown>) =>
       keepLocalStore(db, conflictId, chosenValues),
     [db, keepLocalStore],
   );

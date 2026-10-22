@@ -9,9 +9,11 @@ import {
 } from '@/src/services/social/MessageService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import {
+  type EntityEventSubscription,
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 const EMPTY_INBOX: Inbox = { entries: [], unreachableServerIds: [] };
 
@@ -39,7 +41,7 @@ export function useMessageInbox() {
       setInbox(nextInbox);
       setContacts(nextContacts);
     } catch (error) {
-      console.error('Failed to load the messages:', error);
+      logger.error('Failed to load the messages:', error);
       showNotification(t('messages_load_failed'), 'error');
     } finally {
       setLoading(false);
@@ -47,7 +49,7 @@ export function useMessageInbox() {
   }, [service, showNotification, t]);
 
   useEntityInitialLoad(load);
-  const subscriptions = useMemo(
+  const subscriptions = useMemo<EntityEventSubscription[]>(
     () => [
       { event: MESSAGES_CHANGED, listener: load },
       { event: 'friendship_changed', listener: load },

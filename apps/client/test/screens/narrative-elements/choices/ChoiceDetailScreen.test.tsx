@@ -392,8 +392,8 @@ beforeEach(() => {
 });
 
 describe('ChoiceDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('stays on loading while the choice resolves', async () => {

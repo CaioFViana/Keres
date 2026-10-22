@@ -7,6 +7,7 @@ import {
   exportFileLanguage,
   type ExportFileLanguage,
 } from '@/src/utils/io/storyTransfer';
+import { logger } from '@/src/utils/logging/logger';
 
 type Options = {
   /** The story whose title names the file; nothing is exported while it is missing. */
@@ -60,7 +61,7 @@ export function useGraphMapExport({
         );
       }
     } catch (exportError) {
-      console.log(logMessage, exportError);
+      logger.debug(logMessage, exportError);
       showNotification(t(messageKeys.failed), 'error');
     } finally {
       setExporting(false);

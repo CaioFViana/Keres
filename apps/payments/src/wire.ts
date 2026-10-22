@@ -2,8 +2,6 @@ import type { z } from 'zod';
 import type {
   CheckoutRequestWireSchema,
   CheckoutResultWireSchema,
-  ConnectorInfo,
-  DueSubscriptionWireSchema,
   PaymentEventWire,
   PaymentMethodOptionSchema,
 } from '@keres/shared';
@@ -13,10 +11,9 @@ import type {
  * the Keres server validates with); the row types below are inferred from them so the two
  * sides cannot drift.
  */
-export type { ConnectorInfo, PaymentEventWire };
+export type { PaymentEventWire };
 export type CheckoutRequestWire = z.infer<typeof CheckoutRequestWireSchema>;
 export type CheckoutResultWire = z.infer<typeof CheckoutResultWireSchema>;
-export type DueSubscriptionWire = z.infer<typeof DueSubscriptionWireSchema>;
 export type PaymentMethodOption = z.infer<typeof PaymentMethodOptionSchema>;
 /**
  * What a provider may return from `methods()`: `flow` is optional on the way in (an older

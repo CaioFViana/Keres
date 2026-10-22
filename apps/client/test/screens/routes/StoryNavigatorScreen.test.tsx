@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, act } from '@testing-library/react-native';
 import StoryNavigatorScreen from '@/src/screens/routes/StoryNavigatorScreen';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
@@ -164,8 +164,8 @@ function routesData(overrides: any = {}) {
 }
 
 describe('StoryNavigatorScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 
@@ -256,7 +256,9 @@ describe('StoryNavigatorScreen', () => {
       expect.any(Array),
       expect.any(Object),
     );
-    await mockAlert.mock.calls[0][2][1].onPress();
+    await act(async () => {
+      await mockAlert.mock.calls[0][2][1].onPress();
+    });
     expect(mockSaveRoute).toHaveBeenCalledWith(
       'user-1',
       expect.objectContaining({ storyId: 'story-1', name: 'Saved Run' }),
@@ -272,7 +274,9 @@ describe('StoryNavigatorScreen', () => {
     await fireEvent.press(view.getByText('navigator_replace_route'));
     expect(view.getByTestId('persist-mode').props.children).toBe('replace');
     await fireEvent.press(view.getByTestId('persist-replace'));
-    await mockAlert.mock.calls[0][2][1].onPress();
+    await act(async () => {
+      await mockAlert.mock.calls[0][2][1].onPress();
+    });
     expect(mockSaveRoute).not.toHaveBeenCalled();
     expect(mockReplaceSteps).toHaveBeenCalledWith('user-1', 'route-1', expect.any(Array));
     expect(mockNavigate).toHaveBeenCalledWith('RouteDetail', { routeId: 'route-1' });
@@ -284,7 +288,9 @@ describe('StoryNavigatorScreen', () => {
       const view = await render(<StoryNavigatorScreen />);
       await fireEvent.press(view.getByText('navigator_save_as_route'));
       await fireEvent.press(view.getByTestId('persist-new'));
-      await mockAlert.mock.calls[0][2][1].onPress();
+      await act(async () => {
+        await mockAlert.mock.calls[0][2][1].onPress();
+      });
       expect(mockAlert).toHaveBeenCalledWith('error', 'navigator_save_route_failed');
     });
   });

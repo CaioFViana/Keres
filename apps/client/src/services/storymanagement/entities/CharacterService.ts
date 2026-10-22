@@ -25,6 +25,7 @@ import {
   persistInitialFavorite,
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
@@ -72,7 +73,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         searchTerm,
         favoriteFilterState,
       });
-      const orderByConditions: any[] = [];
+      const orderByConditions: SQL[] = [];
 
       if (tagFilterIds && tagFilterIds.length > 0) {
         const taggedCharacters = db
@@ -115,7 +116,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
                 value,
               );
               if (!condition) {
-                console.warn(`No metadata found for advanced search field: ${field}`);
+                logger.warn(`No metadata found for advanced search field: ${field}`);
               }
               return condition;
             },
@@ -197,12 +198,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
     ): Promise<CharacterSelect> {
       await assertStoryIsWritable(db, characterData.storyId);
       let newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
-      const favorite = await normalizeFavoriteCreate(
-        db,
-        newCharacter.storyId,
-        'Character',
-        newCharacter,
-      );
+      const favorite = await normalizeFavoriteCreate(db, newCharacter.storyId, newCharacter);
       newCharacter = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -268,7 +264,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       delete changes.updatedAt; // updatedAt also changes automatically, ignore it for deciding if a real update happened
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for character ${characterId}. Skipping update and operation log.`,
         );
         return oldCharacter; // Return the original character as no update occurred
@@ -310,7 +306,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         where: eq(characters.id, characterId),
       });
       if (!characterToDelete) {
-        console.warn(`Attempted to delete non-existent character ${characterId}.`);
+        logger.warn(`Attempted to delete non-existent character ${characterId}.`);
         return;
       }
       await assertStoryIsWritable(db, characterToDelete.storyId);
@@ -337,7 +333,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
     async getAllByStoryId(storyId: string): Promise<CharacterSelect[]> {
       if (!storyId) {
-        console.error('getAllByStoryId: storyId is required.');
+        logger.error('getAllByStoryId: storyId is required.');
         return [];
       }
       try {
@@ -348,7 +344,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
           .all();
         return allCharacters;
       } catch (error) {
-        console.error(`Error fetching all characters for story ${storyId}:`, error);
+        logger.error(`Error fetching all characters for story ${storyId}:`, error);
         return [];
       }
     },

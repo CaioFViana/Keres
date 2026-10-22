@@ -20,7 +20,7 @@ export class SuggestionClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
 
     const data = omitClientProtectedFields(this.entityName, update.data);
@@ -38,7 +38,7 @@ export class SuggestionClientSyncHandler implements ClientSyncEntityHandler {
     });
   }
 
-  async applyUpdate(_storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
 
     const columns = toEntityColumns(
@@ -53,7 +53,7 @@ export class SuggestionClientSyncHandler implements ClientSyncEntityHandler {
       .where(eq(schema.suggestions.id, update.id));
   }
 
-  async applyDelete(_storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
 
     await this.db

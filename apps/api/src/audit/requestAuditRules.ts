@@ -311,6 +311,11 @@ export const AUDIT_RULES: readonly AuditRule[] = [
     targetGroup: 'id',
     subjectGroup: 'id',
   }),
+  admin('DELETE', `users/${id}/public-profile`, 'admin.user_public_profile_cleared', {
+    targetType: 'user',
+    targetGroup: 'id',
+    subjectGroup: 'id',
+  }),
   admin('POST', `users/${id}/regenerate-recovery-codes`, 'admin.recovery_codes_regenerated', {
     targetType: 'user',
     targetGroup: 'id',

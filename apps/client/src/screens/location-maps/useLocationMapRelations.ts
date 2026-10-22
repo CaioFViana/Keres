@@ -13,6 +13,7 @@ import {
   deriveContains,
   deriveParent,
 } from '@/src/utils/location-map/locationMapRelations';
+import { logger } from '@/src/utils/logging/logger';
 
 type Notify = (message: string, type?: 'success' | 'warning' | 'error') => void;
 
@@ -138,7 +139,7 @@ export function useLocationMapRelations({
 
   const fail = useCallback(
     (message: string) => {
-      console.log(message);
+      logger.debug(message);
       notify(t('failed_to_save_relation'), 'error');
     },
     [notify, t],

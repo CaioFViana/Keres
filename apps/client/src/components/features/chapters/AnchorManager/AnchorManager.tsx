@@ -12,6 +12,7 @@ import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { AnchorDraft } from './AnchorEditModal';
 import AnchorEditModal from './AnchorEditModal';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * "When does this happen?", for a chapter or an event.
@@ -76,7 +77,7 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
         await persist(draft, editing.id);
         setEditing(null);
       } catch (error) {
-        console.log('AnchorManager: failed to save anchor.', error);
+        logger.debug('AnchorManager: failed to save anchor.', error);
         notify(t('anchor_save_failed'), 'error');
       }
     },
@@ -94,7 +95,7 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
             try {
               await erase(anchor.id);
             } catch (error) {
-              console.log('AnchorManager: failed to delete anchor.', error);
+              logger.debug('AnchorManager: failed to delete anchor.', error);
               notify(t('anchor_save_failed'), 'error');
             }
           },

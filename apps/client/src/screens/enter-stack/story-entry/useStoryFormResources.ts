@@ -10,6 +10,7 @@ import {
   type StoryService,
 } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Owns the story and pack services plus create-mode pack lookups. */
 export function useStoryFormResources(initialStoryId?: string) {
@@ -33,7 +34,7 @@ export function useStoryFormResources(initialStoryId?: string) {
     createPackService(drizzleDb)
       .listPacks()
       .then(setPacks)
-      .catch((err) => console.error('StoryFormScreen: failed to list packs.', err));
+      .catch((err) => logger.error('StoryFormScreen: failed to list packs.', err));
   }, [drizzleDb, initialStoryId, lastInstalledPackId]);
 
   return {

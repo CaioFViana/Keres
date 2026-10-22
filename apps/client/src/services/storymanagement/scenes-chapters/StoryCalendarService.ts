@@ -13,6 +13,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story's calendars.
@@ -232,7 +233,7 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
     async deleteCalendar(currentUserId, calendarId) {
       const calendar = await service.getById(calendarId);
       if (!calendar) {
-        console.warn(`Attempted to delete non-existent StoryCalendar ${calendarId}.`);
+        logger.warn(`Attempted to delete non-existent StoryCalendar ${calendarId}.`);
         return;
       }
       await assertStoryIsWritable(db, calendar.storyId);

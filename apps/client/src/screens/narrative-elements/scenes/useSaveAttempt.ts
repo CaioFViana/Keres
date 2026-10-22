@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The save of a screen that does not throw into the screen: a failure is logged under the screen's name
@@ -15,7 +16,7 @@ export function useSaveAttempt(screenName: string, failureKey: string) {
       try {
         await work();
       } catch (error) {
-        console.log(`${screenName}: failed to ${logLabel}.`, error);
+        logger.debug(`${screenName}: failed to ${logLabel}.`, error);
         showNotification(t(failureKey), 'error');
       }
     },

@@ -97,7 +97,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     /** Row indexes whose band reaches the culling window; bands, bars and labels cull with these. */
     const visibleRowIndexes = useMemo(
       () =>
-        layout.rows.flatMap((row, index) =>
+        layout.rows.flatMap((_row, index) =>
           spatialRectIntersects(
             {
               x: TIMELINE_PADDING,

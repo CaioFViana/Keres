@@ -6,9 +6,9 @@
 .claude
 docs
 
-# Build artifacts - regenerated in-container (apps/admin/dist is built by the admin-build stage).
+# Build artifacts - regenerated in-container (apps/web/dist is built by the web-build stage).
 **/dist
-apps/admin/dist
+apps/web/dist
 apps/client/android
 apps/client/ios
 apps/client/.expo

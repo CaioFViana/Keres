@@ -1,6 +1,8 @@
 import {
   AccountPlanSchema,
   RegenerateRecoveryCodesSchema,
+  OwnPublicProfileSchema,
+  UpdateOwnPublicProfileSchema,
   UpdateUserPasswordSchema,
   UpdateUserPreferencesSchema,
   UpdateUserProfileSchema,
@@ -31,6 +33,13 @@ const userResponseSchema = t.Object({
   avatarIcon: t.Nullable(t.String()),
   bio: t.Nullable(t.String()),
   isAdultVerified: t.Boolean(),
+});
+
+/** The author page's texts as a TypeBox shape, for the places that nest it inside another TypeBox object. */
+const publicProfileResponseSchema = t.Object({
+  biography: t.Nullable(t.String()),
+  links: t.Array(t.Object({ label: t.String(), url: t.String() })),
+  theme: t.Nullable(t.String()),
 });
 
 export const userRoutes = new Elysia()
@@ -151,6 +160,7 @@ export const userRoutes = new Elysia()
           accessRecords: t.Any(),
           ageVerification: t.Array(t.Any()),
           preferences: t.Nullable(t.Object({ showNsfw: t.Boolean() })),
+          publicProfile: t.Nullable(publicProfileResponseSchema),
         }),
         401: t.Object({ message: t.String() }),
       },
@@ -330,6 +340,68 @@ export const userRoutes = new Elysia()
         summary: 'Update your own avatar/bio',
         description:
           "Updates the current user's avatar color, avatar icon, and/or bio. Omitted fields are left unchanged; explicit `null` clears a field.",
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .get(
+    '/public-profile',
+    async ({ user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      const profile = await userService.getPublicProfile(user.userId);
+      if (!profile) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      return profile;
+    },
+    {
+      response: {
+        200: OwnPublicProfileSchema,
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Your author page',
+        description:
+          "The biography, links and theme of the current user's page on the public showcase. Apart from the short bio friends see.",
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .put(
+    '/public-profile',
+    async ({ body, user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+
+      const parsed = UpdateOwnPublicProfileSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid profile data');
+      }
+
+      return userService.updatePublicProfile(user.userId, parsed.data);
+    },
+    {
+      // Shape only: the limits, the addresses and the theme are the shared schema's (a clear message beats a
+      // generic schema failure).
+      body: t.Object({
+        biography: t.Optional(t.Nullable(t.String())),
+        links: t.Optional(t.Array(t.Object({ label: t.String(), url: t.String() }))),
+        theme: t.Optional(t.Nullable(t.String())),
+      }),
+      response: {
+        200: OwnPublicProfileSchema,
+        400: t.Object({ message: t.String() }),
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Update your author page',
+        description:
+          "Updates the biography, links and/or theme of the current user's page on the public showcase. Omitted fields are left unchanged; `null` clears the biography and the theme, an empty list the links.",
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

@@ -1,0 +1,303 @@
+import type {
+  ShowcaseAuthorCard,
+  ShowcaseAuthorPage,
+  ShowcaseFacets,
+  ShowcasePackCard,
+  ShowcasePackDetail,
+  ShowcaseStoryCard,
+  ShowcaseStoryDetail,
+  ShowcaseStoryResponse,
+} from '@keres/shared';
+
+/**
+ * The public site's HTTP client.
+ *
+ * Plain `fetch` instead of the panel's axios: there is no session here, no 401 interceptor and no
+ * token in `localStorage` - mixing the two would bring in exactly what this site must not have.
+ * The only credential that circulates is the unlock token for a protected story, kept in
+ * `sessionStorage` (gone when the tab closes) and scoped to a single story.
+ */
+
+import { type StoryFilters, listQuery } from '@/showcase/storyFilters';
+import { readSessionToken } from './showcaseAuth';
+
+const UNLOCK_TOKEN_PREFIX = 'keres_showcase_unlock_';
+
+export function readUnlockToken(storyId: string): string | null {
+  return sessionStorage.getItem(`${UNLOCK_TOKEN_PREFIX}${storyId}`);
+}
+
+export function storeUnlockToken(storyId: string, token: string): void {
+  sessionStorage.setItem(`${UNLOCK_TOKEN_PREFIX}${storyId}`, token);
+}
+
+export function clearUnlockToken(storyId: string): void {
+  sessionStorage.removeItem(`${UNLOCK_TOKEN_PREFIX}${storyId}`);
+}
+
+function unlockHeaders(storyId: string): Record<string, string> {
+  const token = readUnlockToken(storyId);
+  return token ? { Authorization: `Showcase ${token}` } : {};
+}
+
+/**
+ * The tab's own session, when signed in. Sent as a plain Bearer beside (never inside) the
+ * unlock token: the server reads either credential from the header, and a signed-in verified
+ * adult additionally sees the +18 shelf and its downloads.
+ */
+function sessionHeaders(): Record<string, string> {
+  const token = readSessionToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/**
+ * Both credentials at once, comma-joined: the server reads each half independently, so a
+ * signed-in adult opening a password-protected +18 story proves both facts in one fetch.
+ */
+function storyHeaders(storyId: string): Record<string, string> {
+  const session = sessionHeaders().Authorization;
+  const unlock = unlockHeaders(storyId).Authorization;
+  const combined = [session, unlock].filter(Boolean).join(', ');
+  return combined ? { Authorization: combined } : {};
+}
+
+async function readError(response: Response): Promise<string> {
+  try {
+    const body = await response.json();
+    return typeof body?.message === 'string'
+      ? body.message
+      : `Request failed (${response.status}).`;
+  } catch {
+    return `Request failed (${response.status}).`;
+  }
+}
+
+/** Mirrors the API's public `/config`; `logoUrl` is null until a logo is uploaded. */
+export interface ShowcaseConfig {
+  showcaseEnabled: boolean;
+  /** Whether the root of the server is its landing page. Absent on servers that predate it: no way back is offered. */
+  landingEnabled?: boolean;
+  serverVersion: string;
+  siteName: string;
+  sitePalette: string;
+  logoUrl: string | null;
+}
+
+export async function fetchConfig(): Promise<ShowcaseConfig> {
+  const response = await fetch('/api/public/config');
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export interface StoryListResult {
+  /** `null` when the server answered 304 - the list in hand is still valid. */
+  stories: ShowcaseStoryCard[] | null;
+  etag: string | null;
+  /** How many stories match the filters, whatever page was asked for. */
+  total: number | null;
+}
+
+const totalOf = (response: Response): number | null => {
+  const header = response.headers.get('x-total-count');
+  return header === null ? null : Number(header);
+};
+
+/**
+ * The listing, with `If-None-Match`. The page polls, and without this every poll would download
+ * the whole catalog again just to find out nothing changed.
+ */
+export async function fetchStories(
+  previousEtag: string | null,
+  filters?: StoryFilters,
+  limit?: number,
+): Promise<StoryListResult> {
+  const query = filters ? listQuery(filters, limit) : '';
+  const response = await fetch(`/api/public/stories${query ? `?${query}` : ''}`, {
+    headers: {
+      ...sessionHeaders(),
+      ...(previousEtag ? { 'If-None-Match': previousEtag } : {}),
+    },
+  });
+  if (response.status === 304) {
+    return { stories: null, etag: previousEtag, total: null };
+  }
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return {
+    stories: await response.json(),
+    etag: response.headers.get('etag'),
+    total: totalOf(response),
+  };
+}
+
+/** What the list can be filtered by, counted over what this viewer may see. */
+export async function fetchFacets(): Promise<ShowcaseFacets> {
+  const response = await fetch('/api/public/stories/facets', { headers: sessionHeaders() });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export interface AuthorListResult {
+  authors: ShowcaseAuthorCard[];
+  total: number;
+}
+
+export async function fetchAuthors(q: string, limit: number): Promise<AuthorListResult> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (q.trim()) params.set('q', q.trim());
+  const response = await fetch(`/api/public/authors?${params}`, { headers: sessionHeaders() });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const authors: ShowcaseAuthorCard[] = await response.json();
+  return { authors, total: totalOf(response) ?? authors.length };
+}
+
+export async function fetchAuthor(username: string): Promise<ShowcaseAuthorPage> {
+  const response = await fetch(`/api/public/authors/${encodeURIComponent(username)}`, {
+    headers: sessionHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export async function fetchStory(storyId: string): Promise<ShowcaseStoryResponse> {
+  const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}`, {
+    headers: storyHeaders(storyId),
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export async function unlockStory(storyId: string, password: string): Promise<ShowcaseStoryDetail> {
+  const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}/unlock`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...sessionHeaders() },
+    body: JSON.stringify({ password }),
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const { token } = (await response.json()) as { token: string };
+  storeUnlockToken(storyId, token);
+
+  const detail = await fetchStory(storyId);
+  if ('protected' in detail) {
+    // Should not happen: the token was just issued for this story.
+    clearUnlockToken(storyId);
+    throw new Error('Could not open this story.');
+  }
+  return detail;
+}
+
+/**
+ * A version's download address.
+ *
+ * An `<a download>` sends no headers, so for a protected story the server returns a link with a
+ * 60-second token embedded, rather than accepting the one-hour token in a URL that would end up in
+ * the browser's history.
+ */
+export async function fetchDownloadUrl(storyId: string, publicationId: string): Promise<string> {
+  const response = await fetch(
+    `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
+      publicationId,
+    )}/download-url`,
+    { method: 'POST', headers: storyHeaders(storyId) },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const { url } = (await response.json()) as { url: string };
+  return url;
+}
+
+/**
+ * The cover of a story (or of one of its released works) as an address the page can draw: the picture is fetched with the credentials of the
+ * viewer (a protected or adults-only story answers only to them, and an image tag cannot send headers) and kept
+ * as a local object URL. `null` when there is no cover to show; the caller revokes the address when done.
+ */
+export async function fetchCoverUrl(storyId: string, workId?: string): Promise<string | null> {
+  try {
+    const story = `/api/public/stories/${encodeURIComponent(storyId)}`;
+    const response = await fetch(
+      workId ? `${story}/works/${encodeURIComponent(workId)}/cover` : `${story}/cover`,
+      { headers: storyHeaders(storyId) },
+    );
+    if (!response.ok) return null;
+    return URL.createObjectURL(await response.blob());
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A version's manuscript address. Same short-lived-token dance as the package link: only the path
+ * differs, because the artifact (readable text, not the Keres base) does.
+ */
+export async function fetchManuscriptDownloadUrl(
+  storyId: string,
+  publicationId: string,
+): Promise<string> {
+  const response = await fetch(
+    `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
+      publicationId,
+    )}/manuscript/download-url`,
+    { method: 'POST', headers: storyHeaders(storyId) },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const { url } = (await response.json()) as { url: string };
+  return url;
+}
+
+/**
+ * The address of a version's online reader. A frame cannot send headers either, so a protected
+ * story's address carries the same 60-second token.
+ */
+export async function fetchReaderUrl(storyId: string, publicationId: string): Promise<string> {
+  const response = await fetch(
+    `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
+      publicationId,
+    )}/reader/url`,
+    { method: 'POST', headers: storyHeaders(storyId) },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const { url } = (await response.json()) as { url: string };
+  return url;
+}
+
+/**
+ * The public packs.
+ *
+ * No `If-None-Match` here, unlike the story listing, because this page does not poll: a pack
+ * changes when its author re-extracts and shares it again, which is a deliberate and rare act,
+ * not something a visitor sits waiting for. An ETag exists there to make repeated polling cheap;
+ * with no polling it would only be ceremony.
+ */
+export async function fetchPacks(): Promise<ShowcasePackCard[]> {
+  const response = await fetch('/api/public/packs');
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export async function fetchPack(packId: string): Promise<ShowcasePackDetail> {
+  const response = await fetch(`/api/public/packs/${encodeURIComponent(packId)}`);
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}

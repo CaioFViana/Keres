@@ -82,7 +82,7 @@ it('hydrates once the stats list arrives', async () => {
 
   expect(view.result.current.loading).toBe(true);
 
-  view.rerender({ rows: stats });
+  await view.rerender({ rows: stats });
   await waitFor(() => expect(view.result.current.loading).toBe(false));
 
   expect(view.result.current.name).toBe('Wit');
@@ -107,7 +107,7 @@ describe('useStatFormState durable drafts', () => {
       first.result.current.setName('Agilidade');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderState({});
@@ -120,7 +120,7 @@ describe('useStatFormState durable drafts', () => {
     const first = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderState({});
@@ -139,7 +139,7 @@ describe('useStatFormState durable drafts', () => {
       first.result.current.setName('Força bruta');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderState({ statId: 'stat-1' });
@@ -167,7 +167,7 @@ describe('useStatFormState durable drafts', () => {
     expect(first.result.current.isPrimary).toBe(true);
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -181,7 +181,7 @@ describe('useStatFormState durable drafts', () => {
       second.result.current.setName('Sabedoria');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const third = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -207,7 +207,7 @@ describe('useStatFormState durable drafts', () => {
     expect(first.result.current.isPrimary).toBe(false);
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderState({ statId: 'stat-1' });
@@ -224,7 +224,7 @@ describe('useStatFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerStats = [

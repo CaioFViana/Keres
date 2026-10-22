@@ -1,6 +1,6 @@
 # Keres age-verification service (reference)
 
-The reference service behind an account's "18+ and verified" check on a Keres server (`docs/age_verification.md`,
+The reference service behind an account's "18+ and verified" check on a Keres server (`docs/compliance/age_verification.md`,
 "The reference service"). It receives an identity document and a live photo from a person, a human reviewer decides,
 and the service tells the Keres server only a signed result. The server never sees the document.
 

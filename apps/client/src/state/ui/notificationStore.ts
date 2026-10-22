@@ -21,7 +21,7 @@ interface NotificationState {
   clearAll: () => void;
 }
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
+export const useNotificationStore = create<NotificationState>((set) => ({
   currentNotifications: [null, null, null], // Initialize with 3 empty lanes
   queue: [],
 

@@ -27,6 +27,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { logger } from '@/src/utils/logging/logger';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -103,7 +104,7 @@ const StorySchemaListScreen = () => {
               try {
                 await createStorySchemaFieldService(drizzleDb).deleteField(userId, field.id);
               } catch (err) {
-                console.error('Failed to delete attribute field:', err);
+                logger.error('Failed to delete attribute field:', err);
                 AppAlert.alert(t('error'), t('failed_to_delete_attribute'));
               }
             },
@@ -127,7 +128,7 @@ const StorySchemaListScreen = () => {
         );
         setIsReorderModalVisible(false);
       } catch (err) {
-        console.error('Failed to reorder attribute fields:', err);
+        logger.error('Failed to reorder attribute fields:', err);
         AppAlert.alert(t('error'), t('failed_to_save_attribute'));
       }
     },

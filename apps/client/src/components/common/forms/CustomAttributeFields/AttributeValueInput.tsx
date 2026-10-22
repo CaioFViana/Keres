@@ -7,6 +7,7 @@ import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextIn
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useEntityPickerOptions } from '@/src/hooks/lists/useEntityPickerOptions';
 import type { Ionicons } from '@expo/vector-icons';
+import type { StyleProp, ViewStyle } from 'react-native';
 import type { StorySchemaEntityType } from '@keres/shared';
 import {
   AttributeType,
@@ -32,7 +33,7 @@ interface AttributeValueInputProps {
   suggestionFieldId?: string;
   /** Declared target of an ENTITY field. */
   targetEntityType?: StorySchemaEntityType | null;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**

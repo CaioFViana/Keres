@@ -47,6 +47,8 @@ describe('AddObjectsPill', () => {
 
     await act(async () => {
       (pill.props.onSelectionChange as (values: string[]) => void)(['draw:line']);
+      // The pill clears its selection on the next frame; let that land inside the act.
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
     });
     expect(onAction).toHaveBeenCalledWith('draw:line');
   });

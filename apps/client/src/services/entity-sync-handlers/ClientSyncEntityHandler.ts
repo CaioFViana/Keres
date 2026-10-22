@@ -18,13 +18,12 @@ export interface ClientSyncEntityHandler {
    */
   setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void;
   /**
-   * NOTE: the first parameter receives the active *story* id at every call site
-   * (`SyncPull`/`SyncEngineService`), even though this interface names it `entityId`.
-   * Implementations already name it `storyId`; do not pass an entity id here.
+   * `storyId` is the active *story* id at every call site (`SyncPull`), never an entity id.
+   * A handler that reads nothing from it leaves the parameter out.
    */
-  applyCreate(entityId: string, update: CreateStoryUpdate): Promise<void>;
-  applyUpdate(entityId: string, update: UpdateStoryUpdate): Promise<void>;
-  applyDelete(entityId: string, update: DeleteStoryUpdate): Promise<void>;
+  applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void>;
+  applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void>;
+  applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void>;
   /** Local read used to detect already-applied creates and to snapshot favorites. */
-  getById(id: string): Promise<any | undefined>;
+  getById(id: string): Promise<unknown>;
 }

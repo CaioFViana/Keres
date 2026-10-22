@@ -1,9 +1,9 @@
 import type { CreateStoryUpdate } from '@keres/shared';
 import { CreateCharacterDataSchema, PartialCharacterSchema } from '@keres/shared';
 import type { z } from 'zod';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { characters } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 type CharacterCreateType = z.infer<typeof CreateCharacterDataSchema>;
 
@@ -21,12 +21,8 @@ export class CharacterSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Validate incoming data against the create schema
     const validatedData: CharacterCreateType = this.createSchema.parse(update.data);
 

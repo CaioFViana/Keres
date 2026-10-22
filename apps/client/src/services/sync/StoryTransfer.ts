@@ -11,6 +11,7 @@ import { createCommentService } from '@/src/services/storymanagement/notes-tags-
 import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import type { SyncNotifier } from './SyncNotifier';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface ServerStoryPreview {
   storyId: string;
@@ -37,7 +38,7 @@ export async function fetchServerStoryPreviewsOrNull(
   server: ServerSelect,
 ): Promise<ServerStoryPreview[] | null> {
   if (!server?.url) {
-    console.log('A server with a URL is required to fetch story previews.');
+    logger.debug('A server with a URL is required to fetch story previews.');
     return null;
   }
 
@@ -52,7 +53,7 @@ export async function fetchServerStoryPreviewsOrNull(
     }>('/sync/pullpreviews');
     return response.data.storyPreviews;
   } catch (error) {
-    console.log(`Error fetching server story previews from ${server.url}:`, error);
+    logger.debug(`Error fetching server story previews from ${server.url}:`, error);
     return null;
   }
 }
@@ -95,7 +96,7 @@ export async function downloadAndImportStory(
       return;
     }
   } catch (error) {
-    console.error('Error fetching server details by ID:', error);
+    logger.error('Error fetching server details by ID:', error);
     notifier.message(
       `Failed to download story '${storyId}': Error retrieving server details.`,
       'error',
@@ -115,7 +116,7 @@ export async function downloadAndImportStory(
     await createStoryService(db).importFullStory(userId, fullStoryData, queriedServerId, role);
     notifier.message(i18n.t('story_downloaded_and_imported', { title: storyTitle }), 'success');
   } catch (error) {
-    console.log(`Error downloading or importing story ${storyId} from ${server.url}:`, error);
+    logger.debug(`Error downloading or importing story ${storyId} from ${server.url}:`, error);
     notifier.message(i18n.t('failed_to_download_story_named', { title: storyTitle }), 'error');
   }
 }
@@ -175,7 +176,7 @@ export async function uploadNewStoryToServer(
       return { success: false, reason: 'already_exists' };
     }
   } catch (error) {
-    console.log(`Error checking story existence on ${server.url}:`, error);
+    logger.debug(`Error checking story existence on ${server.url}:`, error);
     return { success: false, reason: 'error', message: (error as Error)?.message };
   }
 
@@ -202,7 +203,7 @@ export async function uploadNewStoryToServer(
       storyExport,
     );
   } catch (error) {
-    console.log(`Error uploading story ${storyId} to ${server.url}:`, error);
+    logger.debug(`Error uploading story ${storyId} to ${server.url}:`, error);
     // The story stays unlinked, so reads resolve to the local id again: migrate back so the
     // owner's favorites/comments do not sit invisible under the server id after a failed
     // upload. Best effort - a retry migrates forward again anyway.

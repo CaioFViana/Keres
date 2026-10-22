@@ -6,6 +6,7 @@ import {
   type PaymentOverview,
 } from '@/src/services/payments/PaymentService';
 import {
+  type EntityEventSubscription,
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
@@ -49,7 +50,7 @@ export function usePaymentOverview(server: ServerSelect | undefined, online: boo
   }, [online, reload]);
   useEntityInitialLoad(look);
 
-  const subscriptions = useMemo(
+  const subscriptions = useMemo<EntityEventSubscription[]>(
     () => [
       {
         event: PAYMENTS_CHANGED,

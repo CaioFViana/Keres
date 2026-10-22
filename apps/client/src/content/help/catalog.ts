@@ -32,6 +32,7 @@ export const helpSections: HelpSection[] = [
       'story-analysis',
       'import-export',
       'publish-story',
+      'browse-showcase',
       'packs',
       'example-stories',
     ],

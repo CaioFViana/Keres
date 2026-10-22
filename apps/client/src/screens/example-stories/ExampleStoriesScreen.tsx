@@ -21,6 +21,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The catalog of example stories packaged with the app.
@@ -119,7 +120,7 @@ const ExampleStoriesScreen = () => {
           showNotification(t('example_stories_install_failed'), 'error');
         }
       } catch (installError) {
-        console.log(
+        logger.debug(
           `ExampleStoriesScreen: failed to install example story ${slug}/${language}.`,
           installError,
         );

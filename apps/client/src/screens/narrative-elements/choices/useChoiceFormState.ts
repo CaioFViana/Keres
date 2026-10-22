@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseChoiceFormStateOptions = {
   initialChoiceId?: string;
@@ -81,11 +82,11 @@ export function useChoiceFormState({
             });
             setLoadedUpdatedAt(fetchedChoice.updatedAt?.toISOString?.() ?? null);
           } else {
-            console.warn('Choice not found:', initialChoiceId);
+            logger.warn('Choice not found:', initialChoiceId);
           }
         }
       } catch (err) {
-        console.error('Failed to load choice:', err);
+        logger.error('Failed to load choice:', err);
       } finally {
         setLoading(false);
       }
@@ -102,7 +103,7 @@ export function useChoiceFormState({
 
   const restoreDraftFields = useCallback((fields: ChoiceFormDraftFields) => {
     if (!isChoiceFormDraftFields(fields)) {
-      console.error('Corrupt choice form draft ignored.');
+      logger.error('Corrupt choice form draft ignored.');
       return;
     }
     setSceneId(fields.sceneId);

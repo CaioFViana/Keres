@@ -152,10 +152,13 @@ describe('echo and create handling', () => {
     await pull.applyRemoteCreate(create, handler);
 
     // The story is stamped into the row: pulled payloads leave it out.
-    expect(handler.applyCreate).toHaveBeenCalledWith(STORY_ID, {
-      ...create,
-      data: { ...(create as { data: Record<string, unknown> }).data, storyId: STORY_ID },
-    });
+    expect(handler.applyCreate).toHaveBeenCalledWith(
+      {
+        ...create,
+        data: { ...(create as { data: Record<string, unknown> }).data, storyId: STORY_ID },
+      },
+      STORY_ID,
+    );
     expect(handler.applyUpdate).not.toHaveBeenCalled();
   });
 
@@ -166,11 +169,11 @@ describe('echo and create handling', () => {
     await pull.applyRemoteCreate(create, handler);
 
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({
         type: 'update',
         changes: expect.objectContaining({ name: 'Created', version: 7 }),
       }),
+      STORY_ID,
     );
   });
 
@@ -185,8 +188,8 @@ describe('echo and create handling', () => {
     await pull.applyRemoteCreate(create, handler);
 
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: expect.objectContaining({ version: 12 }) }),
+      STORY_ID,
     );
   });
 
@@ -197,10 +200,13 @@ describe('echo and create handling', () => {
 
     expect(handler.getById).not.toHaveBeenCalled();
     // The story is stamped into the row: pulled payloads leave it out.
-    expect(handler.applyCreate).toHaveBeenCalledWith(STORY_ID, {
-      ...create,
-      data: { ...(create as { data: Record<string, unknown> }).data, storyId: STORY_ID },
-    });
+    expect(handler.applyCreate).toHaveBeenCalledWith(
+      {
+        ...create,
+        data: { ...(create as { data: Record<string, unknown> }).data, storyId: STORY_ID },
+      },
+      STORY_ID,
+    );
   });
 
   it('restarts the version at zero when a repeated create carries none', async () => {
@@ -214,8 +220,8 @@ describe('echo and create handling', () => {
     await pull.applyRemoteCreate(create, handler);
 
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: expect.objectContaining({ version: 0 }) }),
+      STORY_ID,
     );
   });
 });
@@ -329,8 +335,8 @@ describe('reconciliation decisions', () => {
 
     expect(result).toEqual({ conflicted: false });
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: { name: 'Server name' } }),
+      STORY_ID,
     );
     expect(rebase).toHaveBeenCalledWith([local], 4);
   });
@@ -373,8 +379,8 @@ describe('reconciliation decisions', () => {
 
     expect(result).toEqual({ conflicted: false });
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: { name: 'Server name' } }),
+      STORY_ID,
     );
     expect(rebase).toHaveBeenCalledWith([local], 4);
     expect(recordConflict).not.toHaveBeenCalled();

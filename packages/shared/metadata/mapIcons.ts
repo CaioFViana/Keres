@@ -5,7 +5,7 @@ import mapIconNames from './mapIcons.json';
  * services) instead of a search across thousands of icons, the same discipline as the avatar list.
  *
  * The names are Ionicons' own: they work both as a font glyph (app) and as an `.svg` file name
- * (Showcase under `apps/admin`). The list lives in a `.json` next door because the Showcase build
+ * (Showcase under `apps/web`). The list lives in a `.json` next door because the Showcase build
  * has to read it outside TypeScript - the Vite plugin runs in Node, which does not load this
  * package's `.ts` files.
  */

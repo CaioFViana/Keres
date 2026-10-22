@@ -5,6 +5,7 @@ import type { ServerSelect } from '@/src/db/schema';
 import { isOfflineError } from '@/src/services/api/apiClient';
 import { userApiService } from '@/src/services/api/UserApiService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 /** What the editor needs of the service that stores the server locally. */
 interface TagStore {
@@ -54,12 +55,12 @@ export function useServerTagEditor(
       await store.updateServer(server.id, { tag: updated.tag });
       onSaved(server.id, updated.tag);
       cancel();
-    } catch (err: any) {
+    } catch (err) {
       if (isOfflineError(err)) {
         AppAlert.alert(t('error'), t('server_unreachable'));
-      } else if (err?.response?.status === 409) {
+      } else if (httpStatusOf(err) === 409) {
         AppAlert.alert(t('error'), t('tag_already_taken'));
-      } else if (err?.response?.status === 400) {
+      } else if (httpStatusOf(err) === 400) {
         AppAlert.alert(t('error'), t('invalid_tag_format'));
       } else {
         AppAlert.alert(t('error'), t('failed_to_update_tag'));

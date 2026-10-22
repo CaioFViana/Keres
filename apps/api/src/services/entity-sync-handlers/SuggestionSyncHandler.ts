@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateStoryUpdate,
   CreateSuggestionDataType,
@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateSuggestionDataSchema, PartialSuggestionSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { suggestions } from '@/db/schema';
 import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
@@ -26,12 +26,8 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateSuggestionDataType = this.createSchema.parse(update.data);
 
     // Check for existing suggestion with the same type and value within the same story
@@ -65,12 +61,11 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // If type or value are being updated, check for uniqueness within the story
@@ -99,16 +94,14 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
       }
     }
 
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
   }
 }

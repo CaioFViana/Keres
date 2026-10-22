@@ -184,8 +184,8 @@ function plotsData(overrides: any = {}) {
 }
 
 describe('PlotMatrixScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

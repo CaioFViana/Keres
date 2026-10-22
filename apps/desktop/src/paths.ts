@@ -42,7 +42,7 @@ export function resolveClientFile(
 
   for (const candidate of candidates) {
     const filePath = path.join(clientDist, candidate);
-    // The `path.sep` matters: without it, "../client-dist-anything/x" would pass the prefix check.
+    // The `path.sep` matters: without it, "../dist-client-anything/x" would pass the prefix check.
     if (
       (filePath === clientDist || filePath.startsWith(clientDist + path.sep)) &&
       exists(filePath)

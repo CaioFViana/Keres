@@ -8,6 +8,8 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import i18n from '@/src/utils/format/i18n';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
+import { logger } from '@/src/utils/logging/logger';
+import type { WireValues } from '@/src/types/wireValues';
 
 /** Thrown when a story-content mutation is attempted by a user with only reader access. */
 export class StoryReadOnlyError extends Error {
@@ -149,7 +151,7 @@ export function recordLocalOperationSync(
   operationType: StoryUpdateType,
   entityType: string,
   entityId: string,
-  payload: Record<string, any>,
+  payload: WireValues,
 ): number {
   const story = db
     .select({ lastOperationLog: schema.stories.lastOperationLog })
@@ -165,7 +167,7 @@ export function recordLocalOperationSync(
   }
   const next = (story.lastOperationLog || 0) + 1;
   const operationId = createULID();
-  const heldBy = findConflictHoldingEdits(db, storyId, entityType, entityId, operationType);
+  const heldBy = findConflictHoldingEdits(db, storyId, entityType, entityId);
   // An arranged row's position is derived from its rank on every device: an edit never carries it.
   const arranged = ARRANGED[entityType];
   const recorded =
@@ -202,7 +204,7 @@ export function recordLocalOperationSync(
   // Without this, a local edit's own operation log row doesn't show up in the Operation Log
   // screen until it's unmounted and remounted (e.g. leaving and re-entering the story).
   afterLocalWrite(() => entityEventEmitter.emit('operation_log_updated', storyId));
-  console.log(
+  logger.debug(
     `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${next}`,
   );
   return next;
@@ -219,10 +221,10 @@ export async function recordLocalOperation(
   operationType: StoryUpdateType,
   entityType: string,
   entityId: string,
-  payload: Record<string, any>,
+  payload: WireValues,
 ): Promise<void> {
   if (!db) {
-    console.error('recordLocalOperation: Drizzle client (db) not set.');
+    logger.error('recordLocalOperation: Drizzle client (db) not set.');
     return;
   }
   await runLocalWrite(db, storyId, () =>
@@ -251,7 +253,6 @@ function findConflictHoldingEdits(
   storyId: string,
   entityType: string,
   entityId: string,
-  operationType: StoryUpdateType,
 ): typeof schema.syncConflicts.$inferSelect | undefined {
   const conflict = db
     .select()
@@ -275,7 +276,7 @@ function joinPendingConflict(
   conflict: typeof schema.syncConflicts.$inferSelect,
   operationId: string,
   operationType: StoryUpdateType,
-  payload: Record<string, any>,
+  payload: WireValues,
 ): void {
   const parse = <T>(raw: string | null, fallback: T): T => {
     try {
@@ -294,7 +295,7 @@ function joinPendingConflict(
         operationId,
       ]),
       localValues: JSON.stringify({
-        ...parse<Record<string, any>>(conflict.localValues, {}),
+        ...parse<WireValues>(conflict.localValues, {}),
         ...values,
       }),
       // A later deletion is the strongest intent; a create stays a create.
@@ -340,7 +341,7 @@ export async function trimSyncedOperationLogs(
   keep: number = MAX_RETAINED_SYNCED_OPERATIONS,
 ): Promise<number> {
   if (!db) {
-    console.error('trimSyncedOperationLogs: Drizzle client (db) not set.');
+    logger.error('trimSyncedOperationLogs: Drizzle client (db) not set.');
     return 0;
   }
 

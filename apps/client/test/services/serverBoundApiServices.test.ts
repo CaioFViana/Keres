@@ -204,6 +204,27 @@ describe('server-bound API services', () => {
     await expect(service.getOwnProfile(server)).rejects.toThrow('boom');
   });
 
+  it('reads and writes the author page texts, treating a server without the route as having none', async () => {
+    const service = new UserApiService();
+    const texts = {
+      biography: 'Hi',
+      links: [{ label: 'Site', url: 'https://example.com' }],
+      theme: null,
+    };
+    mockClient.get.mockResolvedValueOnce({ data: texts });
+    await expect(service.getPublicProfile(server)).resolves.toEqual(texts);
+    expect(mockClient.get).toHaveBeenCalledWith('/user/public-profile');
+
+    mockClient.get.mockRejectedValueOnce({ response: { status: 404 } });
+    await expect(service.getPublicProfile(server)).resolves.toBeUndefined();
+    mockClient.get.mockRejectedValueOnce(new Error('boom'));
+    await expect(service.getPublicProfile(server)).rejects.toThrow('boom');
+
+    mockClient.put.mockResolvedValueOnce({ data: texts });
+    await expect(service.updatePublicProfile(server, { biography: 'Hi' })).resolves.toEqual(texts);
+    expect(mockClient.put).toHaveBeenCalledWith('/user/public-profile', { biography: 'Hi' });
+  });
+
   it('reads the own plan, treats a server without the route as having none, and rethrows other failures', async () => {
     const service = new UserApiService();
     mockClient.get.mockResolvedValueOnce({ data: { tierName: 'Free' } });

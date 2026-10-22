@@ -30,7 +30,7 @@ export default defineConfig({
       // A directory of its own: without it the integration report would overwrite the unit suites', and
       // `test:report` would show one in place of the other.
       reportsDirectory: 'coverage-integration',
-      // A floor, not a target - see the ratchet rule in TESTING_PLAN.md.
+      // A floor, not a target - see the ratchet rule in docs/structure/testing.md.
       thresholds: coverageThresholds.apiIntegration,
     },
   },

@@ -28,6 +28,7 @@ import StorySelectionStack, {
   type StorySelectionDrawerParamList,
 } from './stacks/StorySelectionStack';
 import { attachWebHistoryBack, hasScreenBehind } from './links/webHistoryBack';
+import { logger } from '@/src/utils/logging/logger';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
@@ -148,7 +149,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
           setIsColdInstallNeeded(false);
         }
       } catch (error) {
-        console.error('Error checking for client settings:', error);
+        logger.error('Error checking for client settings:', error);
         setIsColdInstallNeeded(true);
       } finally {
         setIsLoading(false);

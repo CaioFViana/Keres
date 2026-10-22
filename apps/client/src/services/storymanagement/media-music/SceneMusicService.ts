@@ -14,6 +14,7 @@ import {
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 /** What a link points at: a Song of the story, or a medium of its Gallery (an audio file, a link). */
 export type SceneMusicTarget = { songId: string } | { galleryId: string };
@@ -199,7 +200,7 @@ export const createSceneMusicService = (db: AppDrizzleClient): SceneMusicService
     async deleteMusic(currentUserId, musicId) {
       const original = await db.query.sceneMusic.findFirst({ where: eq(sceneMusic.id, musicId) });
       if (!original) {
-        console.warn(`Attempted to delete non-existent scene music ${musicId}.`);
+        logger.warn(`Attempted to delete non-existent scene music ${musicId}.`);
         return;
       }
       await assertStoryIsWritable(db, original.storyId);

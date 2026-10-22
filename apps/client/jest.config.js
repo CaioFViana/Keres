@@ -28,6 +28,10 @@ module.exports = {
     // The real enriched-html web build imports its stylesheet; styles are
     // irrelevant to behavior tests.
     '\\.css$': '<rootDir>/test/helpers/cssStub.js',
+    // Expo's winter runtime installs `fetch` lazily, and the first read can land in a suite whose module
+    // registry has no TurboModuleRegistry: the core module then logs a missing-native-module warning from
+    // its JS-logger setup. That setup only forwards native logs to the console, and Jest has no native side.
+    'expo-modules-core/src/sweet/setUpJsLogger\\.fx$': '<rootDir>/test/helpers/cssStub.js',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
@@ -38,7 +42,7 @@ module.exports = {
   ],
   coverageReporters: ['text', 'lcov'],
   // A floor, not a target: set a little below what was measured so as to absorb fluctuation, and to rise
-  // along when coverage rises. See the ratchet rule in TESTING_PLAN.md.
+  // along when coverage rises. See the ratchet rule in docs/structure/testing.md.
   coverageThreshold: {
     global: coverageThresholds.client,
   },

@@ -26,3 +26,17 @@ export class StoryImportError extends Error {
     this.reason = reason;
   }
 }
+
+/** The message the person is shown for a story package that could not be imported, by the reason it was refused. */
+export function storyImportMessageKey(reason: string): string {
+  switch (reason) {
+    case 'future_format_version':
+      return 'import_story_future_version';
+    case 'invalid_format':
+      return 'import_story_invalid_file';
+    case 'corrupt_content':
+      return 'import_story_corrupt_content';
+    default:
+      return 'import_story_unreadable_file';
+  }
+}

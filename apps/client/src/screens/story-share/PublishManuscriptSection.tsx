@@ -3,12 +3,13 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import type { StorySelect } from '@/src/db/schema';
 import { useTranslation } from 'react-i18next';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import { SCREENPLAY_EXPORT_FORMATS } from '@/src/components/features/manuscript/export/manuscriptExport';
 import { SERVER_MANUSCRIPT_FORMATS } from '@/src/services/api/PublicationApiService';
-import type { ThemeColors } from '@/src/theme';
-import { typography } from '@/src/theme/tokens';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { radius, space, typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { PublishManuscriptState } from './usePublishManuscript';
 
@@ -32,6 +33,7 @@ export function PublishManuscriptSection({
   const { term } = useStoryVocabulary();
   const { t } = useTranslation();
   const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
 
   const branching = storyType === 'branching';
   const works = manuscript.manuscriptArcs;
@@ -84,6 +86,17 @@ export function PublishManuscriptSection({
             disabled={disabled}
             testID={`publish-package-switch-${storyId}`}
           />
+        </View>
+      )}
+      {!releasingWork && manuscript.includePackage && (
+        // Said where the choice is made, not only when it is confirmed: the file is the whole story, notes included.
+        <View style={styles.warning} testID={`publish-package-warning-${storyId}`}>
+          <View style={styles.warningHead}>
+            <Ionicons name="warning-outline" size={18} color={colors.error} />
+            <Text style={styles.warningTitle}>{t('publish_package_warning_title')}</Text>
+          </View>
+          <Text style={styles.warningBody}>{t('publish_package_warning_body')}</Text>
+          <Text style={styles.warningHint}>{t('publish_package_warning_hint')}</Text>
         </View>
       )}
       <View style={styles.switchRow}>
@@ -152,4 +165,20 @@ const createStyles = (colors: ThemeColors) =>
     options: { marginBottom: 16 },
     optionsDisabled: { opacity: 0.5 },
     release: { marginBottom: 14 },
+    warning: {
+      borderColor: colors.error,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      marginBottom: space.xl,
+      padding: space.lg,
+    },
+    warningHead: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: space.md,
+      marginBottom: space.md,
+    },
+    warningTitle: { ...typography.label, color: colors.error, flex: 1 },
+    warningBody: { ...typography.body, color: colors.text, marginBottom: space.md },
+    warningHint: { ...typography.hint, color: colors.textSecondary },
   });

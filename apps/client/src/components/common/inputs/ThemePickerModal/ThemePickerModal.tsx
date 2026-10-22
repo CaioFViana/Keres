@@ -16,6 +16,8 @@ interface ThemePickerModalProps {
   onConfirm: (themeName: string) => void;
   onClose: () => void;
   saving?: boolean;
+  /** What the picker says under its title; the story's own wording unless the caller is choosing for something else. */
+  description?: string;
 }
 
 /**
@@ -31,6 +33,7 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
   onConfirm,
   onClose,
   saving = false,
+  description,
 }) => {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
@@ -93,7 +96,7 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
       placement="adaptive"
     >
       <ModalHeader title={t('select_theme')} />
-      <Text style={styles.description}>{t('theme_picker_description')}</Text>
+      <Text style={styles.description}>{description ?? t('theme_picker_description')}</Text>
       <ScrollView style={styles.list} showsVerticalScrollIndicator>
         {themeDisplayOptions.map((option) => {
           const palette = themes[option.value];

@@ -111,6 +111,44 @@ console.info = (...args: Parameters<typeof console.info>) => {
   originalConsoleInfo(...args);
 };
 
+/**
+ * `logger.debug` writes through `console.log` in development, which is what a test run is: every sync cycle
+ * and every recorded operation would print a line per call. A test that cares about a line spies on
+ * `console.log` itself, which still works over this stand-in.
+ */
+console.log = () => undefined;
+
+// A component that calls `useTranslation` with no mock renders its keys; an instance with no catalogs gives
+// react-i18next that, instead of a missing-instance warning per file. Suites that need real strings
+// initialize their own (or mock `react-i18next`).
+require('i18next')
+  .use(require('react-i18next').initReactI18next)
+  .init({ lng: 'en', resources: {} });
+
+/**
+ * A list batches the cells it renders on a 50 ms timer of its own, started by a layout or a scroll. The
+ * timer fires wherever the test happens to be awaiting - between two presses, while a mock resolves - and
+ * its `setState` then lands outside `act()`: one "not wrapped in act" per run, in a different screen each
+ * time, depending on how busy the machine was. The list's state updates are made inside `act` here, which
+ * is where a user's frame would have made them.
+ */
+const listStateUpdates = require('@react-native/virtualized-lists/Lists/StateSafePureComponent')
+  .default.prototype;
+const setListState = listStateUpdates.setState;
+listStateUpdates.setState = function setStateInAct(this: unknown, ...args: unknown[]) {
+  // React's own `act`, not Testing Library's: that one always wraps the callback in an async function, which
+  // React then expects to be awaited. The update is synchronous, and so is the scope around it.
+  const wasActEnvironment = globalThis.IS_REACT_ACT_ENVIRONMENT;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    require('react').act(() => {
+      setListState.apply(this, args);
+    });
+  } finally {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = wasActEnvironment;
+  }
+};
+
 // Skia draws on the GPU with no host tree; tests assert the declarative scene instead, so each
 // drawing maps to a host placeholder that keeps its props (paths, paints, camera) queryable.
 jest.mock('@shopify/react-native-skia', () => {

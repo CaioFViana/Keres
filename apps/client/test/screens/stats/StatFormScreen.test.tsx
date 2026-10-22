@@ -104,8 +104,8 @@ function formState(overrides: any = {}) {
 }
 
 describe('StatFormScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

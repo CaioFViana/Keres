@@ -14,7 +14,7 @@ import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createScenePageService, groupPagesByScene } from './ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
-import { ensureSketchSnapshot } from '@/src/services/storymanagement/media-music/SketchSnapshotService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** A manuscript page is paper whatever theme the app is in. */
 const PRINT_COLORS: SvgExportColors = {
@@ -54,7 +54,6 @@ const isSketchMediaKey = (mediaId: string) => mediaId.startsWith('sketch:');
  */
 export async function loadManuscriptPages(
   db: AppDrizzleClient,
-  userId: string,
   storyId: string,
   sceneIds?: ReadonlySet<string>,
   /** False for a format with no pictures: nothing is read or drawn, a page only learns whether its picture exists. */
@@ -89,7 +88,7 @@ export async function loadManuscriptPages(
         problems.missing += 1;
       }
     } catch (error) {
-      console.log('loadManuscriptPages: could not read a page image.', error);
+      logger.debug('loadManuscriptPages: could not read a page image.', error);
       problems.missing += 1;
     }
     settled.set(galleryId, result);
@@ -125,7 +124,7 @@ export async function loadManuscriptPages(
         problems.missing += 1;
       }
     } catch (error) {
-      console.log('loadManuscriptPages: could not draw a sketch preview.', error);
+      logger.debug('loadManuscriptPages: could not draw a sketch preview.', error);
       problems.snapshot += 1;
     }
     sketched.set(sketchId, result);
@@ -189,32 +188,6 @@ export async function estimateManuscriptPageBytes(
 }
 
 /**
- * Redraws the Gallery snapshot of every Sketch that a page of the story stands on and whose drawing
- * changed since its snapshot was made, and returns how many were redrawn. This is the one automatic
- * path that still writes to the Gallery, and only on an explicit publish: the server compiles a
- * publication from what it was sent and cannot draw a Sketch itself, so the new snapshots are
- * changes that still have to sync before the publication can show them. Display draws from the
- * content itself and local export renders it directly instead, never touching the Gallery.
- */
-export async function refreshStaleSketchSnapshots(
-  db: AppDrizzleClient,
-  userId: string,
-  storyId: string,
-): Promise<number> {
-  const rows = await createScenePageService(db).getPagesForStory(storyId);
-  const sketchIds = [...new Set(rows.flatMap((page) => (page.sketchId ? [page.sketchId] : [])))];
-  let redrawn = 0;
-  for (const sketchId of sketchIds) {
-    try {
-      if ((await ensureSketchSnapshot(db, userId, sketchId))?.regenerated) redrawn += 1;
-    } catch (error) {
-      console.log('refreshStaleSketchSnapshots: could not redraw a snapshot.', error);
-    }
-  }
-  return redrawn;
-}
-
-/**
  * The cover of a book, read from this device: the picture it is, or `null` when it has none, it is gone, it is not
  * on this device or it is not an image the manuscript can embed (a GIF, a WebP). Said by returning nothing: a book
  * without its cover is still a book.
@@ -232,7 +205,7 @@ export async function loadManuscriptCover(
     if (!info || info.width * info.height > MAX_MANUSCRIPT_IMAGE_PIXELS) return null;
     return { key: `cover:${galleryId}`, image: { ...info, bytes } };
   } catch (error) {
-    console.log('loadManuscriptCover: could not read the cover.', error);
+    logger.debug('loadManuscriptCover: could not read the cover.', error);
     return null;
   }
 }

@@ -28,6 +28,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type Navigation = NativeStackNavigationProp<SketchStackParamList, 'SketchList'>;
 
@@ -57,7 +58,7 @@ const SketchListScreen = () => {
       setSketches(await createSketchService(db).getSketchesForStory(storyId));
       setError(null);
     } catch (loadError) {
-      console.log('SketchListScreen: failed to load sketches.', loadError);
+      logger.debug('SketchListScreen: failed to load sketches.', loadError);
       setError(t('sketch_load_failed'));
     }
   }, [db, storyId, t]);
@@ -115,7 +116,7 @@ const SketchListScreen = () => {
             });
             await reload();
           } catch (duplicateError) {
-            console.log('SketchListScreen: failed to duplicate sketch.', duplicateError);
+            logger.debug('SketchListScreen: failed to duplicate sketch.', duplicateError);
             showNotification(t('sketch_save_failed'), 'error');
           }
         },
@@ -141,7 +142,7 @@ const SketchListScreen = () => {
       setEditingSketch(null);
       await reload();
     } catch (updateError) {
-      console.log('SketchListScreen: failed to update sketch details.', updateError);
+      logger.debug('SketchListScreen: failed to update sketch details.', updateError);
       showNotification(t('sketch_save_failed'), 'error');
     }
   };
@@ -204,7 +205,7 @@ const SketchListScreen = () => {
             });
             navigation.navigate('SketchCanvas', { sketchId: created.id });
           } catch (createError) {
-            console.log('SketchListScreen: failed to create a sketch.', createError);
+            logger.debug('SketchListScreen: failed to create a sketch.', createError);
             showNotification(t('sketch_save_failed'), 'error');
           }
         }}

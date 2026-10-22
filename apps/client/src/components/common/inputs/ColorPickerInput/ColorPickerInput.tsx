@@ -1,6 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
@@ -15,7 +22,7 @@ interface ColorPickerInputProps {
    * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
    * draws the field's frame, and a second border/height around it misaligns the inner content.
    */
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 const ColorPickerInput: React.FC<ColorPickerInputProps> = ({

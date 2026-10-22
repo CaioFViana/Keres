@@ -4,6 +4,7 @@ import { Asset } from 'expo-asset';
 import { useEffect, useState } from 'react';
 import mediumAssetId from '@/assets/fonts/Roboto-Medium.ttf';
 import regularAssetId from '@/assets/fonts/Roboto-Regular.ttf';
+import { logger } from '@/src/utils/logging/logger';
 
 let warned = false;
 
@@ -28,7 +29,7 @@ export function useEdgeFont(fontSize: number, medium = false): SkFont | null {
       .catch((error: unknown) => {
         if (!warned) {
           warned = true;
-          console.warn('[SkiaEdgeCanvas] bundled font failed to load; labels stay hidden.', error);
+          logger.warn('[SkiaEdgeCanvas] bundled font failed to load; labels stay hidden.', error);
         }
       });
     return () => {

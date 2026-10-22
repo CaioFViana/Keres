@@ -10,6 +10,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface EffectService {
   getById(id: string): Promise<Effect | undefined>;
@@ -181,7 +182,7 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
     async deleteEffect(userId: string, id: string): Promise<void> {
       const effectToDelete = await db.query.effects.findFirst({ where: eq(effects.id, id) });
       if (!effectToDelete) {
-        console.warn(`Attempted to delete non-existent Effect ${id}.`);
+        logger.warn(`Attempted to delete non-existent Effect ${id}.`);
         return;
       }
       await assertStoryIsWritable(db, effectToDelete.storyId);

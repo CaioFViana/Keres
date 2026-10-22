@@ -126,8 +126,8 @@ beforeEach(() => {
   mockSearchAllEntities.mockResolvedValue([]);
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 async function typeQuery(view: { getByTestId: (id: string) => unknown }, query: string) {

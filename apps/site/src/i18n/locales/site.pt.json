@@ -47,6 +47,10 @@
       }
     }
   },
+  "end": {
+    "title": "Fim. Ou o começo da sua.",
+    "lead": "O fio acaba onde você decidir cortá-lo. Até lá, ele passa por tudo o que você escrever."
+  },
   "faq": {
     "title": "Perguntas frequentes",
     "items": {
@@ -87,6 +91,8 @@
     }
   },
   "features": {
+    "title": "O que o Keres guarda e conecta",
+    "lead": "Quatro frentes, um só espaço de trabalho: abra qualquer item para ler o que ele faz.",
     "universe": {
       "title": "O universo narrativo",
       "lead": "Tudo o que uma história precisa guardar, ligado entre si.",
@@ -192,6 +198,7 @@
     "tagline": "Um companheiro de escrita para planejar histórias.",
     "source": "Código aberto no GitHub",
     "docs": "Documentação no repositório",
+    "showcase": "Vitrine",
     "terms": "Termos",
     "privacy": "Privacidade"
   },
@@ -201,12 +208,16 @@
     "lead": "O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras de mundo, notas e mídias num único espaço. O aplicativo continua funcionando sem internet. Um servidor só entra se você quiser sincronizar, colaborar ou publicar.",
     "ctaTry": "Experimente agora, offline",
     "tryNote": "Roda no seu navegador, sem servidor nem conta: suas histórias ficam neste aparelho. Os recursos de servidor (sincronização, colaboração, publicação) não fazem parte desta versão.",
+    "ctaShowcase": "Ver a vitrine",
     "landingCtaTry": "Abrir o cliente web",
     "landingTryNote": "Conectado a este servidor, com sincronização, colaboração e publicação.",
     "landingTryNote_official": "Conectado ao Keres, com sincronização, colaboração e publicação.",
     "ctaDownload": "Baixar",
     "ctaGithub": "Ver no GitHub",
-    "ctaFeatures": "Ver o que inclui"
+    "ctaFeatures": "Ver o que inclui",
+    "choice": "Toda história começa com uma escolha.",
+    "showcaseNote": "Histórias publicadas aqui por quem as escreveu: para ler, baixar e importar.",
+    "downloadNote": "Android, iOS, Windows, macOS e Linux, ou o seu próprio servidor."
   },
   "language": {
     "label": "Idioma"
@@ -223,7 +234,9 @@
     "retry": "Tentar de novo",
     "unavailable": "Este servidor não tem textos legais públicos.",
     "version": "Versão {{version}} · {{date}}",
-    "contactCta": "Dúvidas? Fale conosco"
+    "contactCta": "Dúvidas? Fale conosco",
+    "home": "← Voltar ao início",
+    "contactTitle": "Dúvidas sobre isto?"
   },
   "meta": {
     "title": "Keres — Organize universos, conecte narrativas",
@@ -238,6 +251,7 @@
     "download": "Baixar",
     "contact": "Contato",
     "legal": "Legal",
+    "showcase": "Vitrine",
     "github": "GitHub",
     "menu": "Menu"
   },

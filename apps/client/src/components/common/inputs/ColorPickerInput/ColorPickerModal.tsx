@@ -16,6 +16,7 @@ import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '@/src/utils/format/colorMath';
+import type { PanResponderGestureState } from 'react-native';
 
 const SLIDER_HEIGHT = 20;
 
@@ -147,26 +148,33 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     return rgbToHex(r, g, b);
   }, [getRgbFromHsv]);
 
-  const handleColorSelect = useCallback((gestureState: any, refLayout: any, isHue: boolean) => {
-    const x = gestureState.x0 + gestureState.dx;
-    const y = gestureState.y0 + gestureState.dy;
+  const handleColorSelect = useCallback(
+    (
+      gestureState: PanResponderGestureState,
+      refLayout: { x: number; y: number; width: number; height: number },
+      isHue: boolean,
+    ) => {
+      const x = gestureState.x0 + gestureState.dx;
+      const y = gestureState.y0 + gestureState.dy;
 
-    const relativeX = x - refLayout.x;
-    const relativeY = y - refLayout.y;
+      const relativeX = x - refLayout.x;
+      const relativeY = y - refLayout.y;
 
-    if (isHue) {
-      let newHue = (relativeX / refLayout.width) * 360;
-      newHue = Math.max(0, Math.min(360, newHue));
-      setHue(newHue);
-    } else {
-      let newSaturation = (relativeX / refLayout.width) * 100;
-      let newValue = 100 - (relativeY / refLayout.height) * 100; // Value is inverted for UI
-      newSaturation = Math.max(0, Math.min(100, newSaturation));
-      newValue = Math.max(0, Math.min(100, newValue));
-      setSaturation(newSaturation);
-      setValue(newValue);
-    }
-  }, []);
+      if (isHue) {
+        let newHue = (relativeX / refLayout.width) * 360;
+        newHue = Math.max(0, Math.min(360, newHue));
+        setHue(newHue);
+      } else {
+        let newSaturation = (relativeX / refLayout.width) * 100;
+        let newValue = 100 - (relativeY / refLayout.height) * 100; // Value is inverted for UI
+        newSaturation = Math.max(0, Math.min(100, newSaturation));
+        newValue = Math.max(0, Math.min(100, newValue));
+        setSaturation(newSaturation);
+        setValue(newValue);
+      }
+    },
+    [],
+  );
 
   const [saturationValuePanResponder] = useState(
     // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
@@ -174,7 +182,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt, gestureState) => {
+        onPanResponderGrant: (_evt, gestureState) => {
           saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
             setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
             handleColorSelect(
@@ -184,7 +192,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
             );
           });
         },
-        onPanResponderMove: (evt, gestureState) => {
+        onPanResponderMove: (_evt, gestureState) => {
           if (pickerLayout.width > 0) {
             handleColorSelect(gestureState, pickerLayout, false);
           }
@@ -198,7 +206,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt, gestureState) => {
+        onPanResponderGrant: (_evt, gestureState) => {
           hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
             setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
             handleColorSelect(
@@ -208,7 +216,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
             );
           });
         },
-        onPanResponderMove: (evt, gestureState) => {
+        onPanResponderMove: (_evt, gestureState) => {
           if (hueLayout.width > 0) {
             handleColorSelect(gestureState, hueLayout, true);
           }

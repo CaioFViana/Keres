@@ -10,7 +10,9 @@ const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
   goBack: (...args: unknown[]) => mockGoBack(...args),
   navigate: (...args: unknown[]) => mockNavigate(...args),
 };
@@ -30,6 +32,7 @@ const mockAuthedGet = jest.fn();
 const mockAuthedPost = jest.fn();
 const mockPaymentOverview = jest.fn();
 const mockAccountPlan = jest.fn();
+const mockStoryUsage = jest.fn();
 const mockColors = {
   primary: '#0000ff',
   onPrimary: '#ffffff',
@@ -92,6 +95,9 @@ jest.mock('@/src/screens/enter-stack/servers/usePaymentOverview', () => ({
 }));
 jest.mock('@/src/screens/enter-stack/servers/useAccountPlan', () => ({
   useAccountPlan: (...args: unknown[]) => mockAccountPlan(...args),
+}));
+jest.mock('@/src/screens/enter-stack/servers/useServerStoryUsage', () => ({
+  useServerStoryUsage: (...args: unknown[]) => mockStoryUsage(...args),
 }));
 const mockFetchAgeInfo = jest.fn();
 const mockFetchVerificationStatus = jest.fn();
@@ -186,6 +192,7 @@ describe('ServerDetailScreen', () => {
     mockRoute.params = { serverId: 'srv-1' };
     mockPaymentOverview.mockReturnValue({ overview: null, loading: false, reload: jest.fn() });
     mockAccountPlan.mockReturnValue({ plan: null, reload: jest.fn() });
+    mockStoryUsage.mockReturnValue({ stories: [] });
     // A server that answers without saying anything about age, unless a test says so.
     mockFetchAgeInfo.mockResolvedValue(null);
     // An account that is through its age check, unless a test says otherwise.
@@ -205,8 +212,8 @@ describe('ServerDetailScreen', () => {
     useUserSettingsStore.setState({ userId: 'local-me' });
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('shows the server with where it is, who the user is, its tag, version and status', async () => {
@@ -257,16 +264,31 @@ describe('ServerDetailScreen', () => {
     expect(view.getByText('Main')).toBeTruthy();
   });
 
-  it('opens profile, password and connection from their own rows', async () => {
+  it('opens profile, author page, password and connection from their own rows', async () => {
     const view = await render(<ServerDetailScreen />);
     await view.findByText('Main');
 
     await fireEvent.press(view.getByTestId('server-action-profile'));
     expect(mockNavigate).toHaveBeenCalledWith('MyProfile', { serverId: 'srv-1' });
+    await fireEvent.press(view.getByTestId('server-action-author-page'));
+    expect(mockNavigate).toHaveBeenCalledWith('PublicProfile', { serverId: 'srv-1' });
     await fireEvent.press(view.getByTestId('server-action-password'));
     expect(mockNavigate).toHaveBeenCalledWith('ChangePassword', { serverId: 'srv-1' });
     await fireEvent.press(view.getByTestId('server-action-connection'));
     expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', { serverId: 'srv-1' });
+  });
+
+  it("opens the server's showcase from its row, under the showcase's home", async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-showcase'));
+
+    expect(mockParentNavigate).toHaveBeenCalledWith('ShowcaseDrawer', {
+      screen: 'ShowcaseBrowse',
+      params: { serverId: 'srv-1' },
+      initial: false,
+    });
   });
 
   it('reads the agreed server terms from the local copy, offline', async () => {
@@ -740,6 +762,66 @@ describe('ServerDetailScreen', () => {
       expect(view.getByText('plan_card_entities_used:{"used":120,"limit":500}')).toBeTruthy();
       // No subscription behind it: no card of dates.
       expect(view.queryByTestId('plan-status-card')).toBeNull();
+    });
+
+    it('lists the own stories on this server with their counts against the per-story ceiling', async () => {
+      mockAccountPlan.mockReturnValue({
+        plan: {
+          tierName: 'Free',
+          isDefault: true,
+          maxStories: 3,
+          maxEntitiesPerStory: 200,
+          maxEntitiesTotal: 500,
+          maxPublicationsPerDay: null,
+          maxPublishedArcs: 1,
+          storiesUsed: 2,
+          entitiesUsedTotal: 120,
+        },
+        reload: jest.fn(),
+      });
+      mockStoryUsage.mockReturnValue({
+        stories: [
+          { id: 'story-a', title: 'Alpha', total: 190 },
+          { id: 'story-b', title: 'Beta', total: 12 },
+        ],
+      });
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.getByText('plan_card_story_usage_title')).toBeTruthy();
+      expect(view.getByText('Alpha')).toBeTruthy();
+      expect(view.getByText('plan_card_story_items_of:{"used":190,"limit":200}')).toBeTruthy();
+      expect(view.getByText('plan_card_story_items_of:{"used":12,"limit":200}')).toBeTruthy();
+      expect(mockStoryUsage).toHaveBeenCalledWith('srv-1', true);
+    });
+
+    it('shows no story list without a plan', async () => {
+      mockStoryUsage.mockReturnValue({ stories: [{ id: 'story-a', title: 'Alpha', total: 3 }] });
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.queryByTestId('story-usage-card')).toBeNull();
+    });
+
+    it('shows no story list when there is no own story on this server', async () => {
+      mockAccountPlan.mockReturnValue({
+        plan: {
+          tierName: 'Free',
+          isDefault: true,
+          maxStories: null,
+          maxEntitiesPerStory: null,
+          maxEntitiesTotal: null,
+          maxPublicationsPerDay: null,
+          maxPublishedArcs: null,
+          storiesUsed: 0,
+          entitiesUsedTotal: 0,
+        },
+        reload: jest.fn(),
+      });
+      mockStoryUsage.mockReturnValue({ stories: [] });
+      const empty = await render(<ServerDetailScreen />);
+      await empty.findByText('Main');
+      expect(empty.queryByText('plan_card_story_usage_title')).toBeNull();
     });
 
     it('puts what a paid plan comes with above where it stands', async () => {

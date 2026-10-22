@@ -1,0 +1,114 @@
+import type { PackContentSummary } from '@keres/shared';
+
+/** Formatting shared by the listing and the story page. */
+
+/** Where an author's page lives on the site. */
+export function authorPath(username: string): string {
+  return `/author/${encodeURIComponent(username)}`;
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unitIndex]}`;
+}
+
+/**
+ * `language` comes from i18n, not from the browser: someone who chose to read the page in
+ * Portuguese expects the date in Portuguese, even in a browser set to English.
+ */
+export function formatDate(isoDate: string, language?: string): string {
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(language || undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+// The server filters by the same split, so the chips and the filter agree on what a genre is.
+export { genreList } from '@keres/shared/utils/genreList';
+
+/**
+ * What a pack contains, as short phrases.
+ *
+ * Only the non-empty parts: a pack of nothing but tags should say "6 tags" and stop, not carry four
+ * zeroes across the card. The stat notation rides along with the axes because a ladder of letters
+ * and a ladder of numbers are different offers.
+ */
+export function packContentLines(
+  summary: PackContentSummary,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string[] {
+  const lines: string[] = [];
+  // The suffix is chosen here rather than left to i18next, the convention the rest of the
+  // repository follows: the translation audit reads literal keys out of the source, and a key it
+  // cannot see is a key it cannot check.
+  const plural = (base: string, count: number) =>
+    t(count === 1 ? `${base}_one` : `${base}_other`, { count });
+
+  if (summary.fieldCount > 0) {
+    lines.push(plural('pack.fieldCount', summary.fieldCount));
+  }
+  if (summary.statCount > 0) {
+    lines.push(plural('pack.statCount', summary.statCount));
+  }
+  if (summary.tagCount > 0) {
+    lines.push(plural('pack.tagCount', summary.tagCount));
+  }
+  if (summary.suggestionCount > 0) {
+    lines.push(plural('pack.suggestionCount', summary.suggestionCount));
+  }
+  if (summary.hasVocabulary) {
+    lines.push(t('pack.vocabulary'));
+  }
+  if (summary.statSystem) {
+    lines.push(t(`pack.notation.${summary.statNotation}`));
+  }
+  // The skeleton, when the pack carries one: same nonzero-only rule, after the structure.
+  if (summary.chapterCount > 0) {
+    lines.push(plural('pack.chapterCount', summary.chapterCount));
+  }
+  if (summary.sceneCount > 0) {
+    lines.push(plural('pack.sceneCount', summary.sceneCount));
+  }
+  if (summary.characterCount > 0) {
+    lines.push(plural('pack.characterCount', summary.characterCount));
+  }
+  if (summary.locationCount > 0) {
+    lines.push(plural('pack.locationCount', summary.locationCount));
+  }
+  if (summary.worldRuleCount > 0) {
+    lines.push(plural('pack.worldRuleCount', summary.worldRuleCount));
+  }
+  if (summary.noteCount > 0) {
+    lines.push(plural('pack.noteCount', summary.noteCount));
+  }
+  if (summary.boardCount > 0) {
+    lines.push(plural('pack.boardCount', summary.boardCount));
+  }
+  if (summary.locationMapCount > 0) {
+    lines.push(plural('pack.locationMapCount', summary.locationMapCount));
+  }
+  return lines;
+}
+
+/**
+ * "3 stories". The plural form is chosen here, with both keys written out, rather than left to i18next: the
+ * translation audit reads literal keys out of the source and cannot see one that is assembled.
+ */
+export function storyCountLabel(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  count: number,
+): string {
+  return count === 1
+    ? t('author.storyCount_one', { count })
+    : t('author.storyCount_other', { count });
+}

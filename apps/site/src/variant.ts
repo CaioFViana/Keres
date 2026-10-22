@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { KERES_OFFICIAL_URL } from './content/links';
 
 /**
@@ -38,3 +39,12 @@ export const isOfficialSite =
  * is read where it exists and the plain `key` everywhere else.
  */
 export const SITE_TEXT_CONTEXT: string | undefined = isOfficialSite ? 'official' : undefined;
+
+/**
+ * A text that speaks of the server hosting the page, read with the site's text context. The context is added only
+ * where there is one: i18next's types refuse `{ context: undefined }` under `exactOptionalPropertyTypes`, and
+ * without a context the plain key is what is wanted anyway.
+ */
+export function siteText(t: TFunction, key: string): string {
+  return SITE_TEXT_CONTEXT === undefined ? t(key) : t(key, { context: SITE_TEXT_CONTEXT });
+}

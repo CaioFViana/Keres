@@ -4,6 +4,7 @@ import type { SceneSelect } from '@/src/db/schema';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * A scene's chapter name, for the lists that show scenes outside their own chapter.
@@ -29,7 +30,7 @@ export function useChapterNames(
       const chapters = await createChapterService(drizzleDb).getAllByStoryId(storyId);
       setNames(new Map(chapters.map((chapter) => [chapter.id, chapter.name])));
     } catch (error) {
-      console.error('Failed to load chapter names:', error);
+      logger.error('Failed to load chapter names:', error);
       setNames(new Map());
     }
   }, [drizzleDb, storyId]);

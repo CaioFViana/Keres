@@ -48,7 +48,7 @@ describe('StoryClientSyncHandler', () => {
     const handler = new StoryClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+    await handler.applyCreate(createUpdate('Story', STORY_ID, remoteStory()));
 
     expect(await handler.getById(STORY_ID)).toEqual(
       expect.objectContaining({
@@ -64,10 +64,9 @@ describe('StoryClientSyncHandler', () => {
   it('does not apply serverId, myRole, lastOperationLog or userId from a remote update', async () => {
     const handler = new StoryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+    await handler.applyCreate(createUpdate('Story', STORY_ID, remoteStory()));
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Story', STORY_ID, {
         title: 'A Queda Final',
         serverId: 'attacker-server',
@@ -93,16 +92,15 @@ describe('StoryClientSyncHandler', () => {
   it('updates and tombstones only the addressed story', async () => {
     const handler = new StoryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+    await handler.applyCreate(createUpdate('Story', STORY_ID, remoteStory()));
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Story', STORY_ID, {
         title: 'A Queda Final',
         createdAt: '2026-08-09T12:00:00.000Z',
       }),
     );
-    await handler.applyDelete(STORY_ID, deleteUpdate('Story', STORY_ID));
+    await handler.applyDelete(deleteUpdate('Story', STORY_ID));
 
     expect(await handler.getById(STORY_ID)).toEqual(
       expect.objectContaining({
@@ -118,13 +116,13 @@ describe('StoryClientSyncHandler', () => {
     const handler = new StoryClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('Character', STORY_ID, remoteStory()));
-    await handler.applyCreate(STORY_ID, {
+    await handler.applyCreate(createUpdate('Character', STORY_ID, remoteStory()));
+    await handler.applyCreate({
       type: 'create',
       entity: 'Story',
       data: remoteStory(),
     } as unknown as CreateStoryUpdate);
-    await handler.applyUpdate(STORY_ID, {
+    await handler.applyUpdate({
       type: 'update',
       entity: 'Story',
       id: STORY_ID,
@@ -136,20 +134,17 @@ describe('StoryClientSyncHandler', () => {
 
   it('refuses to operate before receiving its database', async () => {
     await expect(
-      new StoryClientSyncHandler().applyCreate(
-        STORY_ID,
-        createUpdate('Story', STORY_ID, remoteStory()),
-      ),
+      new StoryClientSyncHandler().applyCreate(createUpdate('Story', STORY_ID, remoteStory())),
     ).rejects.toThrow(/Drizzle client \(db\) not set/);
   });
 
   it('ignores an update or delete addressed to another entity type', async () => {
     const handler = new StoryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+    await handler.applyCreate(createUpdate('Story', STORY_ID, remoteStory()));
 
-    await handler.applyUpdate(STORY_ID, updateUpdate('Character', STORY_ID, { title: 'x' }));
-    await handler.applyDelete(STORY_ID, deleteUpdate('Character', STORY_ID));
+    await handler.applyUpdate(updateUpdate('Character', STORY_ID, { title: 'x' }));
+    await handler.applyDelete(deleteUpdate('Character', STORY_ID));
 
     expect(await handler.getById(STORY_ID)).toMatchObject({
       title: 'A Queda',
@@ -160,9 +155,9 @@ describe('StoryClientSyncHandler', () => {
   it('refuses a delete with no id instead of tombstoning blindly', async () => {
     const handler = new StoryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+    await handler.applyCreate(createUpdate('Story', STORY_ID, remoteStory()));
 
-    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Story' } as DeleteStoryUpdate);
+    await handler.applyDelete({ type: 'delete', entity: 'Story' } as DeleteStoryUpdate);
 
     expect(await handler.getById(STORY_ID)).toMatchObject({ isDeleted: false });
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Missing ID'));
@@ -173,10 +168,7 @@ describe('StoryClientSyncHandler', () => {
     handler.setDb(database.db);
     const { version: _version, isDeleted: _deleted, ...rest } = remoteStory();
 
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('Story', STORY_ID, { ...rest, deletedAt: CREATED_AT }),
-    );
+    await handler.applyCreate(createUpdate('Story', STORY_ID, { ...rest, deletedAt: CREATED_AT }));
 
     const row = await handler.getById(STORY_ID);
     expect(row).toMatchObject({ version: 1, isDeleted: false });

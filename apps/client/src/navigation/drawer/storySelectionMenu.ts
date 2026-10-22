@@ -67,6 +67,12 @@ export function buildStorySelectionMenu({
           icon: 'server-outline',
         },
         {
+          id: 'ShowcaseDrawer',
+          route: 'ShowcaseDrawer',
+          label: t('showcase_title'),
+          icon: 'storefront-outline',
+        },
+        {
           id: 'FriendshipDrawer',
           route: 'FriendshipDrawer',
           label: t('manage_friendships'),

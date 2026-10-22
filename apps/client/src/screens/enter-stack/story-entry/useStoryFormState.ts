@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoryStart } from '@/src/components/features/story/StoryStartChoice';
 import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseStoryFormStateOptions = {
   initialStoryId?: string;
@@ -68,7 +69,7 @@ export function useStoryFormState({
             setError(t('story_not_found'));
           }
         } catch (err) {
-          console.error('Failed to load story:', err);
+          logger.error('Failed to load story:', err);
           setError(t('failed_to_load_story'));
         } finally {
           setLoading(false);

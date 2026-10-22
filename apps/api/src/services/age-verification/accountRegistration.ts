@@ -7,7 +7,7 @@ import {
 } from './AgeVerificationService';
 
 /**
- * Registration of an account in `required` mode (see `docs/age_verification.md`): the verification service is asked for
+ * Registration of an account in `required` mode (see `docs/compliance/age_verification.md`): the verification service is asked for
  * a sending before the account exists, and the account and its sending are recorded together or not at all. The route
  * keeps the request handling; what has to be undone when a step fails lives here.
  */

@@ -20,6 +20,7 @@ import {
   writeRankChangesSync,
 } from '@/src/db/arrangedWrites';
 import { countActiveStoryEntities } from '@/src/services/storymanagement/story-lifecycle/storyEntityCount';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface StorySchemaFieldService {
   getCustomAttributeCount(storyId?: string): Promise<number>;
@@ -231,7 +232,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         where: eq(storySchemaFields.id, fieldId),
       });
       if (!field) {
-        console.warn(`Attempted to delete non-existent attribute field ${fieldId}.`);
+        logger.warn(`Attempted to delete non-existent attribute field ${fieldId}.`);
         return;
       }
       if (field.isDeleted) {

@@ -1,4 +1,6 @@
 import type {
+  OwnPublicProfile,
+  UpdateOwnPublicProfileType,
   UpdateUserPreferencesType,
   UpdateUserProfileType,
   UserPreferencesType,
@@ -62,7 +64,7 @@ const PUBLIC_INFO_RETURNING = {
 
 /**
  * Only an active account is ever shown to another person: a pending or refused one is found by nobody but its own
- * sign-in (see `docs/age_verification.md`). Every lookup of another account filters on this, so it is written once.
+ * sign-in (see `docs/compliance/age_verification.md`). Every lookup of another account filters on this, so it is written once.
  */
 export const ACTIVE_ACCOUNT = eq(users.verificationStatus, 'active');
 
@@ -247,6 +249,49 @@ export class UserService {
     return publicInfoOf(updated);
   }
 
+  /** What the author wrote for the showcase's author page. Undefined when there is no such account. */
+  async getPublicProfile(userId: string): Promise<OwnPublicProfile | undefined> {
+    const row = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { profileBiography: true, profileLinks: true, profileTheme: true },
+    });
+    if (!row) return undefined;
+    return {
+      biography: row.profileBiography,
+      links: row.profileLinks,
+      theme: row.profileTheme,
+    };
+  }
+
+  /**
+   * Writes the author page's texts. A field left out stays as it was; an empty biography is stored as none, and its
+   * line breaks are normalized to LF whatever the device sent.
+   */
+  async updatePublicProfile(
+    userId: string,
+    profile: UpdateOwnPublicProfileType,
+  ): Promise<OwnPublicProfile> {
+    const changes: Partial<typeof users.$inferInsert> = { updatedAt: new Date() };
+    if (profile.biography !== undefined) {
+      changes.profileBiography = profile.biography?.replace(/\r\n?/g, '\n').trim() || null;
+    }
+    if (profile.links !== undefined) {
+      changes.profileLinks = profile.links;
+    }
+    if (profile.theme !== undefined) {
+      changes.profileTheme = profile.theme;
+    }
+    const [updated] = await db.update(users).set(changes).where(eq(users.id, userId)).returning({
+      biography: users.profileBiography,
+      links: users.profileLinks,
+      theme: users.profileTheme,
+    });
+    if (!updated) {
+      throw new Error('User not found.');
+    }
+    return updated;
+  }
+
   /**
    * The owner's private preferences, with the verification they depend on. Undefined when there is no such account.
    * Never part of the public shape (`PUBLIC_INFO_COLUMNS`).
@@ -368,7 +413,7 @@ export class UserService {
    * Erases the personal data of accounts deleted past the grace period. Pseudonymizes instead
    * of deleting rows: stories, permissions and messages keep pointing at a stable account id, so
    * contributions to shared stories survive, while everything that names or reaches the person
-   * (username, tag, bio, avatar) is scrubbed. Usernames and tags are freed by the same move.
+   * (username, tag, bio, the author page's texts, avatar) is scrubbed. Usernames and tags are freed by the same move.
    * Pseudonymous, not anonymous: the surviving id still links that account's contributions and
    * acceptance proof together - it simply no longer resolves to anyone.
    *
@@ -417,6 +462,9 @@ export class UserService {
         avatarColor: null,
         avatarIcon: null,
         bio: null,
+        profileBiography: null,
+        profileLinks: [],
+        profileTheme: null,
         tierId: null,
         isAdultVerified: false,
         showNsfw: false,

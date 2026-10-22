@@ -8,6 +8,9 @@ const mockNavigateAcross = jest.fn();
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
+/** The question asked before the whole story file goes public: kept apart so the other alerts keep their places. */
+const mockPackageAlert = jest.fn();
+let mockConfirmPackage = true;
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
 const mockNavigation = {
@@ -133,7 +136,21 @@ jest.mock('@/src/db', () => ({
 }));
 
 jest.mock('@/src/state/ui/AppAlert', () => ({
-  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
+  AppAlert: {
+    alert: (...args: unknown[]) => {
+      if (args[0] === 'publish_package_confirm_title') {
+        mockPackageAlert(...args);
+        // By default the person says yes, so the flows under test run as they did before the question existed.
+        if (mockConfirmPackage) {
+          (args[2] as { style?: string; onPress?: () => void }[])
+            .find((button) => button.style === 'destructive')
+            ?.onPress?.();
+        }
+        return;
+      }
+      return mockAlert(...args);
+    },
+  },
 }));
 
 jest.mock('@/src/services/servers/ServerService', () => ({
@@ -314,6 +331,7 @@ describe('buildStoryPublicUrl', () => {
 
 describe('StoryPublishScreen', () => {
   beforeEach(() => {
+    mockConfirmPackage = true;
     mockCompact.current = true;
     jest.clearAllMocks();
     // An older server by default: the legacy JSON publication, as before.
@@ -338,8 +356,8 @@ describe('StoryPublishScreen', () => {
     mockFetchPreviews.mockResolvedValue([{ storyId: 'story-1', lastOperationVersion: 5 }]);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.restoreAllMocks();
   });
 
@@ -1179,6 +1197,60 @@ describe('StoryPublishScreen', () => {
 
     await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
     expect(mockPublish.mock.calls[0][8]).toBe(true);
+  });
+
+  it('warns, where the story file is chosen, that it opens every note of the author', async () => {
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    expect(view.getByTestId('publish-package-warning-story-1')).toBeTruthy();
+    expect(view.getByText('publish_package_warning_title')).toBeTruthy();
+    expect(view.getByText('publish_package_warning_body')).toBeTruthy();
+
+    // Off, the warning has nothing to warn about.
+    await fireEvent.press(view.getByTestId('publish-package-switch-story-1'));
+    expect(view.queryByTestId('publish-package-warning-story-1')).toBeNull();
+  });
+
+  it('asks before publishing the story file, and publishes nothing when the answer is no', async () => {
+    mockConfirmPackage = false;
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    expect(mockPackageAlert).toHaveBeenCalledWith(
+      'publish_package_confirm_title',
+      'publish_package_confirm_message',
+      expect.any(Array),
+    );
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('publishes the story file once the person confirms', async () => {
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    expect(mockPackageAlert).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not ask when only the reading or the manuscript goes public', async () => {
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await fireEvent.press(view.getByTestId('publish-package-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPackageAlert).not.toHaveBeenCalled();
   });
 
   it('publishes the reading alone once the story file is switched off', async () => {

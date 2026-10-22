@@ -85,6 +85,26 @@ jest.mock('@/src/components/common/navigation/NavigationBackButton/NavigationBac
 jest.mock('@/src/navigation/stacks/HelpStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/src/content/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
 
+jest.mock('@/src/screens/showcase/ShowcaseHomeScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/showcase/ShowcaseBrowseScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/showcase/ShowcasePackScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/showcase/ShowcaseAuthorScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/showcase/ShowcaseStoryScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('@/src/screens/packs/PackListScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -137,6 +157,11 @@ jest.mock('@/src/screens/enter-stack/story-entry/ImportStoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('@/src/screens/enter-stack/account/PublicProfileScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('@/src/screens/enter-stack/account/MyProfileScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -197,7 +222,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(8);
+  expect(mockDrawerScreens).toHaveLength(9);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -210,6 +235,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
   expect(mockDrawerScreens.map((screen) => screen.name)).toEqual([
     'StorySelectionMain',
     'ServerManagementDrawer',
+    'ShowcaseDrawer',
     'FriendshipDrawer',
     'ImportStory',
     'PacksDrawer',
@@ -222,6 +248,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
 it.each([
   ['StorySelectionMain', 'StorySelectionScreen'],
   ['ServerManagementDrawer', 'ServerManagement'],
+  ['ShowcaseDrawer', 'ShowcaseHome'],
   ['FriendshipDrawer', 'FriendshipList'],
   ['PacksDrawer', 'PackList'],
   ['Settings', 'SettingsHome'],
@@ -292,6 +319,13 @@ describe('a serverless build', () => {
     ]);
   });
 
+  it('has no showcase either: there is no server whose site to read', async () => {
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    await render(<StorySelectionStack />);
+
+    expect(drawerScreen('ShowcaseDrawer')).toBeUndefined();
+  });
+
   it('keeps local packs but drops browsing the server ones', async () => {
     const Packs = async () => {
       await render(<StorySelectionStack />);
@@ -304,6 +338,24 @@ describe('a serverless build', () => {
     expect(await Packs()).toEqual(['PackList', 'PackForm', 'PackBrowse', 'ShippedPacks']);
     process.env.EXPO_PUBLIC_SERVERLESS = '1';
     expect(await Packs()).toEqual(['PackList', 'PackForm', 'ShippedPacks']);
+  });
+});
+
+/** The showcase entry is a nested stack: a story opens from the home, where the link is pasted, and goes back to it. */
+describe('the showcase stack', () => {
+  it('has the home, the lists, the author and the story', async () => {
+    await render(<StorySelectionStack />);
+    const ShowcaseStack = drawerScreen('ShowcaseDrawer')?.component;
+    mockStackScreens.length = 0;
+    await render(<ShowcaseStack />);
+
+    expect(mockStackScreens).toEqual([
+      'ShowcaseHome',
+      'ShowcaseBrowse',
+      'ShowcaseAuthor',
+      'ShowcasePack',
+      'ShowcaseStory',
+    ]);
   });
 });
 

@@ -11,11 +11,12 @@ import {
   createEntitySnapshotResolver,
 } from '@/src/services/entity-solvers/EntityNameBatchResolver';
 import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
+import { logger } from '@/src/utils/logging/logger';
 
 export function useConflictReviewData(conflicts: PendingConflict[]) {
   const { t } = useTranslation();
   const db = useDrizzle();
-  const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
+  const [snapshots, setSnapshots] = useState<Map<string, Record<string, unknown>>>(new Map());
   const [names, setNames] = useState<Map<string, string>>(new Map());
 
   const [prevConflicts, setPrevConflicts] = useState(conflicts);
@@ -46,7 +47,7 @@ export function useConflictReviewData(conflicts: PendingConflict[]) {
       const resolvedNames = await createEntityNameBatchResolver(db).resolveMany(nameRefs);
       if (!cancelled) setNames(resolvedNames);
     })().catch((error) => {
-      console.log('SyncConflictReviewSheet: failed to resolve entity names.', error);
+      logger.debug('SyncConflictReviewSheet: failed to resolve entity names.', error);
     });
     return () => {
       cancelled = true;

@@ -192,8 +192,8 @@ beforeEach(() => {
   mockDeleteStory.mockResolvedValue(undefined);
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 describe('StorySettingsIndexScreen', () => {

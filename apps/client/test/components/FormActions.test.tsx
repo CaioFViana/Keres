@@ -88,7 +88,7 @@ describe('FormActions equal share', () => {
     );
     expect(grouped.getByTestId('form-action-slot-0')).toBeTruthy();
     expect(grouped.getByTestId('form-action-slot-1')).toBeTruthy();
-    grouped.unmount();
+    await grouped.unmount();
 
     // An unmarked component is one child: its buttons share a slot, which is the bug the mark fixes.
     const plain = await render(

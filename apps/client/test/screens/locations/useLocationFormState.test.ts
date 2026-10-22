@@ -82,7 +82,7 @@ describe('useLocationFormState durable drafts', () => {
       first.result.current.setName('Minas Tirith');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderForm();
@@ -95,7 +95,7 @@ describe('useLocationFormState durable drafts', () => {
     const first = await renderForm();
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderForm();
@@ -114,7 +114,7 @@ describe('useLocationFormState durable drafts', () => {
       first.result.current.setName('Rivendell em chamas');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderForm('loc-1', persistedLocation);
@@ -141,7 +141,7 @@ describe('useLocationFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -155,7 +155,7 @@ describe('useLocationFormState durable drafts', () => {
       second.result.current.setName('Osgiliath');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const third = await renderForm();
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -181,7 +181,7 @@ describe('useLocationFormState durable drafts', () => {
     expect(first.result.current.climate).toBeNull();
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const second = await renderForm('loc-1', persistedLocation);
@@ -198,7 +198,7 @@ describe('useLocationFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerLocation = {

@@ -2,7 +2,7 @@ import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearch
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
-import { getEntityTable } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable } from '@/src/db/entityTableRegistry';
 
 export interface EntityOption {
   id: string;
@@ -25,10 +25,11 @@ export async function loadEntityOptions(
     return [];
   }
 
+  const columns = columnsOf(table);
   const rows = (await db
-    .select({ id: (table as any).id, name: (table as any)[config.titleField] })
+    .select({ id: columns.id, name: columns[config.titleField] })
     .from(table)
-    .where(and(eq((table as any).storyId, storyId), eq((table as any).isDeleted, false)))
+    .where(and(eq(columns.storyId, storyId), eq(columns.isDeleted, false)))
     .all()) as { id: string; name: string | null }[];
 
   return rows.map((row) => ({ id: row.id, name: row.name ?? '' }));

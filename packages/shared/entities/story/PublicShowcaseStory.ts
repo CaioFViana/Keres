@@ -1,3 +1,4 @@
+import type { ProfileLink } from '../accounts/PublicProfile';
 import type { ManuscriptInfo, ReaderInfo } from '../../manuscript/compile/manuscriptContracts';
 import type { StoryPublicationArcSnapshot, StoryPublicationSnapshot } from './StoryPublication';
 
@@ -58,6 +59,11 @@ export interface ShowcaseStoryDetail {
   versions: ShowcaseVersion[];
   /** The story has a cover the site can show: it is served at `/stories/:storyId/cover`. */
   hasCover?: boolean;
+  /**
+   * The works (arc ids) of this story that have a cover the site can show: it is served at
+   * `/stories/:storyId/works/:arcId/cover`. Absent from servers that predate work covers.
+   */
+  workCovers?: string[];
   updatedAt: string;
 }
 
@@ -74,4 +80,43 @@ export type ShowcaseStoryResponse = ShowcaseStoryDetail | ShowcaseProtectedStub;
 
 export function isProtectedStub(value: ShowcaseStoryResponse): value is ShowcaseProtectedStub {
   return (value as ShowcaseProtectedStub).protected === true;
+}
+
+/** A value of a filter and how many visible stories carry it. */
+export interface ShowcaseFacet {
+  value: string;
+  count: number;
+}
+
+/**
+ * What the site can filter by, counted over the stories this viewer may see: genres and languages as the
+ * authors wrote them (merged ignoring case and accents), the mediums of the released works, and the structures.
+ */
+export interface ShowcaseFacets {
+  genres: ShowcaseFacet[];
+  languages: ShowcaseFacet[];
+  mediums: ShowcaseFacet[];
+  types: ShowcaseFacet[];
+}
+
+/** An author in the site's directory: the account that published, with how much of its work is on show. */
+export interface ShowcaseAuthorCard {
+  owner: ShowcaseOwner;
+  storyCount: number;
+  /** When the author last published or removed something. */
+  updatedAt: string;
+}
+
+/**
+ * An author's page: who they are in their own words, and what they have published. The texts are the ones
+ * written on purpose for this page (`OwnPublicProfile`) - never the short bio friends see.
+ */
+export interface ShowcaseAuthorPage {
+  owner: ShowcaseOwner;
+  biography: string | null;
+  links: ProfileLink[];
+  /** The palette the page is tinted with; `null` takes the site's own. */
+  theme: string | null;
+  stories: ShowcaseStoryCard[];
+  updatedAt: string;
 }

@@ -273,10 +273,8 @@ describe('database portability boundary', () => {
     const push = readFileSync(resolve(SOURCE_ROOT, 'services/sync/SyncPushService.ts'), 'utf8');
 
     expect(push).toContain('handler.findById(entityId, tx)');
-    expect(push).toContain('handler.create(userId, storyId, update as CreateStoryUpdate, tx)');
-    expect(push).toContain(
-      'handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx)',
-    );
-    expect(push).toContain('handler.delete(userId, storyId, deleteUpdate, currentEntity, tx)');
+    for (const method of ['create', 'update', 'delete']) {
+      expect(push).toMatch(new RegExp(`handler\\.${method}\\([^;]*database: tx`));
+    }
   });
 });

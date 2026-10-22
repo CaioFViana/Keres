@@ -10,6 +10,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import type { ServerStoryInvitation } from '@/src/services/social/StoryInvitationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useStoryInvitations } from './useStoryInvitations';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { ServerStoryInvitation };
 
@@ -52,7 +53,7 @@ export function useStoryInvitationList(serverFor: StoryInvitationServerLookup) {
               await action(server);
               showNotification(t(successKey, { story: invitation.storyTitle }), 'success');
             } catch (error) {
-              console.log('useStoryInvitationList: invitation action failed.', error);
+              logger.debug('useStoryInvitationList: invitation action failed.', error);
               const status = (error as { response?: { status?: number } })?.response?.status;
               // The invitation stays open on a 429, so the owner can raise the limit and it can be accepted later.
               const key = status === 429 && limitKey ? limitKey : 'story_invitation_failed';

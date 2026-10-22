@@ -151,8 +151,8 @@ beforeEach(() => {
   mockUseEntityListScreen.mockImplementation(() => mockListState);
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('requests its guided tour', async () => {

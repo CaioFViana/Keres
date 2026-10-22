@@ -25,7 +25,7 @@ export const PACKAGES: Package[] = [
   { name: 'api', path: 'apps/api' },
   { name: 'payments', path: 'apps/payments' },
   { name: 'verification', path: 'apps/verification' },
-  { name: 'admin', path: 'apps/admin' },
+  { name: 'web', path: 'apps/web' },
   { name: 'desktop', path: 'apps/desktop' },
   { name: 'site', path: 'apps/site' },
 ];

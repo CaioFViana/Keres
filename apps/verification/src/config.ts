@@ -4,7 +4,7 @@ import { VERIFIER_ID_PATTERN } from '@keres/shared';
 /**
  * Environment of the reference age-verification service. The same discipline as the payments service: secrets are at
  * least 32 characters, the directions use different keys, anything leaving loopback goes over https, and the
- * identity keys live apart from the data they protect (see `docs/age_verification.md`, "The reference service").
+ * identity keys live apart from the data they protect (see `docs/compliance/age_verification.md`, "The reference service").
  *
  * Every problem is collected and reported together: an operator fixing one variable at a time is an operator who
  * starts the service half-configured.

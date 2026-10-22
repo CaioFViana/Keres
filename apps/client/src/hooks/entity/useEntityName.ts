@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { logger } from '@/src/utils/logging/logger';
 
 interface UseEntityNameResult {
   entityName: string | undefined;
@@ -36,7 +37,7 @@ export function useEntityName(
           setEntityName(name);
         }
       } catch (error) {
-        console.error(`Failed to fetch name for ${entityType} with ID ${entityId}:`, error);
+        logger.error(`Failed to fetch name for ${entityType} with ID ${entityId}:`, error);
         if (isMounted) {
           setEntityName(undefined); // Or entityId as fallback
         }

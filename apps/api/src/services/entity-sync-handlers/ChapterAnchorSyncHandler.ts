@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateChapterAnchorDataSchema, PartialChapterAnchorSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
@@ -55,12 +55,8 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const data = this.createSchema.parse(update.data);
 
     await this.assertExists(storyId, 'Container', data.chapterId, 'chapter', database);
@@ -80,12 +76,11 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const changes = this.updateSchema.parse(update.changes);
 
     await this.assertExists(storyId, 'Container', changes.chapterId, 'chapter', database);
@@ -98,6 +93,6 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
       database,
     );
 
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 }

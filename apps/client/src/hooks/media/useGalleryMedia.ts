@@ -4,6 +4,7 @@ import { useDrizzle } from '@/src/db';
 import type { GallerySelect, SketchSelect } from '@/src/db/schema';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
+import { logger } from '@/src/utils/logging/logger';
 
 const IMAGE_TYPES: readonly MediaType[] = ['image'];
 
@@ -89,7 +90,7 @@ export function useScenePageChoices(storyId: string | undefined, enabled: boolea
         if (alive) setSketches(rows);
       })
       .catch((error) => {
-        console.log('useScenePageChoices: failed to load the sketches.', error);
+        logger.debug('useScenePageChoices: failed to load the sketches.', error);
         if (alive) setSketches([]);
       });
     return () => {

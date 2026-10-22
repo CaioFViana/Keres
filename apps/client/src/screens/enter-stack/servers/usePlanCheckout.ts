@@ -13,7 +13,10 @@ import {
 import { playDriver } from '@/src/utils/billing/playPurchase';
 import { PlayPurchaseError, type PlayPurchaseTicket } from '@/src/utils/billing/playPurchaseTypes';
 import { offerForPlayProduct } from '@/src/utils/billing/paymentPlans';
-import { useEntityEventSubscriptions } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import {
+  type EntityEventSubscription,
+  useEntityEventSubscriptions,
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /** How often an open payment is asked about while the person is on the screen: the provider may be slow to tell. */
 export const CHECKOUT_POLL_MS = 4000;
@@ -101,7 +104,7 @@ export function usePlanCheckout(server: ServerSelect | undefined) {
   }, [phase, refresh]);
 
   // The server says a payment changed (the provider told it): look at once instead of waiting for the next tick.
-  const subscriptions = useMemo(
+  const subscriptions = useMemo<EntityEventSubscription[]>(
     () => [
       {
         event: PAYMENTS_CHANGED,

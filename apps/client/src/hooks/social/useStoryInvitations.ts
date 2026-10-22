@@ -6,6 +6,7 @@ import {
   type ServerStoryInvitation,
 } from '@/src/services/social/StoryInvitationService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The open story invitations of every registered server, as last synced - read from the local copy,
@@ -23,7 +24,7 @@ export function useStoryInvitations(): ServerStoryInvitation[] {
           const rows = await createStoryInvitationService(db).getAll();
           if (!cancelled) setInvitations(rows);
         } catch (error) {
-          console.log('useStoryInvitations: could not read the local invitations.', error);
+          logger.debug('useStoryInvitations: could not read the local invitations.', error);
         }
       })();
     };

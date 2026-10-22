@@ -242,10 +242,9 @@ describe('post-commit media collection on push', () => {
     const handler = new GallerySyncHandler();
     const current = await handler.findById(galleryId);
     await handler.delete(
-      ana.userId,
-      storyId,
       { type: 'delete', entity: 'Gallery', id: galleryId, version: 1 } as never,
       current!,
+      { userId: ana.userId, storyId },
     );
 
     // The tombstone landed but the bytes are untouched: collection belongs to the push

@@ -14,6 +14,7 @@ import {
   noteAccessRevocation,
 } from '@/src/services/social/accessRevocation';
 import { importNewServerStories } from '@/src/services/sync/importNewServerStories';
+import { logger } from '@/src/utils/logging/logger';
 
 const RETRY_MS = 5_000;
 /** How often the silence of the socket is checked. */
@@ -110,7 +111,7 @@ export class ServerRealtimeService {
       )
         return;
       if (Date.now() - this.lastMessageAt > SILENCE_LIMIT_MS) {
-        console.log(`Realtime silent for too long (${this.server.name}); reconnecting.`);
+        logger.debug(`Realtime silent for too long (${this.server.name}); reconnecting.`);
         this.reconnectNow();
       }
     }, WATCHDOG_MS);
@@ -164,7 +165,7 @@ export class ServerRealtimeService {
           socket.close();
           return;
         }
-        console.log(`Realtime connected: ${this.server.name}`);
+        logger.debug(`Realtime connected: ${this.server.name}`);
         if (this.storyId) {
           socket.send(JSON.stringify({ type: 'subscribe', storyId: this.storyId }));
           // The same reason as the friendships refresh below: events emitted while this client was disconnected
@@ -180,7 +181,7 @@ export class ServerRealtimeService {
           createFriendshipService(this.db)
             .syncFriendshipsWithServer(this.userId, this.server)
             .catch((error) =>
-              console.log(
+              logger.debug(
                 'Realtime friendship refresh failed:',
                 (error as Error)?.message || error,
               ),
@@ -192,7 +193,7 @@ export class ServerRealtimeService {
           createMessageService(this.db)
             .handleServerNudge(this.server)
             .catch((error) =>
-              console.log('Realtime message refresh failed:', (error as Error)?.message || error),
+              logger.debug('Realtime message refresh failed:', (error as Error)?.message || error),
             ),
         );
         // The same reason, for publications: whoever was offline while a story they read gained a public
@@ -202,7 +203,7 @@ export class ServerRealtimeService {
           createPublicationService(this.db)
             .syncPublicationsWithServer(this.server)
             .catch((error) =>
-              console.log(
+              logger.debug(
                 'Realtime publication refresh failed:',
                 (error as Error)?.message || error,
               ),
@@ -214,7 +215,7 @@ export class ServerRealtimeService {
         if (!this.stopped) {
           this.track(
             this.handleEvent(event.data as string).catch((error) => {
-              console.log('Realtime event handling failed:', (error as Error)?.message || error);
+              logger.debug('Realtime event handling failed:', (error as Error)?.message || error);
             }),
           );
         }
@@ -230,7 +231,7 @@ export class ServerRealtimeService {
         this.scheduleReconnect();
       };
     } catch (error) {
-      console.log(
+      logger.debug(
         `Realtime connection failed for ${this.server.name}; retrying after health check.`,
         (error as Error)?.message || error,
       );
@@ -245,7 +246,7 @@ export class ServerRealtimeService {
     } catch {
       return;
     }
-    console.log(`Realtime event from ${this.server.name}: ${event.type}`);
+    logger.debug(`Realtime event from ${this.server.name}: ${event.type}`);
     if (event.type === 'server.heartbeat') {
       this.heartbeatArmed = true;
       return;

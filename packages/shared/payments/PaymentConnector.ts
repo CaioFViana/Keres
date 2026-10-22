@@ -2,7 +2,7 @@
  * What Keres asks of a payment connector, and what a connector tells Keres.
  *
  * Keres does not charge anybody itself. A server that wants to sell its plans runs a **payment connector**: a
- * separate service that speaks to one payment provider and to Keres over HTTP (see `docs/payment_connectors.md`).
+ * separate service that speaks to one payment provider and to Keres over HTTP (see `docs/compliance/payment_connectors.md`).
  * Nothing of a connector is loaded into the server, and a connector imports nothing of Keres: this file is the
  * shape of the messages, and the same shapes are published as JSON Schema for any language.
  *

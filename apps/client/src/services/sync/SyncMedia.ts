@@ -4,6 +4,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import type { KeresAxiosInstance } from '@/src/services/api/apiClient';
 import type { MediaSyncService } from '@/src/services/media/MediaSyncService';
 import { createMediaSyncService } from '@/src/services/media/MediaSyncService';
+import { logger } from '@/src/utils/logging/logger';
 
 interface SyncMediaContext {
   db: () => AppDrizzleClient | null;
@@ -32,14 +33,14 @@ export class SyncMedia {
       this.service ??= createMediaSyncService(db);
       const summary = await this.service.syncStoryMedia(this.context.client(), server, storyId);
       if (summary.uploaded > 0 || summary.downloaded > 0) {
-        console.log(
+        logger.debug(
           `Media sync for story ${storyId}: ${summary.uploaded} uploaded, ${summary.downloaded} downloaded, ${summary.failed} failed.`,
         );
         entityEventEmitter.emit('gallery_changed', storyId);
       }
       return summary.offline;
     } catch (error) {
-      console.log(`Media sync skipped for story ${storyId}.`, error);
+      logger.debug(`Media sync skipped for story ${storyId}.`, error);
       return false;
     }
   }

@@ -1,12 +1,21 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, table, text, timestamp, timestampNow, uniqueIndex } from '@/db/schema/columns';
+import type { ProfileLink } from '@keres/shared';
+import {
+  boolean,
+  json,
+  table,
+  text,
+  timestamp,
+  timestampNow,
+  uniqueIndex,
+} from '@/db/schema/columns';
 import { operationLog } from './operationLog';
 import { stories } from './stories';
 import { storyPermissions } from './storyPermissions';
 import { tiers } from './tiers';
 
 /**
- * Where an account stands in age verification (see `docs/age_verification.md`). `active` is every normal account -
+ * Where an account stands in age verification (see `docs/compliance/age_verification.md`). `active` is every normal account -
  * and every account where verification is off. `pending` waits for the service's decision on its first sending;
  * `rejected` is an account whose last sending was refused or expired (it may send again, or be closed).
  */
@@ -32,6 +41,12 @@ export const users = table(
     avatarIcon: text('avatar_icon'),
     /** Free-text profile description, capped at 200 chars (enforced in UpdateUserProfileSchema). */
     bio: text('bio'),
+    /** Long text for the showcase's author page, apart from `bio` (what friends see). Plain text; `null` until written. */
+    profileBiography: text('profile_biography'),
+    /** Links for the author page, in the author's order; every address was checked by `isPublicWebUrl` on the way in. */
+    profileLinks: json('profile_links').$type<ProfileLink[]>().notNull().default([]),
+    /** Key of the named palette that tints the author page; `null` takes the site's own. */
+    profileTheme: text('profile_theme'),
     /** Grants access to the /admin panel and /api/admin/* routes. Checked from the DB per request, never trusted from the JWT. */
     isAdmin: boolean('is_admin').notNull().default(false),
     /**

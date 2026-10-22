@@ -4,6 +4,7 @@ import type { CommentSelect } from '@/src/db/schema';
 import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Paginated story-wide comment list. Search stays with the caller. */
 export function useStoryComments(storyId: string, pageSize = 20) {
@@ -25,7 +26,7 @@ export function useStoryComments(storyId: string, pageSize = 20) {
         setComments((current) => (targetPage === 0 ? result.items : [...current, ...result.items]));
         setTotal(result.total);
       } catch (error) {
-        console.error('Failed to load comments:', error);
+        logger.error('Failed to load comments:', error);
       } finally {
         setLoading(false);
       }

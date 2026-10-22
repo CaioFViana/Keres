@@ -3,7 +3,6 @@ import type {
   VerificationEventWireSchema,
   VerificationRequestWireSchema,
   VerificationResultWireSchema,
-  VerifierInfoSchema,
 } from '@keres/shared';
 
 /**
@@ -13,4 +12,3 @@ import type {
 export type VerificationRequestWire = z.infer<typeof VerificationRequestWireSchema>;
 export type VerificationResultWire = z.infer<typeof VerificationResultWireSchema>;
 export type VerificationEventWire = z.infer<typeof VerificationEventWireSchema>;
-export type VerifierInfoWire = z.infer<typeof VerifierInfoSchema>;

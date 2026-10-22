@@ -4,6 +4,7 @@ import type { ServerPaymentSelect, ServerSelect } from '@/src/db/schema';
 import { createPaymentHistoryService } from '@/src/services/payments/PaymentHistoryService';
 import { PAYMENTS_CHANGED } from '@/src/services/payments/PaymentService';
 import {
+  type EntityEventSubscription,
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
@@ -55,7 +56,7 @@ export function usePaymentHistory(server: ServerSelect | undefined, online: bool
   }, [readSaved, refresh]);
   useEntityInitialLoad(look);
 
-  const subscriptions = useMemo(
+  const subscriptions = useMemo<EntityEventSubscription[]>(
     () => [
       {
         event: PAYMENTS_CHANGED,

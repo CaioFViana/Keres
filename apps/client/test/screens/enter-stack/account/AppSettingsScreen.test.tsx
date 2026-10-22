@@ -246,8 +246,8 @@ describe('AppSettingsScreen', () => {
     mockSyncReset.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     (console.log as jest.Mock).mockRestore();
   });
 
@@ -374,7 +374,9 @@ describe('AppSettingsScreen', () => {
     await view.findByText('dark_mode');
     const switches = view.getAllByRole('switch');
     expect(switches).toHaveLength(7);
-    useMusicToolsStore.setState({ enabled: false });
+    await act(async () => {
+      useMusicToolsStore.setState({ enabled: false });
+    });
     await fireEvent.press(switches[0]);
     expect(mockSetDarkMode).toHaveBeenCalledWith(mockDrizzle, true);
     await fireEvent.press(switches[1]);

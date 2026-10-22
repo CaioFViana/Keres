@@ -28,6 +28,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -108,7 +109,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
     async createItem(currentUserId: string, itemData: Create<ItemInsert>): Promise<ItemSelect> {
       await assertStoryIsWritable(db, itemData.storyId);
       let newItem = prepareNewEntityData<ItemInsert>(itemData);
-      const favorite = await normalizeFavoriteCreate(db, newItem.storyId, 'Item', newItem);
+      const favorite = await normalizeFavoriteCreate(db, newItem.storyId, newItem);
       newItem = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -218,7 +219,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
           .orderBy(asc(items.createdAt))
           .all();
       } catch (error) {
-        console.error(`Error fetching all items for story ${storyId}:`, error);
+        logger.error(`Error fetching all items for story ${storyId}:`, error);
         return [];
       }
     },

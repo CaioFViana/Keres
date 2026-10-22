@@ -403,8 +403,8 @@ function jsonOf(view: View, testID: string) {
 }
 
 describe('LocationGraphScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

@@ -41,6 +41,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { openGalleryExternally } from '@/src/services/media/openGalleryExternally';
+import { logger } from '@/src/utils/logging/logger';
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '—';
@@ -138,7 +139,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       );
       setError(null);
     } catch (loadError) {
-      console.error('Failed to load media:', loadError);
+      logger.error('Failed to load media:', loadError);
       setError(t('media_load_failed'));
     } finally {
       setLoading(false);
@@ -171,7 +172,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       showNotification(t('media_updated_successfully'), 'success');
       onClose();
     } catch (saveError) {
-      console.error('Failed to save media:', saveError);
+      logger.error('Failed to save media:', saveError);
       showNotification(t('media_save_failed'), 'error');
     } finally {
       setSaving(false);
@@ -198,7 +199,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       await galleryService.updateGalleryFavoriteStatus(userId, media.id, !media.isFavorite);
       setMedia({ ...media, isFavorite: !media.isFavorite });
     } catch (favoriteError) {
-      console.error('Failed to toggle media favorite:', favoriteError);
+      logger.error('Failed to toggle media favorite:', favoriteError);
       showNotification(t('media_save_failed'), 'error');
     }
   }, [media, userId, galleryService, showNotification, t]);
@@ -225,7 +226,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
             showNotification(t('media_deleted_successfully'), 'success');
             onClose();
           } catch (deleteError) {
-            console.error('Failed to delete media:', deleteError);
+            logger.error('Failed to delete media:', deleteError);
             showNotification(t('media_delete_failed'), 'error');
           }
         },
@@ -258,7 +259,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
         showNotification(t('gallery_open_outside_failed'), 'warning');
       }
     } catch (openError) {
-      console.log('Failed to open gallery item outside Keres:', openError);
+      logger.debug('Failed to open gallery item outside Keres:', openError);
       showNotification(t('gallery_open_outside_failed'), 'error');
     }
   };

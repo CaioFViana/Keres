@@ -38,8 +38,6 @@ export const COMPLETENESS_FINDING_KEYS = [
   'analysis_song_unused',
 ] as const;
 
-export type CompletenessFindingKey = (typeof COMPLETENESS_FINDING_KEYS)[number];
-
 export interface StoryAnalysisFinding {
   /** Stable across runs - used as a list key, never displayed. */
   id: string;

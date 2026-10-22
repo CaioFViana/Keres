@@ -43,6 +43,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryCalendar } from './useStoryCalendar';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
+import { logger } from '@/src/utils/logging/logger';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);
@@ -396,7 +397,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         result.delivered ? 'success' : 'warning',
       );
     } catch (error) {
-      console.log('StoryTimelineScreen: failed to export timeline.', error);
+      logger.debug('StoryTimelineScreen: failed to export timeline.', error);
       notify(t('story_timeline_export_failed'), 'error');
     } finally {
       setSaving(false);

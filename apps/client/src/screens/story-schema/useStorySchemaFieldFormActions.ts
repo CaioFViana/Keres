@@ -8,6 +8,8 @@ import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StoryS
 import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StorySchemaFieldFormState } from './useStorySchemaFieldFormState';
+import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 type StorySchemaFieldNavigation = NativeStackNavigationProp<
   StorySettingsStackParamList,
@@ -93,9 +95,9 @@ export function useStorySchemaFieldFormActions({
       }
       await state.clearFormDraft();
       navigation.goBack();
-    } catch (err: any) {
-      console.error('Failed to save attribute field:', err);
-      AppAlert.alert(t('error'), err?.message || t('failed_to_save_attribute'));
+    } catch (err) {
+      logger.error('Failed to save attribute field:', err);
+      AppAlert.alert(t('error'), errorMessageOf(err) || t('failed_to_save_attribute'));
     } finally {
       setSaving(false);
     }

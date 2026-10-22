@@ -109,7 +109,7 @@ const TermsModal: React.FC<TermsModalProps> = ({
           if (measured.current.layout > 0)
             handleScroll(measured.current.content, measured.current.layout, 0);
         }}
-        onContentSizeChange={(width, height) => {
+        onContentSizeChange={(_width, height) => {
           measured.current.content = height;
           if (measured.current.layout > 0) handleScroll(height, measured.current.layout, 0);
         }}

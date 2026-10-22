@@ -3,6 +3,7 @@ import type { AppDrizzleClient } from '@/src/db';
 import { createKeresAxiosInstance, isOfflineError } from '@/src/services/api/apiClient';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The entity ceilings of the plan a story counts against, from the server the story is linked to.
@@ -25,7 +26,7 @@ export const createStoryPlanService = (db: AppDrizzleClient) => ({
       return response.data;
     } catch (error) {
       if (!isOfflineError(error)) {
-        console.warn('StoryPlanService: could not read the plan of the story.', error);
+        logger.warn('StoryPlanService: could not read the plan of the story.', error);
       }
       return null;
     }

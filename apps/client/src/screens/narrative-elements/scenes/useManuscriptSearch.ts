@@ -113,7 +113,7 @@ export function useManuscriptSearch(
       if (!node || typeof (node as Text).measureInWindow !== 'function') return;
       const measure = (retries: number) => {
         if (generation !== scrollGenerationRef.current) return;
-        (node as Text).measureInWindow((segX, segY, segWidth, segHeight) => {
+        (node as Text).measureInWindow((_segX, segY, _segWidth, segHeight) => {
           if (generation !== scrollGenerationRef.current) return;
           const viewport = viewportRef.current;
           if (!viewport || typeof viewport.measureInWindow !== 'function') return;
@@ -123,7 +123,7 @@ export function useManuscriptSearch(
             return;
           }
           if (segHeight <= 0) return;
-          viewport.measureInWindow((viewX, viewY, viewWidth, viewHeight) => {
+          viewport.measureInWindow((_viewX, viewY, _viewWidth, viewHeight) => {
             if (generation !== scrollGenerationRef.current) return;
             const delta = computeScrollAdjustment({
               segTop: segY,

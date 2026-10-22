@@ -48,7 +48,6 @@ interface Props {
   connectCandidates: { id: string; name: string }[];
   canEdit: boolean;
   destinationMapId?: string | null;
-  destinationName?: string | null;
   destinationUnavailable: boolean;
   destinationOptions: { label: string; value: string }[];
   onChangeIcon: (icon: string) => void;
@@ -85,7 +84,6 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   connectCandidates,
   canEdit,
   destinationMapId,
-  destinationName,
   destinationUnavailable,
   destinationOptions,
   onChangeIcon,

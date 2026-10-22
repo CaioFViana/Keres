@@ -42,7 +42,7 @@ const PlotListItem: React.FC<PlotListItemProps> = ({ plot, sceneCount, onViewDet
           </Text>
         </View>
       )}
-      renderExpandedContent={(item) => (
+      renderExpandedContent={() => (
         <Text style={styles.descriptionText}>
           {preview?.primaryDetail ? truncate(preview.primaryDetail, 300) : t('no_plot_details')}
         </Text>

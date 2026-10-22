@@ -30,7 +30,7 @@ const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails, onToggleF
     </View>
   );
 
-  const renderExpandedContent = (t: TagSelect) => (
+  const renderExpandedContent = () => (
     <View>
       {extraNotesSummary && <Text style={styles.descriptionText}>{extraNotesSummary}</Text>}
     </View>

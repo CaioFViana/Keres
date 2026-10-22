@@ -22,6 +22,8 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useStoryInvitations } from './useStoryInvitations';
+import { logger } from '@/src/utils/logging/logger';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 /**
  * Server linkage and collaboration state for one story's settings screen.
@@ -76,7 +78,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
         setServerId(null);
         AppAlert.alert(t('warning'), t('server_not_found_for_story'));
       } catch (err) {
-        if (!cancelled) console.error('Failed to load servers for story settings:', err);
+        if (!cancelled) logger.error('Failed to load servers for story settings:', err);
       }
     })();
     return () => {
@@ -142,14 +144,14 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
           setIsOwnerOnServer(true);
           setCollaborators(fetchedCollaborators);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (cancelled) return;
         // A 403 is not an error here - it is how the server reports that the
         // current user is linked to the story but is not its owner.
-        if (err?.response?.status === 403) {
+        if (httpStatusOf(err) === 403) {
           setIsOwnerOnServer(false);
         } else {
-          console.error('Failed to check story ownership/collaborators on server:', err);
+          logger.error('Failed to check story ownership/collaborators on server:', err);
           setIsOwnerOnServer(null);
         }
         setCollaborators(null);
@@ -164,7 +166,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     if (linkedServer && isOwnerOnServer === true) {
       createStoryInvitationService(drizzleDb)
         .syncWithServer(linkedServer)
-        .catch((error) => console.log('Failed to load story invitations:', error));
+        .catch((error) => logger.debug('Failed to load story invitations:', error));
     }
   }, [drizzleDb, linkedServer, isOwnerOnServer]);
 
@@ -198,7 +200,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
         if (!cancelled) setAddableFriends(friends);
       } catch (err) {
         if (!cancelled) {
-          console.error('Failed to load friends for collaborator picker:', err);
+          logger.error('Failed to load friends for collaborator picker:', err);
           setAddableFriends([]);
         }
       }
@@ -247,7 +249,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
         AppAlert.alert(t('error'), t('send_to_server_failed'));
       }
     } catch (err) {
-      console.error('Failed to send story to server:', err);
+      logger.error('Failed to send story to server:', err);
       AppAlert.alert(t('error'), t('send_to_server_failed'));
     } finally {
       setServerActionLoading(false);
@@ -273,7 +275,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       setSelectedPermissionType('reader');
       showNotification(t('story_invitation_sent', { name: invitation.inviteeUsername }), 'success');
     } catch (err) {
-      console.error('Failed to invite collaborator:', err);
+      logger.error('Failed to invite collaborator:', err);
       // The server refuses whoever is not age-verified on an NSFW story (403 with the
       // friendship intact): say so instead of the generic failure.
       const status = (err as { response?: { status?: number } })?.response?.status;
@@ -301,7 +303,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       await storyInvitationApi.invite(linkedServer, storyId, invitation.inviteeId, permissionType);
       await createStoryInvitationService(drizzleDb).syncWithServer(linkedServer);
     } catch (err) {
-      console.error('Failed to change the invitation role:', err);
+      logger.error('Failed to change the invitation role:', err);
       AppAlert.alert(t('error'), t('update_collaborator_permission_failed'));
     } finally {
       setServerActionLoading(false);
@@ -323,7 +325,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
             try {
               await closeStoryInvitation(drizzleDb, linkedServer, invitation);
             } catch (err) {
-              console.error('Failed to withdraw the invitation:', err);
+              logger.error('Failed to withdraw the invitation:', err);
               AppAlert.alert(t('error'), t('story_invitation_failed'));
             } finally {
               setServerActionLoading(false);
@@ -350,7 +352,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       );
       setCollaborators(await storyPermissionApi.getCollaborators(linkedServer, storyId));
     } catch (err) {
-      console.error('Failed to update collaborator permission:', err);
+      logger.error('Failed to update collaborator permission:', err);
       AppAlert.alert(t('error'), t('update_collaborator_permission_failed'));
     } finally {
       setServerActionLoading(false);
@@ -381,7 +383,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
                 (current ?? []).filter((c) => c.userId !== collaborator.userId),
               );
             } catch (err) {
-              console.error('Failed to remove collaborator:', err);
+              logger.error('Failed to remove collaborator:', err);
               AppAlert.alert(t('error'), t('remove_collaborator_failed'));
             } finally {
               setServerActionLoading(false);
@@ -411,18 +413,18 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
             await storyService().discardCollaboratedCopy(storyId);
             AppAlert.alert(t('success'), t('leave_story_success'));
             onLeft?.();
-          } catch (err: any) {
+          } catch (err) {
             // Already out (the owner removed them meanwhile): the server has nothing left to give up.
-            if (err?.response?.status === 404) {
+            if (httpStatusOf(err) === 404) {
               try {
                 await storyService().discardCollaboratedCopy(storyId);
                 onLeft?.();
                 return;
               } catch (purgeError) {
-                console.error('Failed to discard the copy of a story already left:', purgeError);
+                logger.error('Failed to discard the copy of a story already left:', purgeError);
               }
             }
-            console.error('Failed to leave the story:', err);
+            logger.error('Failed to leave the story:', err);
             AppAlert.alert(
               t('error'),
               isOfflineError(err) ? t('leave_story_offline') : t('leave_story_failed'),
@@ -452,7 +454,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
             if (selectedStory) setSelectedStory({ ...selectedStory, serverId: null });
             AppAlert.alert(t('success'), t('unlink_from_server_success'));
           } catch (err) {
-            console.error('Failed to unlink story from server:', err);
+            logger.error('Failed to unlink story from server:', err);
             AppAlert.alert(
               t('error'),
               isOfflineError(err)

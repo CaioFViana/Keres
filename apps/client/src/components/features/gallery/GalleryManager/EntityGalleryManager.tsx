@@ -23,6 +23,7 @@ import GalleryAddMediaModal, {
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
 import GalleryAttachExistingModal from '@/src/components/features/gallery/GalleryAttachExistingModal';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
+import { logger } from '@/src/utils/logging/logger';
 
 interface EntityGalleryManagerProps {
   ownerId: string | undefined;
@@ -157,7 +158,7 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
           showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
         }
       } catch (err) {
-        console.error('Failed to add media to entity:', err);
+        logger.error('Failed to add media to entity:', err);
         showNotification(t('media_picker_failed'), 'error');
       }
     },
@@ -171,7 +172,7 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
     try {
       setUnlinkedMedia(await getUnlinkedMedia());
     } catch (error) {
-      console.error('Failed to load gallery media to attach:', error);
+      logger.error('Failed to load gallery media to attach:', error);
       showNotification(t('media_load_failed'), 'error');
       setUnlinkedMedia([]);
     } finally {
@@ -202,7 +203,7 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
         }
         setExistingMediaVisible(false);
       } catch (error) {
-        console.error('Failed to attach existing gallery media:', error);
+        logger.error('Failed to attach existing gallery media:', error);
         showNotification(t('media_save_failed'), 'error');
       }
     },
@@ -212,7 +213,7 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
   const handleRemove = useCallback(
     (galleryId: string) => {
       removeMedia(galleryId).catch((err) => {
-        console.error('Failed to unlink media from entity:', err);
+        logger.error('Failed to unlink media from entity:', err);
         showNotification(t('media_save_failed'), 'error');
       });
     },

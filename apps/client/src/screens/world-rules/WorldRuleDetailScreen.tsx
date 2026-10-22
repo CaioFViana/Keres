@@ -40,6 +40,7 @@ import { useTheme } from '@/src/theme';
 
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 // Define the parameter list for this screen
 export type WorldRuleDetailScreenParamList = {
@@ -85,7 +86,7 @@ const WorldRuleDetailScreen = () => {
 
   const fetchWorldRule = useCallback(async () => {
     if (!worldRuleServiceRef.current) {
-      console.warn('WorldRule service not initialized.');
+      logger.warn('WorldRule service not initialized.');
       return;
     }
     try {
@@ -101,7 +102,7 @@ const WorldRuleDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch world rule details:', err);
+      logger.error('Failed to fetch world rule details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -110,7 +111,7 @@ const WorldRuleDetailScreen = () => {
   }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const handleWorldRuleChange = useCallback(
-    async (changedStoryId: string, changedWorldRuleId: string) => {
+    async (_changedStoryId: string, changedWorldRuleId: string) => {
       if (changedWorldRuleId === worldRuleId) {
         if (worldRuleServiceRef.current) {
           const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
@@ -127,7 +128,7 @@ const WorldRuleDetailScreen = () => {
   );
 
   const handleTagRelationChange = useCallback(
-    async (changedStoryId: string, changedEntityId: string) => {
+    async (_changedStoryId: string, changedEntityId: string) => {
       if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
         const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
         if (updatedWorldRule && !updatedWorldRule.isDeleted) {

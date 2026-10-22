@@ -6,6 +6,7 @@ import {
   scheduleWriteEditorDraft,
   writeEditorDraftNow,
 } from '@/src/services/drafts/EditorDraftService';
+import { logger } from '@/src/utils/logging/logger';
 
 export const FORM_DRAFT_FIELD = 'form';
 /** Draft key for not-yet-created entities: one pending creation per type per story. */
@@ -55,7 +56,7 @@ function parseStoredDraft(raw: string): StoredFormDraft | null {
     }
     return { fields: parsed.fields, baseUpdatedAt: parsed.baseUpdatedAt ?? null };
   } catch (error) {
-    console.error('Corrupt form draft ignored:', error);
+    logger.error('Corrupt form draft ignored:', error);
     return null;
   }
 }
@@ -149,7 +150,7 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
       try {
         row = await readBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
       } catch (error) {
-        console.error('Failed to read form draft:', error);
+        logger.error('Failed to read form draft:', error);
       } finally {
         setRestoreSettled(true);
       }
@@ -215,7 +216,7 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
           baseUpdatedAt: latestBaseUpdatedAtRef.current ?? null,
         }),
       ).catch((error) => {
-        console.error('Failed to flush form draft on unmount:', error);
+        logger.error('Failed to flush form draft on unmount:', error);
       });
     },
     // Mount-only subscription; everything mutable goes through refs.

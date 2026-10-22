@@ -244,8 +244,8 @@ const addAction = () =>
   mockHeaderConfig.current!.actions.find((action: any) => action.id === 'add')!;
 
 describe('GalleryListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

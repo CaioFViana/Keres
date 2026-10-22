@@ -1,7 +1,7 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { comments } from '@/db/schema';
 import {
   BaseSyncEntityHandler,
@@ -79,12 +79,8 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { userId, storyId, database = db } = ctx;
     const data: CreateCommentDataType = this.createSchema.parse(update.data);
     if (data.authorUserId !== userId) {
       throw new SyncConflictError(
@@ -116,18 +112,17 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { userId } = ctx;
     // Editing the text/excerpt/criticality is always restricted to the author, even for the story's owner
     // - the owner only has an elevated *deletion* privilege (see SyncService.ts), not the right to edit
     // content written by somebody else.
     if (currentEntity.authorUserId !== userId) {
       throw new SyncConflictError('unauthorized', 'Only the comment author can edit it.');
     }
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 }

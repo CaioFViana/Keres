@@ -8,6 +8,7 @@ import { getServerAccessToken, isOfflineError } from '@/src/services/api/apiClie
 import { mediaFileService } from './MediaFileService';
 import type { GalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The gallery's binary channel.
@@ -74,7 +75,7 @@ export class MediaSyncService {
       if (isOfflineError(error)) {
         summary.offline = true;
       } else {
-        console.log(`MediaSyncService: media sync for story ${storyId} did not complete.`, error);
+        logger.debug(`MediaSyncService: media sync for story ${storyId} did not complete.`, error);
       }
     }
 
@@ -119,7 +120,7 @@ export class MediaSyncService {
         }
       }
     } catch (error) {
-      console.log(
+      logger.debug(
         `MediaSyncService: collecting deleted media for story ${storyId} did not complete.`,
         error,
       );
@@ -172,7 +173,7 @@ export class MediaSyncService {
       if (!mediaFileService.exists(media.localPath)) {
         // The record exists but the file has vanished from this device (a system cleanup,
         // a reinstall). There is nothing to upload; it becomes a download case.
-        console.warn(
+        logger.warn(
           `MediaSyncService: local file missing for gallery ${media.id}; will try to download instead.`,
         );
         await this.galleryService.setLocalFileState(media.id, {
@@ -215,7 +216,10 @@ export class MediaSyncService {
         if (isOfflineError(error)) {
           throw error;
         }
-        console.log(`MediaSyncService: failed to upload media ${media.id} (${media.hash}).`, error);
+        logger.debug(
+          `MediaSyncService: failed to upload media ${media.id} (${media.hash}).`,
+          error,
+        );
         // 400 (hash mismatch), 413 (over the ceiling) and 415 (unsupported type) are verdicts on
         // the bytes themselves: retrying next cycle changes nothing. Anything else (401/403/404
         // that may heal, 5xx, timeouts) keeps retrying every cycle as before.
@@ -258,7 +262,7 @@ export class MediaSyncService {
         }
         // A file is here but it is not these bytes (a truncated download, a corruption): drop it
         // and fall through to a fresh download instead of adopting it as complete.
-        console.warn(
+        logger.warn(
           `MediaSyncService: local file for gallery ${media.id} does not match its hash; re-downloading.`,
         );
         mediaFileService.deleteLocal(existingPath);
@@ -317,7 +321,7 @@ export class MediaSyncService {
         if (isOfflineError(error)) {
           throw error;
         }
-        console.log(
+        logger.debug(
           `MediaSyncService: failed to download media ${media.id} (${media.hash}).`,
           error,
         );

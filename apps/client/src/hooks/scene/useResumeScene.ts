@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface ResumeScene {
   id: string;
@@ -42,7 +43,7 @@ export function useResumeScene(storyId: string | undefined): ResumeScene | null 
               : null,
           });
         } catch (error) {
-          console.error('Could not read the last edited scene:', error);
+          logger.error('Could not read the last edited scene:', error);
           if (!cancelled) setResume({ storyId, scene: null });
         }
       })();

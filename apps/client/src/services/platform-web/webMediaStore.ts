@@ -1,4 +1,5 @@
 import SparkMD5 from 'spark-md5';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Media storage on the web platform.
@@ -180,7 +181,7 @@ export async function hydrate(): Promise<void> {
       knownPaths.add(path);
     }
   } catch (error) {
-    console.warn('webMediaStore: failed to hydrate existing paths.', error);
+    logger.warn('webMediaStore: failed to hydrate existing paths.', error);
   }
 }
 

@@ -410,8 +410,8 @@ function jsonOf(view: View, testID: string) {
 }
 
 describe('LocationDetailsScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

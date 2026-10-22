@@ -35,6 +35,7 @@ import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 import type { TagsScreenNavigationProp } from './TagListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 // Define the parameter list for this screen
 export type TagDetailScreenParamList = {
@@ -99,7 +100,7 @@ const TagDetailScreen = () => {
 
   const fetchTag = useCallback(async () => {
     if (!tagServiceRef.current) {
-      console.warn('Tag service not initialized.');
+      logger.warn('Tag service not initialized.');
       return;
     }
     try {
@@ -115,7 +116,7 @@ const TagDetailScreen = () => {
         setHeaderTitle(t('tag_not_found'));
       }
     } catch (err) {
-      console.error('Failed to fetch tag details:', err);
+      logger.error('Failed to fetch tag details:', err);
       setError(t('failed_to_load_tag'));
       setHeaderTitle(t('error'));
     } finally {
@@ -125,7 +126,7 @@ const TagDetailScreen = () => {
 
   const fetchTagRelations = useCallback(async () => {
     if (!tagRelationServiceRef.current || !selectedStory?.id) {
-      console.warn('Tag relation service or story not initialized.');
+      logger.warn('Tag relation service or story not initialized.');
       return;
     }
     try {
@@ -135,7 +136,7 @@ const TagDetailScreen = () => {
       );
       setAllTagRelations(relations);
     } catch (err) {
-      console.error('Failed to fetch tag relations:', err);
+      logger.error('Failed to fetch tag relations:', err);
     }
   }, [tagId, selectedStory?.id]);
 
@@ -182,7 +183,7 @@ const TagDetailScreen = () => {
   }, [allTagRelations, drizzleDb, selectedStory?.id, t]);
 
   const handleTagChange = useCallback(
-    async (changedStoryId: string, changedTagId: string) => {
+    async (_changedStoryId: string, changedTagId: string) => {
       if (changedTagId === tagId) {
         // Re-fetch the tag to get the latest status
         if (tagServiceRef.current) {
@@ -201,7 +202,7 @@ const TagDetailScreen = () => {
   );
 
   const handleTagRelationChange = useCallback(
-    (changedStoryId: string, changedTagId: string) => {
+    (_changedStoryId: string, changedTagId: string) => {
       if (changedTagId === tagId) {
         fetchTagRelations(); // Refetch relations if a tag relation changed
       }

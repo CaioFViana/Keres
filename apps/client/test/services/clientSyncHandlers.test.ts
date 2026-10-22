@@ -914,14 +914,14 @@ describe.each(HANDLERS)(
       const handler = build();
 
       await expect(
-        handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1'))),
+        handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID),
       ).rejects.toThrow(/Drizzle client \(db\).*not set/);
     });
 
     it('inserts the entity the server sent', async () => {
       const handler = withDb();
 
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
       const rows = rowsOf();
       expect(rows).toHaveLength(1);
@@ -931,7 +931,7 @@ describe.each(HANDLERS)(
     it('revives the ISO dates the server sent as real timestamps', async () => {
       const handler = withDb();
 
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
       const [row] = rowsOf();
       expect(row.createdAt).toBeInstanceOf(Date);
@@ -942,7 +942,7 @@ describe.each(HANDLERS)(
       const handler = withDb();
       const payload = { ...data('e-1'), isDeleted: true, deletedAt: CREATED_AT };
 
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', payload));
+      await handler.applyCreate(createUpdate(name, 'e-1', payload), STORY_ID);
 
       const [row] = rowsOf();
       expect(row.isDeleted).toBe(true);
@@ -954,7 +954,7 @@ describe.each(HANDLERS)(
       const handler = withDb();
       const payload = { ...data('e-1'), storyId: 'historia-errada' };
 
-      await handler.applyCreate('historia-certa', createUpdate(name, 'e-1', payload));
+      await handler.applyCreate(createUpdate(name, 'e-1', payload), 'historia-certa');
 
       expect(rowsOf()[0].storyId).toBe(usesStoryContext ? 'historia-certa' : 'historia-errada');
     });
@@ -962,7 +962,7 @@ describe.each(HANDLERS)(
     it('ignores an operation addressed to another entity type', async () => {
       const handler = withDb();
 
-      await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate('OutraEntidade', 'e-1', data('e-1')), STORY_ID);
 
       expect(rowsOf()).toEqual([]);
     });
@@ -970,96 +970,105 @@ describe.each(HANDLERS)(
     it('refuses a create with no id instead of inserting a broken row', async () => {
       const handler = withDb();
 
-      await handler.applyCreate(STORY_ID, {
-        type: 'create',
-        entity: name,
-        data: data('e-1'),
-      } as unknown as CreateStoryUpdate);
+      await handler.applyCreate(
+        {
+          type: 'create',
+          entity: name,
+          data: data('e-1'),
+        } as unknown as CreateStoryUpdate,
+        STORY_ID,
+      );
 
       expect(rowsOf()).toEqual([]);
     });
 
     it('applies a remote change to the stored row', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
-      await handler.applyUpdate(STORY_ID, updateUpdate(name, 'e-1', change));
+      await handler.applyUpdate(updateUpdate(name, 'e-1', change), STORY_ID);
 
       expect(rowsOf()[0][labelColumn]).toBe(Object.values(change)[0]);
     });
 
     it('leaves the fields the change did not mention alone', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
-      await handler.applyUpdate(STORY_ID, updateUpdate(name, 'e-1', change));
+      await handler.applyUpdate(updateUpdate(name, 'e-1', change), STORY_ID);
 
       expect(rowsOf()[0].version).toBe(1);
     });
 
     it('touches updatedAt on every change', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
       const before = rowsOf()[0].updatedAt.getTime();
 
-      await handler.applyUpdate(STORY_ID, updateUpdate(name, 'e-1', change));
+      await handler.applyUpdate(updateUpdate(name, 'e-1', change), STORY_ID);
 
       expect(rowsOf()[0].updatedAt.getTime()).toBeGreaterThan(before);
     });
 
     it('ignores an update addressed to another entity type', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
-      await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'e-1', change));
+      await handler.applyUpdate(updateUpdate('OutraEntidade', 'e-1', change), STORY_ID);
 
       expect(rowsOf()[0][labelColumn]).not.toBe(Object.values(change)[0]);
     });
 
     it('touches nothing when the update names an id that is not here', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
-      await handler.applyUpdate(STORY_ID, updateUpdate(name, 'nao-existe', change));
+      await handler.applyUpdate(updateUpdate(name, 'nao-existe', change), STORY_ID);
 
       expect(rowsOf()[0][labelColumn]).not.toBe(Object.values(change)[0]);
     });
 
     it('refuses an update with no id instead of writing it nowhere', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
       const before = rowsOf();
 
-      await handler.applyUpdate(STORY_ID, {
-        type: 'update',
-        entity: name,
-        changes: change,
-      } as unknown as UpdateStoryUpdate);
+      await handler.applyUpdate(
+        {
+          type: 'update',
+          entity: name,
+          changes: change,
+        } as unknown as UpdateStoryUpdate,
+        STORY_ID,
+      );
 
       expect(rowsOf()).toEqual(before);
     });
 
     it('refuses an update with no changes instead of touching the row', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
       const before = rowsOf();
 
-      await handler.applyUpdate(STORY_ID, {
-        type: 'update',
-        entity: name,
-        id: 'e-1',
-      } as unknown as UpdateStoryUpdate);
+      await handler.applyUpdate(
+        {
+          type: 'update',
+          entity: name,
+          id: 'e-1',
+        } as unknown as UpdateStoryUpdate,
+        STORY_ID,
+      );
 
       expect(rowsOf()).toEqual(before);
     });
 
     it('revives the ISO dates a change carries as real timestamps', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
       await handler.applyUpdate(
-        STORY_ID,
         updateUpdate(name, 'e-1', { ...change, createdAt: CREATED_AT, deletedAt: CREATED_AT }),
+        STORY_ID,
       );
 
       const [row] = rowsOf();
@@ -1071,9 +1080,9 @@ describe.each(HANDLERS)(
 
     it('soft-deletes, keeping the row so the tombstone survives', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
-      await handler.applyDelete(STORY_ID, deleteUpdate(name, 'e-1'));
+      await handler.applyDelete(deleteUpdate(name, 'e-1'), STORY_ID);
 
       const [row] = rowsOf();
       expect(row.isDeleted).toBe(true);
@@ -1082,33 +1091,36 @@ describe.each(HANDLERS)(
 
     it('ignores a delete addressed to another entity type', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
-      await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'e-1'));
+      await handler.applyDelete(deleteUpdate('OutraEntidade', 'e-1'), STORY_ID);
 
       expect(rowsOf()[0].isDeleted).toBe(false);
     });
 
     it('refuses a delete with no id instead of deleting blindly', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
       const before = rowsOf();
 
-      await handler.applyDelete(STORY_ID, {
-        type: 'delete',
-        entity: name,
-      } as unknown as DeleteStoryUpdate);
+      await handler.applyDelete(
+        {
+          type: 'delete',
+          entity: name,
+        } as unknown as DeleteStoryUpdate,
+        STORY_ID,
+      );
 
       expect(rowsOf()).toEqual(before);
     });
 
     it('ignores a delete for an id that is not here, so pulls stay idempotent', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
       const before = rowsOf();
 
       await expect(
-        handler.applyDelete(STORY_ID, deleteUpdate(name, 'nao-existe')),
+        handler.applyDelete(deleteUpdate(name, 'nao-existe'), STORY_ID),
       ).resolves.toBeUndefined();
 
       expect(rowsOf()).toEqual(before);
@@ -1116,7 +1128,7 @@ describe.each(HANDLERS)(
 
     it('reads an entity back by id', async () => {
       const handler = withDb();
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
 
       expect(((await handler.getById('e-1')) as { id?: string } | undefined)?.id).toBe('e-1');
     });
@@ -1130,9 +1142,9 @@ describe.each(HANDLERS)(
     it('keeps two entities of the same story apart', async () => {
       const handler = withDb();
 
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
-      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-2', data('e-2')));
-      await handler.applyDelete(STORY_ID, deleteUpdate(name, 'e-1'));
+      await handler.applyCreate(createUpdate(name, 'e-1', data('e-1')), STORY_ID);
+      await handler.applyCreate(createUpdate(name, 'e-2', data('e-2')), STORY_ID);
+      await handler.applyDelete(deleteUpdate(name, 'e-1'), STORY_ID);
 
       const byId = new Map(rowsOf().map((row) => [row.id, row]));
       expect(byId.get('e-1').isDeleted).toBe(true);
@@ -1147,7 +1159,6 @@ describe('CharacterClientSyncHandler specifics', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Character', 'char-1', {
         id: 'char-1',
         storyId: STORY_ID,
@@ -1162,6 +1173,7 @@ describe('CharacterClientSyncHandler specifics', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
     const row = await database.db.query.characters.findFirst({
@@ -1179,7 +1191,6 @@ describe('CharacterClientSyncHandler specifics', () => {
     const handler = new CharacterClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Character', 'char-1', {
         id: 'char-1',
         storyId: STORY_ID,
@@ -1191,9 +1202,10 @@ describe('CharacterClientSyncHandler specifics', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
-    await handler.applyUpdate(STORY_ID, updateUpdate('Character', 'char-1', { title: null }));
+    await handler.applyUpdate(updateUpdate('Character', 'char-1', { title: null }), STORY_ID);
 
     const row = await database.db.query.characters.findFirst({
       where: eq(schema.characters.id, 'char-1'),
@@ -1210,8 +1222,8 @@ describe('SuggestionClientSyncHandler specifics', () => {
     const before = Math.floor(Date.now() / 1000) * 1000;
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Suggestion', 's-1', { type: 'character-name', value: 'Nyx' }),
+      STORY_ID,
     );
 
     const row = await database.db.query.suggestions.findFirst({

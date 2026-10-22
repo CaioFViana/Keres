@@ -103,8 +103,8 @@ beforeEach(async () => {
   await AsyncStorage.clear();
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 describe('MainDrawerMenu', () => {
@@ -287,7 +287,7 @@ describe('MainDrawerMenu', () => {
     );
 
     mockFocused = { route: 'CharactersStack', focus: {} };
-    view.rerender(
+    await view.rerender(
       <MainDrawerMenu
         state={{ routes: [], index: 0 } as never}
         navigation={{} as never}

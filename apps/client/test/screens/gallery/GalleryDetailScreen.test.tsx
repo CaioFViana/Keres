@@ -62,7 +62,7 @@ it('mounts the shared detail content for the routed gallery', async () => {
 it('closes back through navigation', async () => {
   const screen = await render(<GalleryDetailScreen />);
 
-  fireEvent.press(screen.getByTestId('gallery-content-stub'));
+  await fireEvent.press(screen.getByTestId('gallery-content-stub'));
 
   expect(mockGoBack).toHaveBeenCalled();
 });

@@ -13,6 +13,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export type NewNoteRelation = Omit<
   NoteRelationInterface,
@@ -78,7 +79,7 @@ export function createNoteRelationService(
         });
         return relations;
       } catch (error) {
-        console.error('Error fetching note relations for entity:', error);
+        logger.error('Error fetching note relations for entity:', error);
         throw error;
       }
     },
@@ -94,7 +95,7 @@ export function createNoteRelationService(
         });
         return relations;
       } catch (error) {
-        console.error('Error fetching note relations for note:', error);
+        logger.error('Error fetching note relations for note:', error);
         throw error;
       }
     },
@@ -133,7 +134,7 @@ export function createNoteRelationService(
             delete changes.updatedAt;
 
             if (Object.keys(changes).length === 0) {
-              console.log(
+              logger.debug(
                 `NoteRelation ${relation.id}: No significant changes detected. Skipping update and operation log.`,
               );
               return existingRelation;
@@ -234,7 +235,7 @@ export function createNoteRelationService(
 
         return resultRelation;
       } catch (error) {
-        console.error('Error saving note relation:', error);
+        logger.error('Error saving note relation:', error);
         throw error;
       }
     },
@@ -246,7 +247,7 @@ export function createNoteRelationService(
         });
 
         if (!existingRelation) {
-          console.warn(`NoteRelation with ID ${relationId} not found for deletion.`);
+          logger.warn(`NoteRelation with ID ${relationId} not found for deletion.`);
           return false;
         }
         await assertStoryIsWritable(drizzleDb, existingRelation.storyId);
@@ -288,7 +289,7 @@ export function createNoteRelationService(
 
         return true;
       } catch (error) {
-        console.error('Error deleting note relation:', error);
+        logger.error('Error deleting note relation:', error);
         throw error;
       }
     },

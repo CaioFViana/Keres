@@ -180,8 +180,8 @@ beforeEach(() => {
   mockGetEntityIdentifier.mockResolvedValue('Aria');
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders the tag with color, notes and relations', async () => {

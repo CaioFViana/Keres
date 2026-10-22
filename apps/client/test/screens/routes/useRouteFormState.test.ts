@@ -112,7 +112,7 @@ describe('useRouteFormState durable drafts', () => {
       first.result.current.setName('Trilha do Sul');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -125,7 +125,7 @@ describe('useRouteFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -144,7 +144,7 @@ describe('useRouteFormState durable drafts', () => {
       first.result.current.setName('Passagem do Norte, bloqueada');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ routeId: 'route-1', route: persistedRoute });
@@ -171,7 +171,7 @@ describe('useRouteFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -185,7 +185,7 @@ describe('useRouteFormState durable drafts', () => {
       second.result.current.setName('Atalho do Leste');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -211,7 +211,7 @@ describe('useRouteFormState durable drafts', () => {
     expect(first.result.current.details).toBe('Nevada');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ routeId: 'route-1', route: persistedRoute });
@@ -228,7 +228,7 @@ describe('useRouteFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerRoute = {

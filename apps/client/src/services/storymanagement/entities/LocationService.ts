@@ -25,6 +25,7 @@ import {
   persistInitialFavorite,
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type LocationWithTags = LocationSelect & { tags: TagSelect[] };
 
@@ -72,7 +73,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         searchTerm,
         favoriteFilterState,
       });
-      const orderByConditions: any[] = [];
+      const orderByConditions: SQL[] = [];
 
       if (tagFilterIds && tagFilterIds.length > 0) {
         const taggedLocations = db
@@ -101,7 +102,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
                 value,
               );
               if (!condition) {
-                console.warn(`No metadata found for advanced search field: ${field}`);
+                logger.warn(`No metadata found for advanced search field: ${field}`);
               }
               return condition;
             },
@@ -180,12 +181,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
     ): Promise<LocationSelect> {
       await assertStoryIsWritable(db, locationData.storyId);
       let newLocation = prepareNewEntityData<LocationInsert>(locationData);
-      const favorite = await normalizeFavoriteCreate(
-        db,
-        newLocation.storyId,
-        'Location',
-        newLocation,
-      );
+      const favorite = await normalizeFavoriteCreate(db, newLocation.storyId, newLocation);
       newLocation = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -247,7 +243,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for location ${locationId}. Skipping update and operation log.`,
         );
         return oldLocation;
@@ -289,7 +285,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         where: eq(locations.id, locationId),
       });
       if (!locationToDelete) {
-        console.warn(`Attempted to delete non-existent location ${locationId}.`);
+        logger.warn(`Attempted to delete non-existent location ${locationId}.`);
         return;
       }
       await assertStoryIsWritable(db, locationToDelete.storyId);
@@ -375,7 +371,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
 
     async getAllByStoryId(storyId: string): Promise<LocationSelect[]> {
       if (!storyId) {
-        console.error('getAllByStoryId: storyId is required.');
+        logger.error('getAllByStoryId: storyId is required.');
         return [];
       }
       try {
@@ -386,7 +382,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
           .all();
         return allLocations;
       } catch (error) {
-        console.error(`Error fetching all locations for story ${storyId}:`, error);
+        logger.error(`Error fetching all locations for story ${storyId}:`, error);
         return [];
       }
     },

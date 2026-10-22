@@ -6,7 +6,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  * `keres-to-verifier` (what Keres asks) and `verifier-to-keres` (what the service reports).
  *
  * Kept as its own copy on purpose: this service ships alone in its own image and imports nothing of Keres or of
- * the payments service. `test/signing.test.ts` pins the canonical strings, and `docs/age_verification.md` is the
+ * the payments service. `test/signing.test.ts` pins the canonical strings, and `docs/compliance/age_verification.md` is the
  * contract.
  *
  * Summary: every request Keres sends is HMAC-SHA256 over

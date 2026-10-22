@@ -27,6 +27,6 @@ it('creates the route service once from the drizzle client', async () => {
   expect(mockCreateRouteService).toHaveBeenCalledWith(fakeDb);
   expect(view.result.current.routeServiceRef.current).toBe(fakeService);
 
-  view.rerender({});
+  await view.rerender({});
   expect(mockCreateRouteService).toHaveBeenCalledTimes(1);
 });

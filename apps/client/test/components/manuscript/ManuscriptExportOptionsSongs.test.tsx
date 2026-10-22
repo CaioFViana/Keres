@@ -6,6 +6,7 @@ import {
   type ManuscriptExportSettings,
 } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 import { songPrintOf } from '@/src/components/features/manuscript/export/songPrintOf';
+import { useInstantTiming } from '@/test/helpers/instantAnimations';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('@/src/theme', () => ({
@@ -67,9 +68,15 @@ function Harness({
   );
 }
 
-afterEach(() => {
-  cleanup();
+// The switches glide on real frames; finish them inside the press that starts them.
+beforeEach(() => {
+  useInstantTiming();
+});
+
+afterEach(async () => {
+  await cleanup();
   latest = null;
+  jest.restoreAllMocks();
 });
 
 describe('ManuscriptExportOptions songs', () => {

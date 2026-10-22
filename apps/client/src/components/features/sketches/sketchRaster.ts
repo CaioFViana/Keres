@@ -7,6 +7,7 @@ import {
   Skia,
 } from '@shopify/react-native-skia';
 import { recordSketchPicture } from './sketchPictures';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Longest side of the scratch bitmap a fill or eyedropper reads; the stored result stays vector. */
 const RASTER_MAX_SIDE = 1800;
@@ -69,7 +70,7 @@ export function rasterizeSketch(
     // Copied: the surface goes away below and the bitmap must outlive it.
     return pixels ? { data: new Uint8Array(pixels as Uint8Array), width, height, scale } : null;
   } catch (error) {
-    console.log('rasterizeSketch: could not rasterize the sketch.', error);
+    logger.debug('rasterizeSketch: could not rasterize the sketch.', error);
     return null;
   } finally {
     image?.dispose();

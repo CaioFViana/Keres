@@ -3,8 +3,6 @@ import type { TagService } from '@/src/services/storymanagement/notes-tags-comme
 import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 
-export type { FavoriteFilterState } from '@/src/types/entityFilters';
-
 export const useTagStore = createEntityStore<'tags', TagSelect, TagService>({
   collectionKey: 'tags',
   favoriteEntityType: 'Tag',

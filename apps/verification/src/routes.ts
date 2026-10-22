@@ -20,7 +20,7 @@ import {
 } from './verifications';
 
 /**
- * The `/v1` protocol of the service (`KERES-AGE-V1`, `docs/age_verification.md`): every request from Keres is verified
+ * The `/v1` protocol of the service (`KERES-AGE-V1`, `docs/compliance/age_verification.md`): every request from Keres is verified
  * (signature under either accepted key, a fresh timestamp, a nonce seen once), every answer is signed with the current
  * key. The app is an ordinary fetch handler, so the tests drive it without a socket.
  *

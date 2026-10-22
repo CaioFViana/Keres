@@ -224,8 +224,8 @@ describe('FriendshipListScreen', () => {
     mockUnblacklist.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('puts the friendships under their server, by what they ask of the person, with counts', async () => {

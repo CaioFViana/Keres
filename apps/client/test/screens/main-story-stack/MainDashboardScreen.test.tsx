@@ -248,8 +248,8 @@ function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unkno
 }
 
 describe('MainDashboardScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {
@@ -302,7 +302,10 @@ describe('MainDashboardScreen', () => {
       expect(JSON.parse(written.seenTutorials).firstStory.done).toBe(true);
       // The persisted done flag keeps later focuses quiet.
       expect(mockShowNotification).toHaveBeenCalledTimes(1);
+      // The counts and the analysis arrive on their own promises; let them land inside act.
+      await act(async () => {});
     } finally {
+      await cleanup();
       useUserSettingsStore.getState().resetSettings();
     }
   });

@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreateGalleryDataType,
   CreateStoryUpdate,
@@ -80,12 +80,8 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Validate incoming data against the create schema
     const validatedData: CreateGalleryDataType = this.createSchema.parse(update.data);
 
@@ -110,12 +106,11 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.mimeType !== undefined || validatedChanges.mediaType !== undefined) {
@@ -134,17 +129,15 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     // used server time instead of the client's `operationTime` - a concurrent edit landed here
     // with no error and no conflict reported, just silently dropped (same bug already found
     // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
     // No blob collection here: it runs in the push coordinator after the commit (see
     // `collectPushMediaGarbage`). Inside this transaction the check would read stale state - and
     // bytes deleted first would stay deleted if the transaction then rolled back.

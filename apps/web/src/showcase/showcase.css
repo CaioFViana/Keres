@@ -1,0 +1,1223 @@
+/*
+ * The public site's look.
+ *
+ * Two variable families coexist here on purpose:
+ *   --color-*  the fixed Keres look (header, footer, listing)
+ *   --story-*  the open story's palette, injected inline by `paletteVars`
+ * The second only exists inside a story's page - it is what allows tinting that page
+ * with the theme its author chose without making the site's frame unreadable.
+ */
+
+:root,
+[data-theme="light"] {
+  --color-bg: #fbfaff;
+  --color-bg-elevated: #ffffff;
+  --color-surface: #ffffff;
+  --color-text: #14121c;
+  --color-text-secondary: #5d5a6b;
+  --color-border: #e6e2f0;
+  --color-primary: #6200ee;
+  --color-on-primary: #ffffff;
+  --color-accent: #00c853;
+  --color-error: #b00020;
+  --color-header: rgba(255, 255, 255, 0.85);
+  --color-hero-from: #f0eaff;
+  --color-hero-to: #fbfaff;
+  --shadow-card: 0 1px 3px rgba(20, 18, 28, 0.06), 0 8px 24px rgba(20, 18, 28, 0.05);
+  --shadow-card-hover: 0 2px 6px rgba(20, 18, 28, 0.08), 0 16px 40px rgba(20, 18, 28, 0.1);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0e0d13;
+  --color-bg-elevated: #17161f;
+  --color-surface: #17161f;
+  --color-text: #f2f0f7;
+  --color-text-secondary: #a5a1b4;
+  --color-border: #262435;
+  --color-primary: #bb86fc;
+  --color-on-primary: #100f16;
+  --color-accent: #69f0ae;
+  --color-error: #cf6679;
+  --color-header: rgba(14, 13, 19, 0.8);
+  --color-hero-from: #1b1729;
+  --color-hero-to: #0e0d13;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  /* The hero's wash: on the canvas, so the thread runs over it and not behind a band. */
+  background:
+    linear-gradient(180deg, var(--color-hero-from), var(--color-hero-to)) top / 100% 760px no-repeat,
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---------- header ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-header);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header-inner,
+.site-footer-inner,
+.site-main > * {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.brand,
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primary);
+}
+
+.brand-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/*
+ * The icon is a cropped PNG, drawn well below its native size: without
+ * `object-fit: contain` a different aspect ratio would stretch it, and `display: block`
+ * avoids the baseline gap an inline image would open inside the header's flex layout.
+ */
+.mark {
+  display: block;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+/* An uploaded logo keeps the header's height; a wide one shrinks to fit instead of pushing the nav. */
+.site-logo {
+  height: 28px;
+  width: auto;
+  max-width: 140px;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 0.92rem;
+  color: var(--color-text-secondary);
+}
+
+.site-nav a:hover {
+  color: var(--color-text);
+}
+
+/* Same shape as the theme button beside it, so the two read as a pair of controls. */
+.language-select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.language-select:hover {
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
+@media (max-width: 640px) {
+  .theme-toggle-text {
+    display: none;
+  }
+}
+
+/* ---------- main / hero ---------- */
+
+.site-main {
+  flex: 1;
+  padding: 0 0 72px;
+}
+
+.hero {
+  padding: 72px 0 64px;
+  max-width: none;
+}
+
+/* The pages the thread runs through: the frame has its own width, and the hero its own, shorter, rhythm. */
+.site-main > .thread-page {
+  max-width: 1120px;
+  padding: 0 24px 0 0;
+}
+
+.thread-page .hero {
+  padding: 28px 0 8px;
+}
+
+.thread-page .hero-inner {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hero-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hero-eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.hero-title {
+  margin: 0 0 16px;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.hero-text {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 1.06rem;
+  color: var(--color-text-secondary);
+}
+
+/* ---------- story list ---------- */
+
+.stories {
+  padding-top: 56px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.count {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+/* An entry of a list (a story, an author): a node on the thread with its text, and what stands beside it. */
+.entry-list {
+  max-width: 880px;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 22px;
+  padding: 28px 0 30px;
+  border-top: 1px solid var(--color-border);
+}
+
+.entry-body {
+  min-width: 0;
+}
+
+.entry-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.entry-title a:hover {
+  color: var(--story-primary, var(--color-primary));
+}
+
+.entry-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.entry .owner {
+  margin-bottom: 10px;
+}
+
+.entry .owner:hover .owner-name {
+  color: var(--story-primary, var(--color-primary));
+}
+
+.entry-side {
+  align-self: start;
+}
+
+.story-card-desc {
+  max-width: 60ch;
+  margin: 0 0 12px;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The cover beside the entry: its own shape, never stretched. */
+.story-card-cover {
+  display: block;
+  width: 84px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+}
+
+@media (min-width: 761px) {
+  .story-card-cover {
+    width: 104px;
+    height: 148px;
+  }
+}
+
+.badge {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.badge-branching {
+  color: var(--story-primary, var(--color-primary));
+  border-color: currentColor;
+}
+
+.badge-adult {
+  color: var(--color-error);
+  border-color: currentColor;
+}
+
+/* Sign-in lives on the page itself: a quiet header slot and a gate-styled dialog. */
+.auth-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-name {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.button-secondary {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.button-secondary:hover {
+  border-color: var(--color-primary);
+}
+
+.login-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.login-backdrop .gate-card {
+  text-align: left;
+}
+
+.gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gate-actions .button-secondary {
+  padding: 11px 18px;
+  font-weight: 600;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  font-size: 0.76rem;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--story-primary-container, var(--color-bg));
+  color: var(--story-on-primary-container, var(--color-text-secondary));
+  border: 1px solid var(--color-border);
+}
+
+.owner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+/* The content is the SVG of the icon the person chose; the background colour comes inline. */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.owner-name {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.88rem;
+  min-width: 0;
+}
+
+.owner-tag {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+}
+
+.version-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+.version-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  color: var(--color-text);
+}
+
+.dot {
+  opacity: 0.5;
+}
+
+/* ---------- story page ---------- */
+
+/* A page that wears a palette (a story's, an author's): its thread, nodes and accents take the tint. */
+.themed {
+  --page-tint: var(--story-primary, var(--color-primary));
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+}
+
+.back-link:hover {
+  color: var(--page-tint, var(--color-primary));
+}
+
+.story-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px 32px;
+  align-items: start;
+}
+
+.story-head h1 {
+  margin: 12px 0 14px;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.story-head .owner:hover .owner-name {
+  color: var(--page-tint, var(--color-primary));
+}
+
+.story-cover {
+  display: block;
+  width: min(160px, 100%);
+  height: auto;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+@media (min-width: 761px) {
+  .story-cover {
+    width: 200px;
+    max-height: 300px;
+  }
+}
+
+.story-description {
+  max-width: 68ch;
+  margin: 22px 0 0;
+  font-size: 1.05rem;
+  color: var(--color-text-secondary);
+  border-left: 3px solid var(--page-tint, var(--color-primary));
+  padding-left: 18px;
+}
+
+.story-facts-card h2 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+}
+
+.story-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px 24px;
+  margin: 0;
+}
+
+.story-facts dt {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.story-facts dd {
+  margin: 0;
+}
+
+.story-facts .chips {
+  margin-bottom: 0;
+}
+
+/* The versions: each one is a node on the thread, the newest first and the biggest. */
+.versions {
+  margin-top: 32px;
+}
+
+.versions-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 28px;
+  max-width: 880px;
+}
+
+.versions h2 {
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+.version-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  max-width: 880px;
+  padding: 24px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.version-info {
+  min-width: 0;
+}
+
+.version-info h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.version.newest .version-info h3 {
+  font-size: 1.45rem;
+}
+
+.badge-newest {
+  color: var(--page-tint, var(--color-primary));
+  border-color: currentColor;
+}
+
+.version-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.86rem;
+  color: var(--color-text-secondary);
+}
+
+/* A version's buttons, side by side: the package first, the reading and the manuscript after it. */
+.version .version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.download-button {
+  flex: 0 0 auto;
+  padding: 9px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--page-tint, var(--color-primary));
+  color: var(--story-on-primary, var(--color-on-primary));
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.download-button.ghost {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+a.download-button {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* ---------- reader page ---------- */
+
+/* Reading takes the window under the header; the reader inside is the only thing that scrolls. */
+.site--reading {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+}
+
+.site--reading .site-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.site--reading .site-main > * {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reader-page {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reader-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.reader-head .back-link {
+  margin-bottom: 0;
+}
+
+.reader-title {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-page > .muted,
+.reader-page > .error-text {
+  padding: 24px;
+}
+
+.reader-frame {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--color-bg);
+}
+
+.download-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.download-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- password gate ---------- */
+
+.gate {
+  display: flex;
+  justify-content: center;
+  padding: 80px 24px;
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.gate-card h1 {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+}
+
+.gate-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 22px 0 12px;
+}
+
+.gate-card input {
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.gate-card input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.gate-card button {
+  padding: 11px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gate-card button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- prose / misc ---------- */
+
+.prose {
+  padding-top: 24px;
+  max-width: 68ch;
+}
+
+.prose h2 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+.about-page .prose:last-of-type {
+  padding-bottom: 40px;
+}
+
+.prose p {
+  color: var(--color-text-secondary);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}
+
+.error-text {
+  color: var(--color-error);
+}
+
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  padding: 32px 0;
+}
+
+.site-footer-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.disclaimer {
+  flex: 1;
+  min-width: 260px;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  max-width: 70ch;
+}
+
+/* --- Packs -------------------------------------------------------------------------------- */
+
+/*
+ * Narrower columns than the story grid on purpose: a pack card carries a name, a line of
+ * description and a row of counts - nothing with the visual weight of a published work, and
+ * stretching it to a story's width would only pad it with emptiness.
+ */
+.badge-pack {
+  color: var(--color-primary);
+  border-color: currentColor;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.pack-language {
+  font-size: 0.76rem;
+  color: var(--color-text-secondary);
+}
+
+.pack-contents {
+  margin-top: 32px;
+}
+
+.pack-contents h2 {
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+.pack-section {
+  margin-top: 24px;
+}
+
+.pack-section h3 {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.pack-section {
+  max-width: 880px;
+}
+
+.pack-group {
+  margin-bottom: 14px;
+}
+
+.pack-group h4 {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.pack-field-list,
+.pack-stat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.pack-field-list li,
+.pack-stat-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.pack-field-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pack-field-type {
+  font-size: 0.76rem;
+  color: var(--color-text-secondary);
+}
+
+/* Its own line: a description is prose, and wrapping it beside the type would fray the row. */
+.pack-field-desc {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.pack-ladder {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+.pack-ladder.shared {
+  margin-top: 10px;
+}
+
+/* How to use a pack: where the thread ends. */
+.pack-howto {
+  margin-top: 36px;
+  padding-bottom: 24px;
+}
+
+.pack-title {
+  margin: 12px 0 14px;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.pack-howto h2 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+.pack-howto p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+/* ---------- search and filters ---------- */
+
+.story-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.filter-search,
+.filter-field select {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.filter-search:focus,
+.filter-field select:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.filter-field select {
+  max-width: 200px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.filter-clear {
+  align-self: flex-end;
+  padding: 9px 14px;
+}
+
+.show-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.show-more .button-secondary {
+  padding: 10px 22px;
+}
+
+/* ---------- authors ---------- */
+
+/* The back link, the avatar and the name are one above the other: both are inline by default and would share a line. */
+.author-head .back-link {
+  display: block;
+}
+
+.author-head .avatar {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.author-head p {
+  margin: 4px 0 0;
+}
+
+/* The author's own words, as typed: line breaks kept, nothing read as markup. */
+.author-biography {
+  max-width: 68ch;
+  margin: 22px 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+  border-left: 3px solid var(--page-tint, var(--color-primary));
+  padding-left: 18px;
+}
+
+.author-links-block h2 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+}
+
+/* One branch off the thread, with a tile for each destination. */
+.author-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.author-links a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+  padding: 14px 40px 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  transition:
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.author-links a:hover {
+  border-color: var(--page-tint, var(--color-primary));
+  transform: translateY(-1px);
+}
+
+.author-link-label {
+  font-weight: 600;
+}
+
+.author-link-host {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.author-link-arrow {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  color: var(--page-tint, var(--color-primary));
+  transition: transform 0.16s ease;
+}
+
+.author-links a:hover .author-link-arrow {
+  transform: translate(2px, -2px);
+}
+
+.author-stories h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+/* The cover of a released work, above its title on the story's page. */
+.work-cover {
+  display: block;
+  width: min(140px, 40%);
+  height: auto;
+  max-height: 210px;
+  margin: 0 0 14px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 640px) {
+  /* Four links, a language, a theme and a sign-in no longer fit one line: the header wraps instead of scrolling the page sideways. */
+  .site-header-inner {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .site-nav {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+
+  .filter-field,
+  .filter-field select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .filter-row > .filter-field {
+    flex: 1 1 140px;
+  }
+}
+
+/* The cards the thread splits to: the site's card, with the accent stub of the landing's. */
+.thread-page .card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 26px 24px 22px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.thread-page .card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, var(--page-tint, var(--color-primary)), var(--color-accent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .author-links a,
+  .author-link-arrow {
+    transition: none;
+  }
+}

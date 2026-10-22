@@ -612,7 +612,7 @@ describe('MarkdownPreview', () => {
     const marked = view.getByText('crash');
     expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#ccf');
 
-    fireEvent.press(marked);
+    await fireEvent.press(marked);
     expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
 
@@ -632,7 +632,7 @@ describe('MarkdownPreview', () => {
     expect(StyleSheet.flatten(first.props.style).backgroundColor).toBe('#ccf');
     expect(StyleSheet.flatten(second.props.style).backgroundColor).toBe('#ccf');
 
-    fireEvent.press(second);
+    await fireEvent.press(second);
     expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
 

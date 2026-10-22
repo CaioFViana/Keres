@@ -143,8 +143,6 @@ beforeEach(async () => {
       [chapter2Id, 'Epilogo', 2],
     ] as const) {
       await chapters.create(
-        userId,
-        story,
         create('Chapter', id, {
           name,
           index,
@@ -152,6 +150,7 @@ beforeEach(async () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId: story },
       );
     }
     for (const [id, name] of [
@@ -159,8 +158,6 @@ beforeEach(async () => {
       [location2Id, 'Tartaro'],
     ] as const) {
       await locations.create(
-        userId,
-        story,
         create('Location', id, {
           name,
           description: null,
@@ -170,6 +167,7 @@ beforeEach(async () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId: story },
       );
     }
     for (const [id, name, index] of [
@@ -177,8 +175,6 @@ beforeEach(async () => {
       [secondSceneId, 'Partida', 2],
     ] as const) {
       await scenes.create(
-        userId,
-        story,
         create('Scene', id, {
           chapterId,
           locationId,
@@ -194,39 +190,45 @@ beforeEach(async () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId: story },
       );
     }
-    await characters.create(userId, story, create('Character', characterId, { name: 'Keres' }));
+    await characters.create(create('Character', characterId, { name: 'Keres' }), {
+      userId,
+      storyId: story,
+    });
   }
   fx.Lchar2 = newId();
   fx.Lchar3 = newId();
-  await characters.create(userId, linearStoryId, create('Character', fx.Lchar2, { name: 'Nyx' }));
-  await characters.create(userId, linearStoryId, create('Character', fx.Lchar3, { name: 'Erebo' }));
+  await characters.create(create('Character', fx.Lchar2, { name: 'Nyx' }), {
+    userId,
+    storyId: linearStoryId,
+  });
+  await characters.create(create('Character', fx.Lchar3, { name: 'Erebo' }), {
+    userId,
+    storyId: linearStoryId,
+  });
 
   const choiceId = newId();
   fx.Bchoice = choiceId;
   await new ChoiceSyncHandler().create(
-    userId,
-    branchingStoryId,
     create('Choice', choiceId, {
       sceneId: fx.Bscene,
       nextSceneId: fx.Bscene2,
       text: 'Abrir o portao',
       notes: null,
     }),
+    { userId, storyId: branchingStoryId },
   );
   const routeId = newId();
   fx.Broute = routeId;
-  await new RouteSyncHandler().create(
+  await new RouteSyncHandler().create(create('Route', routeId, { name: 'Train', details: null }), {
     userId,
-    branchingStoryId,
-    create('Route', routeId, { name: 'Train', details: null }),
-  );
+    storyId: branchingStoryId,
+  });
   const itemId = newId();
   fx.Bitem = itemId;
   await new ItemSyncHandler().create(
-    userId,
-    branchingStoryId,
     create('Item', itemId, {
       characterOwnerId: null,
       name: 'Chave',
@@ -236,35 +238,32 @@ beforeEach(async () => {
       isFavorite: false,
       extraNotes: null,
     }),
+    { userId, storyId: branchingStoryId },
   );
   const noteId = newId();
   fx.Lnote = noteId;
   await new NoteSyncHandler().create(
-    userId,
-    linearStoryId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId: linearStoryId },
   );
   const tagId = newId();
   fx.Ltag = tagId;
   await new TagSyncHandler().create(
-    userId,
-    linearStoryId,
     create('Tag', tagId, { name: 'Viloes', color: null, isFavorite: false, extraNotes: null }),
+    { userId, storyId: linearStoryId },
   );
   const galleryId = newId();
   fx.Lgallery = galleryId;
-  await new GallerySyncHandler().create(
+  await new GallerySyncHandler().create(create('Gallery', galleryId, galleryData('a'.repeat(32))), {
     userId,
-    linearStoryId,
-    create('Gallery', galleryId, galleryData('a'.repeat(32))),
-  );
+    storyId: linearStoryId,
+  });
   const statId = newId();
   fx.Lstat = statId;
-  await new StatSyncHandler().create(
+  await new StatSyncHandler().create(create('Stat', statId, { name: 'Coragem' }), {
     userId,
-    linearStoryId,
-    create('Stat', statId, { name: 'Coragem' }),
-  );
+    storyId: linearStoryId,
+  });
 });
 
 describe('choice and route update paths', () => {
@@ -273,14 +272,13 @@ describe('choice and route update paths', () => {
     const current = await handler.findByIdOrThrow(fx.Bchoice);
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('Choice', fx.Bchoice, {
         sceneId: fx.Bscene2,
         nextSceneId: fx.Bscene,
         version: 1,
       }),
       current,
+      { userId, storyId: branchingStoryId },
     );
 
     expect(await handler.findByIdOrThrow(fx.Bchoice)).toMatchObject({
@@ -311,26 +309,26 @@ describe('choice and route update paths', () => {
 
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('Choice', newId(), {
           sceneId: fx.Lscene,
           nextSceneId: fx.Lscene2,
           text: 'Novo',
           notes: null,
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/linear story/i);
     await expect(
-      handler.update(
+      handler.update(change('Choice', linearChoiceId, { text: 'Editado', version: 1 }), current, {
         userId,
-        linearStoryId,
-        change('Choice', linearChoiceId, { text: 'Editado', version: 1 }),
-        current,
-      ),
+        storyId: linearStoryId,
+      }),
     ).rejects.toThrow(/linear story/i);
     await expect(
-      handler.delete(userId, linearStoryId, remove('Choice', linearChoiceId, 1), current),
+      handler.delete(remove('Choice', linearChoiceId, 1), current, {
+        userId,
+        storyId: linearStoryId,
+      }),
     ).rejects.toThrow(/linear story/i);
     expect(await handler.findByIdOrThrow(linearChoiceId)).toMatchObject({
       text: 'Legado',
@@ -342,7 +340,11 @@ describe('choice and route update paths', () => {
     const handler = new RouteSyncHandler();
     const current = await handler.findByIdOrThrow(fx.Broute);
 
-    await handler.delete(userId, branchingStoryId, remove('Route', fx.Broute, 1), current, db);
+    await handler.delete(remove('Route', fx.Broute, 1), current, {
+      userId,
+      storyId: branchingStoryId,
+      database: db,
+    });
 
     expect(await handler.findByIdOrThrow(fx.Broute)).toMatchObject({
       isDeleted: true,
@@ -354,24 +356,21 @@ describe('choice and route update paths', () => {
     const handler = new RouteStepSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('RouteStep', id, {
         routeId: fx.Broute,
         position: 1,
         sceneId: fx.Bscene,
         selectedChoiceId: fx.Bchoice,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const current = await handler.findByIdOrThrow(id);
 
-    await handler.update(
+    await handler.update(change('RouteStep', id, { position: 5, version: 1 }), current, {
       userId,
-      branchingStoryId,
-      change('RouteStep', id, { position: 5, version: 1 }),
-      current,
-      db,
-    );
+      storyId: branchingStoryId,
+      database: db,
+    });
 
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       position: 5,
@@ -385,38 +384,33 @@ describe('choice and route update paths', () => {
   it('a RouteStep re-points its route, scene and choice on update', async () => {
     const handler = new RouteStepSyncHandler();
     const route2 = newId();
-    await new RouteSyncHandler().create(
+    await new RouteSyncHandler().create(create('Route', route2, { name: 'Boat', details: null }), {
       userId,
-      branchingStoryId,
-      create('Route', route2, { name: 'Boat', details: null }),
-    );
+      storyId: branchingStoryId,
+    });
     const choice2 = newId();
     await new ChoiceSyncHandler().create(
-      userId,
-      branchingStoryId,
       create('Choice', choice2, {
         sceneId: fx.Bscene2,
         nextSceneId: fx.Bscene,
         text: 'Voltar',
         notes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('RouteStep', id, {
         routeId: fx.Broute,
         position: 1,
         sceneId: fx.Bscene,
         selectedChoiceId: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const current = await handler.findByIdOrThrow(id);
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('RouteStep', id, {
         routeId: route2,
         sceneId: fx.Bscene2,
@@ -424,6 +418,7 @@ describe('choice and route update paths', () => {
         version: 1,
       }),
       current,
+      { userId, storyId: branchingStoryId },
     );
 
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
@@ -438,24 +433,21 @@ describe('choice and route update paths', () => {
     const handler = new RouteStepSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('RouteStep', id, {
         routeId: fx.Broute,
         position: 1,
         sceneId: fx.Bscene,
         selectedChoiceId: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const current = await handler.findByIdOrThrow(id);
 
     await expect(
-      handler.update(
+      handler.update(change('RouteStep', id, { sceneId: newId(), version: 1 }), current, {
         userId,
-        branchingStoryId,
-        change('RouteStep', id, { sceneId: newId(), version: 1 }),
-        current,
-      ),
+        storyId: branchingStoryId,
+      }),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
 });
@@ -465,8 +457,6 @@ describe('item, mode and stat update paths', () => {
     const handler = new ItemSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('Item', id, {
         characterOwnerId: fx.Lchar,
         name: 'Espada',
@@ -476,27 +466,25 @@ describe('item, mode and stat update paths', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Item', id, { name: 'Espada longa', version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ name: 'Espada longa', version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Item', id, { description: 'Forjada em Styx', version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     await handler.update(
-      userId,
-      linearStoryId,
       change('Item', id, { name: 'Espada longa', version: 3 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       description: 'Forjada em Styx',
@@ -508,8 +496,6 @@ describe('item, mode and stat update paths', () => {
     const handler = new ItemSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('Item', id, {
         characterOwnerId: fx.Lchar,
         name: 'Escudo',
@@ -519,13 +505,13 @@ describe('item, mode and stat update paths', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Item', id, { characterOwnerId: fx.Lchar2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
 
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
@@ -537,25 +523,22 @@ describe('item, mode and stat update paths', () => {
   it('a Mode edits its name and moves to another character', async () => {
     const handler = new ModeSyncHandler();
     const id = newId();
-    await handler.create(
+    await handler.create(create('Mode', id, { characterId: fx.Lchar, name: 'Desperta' }), {
       userId,
-      linearStoryId,
-      create('Mode', id, { characterId: fx.Lchar, name: 'Desperta' }),
-    );
+      storyId: linearStoryId,
+    });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Mode', id, { name: 'Adormecida', version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ name: 'Adormecida', version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Mode', id, { characterId: fx.Lchar2, version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       characterId: fx.Lchar2,
@@ -567,10 +550,9 @@ describe('item, mode and stat update paths', () => {
     const handler = new StatSyncHandler();
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Stat', fx.Lstat, { name: 'Bravura', version: 1 }),
       await handler.findByIdOrThrow(fx.Lstat),
+      { userId, storyId: linearStoryId },
     );
 
     expect(await handler.findByIdOrThrow(fx.Lstat)).toMatchObject({ name: 'Bravura', version: 2 });
@@ -580,10 +562,9 @@ describe('item, mode and stat update paths', () => {
     const handler = new StatSyncHandler();
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Stat', fx.Lstat, { isPrimary: true, version: 1 }),
       await handler.findByIdOrThrow(fx.Lstat),
+      { userId, storyId: linearStoryId },
     );
 
     expect(await handler.findByIdOrThrow(fx.Lstat)).toMatchObject({ isPrimary: true, version: 2 });
@@ -593,30 +574,26 @@ describe('item, mode and stat update paths', () => {
     const handler = new StatStrengthSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('StatStrength', id, { statId: fx.Lstat, label: 'F', minValue: 0 }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('StatStrength', id, { label: 'Fraco', version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ label: 'Fraco', version: 2 });
 
     const otherStat = newId();
-    await new StatSyncHandler().create(
+    await new StatSyncHandler().create(create('Stat', otherStat, { name: 'Sabedoria' }), {
       userId,
-      linearStoryId,
-      create('Stat', otherStat, { name: 'Sabedoria' }),
-    );
+      storyId: linearStoryId,
+    });
     await handler.update(
-      userId,
-      linearStoryId,
       change('StatStrength', id, { statId: otherStat, version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ statId: otherStat, version: 3 });
   });
@@ -625,36 +602,31 @@ describe('item, mode and stat update paths', () => {
     const handler = new StatRelationSyncHandler();
     const modeId = newId();
     await new ModeSyncHandler().create(
-      userId,
-      linearStoryId,
       create('Mode', modeId, { characterId: fx.Lchar, name: 'Desperta' }),
+      { userId, storyId: linearStoryId },
     );
     const otherStat = newId();
-    await new StatSyncHandler().create(
+    await new StatSyncHandler().create(create('Stat', otherStat, { name: 'Sabedoria' }), {
       userId,
-      linearStoryId,
-      create('Stat', otherStat, { name: 'Sabedoria' }),
-    );
+      storyId: linearStoryId,
+    });
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('StatRelation', id, { characterId: fx.Lchar, statId: fx.Lstat, value: 5 }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('StatRelation', id, { value: 7, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ value: 7, version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('StatRelation', id, { characterId: fx.Lchar2, version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       characterId: fx.Lchar2,
@@ -663,23 +635,20 @@ describe('item, mode and stat update paths', () => {
 
     const mode2 = newId();
     await new ModeSyncHandler().create(
-      userId,
-      linearStoryId,
       create('Mode', mode2, { characterId: fx.Lchar2, name: 'Eco' }),
+      { userId, storyId: linearStoryId },
     );
     await handler.update(
-      userId,
-      linearStoryId,
       change('StatRelation', id, { modeId: mode2, version: 3 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ modeId: mode2, version: 4 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('StatRelation', id, { statId: otherStat, version: 4 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ statId: otherStat, version: 5 });
   });
@@ -704,48 +673,45 @@ describe('check, group, effect and suggestion update paths', () => {
     const handler = new ChoiceCheckSyncHandler();
     const group2 = newId();
     await groups.create(
-      userId,
-      branchingStoryId,
       create('ChoiceCheckGroup', group2, { choiceId: fx.Bchoice, combinator: 'OR', order: 1 }),
+      { userId, storyId: branchingStoryId },
     );
     const group1 = newId();
     await groups.create(
-      userId,
-      branchingStoryId,
       create('ChoiceCheckGroup', group1, { choiceId: fx.Bchoice, combinator: 'AND', order: 0 }),
+      { userId, storyId: branchingStoryId },
     );
     const id = newId();
-    await handler.create(userId, branchingStoryId, create('ChoiceCheck', id, checkData(group1)));
+    await handler.create(create('ChoiceCheck', id, checkData(group1)), {
+      userId,
+      storyId: branchingStoryId,
+    });
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ChoiceCheck', id, { sceneId: fx.Bscene, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ sceneId: fx.Bscene, version: 2 });
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ChoiceCheck', id, { itemId: fx.Bitem, version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ itemId: fx.Bitem, version: 3 });
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ChoiceCheck', id, { groupId: group2, version: 3 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ groupId: group2, version: 4 });
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ChoiceCheck', id, { order: 9, version: 4 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ order: 9, version: 5 });
   });
@@ -754,35 +720,31 @@ describe('check, group, effect and suggestion update paths', () => {
     const handler = new ChoiceCheckGroupSyncHandler();
     const choice2 = newId();
     await new ChoiceSyncHandler().create(
-      userId,
-      branchingStoryId,
       create('Choice', choice2, {
         sceneId: fx.Bscene2,
         nextSceneId: fx.Bscene,
         text: 'Voltar',
         notes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('ChoiceCheckGroup', id, { choiceId: fx.Bchoice, combinator: 'AND', order: 0 }),
+      { userId, storyId: branchingStoryId },
     );
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ChoiceCheckGroup', id, { choiceId: choice2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ choiceId: choice2, version: 2 });
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ChoiceCheckGroup', id, { combinator: 'OR', version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ combinator: 'OR', version: 3 });
   });
@@ -791,8 +753,6 @@ describe('check, group, effect and suggestion update paths', () => {
     const handler = new EffectSyncHandler();
     const item2 = newId();
     await new ItemSyncHandler().create(
-      userId,
-      branchingStoryId,
       create('Item', item2, {
         characterOwnerId: null,
         name: 'Mapa',
@@ -802,11 +762,10 @@ describe('check, group, effect and suggestion update paths', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('Effect', id, {
         entityType: 'Scene',
         entityId: fx.Bscene,
@@ -814,21 +773,20 @@ describe('check, group, effect and suggestion update paths', () => {
         itemId: null,
         triggerName: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('Effect', id, { itemId: item2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ itemId: item2, version: 2 });
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('Effect', id, { triggerName: 'portao', version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ triggerName: 'portao', version: 3 });
   });
@@ -836,57 +794,50 @@ describe('check, group, effect and suggestion update paths', () => {
   it('a Suggestion retitles its type and restates its own value', async () => {
     const handler = new SuggestionSyncHandler();
     const id = newId();
-    await handler.create(
+    await handler.create(create('Suggestion', id, { type: 'character-name', value: 'Nyx' }), {
       userId,
-      linearStoryId,
-      create('Suggestion', id, { type: 'character-name', value: 'Nyx' }),
-    );
+      storyId: linearStoryId,
+    });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Suggestion', id, { type: 'place-name', version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ type: 'place-name', version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Suggestion', id, { type: 'place-name', version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 3 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Suggestion', id, { version: 3 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 4 });
   });
 
   it('a Suggestion edit that collides with another row is rejected', async () => {
     const handler = new SuggestionSyncHandler();
-    await handler.create(
+    await handler.create(create('Suggestion', newId(), { type: 'character-name', value: 'Nyx' }), {
       userId,
-      linearStoryId,
-      create('Suggestion', newId(), { type: 'character-name', value: 'Nyx' }),
-    );
+      storyId: linearStoryId,
+    });
     const id = newId();
-    await handler.create(
+    await handler.create(create('Suggestion', id, { type: 'character-name', value: 'Erebo' }), {
       userId,
-      linearStoryId,
-      create('Suggestion', id, { type: 'character-name', value: 'Erebo' }),
-    );
+      storyId: linearStoryId,
+    });
 
     await expect(
       handler.update(
-        userId,
-        linearStoryId,
         change('Suggestion', id, { value: 'Nyx', version: 1 }),
         await handler.findByIdOrThrow(id),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/already exists/i);
     expect((await handler.findByIdOrThrow(id)).value).toBe('Erebo');
@@ -898,18 +849,16 @@ describe('tag and scene update paths', () => {
     const handler = new TagSyncHandler();
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Tag', fx.Ltag, { color: '#ff0000', version: 1 }),
       await handler.findByIdOrThrow(fx.Ltag),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Ltag)).toMatchObject({ color: '#ff0000', version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Tag', fx.Ltag, { name: 'Viloes', version: 2 }),
       await handler.findByIdOrThrow(fx.Ltag),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Ltag)).toMatchObject({ version: 3 });
   });
@@ -918,38 +867,34 @@ describe('tag and scene update paths', () => {
     const handler = new TagRelationSyncHandler();
     const tag2 = newId();
     await new TagSyncHandler().create(
-      userId,
-      linearStoryId,
       create('Tag', tag2, { name: 'Herois', color: null, isFavorite: false, extraNotes: null }),
+      { userId, storyId: linearStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('TagRelation', id, {
         tagId: fx.Ltag,
         relationId: fx.Lchar,
         relationType: 'Character',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('TagRelation', id, { tagId: tag2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ tagId: tag2, version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('TagRelation', id, {
         relationId: fx.Lchar2,
         relationType: 'Character',
         version: 2,
       }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       relationId: fx.Lchar2,
@@ -957,14 +902,13 @@ describe('tag and scene update paths', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('TagRelation', id, {
         relationId: fx.Llocation,
         relationType: 'Location',
         version: 3,
       }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       relationId: fx.Llocation,
@@ -973,10 +917,9 @@ describe('tag and scene update paths', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('TagRelation', id, { version: 4 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 5 });
   });
@@ -985,16 +928,14 @@ describe('tag and scene update paths', () => {
     const handler = new SceneSyncHandler();
     const calendarId = newId();
     await new StoryCalendarSyncHandler().create(
-      userId,
-      linearStoryId,
       create('StoryCalendar', calendarId, calendarData()),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Scene', fx.Lscene, { chapterId: fx.Lchapter2, version: 1 }),
       await handler.findByIdOrThrow(fx.Lscene),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({
       chapterId: fx.Lchapter2,
@@ -1002,10 +943,9 @@ describe('tag and scene update paths', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Scene', fx.Lscene, { locationId: fx.Llocation2, version: 2 }),
       await handler.findByIdOrThrow(fx.Lscene),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({
       locationId: fx.Llocation2,
@@ -1013,10 +953,9 @@ describe('tag and scene update paths', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Scene', fx.Lscene, { calendarDateOverrideCalendarId: calendarId, version: 3 }),
       await handler.findByIdOrThrow(fx.Lscene),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({
       calendarDateOverrideCalendarId: calendarId,
@@ -1033,16 +972,14 @@ describe('tag and scene update paths', () => {
     const handler = new SceneSyncHandler();
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Scene', fx.Lscene2, { isStart: true, version: 1 }),
       await handler.findByIdOrThrow(fx.Lscene2),
+      { userId, storyId: linearStoryId },
     );
     await handler.update(
-      userId,
-      linearStoryId,
       change('Scene', fx.Lscene, { isFinish: true, version: 1 }),
       await handler.findByIdOrThrow(fx.Lscene),
+      { userId, storyId: linearStoryId },
     );
 
     expect(await handler.findByIdOrThrow(fx.Lscene2)).toMatchObject({ isStart: true, version: 2 });
@@ -1053,10 +990,9 @@ describe('tag and scene update paths', () => {
     const handler = new SceneSyncHandler();
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Scene', fx.Lscene, { name: 'Chegada revisada', version: 1 }),
       await handler.findByIdOrThrow(fx.Lscene),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({
       name: 'Chegada revisada',
@@ -1064,13 +1000,11 @@ describe('tag and scene update paths', () => {
       version: 2,
     });
 
-    await handler.delete(
+    await handler.delete(remove('Scene', fx.Lscene, 2), await handler.findByIdOrThrow(fx.Lscene), {
       userId,
-      linearStoryId,
-      remove('Scene', fx.Lscene, 2),
-      await handler.findByIdOrThrow(fx.Lscene),
-      db,
-    );
+      storyId: linearStoryId,
+      database: db,
+    });
     expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({ isDeleted: true, version: 3 });
   });
 
@@ -1078,10 +1012,9 @@ describe('tag and scene update paths', () => {
     const handler = new SceneSyncHandler();
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('Scene', fx.Bscene, { name: 'Chegada revisada', version: 1 }),
       await handler.findByIdOrThrow(fx.Bscene),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Bscene)).toMatchObject({
       name: 'Chegada revisada',
@@ -1095,20 +1028,18 @@ describe('relation update paths', () => {
     const handler = new CharacterRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('CharacterRelation', id, {
         character1Id: fx.Lchar,
         character2Id: fx.Lchar2,
         relationType: 'siblings',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('CharacterRelation', id, { character2Id: fx.Lchar3, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
 
     const updated = await handler.findByIdOrThrow(id);
@@ -1122,13 +1053,12 @@ describe('relation update paths', () => {
     const handler = new CharacterRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('CharacterRelation', id, {
         character1Id: fx.Lchar,
         character2Id: fx.Lchar2,
         relationType: 'siblings',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     // A single-key edit passes the partial schema (which only compares two provided keys) and
@@ -1136,10 +1066,9 @@ describe('relation update paths', () => {
     const current = await handler.findByIdOrThrow(id);
     await expect(
       handler.update(
-        userId,
-        linearStoryId,
         change('CharacterRelation', id, { character1Id: current.character2Id, version: 1 }),
         current,
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/cannot be identical/i);
   });
@@ -1148,19 +1077,16 @@ describe('relation update paths', () => {
     const handler = new LocationRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('LocationRelation', id, {
         locationAId: fx.Llocation,
         locationBId: fx.Llocation2,
         relationType: 'connected_to',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     const third = newId();
     await new LocationSyncHandler().create(
-      userId,
-      linearStoryId,
       create('Location', third, {
         name: 'Erebo',
         description: null,
@@ -1170,12 +1096,12 @@ describe('relation update paths', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: linearStoryId },
     );
     await handler.update(
-      userId,
-      linearStoryId,
       change('LocationRelation', id, { locationAId: fx.Llocation, locationBId: third, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       locationBId: third,
@@ -1183,10 +1109,9 @@ describe('relation update paths', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('LocationRelation', id, { version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 3 });
   });
@@ -1195,20 +1120,18 @@ describe('relation update paths', () => {
     const handler = new LocationRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('LocationRelation', id, {
         locationAId: fx.Llocation,
         locationBId: fx.Llocation2,
         relationType: 'connected_to',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('LocationRelation', id, { relationType: 'contains', version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
 
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
@@ -1220,18 +1143,15 @@ describe('relation update paths', () => {
   it('a LocationRelation update that duplicates a connection is rejected', async () => {
     const handler = new LocationRelationSyncHandler();
     await handler.create(
-      userId,
-      linearStoryId,
       create('LocationRelation', newId(), {
         locationAId: fx.Llocation,
         locationBId: fx.Llocation2,
         relationType: 'connected_to',
       }),
+      { userId, storyId: linearStoryId },
     );
     const third = newId();
     await new LocationSyncHandler().create(
-      userId,
-      linearStoryId,
       create('Location', third, {
         name: 'Erebo',
         description: null,
@@ -1241,24 +1161,23 @@ describe('relation update paths', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: linearStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('LocationRelation', id, {
         locationAId: fx.Llocation,
         locationBId: third,
         relationType: 'connected_to',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await expect(
       handler.update(
-        userId,
-        linearStoryId,
         change('LocationRelation', id, { locationBId: fx.Llocation2, version: 1 }),
         await handler.findByIdOrThrow(id),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/already exists/i);
   });
@@ -1267,23 +1186,21 @@ describe('relation update paths', () => {
     const handler = new LocationRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('LocationRelation', id, {
         locationAId: fx.Llocation,
         locationBId: fx.Llocation2,
         relationType: 'connected_to',
       }),
+      { userId, storyId: linearStoryId },
     );
     const current = await handler.findByIdOrThrow(id);
 
     // A single-key edit passes the partial schema and reaches the handler's own identity check.
     await expect(
       handler.update(
-        userId,
-        linearStoryId,
         change('LocationRelation', id, { locationAId: current.locationBId, version: 1 }),
         current,
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/cannot be identical/i);
   });
@@ -1300,8 +1217,6 @@ describe('relation update paths', () => {
       [c, 'C'],
     ] as const) {
       await new LocationSyncHandler().create(
-        userId,
-        linearStoryId,
         create('Location', id, {
           name,
           description: null,
@@ -1311,6 +1226,7 @@ describe('relation update paths', () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId: linearStoryId },
       );
     }
     // A corrupted cycle the handler could never write itself (it checks): inserted directly.
@@ -1343,13 +1259,12 @@ describe('relation update paths', () => {
 
     await expect(
       handler.create(
-        userId,
-        linearStoryId,
         create('LocationRelation', newId(), {
           locationAId: a,
           locationBId: c,
           relationType: 'contains',
         }),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/maximum allowed depth/i);
   });
@@ -1358,32 +1273,29 @@ describe('relation update paths', () => {
     const handler = new GalleryRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('GalleryRelation', id, {
         galleryId: fx.Lgallery,
         ownerId: fx.Lchar,
         ownerType: 'Character',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('GalleryRelation', id, { ownerId: fx.Lchar2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ ownerId: fx.Lchar2, version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('GalleryRelation', id, {
         ownerId: fx.Llocation,
         ownerType: 'Location',
         version: 2,
       }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       ownerId: fx.Llocation,
@@ -1393,18 +1305,16 @@ describe('relation update paths', () => {
 
     // Restating the same gallery finds only itself in the duplicate check and lands.
     await handler.update(
-      userId,
-      linearStoryId,
       change('GalleryRelation', id, { galleryId: fx.Lgallery, version: 3 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 4 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('GalleryRelation', id, { version: 4 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 5 });
   });
@@ -1412,31 +1322,28 @@ describe('relation update paths', () => {
   it('a GalleryRelation retarget onto an occupied pair is rejected', async () => {
     const handler = new GalleryRelationSyncHandler();
     await handler.create(
-      userId,
-      linearStoryId,
       create('GalleryRelation', newId(), {
         galleryId: fx.Lgallery,
         ownerId: fx.Lchar2,
         ownerType: 'Character',
       }),
+      { userId, storyId: linearStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('GalleryRelation', id, {
         galleryId: fx.Lgallery,
         ownerId: fx.Lchar,
         ownerType: 'Character',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await expect(
       handler.update(
-        userId,
-        linearStoryId,
         change('GalleryRelation', id, { ownerId: fx.Lchar2, version: 1 }),
         await handler.findByIdOrThrow(id),
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/already linked/i);
   });
@@ -1445,36 +1352,31 @@ describe('relation update paths', () => {
     const handler = new NoteRelationSyncHandler();
     const note2 = newId();
     await new NoteSyncHandler().create(
-      userId,
-      linearStoryId,
       create('Note', note2, { title: 'Outra', body: null, isFavorite: false, extraNotes: null }),
+      { userId, storyId: linearStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('NoteRelation', id, {
         noteId: fx.Lnote,
         relationId: fx.Lchar,
         relationType: 'Character',
       }),
+      { userId, storyId: linearStoryId },
     );
     const current = await handler.findByIdOrThrow(id);
 
     await expect(
-      handler.update(
+      handler.update(change('NoteRelation', id, { noteId: note2, version: 1 }), current, {
         userId,
-        linearStoryId,
-        change('NoteRelation', id, { noteId: note2, version: 1 }),
-        current,
-      ),
+        storyId: linearStoryId,
+      }),
     ).rejects.toThrow(/Cannot change 'noteId'/i);
     await expect(
       handler.update(
-        userId,
-        linearStoryId,
         change('NoteRelation', id, { relationType: 'Location', version: 1 }),
         current,
+        { userId, storyId: linearStoryId },
       ),
     ).rejects.toThrow(/Cannot change 'relationType'/i);
   });
@@ -1483,18 +1385,15 @@ describe('relation update paths', () => {
     const handler = new NoteRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('NoteRelation', id, {
         noteId: fx.Lnote,
         relationId: fx.Lchar,
         relationType: 'Character',
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('NoteRelation', id, {
         noteId: fx.Lnote,
         relationId: fx.Lchar,
@@ -1502,14 +1401,14 @@ describe('relation update paths', () => {
         version: 1,
       }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 2 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('NoteRelation', id, { version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 3 });
   });
@@ -1518,16 +1417,14 @@ describe('relation update paths', () => {
     const handler = new CharacterSceneSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('CharacterScene', id, { characterId: fx.Lchar, sceneId: fx.Lscene }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('CharacterScene', id, { characterId: fx.Lchar2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       characterId: fx.Lchar2,
@@ -1535,18 +1432,16 @@ describe('relation update paths', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('CharacterScene', id, { sceneId: fx.Lscene2, version: 2 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ sceneId: fx.Lscene2, version: 3 });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('CharacterScene', id, { version: 3 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 4 });
   });
@@ -1555,14 +1450,13 @@ describe('relation update paths', () => {
     const handler = new SeeAlsoRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('SeeAlsoRelation', id, {
         entityAType: 'Character',
         entityAId: fx.Lchar,
         entityBType: 'Character',
         entityBId: fx.Lchar2,
       }),
+      { userId, storyId: linearStoryId },
     );
     const current = await handler.findByIdOrThrow(id);
 
@@ -1573,12 +1467,10 @@ describe('relation update paths', () => {
       { entityBId: fx.Lchar3 },
     ]) {
       await expect(
-        handler.update(
+        handler.update(change('SeeAlsoRelation', id, { ...changes, version: 1 }), current, {
           userId,
-          linearStoryId,
-          change('SeeAlsoRelation', id, { ...changes, version: 1 }),
-          current,
-        ),
+          storyId: linearStoryId,
+        }),
       ).rejects.toThrow(/Cannot change the linked entities/i);
     }
   });
@@ -1587,21 +1479,19 @@ describe('relation update paths', () => {
     const handler = new SeeAlsoRelationSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('SeeAlsoRelation', id, {
         entityAType: 'Character',
         entityAId: fx.Lchar,
         entityBType: 'Character',
         entityBId: fx.Lchar2,
       }),
+      { userId, storyId: linearStoryId },
     );
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('SeeAlsoRelation', id, { version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 2 });
   });
@@ -1610,8 +1500,6 @@ describe('relation update paths', () => {
     const handler = new ItemJourneySyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('ItemJourney', id, {
         itemId: fx.Bitem,
         sceneId: fx.Bscene,
@@ -1619,13 +1507,13 @@ describe('relation update paths', () => {
         newState: 'perdida',
         extraNotes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ItemJourney', id, { sceneId: fx.Bscene2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ sceneId: fx.Bscene2, version: 2 });
   });
@@ -1634,8 +1522,6 @@ describe('relation update paths', () => {
     const handler = new ItemJourneySyncHandler();
     const item2 = newId();
     await new ItemSyncHandler().create(
-      userId,
-      branchingStoryId,
       create('Item', item2, {
         characterOwnerId: null,
         name: 'Mapa',
@@ -1645,11 +1531,10 @@ describe('relation update paths', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('ItemJourney', id, {
         itemId: fx.Bitem,
         sceneId: fx.Bscene,
@@ -1657,13 +1542,13 @@ describe('relation update paths', () => {
         newState: 'perdida',
         extraNotes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ItemJourney', id, { itemId: item2, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ itemId: item2, version: 2 });
   });
@@ -1671,15 +1556,12 @@ describe('relation update paths', () => {
   it('an ItemJourney hands the item to another character', async () => {
     const handler = new ItemJourneySyncHandler();
     const heirId = newId();
-    await new CharacterSyncHandler().create(
+    await new CharacterSyncHandler().create(create('Character', heirId, { name: 'Erebo' }), {
       userId,
-      branchingStoryId,
-      create('Character', heirId, { name: 'Erebo' }),
-    );
+      storyId: branchingStoryId,
+    });
     const id = newId();
     await handler.create(
-      userId,
-      branchingStoryId,
       create('ItemJourney', id, {
         itemId: fx.Bitem,
         sceneId: fx.Bscene,
@@ -1687,13 +1569,13 @@ describe('relation update paths', () => {
         newState: 'perdida',
         extraNotes: null,
       }),
+      { userId, storyId: branchingStoryId },
     );
 
     await handler.update(
-      userId,
-      branchingStoryId,
       change('ItemJourney', id, { newCharacterOwnerId: heirId, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: branchingStoryId },
     );
     expect(await handler.findByIdOrThrow(id)).toMatchObject({
       newCharacterOwnerId: heirId,
@@ -1706,8 +1588,6 @@ describe('relation update paths', () => {
     const handler = new StorySchemaFieldSyncHandler();
     const id = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('StorySchemaField', id, {
         entityType: 'Character',
         name: 'Lar',
@@ -1718,20 +1598,17 @@ describe('relation update paths', () => {
         defaultValue: null,
         order: 1,
       }),
+      { userId, storyId: linearStoryId },
     );
 
-    await handler.delete(
+    await handler.delete(remove('StorySchemaField', id, 1), await handler.findByIdOrThrow(id), {
       userId,
-      linearStoryId,
-      remove('StorySchemaField', id, 1),
-      await handler.findByIdOrThrow(id),
-    );
+      storyId: linearStoryId,
+    });
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ key: 'lar', isDeleted: true });
 
     const next = newId();
     await handler.create(
-      userId,
-      linearStoryId,
       create('StorySchemaField', next, {
         entityType: 'Character',
         name: 'Lar',
@@ -1742,6 +1619,7 @@ describe('relation update paths', () => {
         defaultValue: null,
         order: 1,
       }),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(next)).toMatchObject({ key: 'lar', isDeleted: false });
   });
@@ -1759,10 +1637,9 @@ describe('gallery media lifecycle', () => {
     const handler = new GallerySyncHandler();
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Gallery', fx.Lgallery, { mimeType: 'image/jpeg', version: 1 }),
       await handler.findByIdOrThrow(fx.Lgallery),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Lgallery)).toMatchObject({
       mimeType: 'image/jpeg',
@@ -1771,10 +1648,9 @@ describe('gallery media lifecycle', () => {
     });
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Gallery', fx.Lgallery, { mediaType: 'image', version: 2 }),
       await handler.findByIdOrThrow(fx.Lgallery),
+      { userId, storyId: linearStoryId },
     );
     expect(await handler.findByIdOrThrow(fx.Lgallery)).toMatchObject({ version: 3 });
   });
@@ -1784,10 +1660,9 @@ describe('gallery media lifecycle', () => {
     const hash = 'd'.repeat(32);
 
     await handler.update(
-      userId,
-      linearStoryId,
       change('Gallery', fx.Lgallery, { hash, version: 1 }),
       await handler.findByIdOrThrow(fx.Lgallery),
+      { userId, storyId: linearStoryId },
     );
 
     expect(await handler.findByIdOrThrow(fx.Lgallery)).toMatchObject({ hash, version: 2 });
@@ -1798,7 +1673,10 @@ describe('gallery media lifecycle', () => {
     const foreignHash = await storeBlob('foreign');
 
     await expect(
-      handler.create(userId, linearStoryId, create('Gallery', newId(), galleryData(foreignHash))),
+      handler.create(create('Gallery', newId(), galleryData(foreignHash)), {
+        userId,
+        storyId: linearStoryId,
+      }),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
   });
 
@@ -1807,11 +1685,17 @@ describe('gallery media lifecycle', () => {
     const bytes = new TextEncoder().encode(`shared-${newId()}`).buffer as ArrayBuffer;
     const hash = createHash('md5').update(new Uint8Array(bytes)).digest('hex');
     const firstId = newId();
-    await handler.create(userId, linearStoryId, create('Gallery', firstId, galleryData(hash)));
+    await handler.create(create('Gallery', firstId, galleryData(hash)), {
+      userId,
+      storyId: linearStoryId,
+    });
     await mediaStorageService.store(hash, 'image/png', bytes);
 
     const secondId = newId();
-    await handler.create(userId, linearStoryId, create('Gallery', secondId, galleryData(hash)));
+    await handler.create(create('Gallery', secondId, galleryData(hash)), {
+      userId,
+      storyId: linearStoryId,
+    });
 
     expect(await handler.findByIdOrThrow(secondId)).toMatchObject({ hash, version: 1 });
   });
@@ -1820,25 +1704,25 @@ describe('gallery media lifecycle', () => {
     const handler = new GallerySyncHandler();
     const hash = 'e'.repeat(32);
     const id = newId();
-    await handler.create(userId, linearStoryId, create('Gallery', id, galleryData(hash)));
+    await handler.create(create('Gallery', id, galleryData(hash)), {
+      userId,
+      storyId: linearStoryId,
+    });
     const bytes = new TextEncoder().encode(`owned-${newId()}`).buffer as ArrayBuffer;
     const realHash = createHash('md5').update(new Uint8Array(bytes)).digest('hex');
     await handler.update(
-      userId,
-      linearStoryId,
       change('Gallery', id, { hash: realHash, version: 1 }),
       await handler.findByIdOrThrow(id),
+      { userId, storyId: linearStoryId },
     );
     await mediaStorageService.store(realHash, 'image/png', bytes);
     expect(await mediaStorageService.has(realHash)).toBe(true);
 
-    await handler.delete(
+    await handler.delete(remove('Gallery', id, 2), await handler.findByIdOrThrow(id), {
       userId,
-      linearStoryId,
-      remove('Gallery', id, 2),
-      await handler.findByIdOrThrow(id),
-      db,
-    );
+      storyId: linearStoryId,
+      database: db,
+    });
 
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true });
     // The bytes stay: collecting here would read through the global connection while the push
@@ -1857,16 +1741,20 @@ describe('gallery media lifecycle', () => {
     const hash = createHash('md5').update(new Uint8Array(bytes)).digest('hex');
     const firstId = newId();
     const secondId = newId();
-    await handler.create(userId, linearStoryId, create('Gallery', firstId, galleryData(hash)));
-    await handler.create(userId, linearStoryId, create('Gallery', secondId, galleryData(hash)));
+    await handler.create(create('Gallery', firstId, galleryData(hash)), {
+      userId,
+      storyId: linearStoryId,
+    });
+    await handler.create(create('Gallery', secondId, galleryData(hash)), {
+      userId,
+      storyId: linearStoryId,
+    });
     await mediaStorageService.store(hash, 'image/png', bytes);
 
-    await handler.delete(
+    await handler.delete(remove('Gallery', firstId, 1), await handler.findByIdOrThrow(firstId), {
       userId,
-      linearStoryId,
-      remove('Gallery', firstId, 1),
-      await handler.findByIdOrThrow(firstId),
-    );
+      storyId: linearStoryId,
+    });
 
     expect(await mediaStorageService.has(hash)).toBe(true);
   });
@@ -1886,7 +1774,10 @@ describe('story root paths', () => {
     const stories = new StorySyncHandler();
     const fields = new StorySchemaFieldSyncHandler();
     const storyId = newId();
-    await stories.create(userId, storyId, storyCreate(storyId, { title: 'Attrs', type: 'linear' }));
+    await stories.create(storyCreate(storyId, { title: 'Attrs', type: 'linear' }), {
+      userId,
+      storyId,
+    });
     const firstId = newId();
     const secondId = newId();
     for (const [id, key, order, rank] of [
@@ -1894,8 +1785,6 @@ describe('story root paths', () => {
       [secondId, 'lar', 1, 'a2'],
     ] as const) {
       await fields.create(
-        userId,
-        storyId,
         create('StorySchemaField', id, {
           entityType: 'Character',
           name: key,
@@ -1907,12 +1796,11 @@ describe('story root paths', () => {
           order,
           rank,
         }),
+        { userId, storyId },
       );
     }
 
     await fields.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'StorySchemaField',
@@ -1921,6 +1809,7 @@ describe('story root paths', () => {
         changes: { rank: 'a0', version: 1 },
       } as never,
       await fields.findByIdOrThrow(secondId),
+      { userId, storyId },
     );
     await renumberArranged(db, storyId, 'StorySchemaField');
 
@@ -1933,17 +1822,18 @@ describe('story root paths', () => {
     const stories = new StorySyncHandler();
     const galleries = new GallerySyncHandler();
     const storyId = newId();
-    await stories.create(userId, storyId, storyCreate(storyId, { title: 'Gone', type: 'linear' }));
-    for (const hash of ['f'.repeat(32), '0'.repeat(32)]) {
-      await galleries.create(userId, storyId, create('Gallery', newId(), galleryData(hash)));
-    }
-
-    await stories.delete(
+    await stories.create(storyCreate(storyId, { title: 'Gone', type: 'linear' }), {
       userId,
       storyId,
-      remove('Story', storyId, 1),
-      await stories.findByIdOrThrow(storyId),
-    );
+    });
+    for (const hash of ['f'.repeat(32), '0'.repeat(32)]) {
+      await galleries.create(create('Gallery', newId(), galleryData(hash)), { userId, storyId });
+    }
+
+    await stories.delete(remove('Story', storyId, 1), await stories.findByIdOrThrow(storyId), {
+      userId,
+      storyId,
+    });
 
     expect(await stories.findByIdOrThrow(storyId)).toMatchObject({ isDeleted: true, version: 2 });
   });

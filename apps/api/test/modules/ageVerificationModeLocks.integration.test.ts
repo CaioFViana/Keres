@@ -34,7 +34,7 @@ import {
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 /**
- * How the two modes differ once an account exists (`docs/age_verification.md`, "Modes"): in `manual` an administrator
+ * How the two modes differ once an account exists (`docs/compliance/age_verification.md`, "Modes"): in `manual` an administrator
  * marks and revokes the verified flag by hand and the adults-only area can be on; in `required` the external service
  * is the only one that verifies, so granting by hand is refused (revoking still goes through the service).
  */

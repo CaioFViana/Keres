@@ -66,7 +66,7 @@ export function Showcase() {
     <section className="band" id="showcase">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{t('showcase.title')}</h2>
+          <h2 data-thread-knot>{t('showcase.title')}</h2>
           <p>{t('showcase.lead')}</p>
         </header>
 

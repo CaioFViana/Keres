@@ -1,8 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useStoryServerCollaboration } from '@/src/hooks/social/useStoryServerCollaboration';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
-// @ts-expect-error - only the mock exports it
-import { mockInvitationList } from '@/src/hooks/social/useStoryInvitations';
 
 const mockDb = {};
 const mockT = (key: string) => key;
@@ -90,6 +88,10 @@ jest.mock('@/src/hooks/social/useStoryInvitations', () => {
     useStoryInvitations: () => store((state: { invitations: unknown[] }) => state.invitations),
   };
 });
+// Only the mock above exports the settable list, so the real module's types do not know it.
+const { mockInvitationList } = jest.requireMock('@/src/hooks/social/useStoryInvitations') as {
+  mockInvitationList: { setState: (state: { invitations: unknown[] }) => void };
+};
 const mockSyncInvitations = jest.fn(async () => undefined);
 jest.mock('@/src/services/social/StoryInvitationService', () => ({
   __esModule: true,

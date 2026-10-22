@@ -1,5 +1,7 @@
 import type {
   AccountPlan,
+  OwnPublicProfile,
+  UpdateOwnPublicProfileType,
   UpdateUserPreferencesType,
   UpdateUserProfileType,
   UserPreferencesType,
@@ -8,6 +10,7 @@ import type {
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 export class UserApiService {
   // Same reasoning as FriendshipApiService: never reuse the shared `apiClient` here,
@@ -24,8 +27,8 @@ export class UserApiService {
     try {
       const response = await this.clientFor(server).get(`/user/by-tag/${encodeURIComponent(tag)}`);
       return response.data;
-    } catch (error: any) {
-      if (error.response && error.response.status === 404) {
+    } catch (error) {
+      if (httpStatusOf(error) === 404) {
         return undefined;
       }
       throw error;
@@ -42,6 +45,30 @@ export class UserApiService {
     profile: UpdateUserProfileType,
   ): Promise<UserPublicInfo> {
     const response = await this.clientFor(server).put('/user/profile', profile);
+    return response.data;
+  }
+
+  /** What the user wrote for their author page on `server`'s public showcase (404 on a server older than the route reads as none). */
+  async getPublicProfile(server: ServerSelect): Promise<OwnPublicProfile | undefined> {
+    try {
+      const response = await this.clientFor(server).get<OwnPublicProfile>('/user/public-profile');
+      return response.data;
+    } catch (error) {
+      if (httpStatusOf(error) === 404) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  async updatePublicProfile(
+    server: ServerSelect,
+    profile: UpdateOwnPublicProfileType,
+  ): Promise<OwnPublicProfile> {
+    const response = await this.clientFor(server).put<OwnPublicProfile>(
+      '/user/public-profile',
+      profile,
+    );
     return response.data;
   }
 
@@ -115,8 +142,8 @@ export class UserApiService {
     try {
       const response = await this.clientFor(server).get(`/user/details/${server.idUser}`);
       return response.data;
-    } catch (error: any) {
-      if (error.response && error.response.status === 404) {
+    } catch (error) {
+      if (httpStatusOf(error) === 404) {
         return undefined;
       }
       throw error;

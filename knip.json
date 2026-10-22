@@ -1,0 +1,71 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "drizzle": false,
+  "ignoreIssues": {
+    "apps/client/test/helpers/detailTabsMock.tsx": ["exports"]
+  },
+  "ignoreUnresolved": ["test/syncFuzz/server.ts"],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.ts"],
+      "project": ["scripts/**/*.ts"]
+    },
+    "apps/api": {
+      "entry": [
+        "src/index.ts",
+        "src/boot.ts",
+        "scripts/*.ts",
+        "test/syncFuzz/server.ts",
+        "test/helpers/shutdownHarness.ts",
+        "test/**/*.test.ts",
+        "vitest*.ts"
+      ],
+      "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
+    },
+    "apps/client": {
+      "entry": [
+        "src/App.tsx",
+        "src/content/**/generated/registry.ts",
+        "src/db/migrations/index.ts",
+        "scripts/*.ts",
+        "plugins/*.js",
+        "test/**/*.test.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.ts",
+        "test/**/*.{ts,tsx}"
+      ],
+      "ignoreDependencies": ["expo-updates"]
+    },
+    "apps/web": {
+      "entry": ["vite*.ts", "test/**/*.test.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"]
+    },
+    "apps/site": {
+      "entry": ["vite*.ts", "test/**/*.test.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"]
+    },
+    "apps/desktop": {
+      "entry": [
+        "src/preload.ts",
+        "src/afterPack.ts",
+        "scripts/*.ts",
+        "test/**/*.test.ts"
+      ],
+      "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
+    },
+    "apps/e2e": {
+      "entry": ["tests/**/*.spec.ts"],
+      "project": ["*.ts", "tests/**/*.ts"]
+    },
+    "packages/shared": {
+      "entry": ["test/**/*.test.ts"],
+      "project": ["**/*.ts"]
+    }
+  },
+  "rules": {
+    "duplicates": "off"
+  }
+}

@@ -148,7 +148,6 @@ const ManuscriptScreen = () => {
     canComment,
     isStoryOwner,
     currentUserId,
-    updateComment,
     deleteComment,
     openThread,
     closeThread,
@@ -514,7 +513,6 @@ const ManuscriptScreen = () => {
           currentUserId={currentUserId}
           onSubmitThread={submitThread}
           onDeleteThread={deleteComment}
-          onUpdateThread={updateComment}
           testID="manuscript-review-tools"
         />
       )}

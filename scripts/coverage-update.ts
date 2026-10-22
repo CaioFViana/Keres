@@ -40,7 +40,7 @@ const reports: Record<string, [string, string][]> = {
     ['apps/api', 'coverage-integration'],
   ],
   payments: [['apps/payments', 'coverage']],
-  admin: [['apps/admin', 'coverage']],
+  web: [['apps/web', 'coverage']],
   desktop: [['apps/desktop', 'coverage']],
   site: [['apps/site', 'coverage']],
 };

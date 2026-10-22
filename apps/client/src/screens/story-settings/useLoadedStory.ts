@@ -4,6 +4,7 @@ import { useDrizzle } from '@/src/db';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { logger } from '@/src/utils/logging/logger';
 
 type LoadedStory = NonNullable<
   Awaited<ReturnType<ReturnType<typeof createStoryService>['getStoryById']>>
@@ -49,7 +50,7 @@ export function useLoadedStory(onLoad: (story: LoadedStory) => void) {
         onLoadRef.current(story);
         setState({ loading: false, error: null });
       } catch (err) {
-        console.error('Failed to load story settings:', err);
+        logger.error('Failed to load story settings:', err);
         if (!cancelled) setState({ loading: false, error: t('failed_to_load_story_settings') });
       }
     };

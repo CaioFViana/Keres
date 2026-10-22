@@ -1,8 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import keresLogoUrl from 'virtual:keres-logo';
 import { LANDING_NAV_SECTIONS, NAV_SECTIONS } from '../content/catalog';
-import { GITHUB_README_URL, GITHUB_REPO_URL } from '../content/links';
+import { LEGAL_PAGES, legalPath } from '../content/legalPages';
+import { GITHUB_README_URL, GITHUB_REPO_URL, HOSTED_SHOWCASE_URL } from '../content/links';
+import { useShowcaseAvailable } from './ShowcaseAvailability';
 import { isLandingBuild } from '../variant';
 import { LanguageSelect } from '../i18n/LanguageSelect';
 import { SITE_LANGUAGE_KEY } from '../i18n';
@@ -29,15 +31,77 @@ function ThemeToggle() {
   );
 }
 
-export function Layout({ children }: { children: ReactNode }) {
+/**
+ * The server's two legal documents, one entry of the menu: each is a page of its own, and the page it opens has a link
+ * to the other. Closes when the reader goes elsewhere or presses Escape.
+ */
+function LegalMenu({ onNavigate }: { onNavigate: () => void }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: MouseEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  return (
+    <div className="nav-menu" ref={box}>
+      <button
+        type="button"
+        className="nav-menu-button"
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((current) => !current)}
+      >
+        {t('nav.legal')}
+      </button>
+      {open && (
+        <div className="nav-menu-list">
+          {LEGAL_PAGES.map((page) => (
+            <a
+              key={page}
+              href={legalPath(page)}
+              data-testid={`nav-${page}`}
+              onClick={() => {
+                setOpen(false);
+                onNavigate();
+              }}
+            >
+              {t(`legal.tabs.${page}`)}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The header and the footer of every page. `home` is whether this page is the landing itself: on any other page of the
+ * server (the legal documents) the sections of the landing are addresses on its root, not on this page.
+ */
+export function Layout({ children, home = true }: { children: ReactNode; home?: boolean }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const showcaseAvailable = useShowcaseAvailable();
 
   return (
     <div className="site">
       <header className="site-header">
         <div className="site-header-inner">
-          <a href="#top" className="brand">
+          <a href={home ? '#top' : '/'} className="brand">
             <KeresMark />
             <span className="brand-name">Keres</span>
           </a>
@@ -53,10 +117,20 @@ export function Layout({ children }: { children: ReactNode }) {
             </button>
             <div id="site-nav-links" className={menuOpen ? 'nav-links is-open' : 'nav-links'}>
               {(isLandingBuild ? LANDING_NAV_SECTIONS : NAV_SECTIONS).map((section) => (
-                <a key={section} href={`#${section}`} onClick={() => setMenuOpen(false)}>
+                <a
+                  key={section}
+                  href={`${home ? '' : '/'}#${section}`}
+                  onClick={() => setMenuOpen(false)}
+                >
                   {t(`nav.${section}`)}
                 </a>
               ))}
+              {isLandingBuild && <LegalMenu onNavigate={() => setMenuOpen(false)} />}
+              {showcaseAvailable && (
+                <a href={HOSTED_SHOWCASE_URL} data-testid="nav-showcase">
+                  {t('nav.showcase')}
+                </a>
+              )}
               <a href={GITHUB_REPO_URL} rel="noreferrer" target="_blank">
                 {t('nav.github')}
               </a>
@@ -88,10 +162,16 @@ export function Layout({ children }: { children: ReactNode }) {
                 no server's policy as its own. */}
             {isLandingBuild && (
               <>
+                {showcaseAvailable && (
+                  <>
+                    <span aria-hidden="true"> · </span>
+                    <a href={HOSTED_SHOWCASE_URL}>{t('footer.showcase')}</a>
+                  </>
+                )}
                 <span aria-hidden="true"> · </span>
-                <a href="#terms">{t('footer.terms')}</a>
+                <a href={legalPath('terms')}>{t('footer.terms')}</a>
                 <span aria-hidden="true"> · </span>
-                <a href="#privacy">{t('footer.privacy')}</a>
+                <a href={legalPath('privacy')}>{t('footer.privacy')}</a>
               </>
             )}
           </p>

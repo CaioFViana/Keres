@@ -3,6 +3,7 @@ import { useDrizzle } from '@/src/db';
 import type { TagSelect } from '@/src/db/schema';
 import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story's tags as the options of a list's tag filter. Fetched here rather than by the list hook,
@@ -22,7 +23,7 @@ export function useStoryTagFilterOptions(storyId: string | undefined) {
       const fetchedTags = await tagService.getTagsByStoryId(storyId);
       setAllTags(fetchedTags);
     } catch (error) {
-      console.error('Failed to fetch tags:', error);
+      logger.error('Failed to fetch tags:', error);
     }
   }, [storyId, tagService]);
 

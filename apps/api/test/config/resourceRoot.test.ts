@@ -37,18 +37,18 @@ describe('resourceRoot', () => {
     expect(migrationsFolder(true)).toBe(sqlite);
   });
 
-  it('finds admin-dist under the resource override', () => {
+  it('finds dist-admin under the resource override', () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'keres-admin-'));
-    const dist = path.join(root, 'admin-dist');
+    const dist = path.join(root, 'dist-admin');
     mkdirSync(dist);
     writeFileSync(path.join(dist, 'index.html'), '<html></html>');
     vi.stubEnv('KERES_RESOURCE_ROOT', root);
     expect(adminDistPath()).toBe(dist);
   });
 
-  it('finds client-dist under the resource override', () => {
+  it('finds dist-client under the resource override', () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'keres-client-'));
-    const dist = path.join(root, 'client-dist');
+    const dist = path.join(root, 'dist-client');
     mkdirSync(dist);
     writeFileSync(path.join(dist, 'index.html'), '<html></html>');
     vi.stubEnv('KERES_RESOURCE_ROOT', root);

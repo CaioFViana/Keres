@@ -32,6 +32,7 @@ export class UserDataService {
       accessRecords,
       ageVerification,
       preferences,
+      publicProfile,
     ] = await Promise.all([
       userService.getUserById(userId),
       termsAcceptanceService.history(userId),
@@ -50,6 +51,7 @@ export class UserDataService {
       accessRecordService.listOwn(userId),
       ageVerificationService.historyFor(userId),
       userService.getPreferences(userId),
+      userService.getPublicProfile(userId),
     ]);
     return {
       exportedAt: new Date().toISOString(),
@@ -64,6 +66,8 @@ export class UserDataService {
       ageVerification,
       // The owner's private preferences: the one flag they hold, not the public profile shape.
       preferences: preferences ? { showNsfw: preferences.showNsfw } : null,
+      // What the author wrote for the public showcase page: biography, links and theme.
+      publicProfile: publicProfile ?? null,
     };
   }
 }

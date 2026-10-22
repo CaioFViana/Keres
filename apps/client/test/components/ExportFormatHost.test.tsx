@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import ExportFormatHost from '@/src/components/features/export/ExportFormatHost';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { useExportFormatPromptStore } from '@/src/state/ui/exportFormatPromptStore';
 
 jest.mock('@/src/state/ui/exportFormatPrompt', () =>
@@ -23,9 +24,6 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return { __esModule: true, default: ({ children }: any) => <View>{children}</View> };
 });
-
-// eslint-disable-next-line import/first
-import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 describe('export format chooser', () => {
   afterEach(() => useExportFormatPromptStore.getState().answer(null));

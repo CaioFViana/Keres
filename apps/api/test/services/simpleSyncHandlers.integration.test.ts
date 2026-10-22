@@ -142,23 +142,27 @@ describe('simple sync entity handlers', () => {
       const handler = build();
       const firstId = newId();
       const secondId = newId();
-      await handler.create(userId, storyId, {
-        type: 'create',
-        entity,
-        id: firstId,
-        data: firstData,
-      } as CreateStoryUpdate);
-      await handler.create(userId, storyId, {
-        type: 'create',
-        entity,
-        id: secondId,
-        data: secondData,
-      } as CreateStoryUpdate);
+      await handler.create(
+        {
+          type: 'create',
+          entity,
+          id: firstId,
+          data: firstData,
+        } as CreateStoryUpdate,
+        { userId, storyId },
+      );
+      await handler.create(
+        {
+          type: 'create',
+          entity,
+          id: secondId,
+          data: secondData,
+        } as CreateStoryUpdate,
+        { userId, storyId },
+      );
       const second = await handler.findByIdOrThrow(secondId);
 
       const rename = handler.update(
-        userId,
-        storyId,
         {
           type: 'update',
           entity,
@@ -166,6 +170,7 @@ describe('simple sync entity handlers', () => {
           changes: { name: firstData.name, version: 1 },
         } as UpdateStoryUpdate,
         second,
+        { userId, storyId },
       );
 
       await expect(rename).rejects.toThrow(/already exists/i);
@@ -178,29 +183,30 @@ describe('simple sync entity handlers', () => {
     async (entity, build, data, changes, changedField, expectedValue) => {
       const handler = build();
       const id = newId();
-      await handler.create(userId, storyId, {
-        type: 'create',
-        entity,
-        id,
-        data,
-      } as CreateStoryUpdate);
+      await handler.create(
+        {
+          type: 'create',
+          entity,
+          id,
+          data,
+        } as CreateStoryUpdate,
+        { userId, storyId },
+      );
       const created = await handler.findByIdOrThrow(id);
       expect(created).toMatchObject({ id, storyId, version: 1, isDeleted: false });
 
       await handler.update(
-        userId,
-        storyId,
         { type: 'update', entity, id, changes: { ...changes, version: 1 } } as UpdateStoryUpdate,
         created,
+        { userId, storyId },
       );
       const updated = await handler.findByIdOrThrow(id);
       expect(updated).toMatchObject({ [changedField]: expectedValue, version: 2 });
 
       await handler.delete(
-        userId,
-        storyId,
         { type: 'delete', entity, id, version: 2 } as DeleteStoryUpdate,
         updated,
+        { userId, storyId },
       );
       expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 3 });
     },
@@ -209,12 +215,15 @@ describe('simple sync entity handlers', () => {
 
 describe('StoryArc ordering and defaults', () => {
   const create = (id: string, data: Record<string, unknown>) =>
-    new StoryArcSyncHandler().create(userId, storyId, {
-      type: 'create',
-      entity: 'StoryArc',
-      id,
-      data,
-    } as CreateStoryUpdate);
+    new StoryArcSyncHandler().create(
+      {
+        type: 'create',
+        entity: 'StoryArc',
+        id,
+        data,
+      } as CreateStoryUpdate,
+      { userId, storyId },
+    );
 
   it('makes the first arc of a story the default, ordered at zero', async () => {
     const handler = new StoryArcSyncHandler();
@@ -280,10 +289,9 @@ describe('StoryArc ordering and defaults', () => {
 
     const change = async (changes: Record<string, unknown>, version: number) =>
       handler.update(
-        userId,
-        storyId,
         { type: 'update', entity: 'StoryArc', id, changes: { ...changes, version } } as never,
         await handler.findByIdOrThrow(id),
+        { userId, storyId },
       );
     await change({ pageFormat: 'wide' }, 1);
     expect((await handler.findByIdOrThrow(id)).pageFormat).toBe('wide');

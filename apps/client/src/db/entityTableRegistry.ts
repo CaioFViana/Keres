@@ -1,6 +1,7 @@
 import { getTableColumns } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import * as schema from '@/src/db/schema';
+import type { WireValues } from '@/src/types/wireValues';
 
 /**
  * A map from entity name (the same one used in the operation log and in the
@@ -103,17 +104,14 @@ const PROTECTED_BY_ENTITY: Record<string, ReadonlySet<string>> = {
  * Normalizes an object coming from JSON into something drizzle accepts in a `.set()`:
  * it converts dates, discards protected fields and ignores keys that do not exist in the table.
  */
-export function toEntityColumns(
-  entityType: string,
-  values: Record<string, any>,
-): Record<string, any> {
+export function toEntityColumns(entityType: string, values: WireValues): WireValues {
   const table = getEntityTable(entityType);
   if (!table) {
     return {};
   }
 
   const columns = new Set(Object.keys(getTableColumns(table)));
-  const normalized: Record<string, any> = {};
+  const normalized: WireValues = {};
 
   for (const [key, value] of Object.entries(values)) {
     if (
@@ -136,9 +134,9 @@ export function toEntityColumns(
 /** It discards local bookkeeping columns even when the entity is not in the registry. */
 export function omitClientProtectedFields(
   entityType: string,
-  payload: Record<string, any> | undefined,
-): Record<string, any> {
-  const out: Record<string, any> = { ...(payload ?? {}) };
+  payload: WireValues | undefined,
+): WireValues {
+  const out: WireValues = { ...(payload ?? {}) };
   for (const key of PROTECTED_FIELDS) {
     delete out[key];
   }

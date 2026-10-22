@@ -327,8 +327,8 @@ function jsonOf(view: View, testID: string) {
 }
 
 describe('LocationFormContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the title, actions and all fields', async () => {

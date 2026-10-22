@@ -81,7 +81,7 @@ describe('DetailField mentions', () => {
     const openMention = jest.fn();
     const screen = await renderField('Alice went home.', matcherWithAlice(), openMention);
 
-    fireEvent.press(screen.getByText('Alice'));
+    await fireEvent.press(screen.getByText('Alice'));
 
     expect(openMention).toHaveBeenCalledWith(ALICE);
   });
@@ -102,7 +102,7 @@ describe('DetailField mentions', () => {
       </MentionMatcherContext.Provider>,
     );
 
-    fireEvent.press(screen.getByText('Alice'));
+    await fireEvent.press(screen.getByText('Alice'));
 
     expect(onPress).toHaveBeenCalled();
   });
@@ -119,7 +119,7 @@ describe('DetailField comment marks', () => {
     const marked = screen.getByText('crash');
     expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
 
-    fireEvent.press(marked);
+    await fireEvent.press(marked);
     expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
 
@@ -131,7 +131,7 @@ describe('DetailField comment marks', () => {
       onCommentPress,
     });
 
-    fireEvent.press(screen.getByText('Alice'));
+    await fireEvent.press(screen.getByText('Alice'));
 
     expect(onCommentPress).toHaveBeenCalledTimes(1);
     expect(openMention).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe('DetailField comment marks', () => {
       onCommentPress: () => {},
     });
 
-    fireEvent.press(screen.getByText('Alice'));
+    await fireEvent.press(screen.getByText('Alice'));
 
     expect(openMention).toHaveBeenCalledWith(ALICE);
   });
@@ -158,7 +158,7 @@ describe('DetailField comment marks', () => {
       onCommentPress,
     });
 
-    fireEvent.press(screen.getByText('Alice'));
+    await fireEvent.press(screen.getByText('Alice'));
 
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(onCommentPress).not.toHaveBeenCalled();
@@ -247,7 +247,7 @@ describe('DetailField occurrence flash', () => {
     const link = screen.getByText('Alice');
     expect(StyleSheet.flatten(link.parent!.props.style).backgroundColor).toBe('#00f');
 
-    fireEvent.press(link);
+    await fireEvent.press(link);
     expect(openMention).toHaveBeenCalledWith(ALICE);
   });
 
@@ -268,7 +268,7 @@ describe('DetailField occurrence flash', () => {
     expect(StyleSheet.flatten(screen.getByText('went').props.style).backgroundColor).toBe('#aaf');
     expect(StyleSheet.flatten(screen.getByText('home').props.style).backgroundColor).toBe('#00f');
 
-    fireEvent.press(screen.getByText('went'));
+    await fireEvent.press(screen.getByText('went'));
     expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
 });

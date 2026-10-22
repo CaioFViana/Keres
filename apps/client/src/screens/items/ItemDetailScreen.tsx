@@ -46,6 +46,7 @@ import { useTheme } from '@/src/theme';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 export type ItemDetailScreenParamList = {
   ItemDetail: { itemId: string; occurrence?: OccurrenceTarget };
@@ -102,7 +103,7 @@ const ItemDetailScreen = () => {
 
   const fetchItem = useCallback(async () => {
     if (!itemServiceRef.current) {
-      console.warn('Item service not initialized.');
+      logger.warn('Item service not initialized.');
       return;
     }
     try {
@@ -118,7 +119,7 @@ const ItemDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch item details:', err);
+      logger.error('Failed to fetch item details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -132,12 +133,12 @@ const ItemDetailScreen = () => {
       const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
       setAllCharacters(fetchedCharacters);
     } catch (err) {
-      console.error('Failed to fetch all characters:', err);
+      logger.error('Failed to fetch all characters:', err);
     }
   }, [selectedStory?.id]);
 
   const handleItemChange = useCallback(
-    async (changedStoryId: string, changedItemId: string) => {
+    async (_changedStoryId: string, changedItemId: string) => {
       if (changedItemId === itemId && itemServiceRef.current) {
         const updatedItem = await itemServiceRef.current.getById(itemId);
         if (!updatedItem || updatedItem.isDeleted) {

@@ -350,6 +350,25 @@ export class AdminUserService {
     return updated;
   }
 
+  /**
+   * Empties what the account wrote for its public author page (biography, links, theme): the moderation answer to
+   * a page that must not be on show. The account, its short bio and its stories are untouched, and the author may
+   * write the page again.
+   */
+  async clearPublicProfile(id: string): Promise<void> {
+    const existing = await db.query.users.findFirst({
+      columns: { id: true },
+      where: eq(users.id, id),
+    });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    await db
+      .update(users)
+      .set({ profileBiography: null, profileLinks: [], profileTheme: null, updatedAt: new Date() })
+      .where(eq(users.id, id));
+  }
+
   async softDelete(id: string) {
     const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
     if (!existing) {

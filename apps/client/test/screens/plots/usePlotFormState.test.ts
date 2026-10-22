@@ -134,7 +134,7 @@ describe('usePlotFormState durable drafts', () => {
       first.result.current.setName('A Traição');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -147,7 +147,7 @@ describe('usePlotFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -166,7 +166,7 @@ describe('usePlotFormState durable drafts', () => {
       first.result.current.setName('A Vingança, adiada');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ plotId: 'plot-1', plot: persistedPlot });
@@ -193,7 +193,7 @@ describe('usePlotFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -207,7 +207,7 @@ describe('usePlotFormState durable drafts', () => {
       second.result.current.setName('A Redenção');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -233,7 +233,7 @@ describe('usePlotFormState durable drafts', () => {
     expect(first.result.current.details).toBe('Queima lenta');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ plotId: 'plot-1', plot: persistedPlot });
@@ -250,7 +250,7 @@ describe('usePlotFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerPlot = {

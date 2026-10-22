@@ -446,8 +446,8 @@ beforeEach(() => {
   mockDeliverMapExport.mockResolvedValue({ delivered: true, fileName: 'Saga.svg' });
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders the map with subtitle and canvas state', async () => {

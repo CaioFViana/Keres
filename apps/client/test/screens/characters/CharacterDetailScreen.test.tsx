@@ -252,8 +252,8 @@ function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unkno
 }
 
 describe('CharacterDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

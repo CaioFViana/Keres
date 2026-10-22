@@ -589,7 +589,7 @@ describe('SyncInitializer', () => {
     mockSyncEngine.deactivateStory.mockClear();
     mockUserSettings.current.clearActiveServer.mockClear();
     await act(async () => {
-      view.unmount();
+      await view.unmount();
     });
 
     for (const event of [

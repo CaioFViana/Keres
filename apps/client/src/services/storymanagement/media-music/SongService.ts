@@ -13,6 +13,7 @@ import {
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 /** What a person can write of a song; every field is optional on a change. */
 export interface SongFields {
@@ -156,7 +157,7 @@ export const createSongService = (db: AppDrizzleClient): SongService => {
     async deleteSong(currentUserId, songId) {
       const original = await db.query.songs.findFirst({ where: eq(songs.id, songId) });
       if (!original) {
-        console.warn(`Attempted to delete non-existent song ${songId}.`);
+        logger.warn(`Attempted to delete non-existent song ${songId}.`);
         return;
       }
       await assertStoryIsWritable(db, original.storyId);

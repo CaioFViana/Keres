@@ -3,6 +3,7 @@ import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { bytesToBase64 } from './locationMapMedia';
 import { renderLocationMapSvg } from '@/src/utils/location-map/locationMapSvg';
 import type { LocationMapSvgOptions } from '@/src/utils/location-map/locationMapSvg';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface LocationMapExportMedia {
   mediaType: string;
@@ -29,7 +30,7 @@ export async function buildLocationMapSvg(
       imageUris[image.galleryId] =
         `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
     } catch (readError) {
-      console.log('LocationMapScreen: failed to read image for export.', readError);
+      logger.debug('LocationMapScreen: failed to read image for export.', readError);
     }
   }
   return renderLocationMapSvg(content, { ...options, imageUris });

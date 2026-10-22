@@ -15,9 +15,11 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import {
+  type EntityEventSubscription,
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /** The HTTP status of a failed call, which the client's axios wrapper keeps on `response`. */
 const statusOf = (error: unknown): number | undefined =>
@@ -77,7 +79,7 @@ export function useConversation(serverId: string, peer: MessagePeerRef) {
       } else if (statusOf(error) === 403) {
         showNotification(t('message_not_friends'), 'error');
       } else {
-        console.error('Messages:', error);
+        logger.error('Messages:', error);
         showNotification(t(fallbackKey), 'error');
       }
     },
@@ -107,7 +109,7 @@ export function useConversation(serverId: string, peer: MessagePeerRef) {
     } catch (error) {
       setUnavailable(true);
       if (!isOfflineError(error)) {
-        console.error('Failed to load the conversation:', error);
+        logger.error('Failed to load the conversation:', error);
         showNotification(t('messages_load_failed'), 'error');
       }
     } finally {
@@ -116,7 +118,7 @@ export function useConversation(serverId: string, peer: MessagePeerRef) {
   }, [service, serverId, stablePeer, refreshLimits, showNotification, t]);
 
   useEntityInitialLoad(load);
-  const subscriptions = useMemo(
+  const subscriptions = useMemo<EntityEventSubscription[]>(
     () => [
       {
         event: MESSAGES_CHANGED,

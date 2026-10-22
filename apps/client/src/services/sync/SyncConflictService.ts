@@ -7,7 +7,7 @@ import type { SyncConflictSelect } from '@/src/db/schema';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
-import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import { cloneConflictBoard } from './boardConflictClone';
 import { cloneConflictSketch } from './sketchConflictClone';
 import { isRoutePathConflict, landRoutePath } from './routePathDecision';
@@ -18,6 +18,8 @@ import {
   SNAPSHOT_BOOKKEEPING,
   withoutDerivedPosition,
 } from './syncConflictHelpers';
+import { logger } from '@/src/utils/logging/logger';
+import type { WireValues } from '@/src/types/wireValues';
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -31,9 +33,9 @@ export interface PendingConflict {
   localOperationType: 'create' | 'update' | 'delete';
   localOperationIds: string[];
   /** Fields the user changed that have not been accepted by the server yet. */
-  localValues: Record<string, any>;
+  localValues: WireValues;
   /** The entity's state on the server. `null` when it no longer exists there. */
-  serverValues: Record<string, any> | null;
+  serverValues: WireValues | null;
   clientVersion: number | null;
   serverVersion: number | null;
   message: string | null;
@@ -53,8 +55,8 @@ export interface RecordConflictInput {
   reason: SyncConflictReason;
   localOperationType: 'create' | 'update' | 'delete';
   localOperationIds: string[];
-  localValues: Record<string, any>;
-  serverValues?: Record<string, any> | null;
+  localValues: WireValues;
+  serverValues?: WireValues | null;
   clientVersion?: number | null;
   serverVersion?: number | null;
   message?: string | null;
@@ -65,7 +67,7 @@ export interface RefreshServerSnapshotInput {
   entityType: string;
   entityId: string;
   /** What a remote operation arriving after the conflict opened set on the server. */
-  serverValues: Record<string, any>;
+  serverValues: WireValues;
   serverVersion: number | null;
 }
 
@@ -80,7 +82,7 @@ export interface SyncConflictService {
   getPendingConflicts(storyId?: string): Promise<PendingConflict[]>;
   countPendingConflicts(storyId?: string): Promise<number>;
   /** Preserves the user's work, rebased onto the server's current version. */
-  resolveKeepLocal(conflictId: string, chosenValues?: Record<string, any>): Promise<void>;
+  resolveKeepLocal(conflictId: string, chosenValues?: WireValues): Promise<void>;
   /** Accepts what the server has and discards the pending local operations. */
   resolveKeepServer(conflictId: string): Promise<void>;
   /**
@@ -113,8 +115,8 @@ export { findContestedFields, mergeLocalOperationPayloads } from '@keres/shared'
 
 export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictService => {
   const toPendingConflict = (row: SyncConflictSelect): PendingConflict => {
-    const localValues = parseJson<Record<string, any>>(row.localValues, {});
-    const serverValues = parseJson<Record<string, any> | null>(row.serverValues, null);
+    const localValues = parseJson<WireValues>(row.localValues, {});
+    const serverValues = parseJson<WireValues | null>(row.serverValues, null);
 
     return {
       id: row.id,
@@ -185,7 +187,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   const recordRebasedOperation = async (
     conflict: PendingConflict,
     operationType: 'create' | 'update' | 'delete',
-    values: Record<string, any>,
+    values: WireValues,
     baseVersion: number,
   ) => {
     // Runs inside `withResolutionLock`, which holds the same per-story lock as
@@ -232,7 +234,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       columns: { storyId: true },
     });
     if (!initial) {
-      console.log(`SyncConflictService: conflict ${conflictId} not found.`);
+      logger.debug(`SyncConflictService: conflict ${conflictId} not found.`);
       return;
     }
     await withOpLogLock(initial.storyId, async () => {
@@ -240,7 +242,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         where: eq(schema.syncConflicts.id, conflictId),
       });
       if (!row || row.status !== 'pending') {
-        console.log(`SyncConflictService: conflict ${conflictId} is no longer pending.`);
+        logger.debug(`SyncConflictService: conflict ${conflictId} is no longer pending.`);
         return;
       }
       await resolve(toPendingConflict(row));
@@ -254,7 +256,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
    * choice is to send them on, rebased onto the accepted server state. Push-side conflicts carry
    * the whole server row, so this is empty for them; pull-side ones carry only the remote delta.
    */
-  const uncontestedLocalValues = (conflict: PendingConflict): Record<string, any> => {
+  const uncontestedLocalValues = (conflict: PendingConflict): WireValues => {
     if (conflict.isDeletedOnServer || !conflict.serverValues) return {};
     const serverValues = conflict.serverValues;
     return Object.fromEntries(
@@ -314,7 +316,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
    * The conflict's server snapshot as it may be written over the row: without the position an
    * arranged row derives from its rank, and without the bookkeeping older builds stamped on it.
    */
-  const writableSnapshot = (conflict: PendingConflict): Record<string, any> => {
+  const writableSnapshot = (conflict: PendingConflict): WireValues => {
     if (!conflict.serverValues) return {};
     const { asOf: _asOf, positionAsOf: _positionAsOf, ...snapshot } = conflict.serverValues;
     return withoutDerivedPosition(conflict.entityType, snapshot);
@@ -324,27 +326,27 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   const readLocalEntity = async (
     entityType: string,
     entityId: string,
-  ): Promise<Record<string, any> | undefined> => {
+  ): Promise<WireValues | undefined> => {
     const table = getEntityTable(entityType);
     if (!table) return undefined;
     const rows = await db
       .select()
       .from(table)
-      .where(eq((table as any).id, entityId))
+      .where(eq(columnsOf(table).id, entityId))
       .limit(1);
-    return rows.at(0) as Record<string, any> | undefined;
+    return rows.at(0) as WireValues | undefined;
   };
 
   /** Writes values into the local entity and aligns the version with the server's. */
   const writeEntity = async (
     entityType: string,
     entityId: string,
-    values: Record<string, any>,
+    values: WireValues,
     version: number,
   ) => {
     const table = getEntityTable(entityType);
     if (!table) {
-      console.log(`SyncConflictService: no local table registered for entity type ${entityType}.`);
+      logger.debug(`SyncConflictService: no local table registered for entity type ${entityType}.`);
       return;
     }
 
@@ -353,7 +355,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     await db
       .update(table)
       .set({ ...columns, version, updatedAt: new Date() })
-      .where(eq((table as any).id, entityId));
+      .where(eq(columnsOf(table).id, entityId));
   };
 
   // A quarantined operation failed local validation, so there is no server snapshot to restore or
@@ -434,10 +436,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   };
 
   /** "Keep mine": the local values, rebased onto the snapshot the conflict holds now. */
-  const keepLocal = async (
-    conflict: PendingConflict,
-    chosenValues?: Record<string, any>,
-  ): Promise<void> => {
+  const keepLocal = async (conflict: PendingConflict, chosenValues?: WireValues): Promise<void> => {
     const conflictId = conflict.id;
     if (conflict.reason === 'validation' && !conflict.serverValues) {
       await resolveUnpushable(conflict);
@@ -605,7 +604,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
               : input.localOperationType,
             localOperationIds: JSON.stringify(mergedOperationIds),
             localValues: JSON.stringify({
-              ...parseJson<Record<string, any>>(existing.localValues, {}),
+              ...parseJson<WireValues>(existing.localValues, {}),
               ...input.localValues,
             }),
             serverValues: contributesOpsOnly ? existing.serverValues : snapshot.serverValues,
@@ -696,7 +695,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       return rows.length;
     },
 
-    async resolveKeepLocal(conflictId: string, chosenValues?: Record<string, any>): Promise<void> {
+    async resolveKeepLocal(conflictId: string, chosenValues?: WireValues): Promise<void> {
       const conflict = await getConflict(conflictId);
       if (conflict && isRoutePathConflict(conflict)) {
         return resolveRoutePath(conflictId, 'keep_local');

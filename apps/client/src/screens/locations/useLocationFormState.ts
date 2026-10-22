@@ -8,6 +8,7 @@ import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseLocationFormStateOptions = {
   initialLocationId?: string;
@@ -132,11 +133,11 @@ export function useLocationFormState({
                 : fromDb,
             );
           } else {
-            console.warn('Location not found:', initialLocationId);
+            logger.warn('Location not found:', initialLocationId);
           }
         }
       } catch (err) {
-        console.error('Failed to load location:', err);
+        logger.error('Failed to load location:', err);
       } finally {
         setLoading(false);
       }
@@ -153,7 +154,7 @@ export function useLocationFormState({
 
   const restoreDraftFields = useCallback((fields: LocationFormDraftFields) => {
     if (!isLocationFormDraftFields(fields)) {
-      console.error('Corrupt location form draft ignored.');
+      logger.error('Corrupt location form draft ignored.');
       return;
     }
     setName(fields.name);

@@ -8,6 +8,7 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Public-favorite roster for one entity. Hidden when the story does not publish who starred it. */
 export function useFavoriters(storyId: string, entityId: string, entityType: FavoriteEntityType) {
@@ -45,7 +46,7 @@ export function useFavoriters(storyId: string, entityId: string, entityType: Fav
       );
       setProfiles(resolved);
     } catch (error) {
-      console.error('Failed to load users who favorited the entity:', error);
+      logger.error('Failed to load users who favorited the entity:', error);
       setProfiles([]);
     } finally {
       setLoading(false);

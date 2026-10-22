@@ -35,6 +35,7 @@ import {
   persistInitialFavorite,
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -183,7 +184,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         );
         newChapter = { ...newChapter, arcId: defaultArc.id };
       }
-      const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, 'Chapter', newChapter);
+      const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, newChapter);
       newChapter = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -278,7 +279,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for chapter ${chapterId}. Skipping update and operation log.`,
         );
         return originalChapter;
@@ -340,7 +341,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         where: eq(chapters.id, chapterId),
       });
       if (!chapterToDelete) {
-        console.warn(`Attempted to delete non-existent chapter ${chapterId}.`);
+        logger.warn(`Attempted to delete non-existent chapter ${chapterId}.`);
         return;
       }
       await assertStoryIsWritable(db, chapterToDelete.storyId);
@@ -365,7 +366,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       type: ChapterType | null = 'chapter',
     ): Promise<ChapterSelect[]> {
       if (!storyId) {
-        console.error('getAllByStoryId: storyId is required.');
+        logger.error('getAllByStoryId: storyId is required.');
         return [];
       }
       try {
@@ -386,7 +387,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
           .all();
         return allChapters;
       } catch (error) {
-        console.error(`Error fetching all chapters for story ${storyId}:`, error);
+        logger.error(`Error fetching all chapters for story ${storyId}:`, error);
         return [];
       }
     },

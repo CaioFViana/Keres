@@ -90,8 +90,10 @@ describe('SvgRasterHost', () => {
       out.catch(() => {});
     });
 
-    await settle(700);
-    await expect(out!).rejects.toThrow('no bytes');
+    // Inside act: the polling gives up on its own timer and then updates the store.
+    await act(async () => {
+      await expect(out!).rejects.toThrow('no bytes');
+    });
   });
 
   it('supersedes a stale request instead of resolving it late', async () => {

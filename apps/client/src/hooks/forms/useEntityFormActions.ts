@@ -1,3 +1,4 @@
+import type { EntityChangeEvent } from '@/src/state/events/entityEvents';
 import {
   type CustomAttributeValues,
   validateRequiredCustomAttributes,
@@ -15,12 +16,13 @@ import {
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { type ConfirmDeleteOptions, useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity> {
   /** The entity type its custom attribute values are stored under, e.g. `'Location'`; omit for an entity with none. */
   entityType?: StorySchemaEntityType;
   /** Emitted once the entity and everything secondary is saved or deleted, e.g. `'location_changed'`; omit to emit none. */
-  changeEvent?: string;
+  changeEvent?: EntityChangeEvent;
   storyId?: string;
   userId?: string | null;
   /** Needed with `entityType`, to save the attribute values. */
@@ -131,7 +133,7 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
         if (success) AppAlert.alert(t('success'), success);
         config.afterSave(entityId, created);
       } catch (err) {
-        console.error(`Failed to save ${config.logName}:`, err);
+        logger.error(`Failed to save ${config.logName}:`, err);
         AppAlert.alert(t('error'), config.messages.failedToSave);
       }
     });
@@ -150,7 +152,9 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
       onConfirm: async () => {
         await config.remove(userId, entityId);
         await config.clearFormDraft();
-        if (config.changeEvent) entityEventEmitter.emit(config.changeEvent, storyId, entityId);
+        if (config.changeEvent && storyId) {
+          entityEventEmitter.emit(config.changeEvent, storyId, entityId);
+        }
         config.afterDelete();
       },
     });

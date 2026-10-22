@@ -1,18 +1,19 @@
 import { createHash } from 'node:crypto';
+import type { ExampleRow } from './exampleStoryTypes';
 
 type Context = {
   slug: string;
   language: 'en' | 'pt';
-  showcase: any;
+  showcase: ExampleRow;
   storyId: string;
   id: (key: string) => string;
-  base: (id: string, storyId: string) => Record<string, any>;
+  base: (id: string, storyId: string) => ExampleRow;
   publicSourceUrl: (slug: string) => string;
-  chapters: any[];
-  scenes: any[];
-  characters: any[];
-  locations: any[];
-  items: any[];
+  chapters: ExampleRow[];
+  scenes: ExampleRow[];
+  characters: ExampleRow[];
+  locations: ExampleRow[];
+  items: ExampleRow[];
 };
 
 export function buildExampleStoryShowcase(context: Context) {
@@ -241,7 +242,7 @@ export function buildExampleStoryShowcase(context: Context) {
         },
       ]
     : [];
-  const gallery: any = {
+  const gallery: ExampleRow = {
     ...base(id('gallery-public-source'), storyId),
     mediaType: 'link',
     mimeType: 'text/uri-list',

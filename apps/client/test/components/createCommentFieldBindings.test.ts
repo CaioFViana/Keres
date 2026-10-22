@@ -12,7 +12,6 @@ it('uses the displayed text as the snapshot and preserves field permissions and 
     commentsByField: {},
     addComment,
     onDeleteComment: jest.fn(),
-    onUpdateComment: jest.fn(),
   });
   const field = bind('description', 'Not available');
   await field.onAddComment({ commentText: 'Review this', excerptText: null, criticality: 1 });

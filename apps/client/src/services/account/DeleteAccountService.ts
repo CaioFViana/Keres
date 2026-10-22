@@ -11,6 +11,7 @@ import {
   type StoryService,
 } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { userApiService } from '@/src/services/api/UserApiService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The account was deleted on the server, but this device could not finish removing the server.
@@ -75,7 +76,7 @@ export async function deleteServerAccount(
     try {
       await authTokenManager.clearAuthForServer(server.id);
     } catch (clearError) {
-      console.error('Failed to clear the tokens of a deleted account:', clearError);
+      logger.error('Failed to clear the tokens of a deleted account:', clearError);
     }
     throw new AccountDeletionCleanupError(error);
   }

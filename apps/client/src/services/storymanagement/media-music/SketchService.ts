@@ -14,6 +14,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface SketchService {
   getSketchesForStory(storyId: string): Promise<SketchSelect[]>;
@@ -129,7 +130,7 @@ export const createSketchService = (db: AppDrizzleClient): SketchService => {
     async deleteSketch(currentUserId, sketchId) {
       const original = await db.query.sketches.findFirst({ where: eq(sketches.id, sketchId) });
       if (!original) {
-        console.warn(`Attempted to delete non-existent sketch ${sketchId}.`);
+        logger.warn(`Attempted to delete non-existent sketch ${sketchId}.`);
         return;
       }
       await assertStoryIsWritable(db, original.storyId);

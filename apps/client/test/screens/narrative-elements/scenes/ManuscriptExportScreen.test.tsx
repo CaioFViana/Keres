@@ -342,8 +342,8 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
   jest.restoreAllMocks();
 });
 
@@ -363,7 +363,7 @@ async function exportWith(
     props.onChange({ ...props.settings, ...change });
   });
   await act(async () => {
-    fireEvent.press(view.getByTestId('export-confirm'));
+    await fireEvent.press(view.getByTestId('export-confirm'));
   });
 }
 
@@ -917,8 +917,7 @@ describe('ManuscriptExportScreen pages', () => {
     });
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
-    const [, userId, storyId, sceneIds, readPictures] = mockLoadManuscriptPages.mock.calls[0];
-    expect(userId).toBe('user-1');
+    const [, storyId, sceneIds, readPictures] = mockLoadManuscriptPages.mock.calls[0];
     expect(storyId).toBe('story-1');
     expect([...(sceneIds as Set<string>)]).toEqual(['s-1']);
     expect(readPictures).toBe(true);
@@ -993,7 +992,7 @@ describe('ManuscriptExportScreen pages', () => {
     });
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
-    expect(mockLoadManuscriptPages.mock.calls[0][4]).toBe(false);
+    expect(mockLoadManuscriptPages.mock.calls[0][3]).toBe(false);
     expect(mockNotify).not.toHaveBeenCalledWith(
       expect.stringContaining('pages_problems'),
       'warning',

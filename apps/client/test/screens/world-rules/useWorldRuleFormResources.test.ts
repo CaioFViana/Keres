@@ -27,6 +27,6 @@ it('creates the world-rule service once from the drizzle client', async () => {
   expect(mockCreateWorldRuleService).toHaveBeenCalledWith(fakeDb);
   expect(view.result.current.worldRuleServiceRef.current).toBe(fakeService);
 
-  view.rerender({});
+  await view.rerender({});
   expect(mockCreateWorldRuleService).toHaveBeenCalledTimes(1);
 });

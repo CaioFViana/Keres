@@ -11,6 +11,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface TagRelationService {
   getTagsForEntity(
@@ -99,7 +100,7 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
       });
 
       if (existingRelation) {
-        console.log(
+        logger.debug(
           `Tag relation already exists and is active for entity ${relationId} with tag ${tagId}.`,
         );
         return;
@@ -181,7 +182,7 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
       });
 
       if (!relationToDelete) {
-        console.warn(
+        logger.warn(
           `Tag relation for entity ${entityId} with tag ${tagId} not found or already deleted.`,
         );
         return;

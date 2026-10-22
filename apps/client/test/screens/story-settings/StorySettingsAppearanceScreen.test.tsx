@@ -210,8 +210,8 @@ beforeEach(() => {
   mockUpdateStory.mockResolvedValue({});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('says so when no story is selected', async () => {

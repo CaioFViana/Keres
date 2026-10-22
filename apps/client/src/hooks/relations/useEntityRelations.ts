@@ -23,6 +23,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface UseEntityRelationsOptions {
   /** The entity these relations hang off, e.g. `'WorldRule'`. */
@@ -160,7 +161,7 @@ export function useEntityRelations({
     try {
       setAvailableTags(await services.tag.getTagsByStoryId(storyId));
     } catch (err) {
-      console.error('Failed to fetch available tags:', err);
+      logger.error('Failed to fetch available tags:', err);
     }
   }, [services, storyId]);
 
@@ -191,7 +192,7 @@ export function useEntityRelations({
       );
       setSelectedTagIds(tags.map((tag) => tag.id));
     } catch (err) {
-      console.error(`Failed to fetch tags for ${entityType}:`, err);
+      logger.error(`Failed to fetch tags for ${entityType}:`, err);
     }
   }, [
     services,
@@ -210,7 +211,7 @@ export function useEntityRelations({
     try {
       setAllNotes(await services.note.getNotesByStoryId(storyId));
     } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
+      logger.error('Failed to fetch notes for story:', err);
     }
   }, [services, storyId, withNotes]);
 
@@ -237,7 +238,7 @@ export function useEntityRelations({
         }
       }
     } catch (err) {
-      console.error(`Failed to fetch note relations for ${entityType}:`, err);
+      logger.error(`Failed to fetch note relations for ${entityType}:`, err);
     }
   }, [
     services,
@@ -349,7 +350,7 @@ export function useEntityRelations({
           AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
         } catch (error) {
           setPendingNoteRelations(previous);
-          console.error('Failed to sync pending note relation draft:', error);
+          logger.error('Failed to sync pending note relation draft:', error);
           AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
         }
         return;
@@ -383,7 +384,7 @@ export function useEntityRelations({
         entityEventEmitter.emit('note_relation_changed', storyId, entityId);
         AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
       } catch (err) {
-        console.error('Failed to save note relation:', err);
+        logger.error('Failed to save note relation:', err);
         AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
       }
     },
@@ -401,7 +402,7 @@ export function useEntityRelations({
           AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
         } catch (error) {
           setPendingNoteRelations(previous);
-          console.error('Failed to sync pending note relation draft delete:', error);
+          logger.error('Failed to sync pending note relation draft delete:', error);
           AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
         }
         return;
@@ -420,7 +421,7 @@ export function useEntityRelations({
         entityEventEmitter.emit('note_relation_changed', storyId, entityId);
         AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
       } catch (err) {
-        console.error('Failed to delete note relation:', err);
+        logger.error('Failed to delete note relation:', err);
         AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
       }
     },

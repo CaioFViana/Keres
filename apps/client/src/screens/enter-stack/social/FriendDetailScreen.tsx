@@ -17,6 +17,7 @@ import FriendDetailActions, {
 } from '@/src/components/features/friendship/FriendDetailActions';
 import FriendInvitationsBetween from '@/src/components/features/friendship/FriendInvitationsBetween';
 import FriendProfileHeader from '@/src/components/features/friendship/FriendProfileHeader';
+import FriendPublishedStories from '@/src/components/features/friendship/FriendPublishedStories';
 import FriendSharedStories from '@/src/components/features/friendship/FriendSharedStories';
 import InviteToStoryModal from '@/src/components/features/friendship/InviteToStoryModal';
 import { useDrizzle } from '@/src/db';
@@ -24,6 +25,7 @@ import type { ServerSelect } from '@/src/db/schemas/servers';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { useFriendActivity } from '@/src/screens/enter-stack/social/useFriendActivity';
+import { useFriendAuthorPage } from '@/src/screens/enter-stack/social/useFriendAuthorPage';
 import { useFriendshipActionHandler } from '@/src/screens/enter-stack/social/useFriendshipActionHandler';
 import { useInviteFriendToStory } from '@/src/screens/enter-stack/social/useInviteFriendToStory';
 import { useOpenStoryById } from '@/src/screens/enter-stack/social/useOpenStoryById';
@@ -39,6 +41,7 @@ import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { directConversationKey } from '@/src/utils/entity/conversationKey';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
 type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -79,6 +82,27 @@ const FriendDetailScreen = () => {
   const hasUnseenMessage = useIsConversationUnseen(
     friendship ? directConversationKey(friendship.serverId, friendship.otherUserId) : '',
   );
+  // What the friend has on show on their server's public site: the header and the page point at it.
+  const authorPage = useFriendAuthorPage(server, friendship?.friendUsername ?? null, friendship);
+  // The author's page and the stories on it open inside the app, in the showcase, under its home.
+  const openInShowcase = useCallback(
+    (screen: 'ShowcaseAuthor' | 'ShowcaseStory', params: Record<string, string>) => {
+      if (!friendship) return;
+      navigation.getParent()?.navigate('ShowcaseDrawer', {
+        screen,
+        params: { serverId: friendship.serverId, ...params },
+        initial: false,
+      });
+    },
+    [friendship, navigation],
+  );
+  const openAuthorPage = useCallback(() => {
+    if (friendship) openInShowcase('ShowcaseAuthor', { username: friendship.friendUsername });
+  }, [friendship, openInShowcase]);
+  const openPublishedStory = useCallback(
+    (storyId: string) => openInShowcase('ShowcaseStory', { storyId }),
+    [openInShowcase],
+  );
   useScreenHeader({
     target: 'parent',
     title: t('friend_detail_title'),
@@ -93,6 +117,13 @@ const FriendDetailScreen = () => {
         onPress: openConversation,
         visible: friendship?.status === FriendStatus.FRIEND,
         badge: hasUnseenMessage,
+      },
+      {
+        id: 'author-page',
+        icon: 'person-circle-outline',
+        label: t('friend_author_page'),
+        onPress: openAuthorPage,
+        visible: authorPage !== null,
       },
     ],
   });
@@ -141,7 +172,7 @@ const FriendDetailScreen = () => {
           : [],
       );
     } catch (err) {
-      console.error('Failed to load friend detail:', err);
+      logger.error('Failed to load friend detail:', err);
       showNotification(t('failed_to_load_friendships'), 'error');
     } finally {
       setLoading(false);
@@ -359,6 +390,17 @@ const FriendDetailScreen = () => {
         </View>
       )}
 
+      {authorPage && authorPage.stories.length > 0 && (
+        <View style={styles.published}>
+          <FriendPublishedStories
+            friendName={friendship.friendUsername}
+            stories={authorPage.stories}
+            onOpenStory={openPublishedStory}
+            onOpenAuthorPage={openAuthorPage}
+          />
+        </View>
+      )}
+
       {server && (
         <InviteToStoryModal
           visible={inviting}
@@ -379,6 +421,7 @@ const createStyles = (colors: ThemeColors) =>
     bio: { fontSize: 15, color: colors.text, lineHeight: 21, marginTop: 16 },
     blockedNote: { fontSize: 13, color: colors.textSecondary, marginTop: 20 },
     sections: { marginTop: 28, gap: 28 },
+    published: { marginTop: 28 },
     columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
     column: { minWidth: 0, gap: 28 },
     // Only side by side do the columns share the width: stacked, `flex: 1` has no height to share.

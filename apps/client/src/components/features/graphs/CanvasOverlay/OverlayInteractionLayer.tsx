@@ -87,7 +87,7 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
           startScreen.current = at;
           startWorld.current = callbacks.current.screenToWorld(at);
         },
-        onPanResponderMove: (event, gesture) => {
+        onPanResponderMove: (_event, gesture) => {
           if (live.current.mode.kind !== 'draw') return;
           if (!isRectDrawTool(live.current.mode.tool)) return;
           const at = {

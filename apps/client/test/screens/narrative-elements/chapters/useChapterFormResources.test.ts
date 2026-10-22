@@ -27,6 +27,6 @@ it('creates the chapter service once from the drizzle client', async () => {
   expect(mockCreateChapterService).toHaveBeenCalledWith(fakeDb);
   expect(view.result.current.chapterServiceRef.current).toBe(fakeService);
 
-  view.rerender({});
+  await view.rerender({});
   expect(mockCreateChapterService).toHaveBeenCalledTimes(1);
 });

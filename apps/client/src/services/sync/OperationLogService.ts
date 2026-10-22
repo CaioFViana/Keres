@@ -4,9 +4,7 @@ import type { AppDrizzleClient } from '@/src/db';
 import type { OperationLogSelect } from '@/src/db/schema';
 import { operationLogs } from '@/src/db/schema';
 import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
-
-export type OperationType = 'create' | 'update' | 'delete';
-export type EntityType = string; // e.g., 'Story', 'Character', etc.
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Read-only queries over the operation log, for the List/Detail screens. Recording an
@@ -60,7 +58,7 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
       localUserId?: string,
     ): Promise<OperationLogSelect[]> {
       if (!storyId) {
-        console.warn('getRecentOperationLogs: storyId is required.');
+        logger.warn('getRecentOperationLogs: storyId is required.');
         return [];
       }
       // Batched operations (e.g. a multi-entity save) share the same millisecond in
@@ -79,7 +77,7 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
       localUserId?: string,
     ): Promise<{ logs: OperationLogSelect[]; total: number }> {
       if (!storyId) {
-        console.warn('getPaginatedOperationLogs: storyId is required.');
+        logger.warn('getPaginatedOperationLogs: storyId is required.');
         return { logs: [], total: 0 };
       }
 
@@ -109,7 +107,7 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
       localUserId?: string,
     ): Promise<OperationLogSelect | undefined> {
       if (!logId) {
-        console.warn('getOperationLogById: logId is required.');
+        logger.warn('getOperationLogById: logId is required.');
         return undefined;
       }
       const log = await db.query.operationLogs.findFirst({

@@ -55,6 +55,7 @@ import {
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { logger } from '@/src/utils/logging/logger';
 
 export type ChoiceDetailScreenParamList = {
   ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
@@ -115,15 +116,8 @@ const ChoiceDetailScreen = () => {
   const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({});
   const [itemNamesById, setItemNamesById] = useState<Record<string, string>>({});
   const { canEdit } = useStoryRole(choice?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(choice?.storyId, 'Choice', choiceId);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(choice?.storyId, 'Choice', choiceId);
 
   const {
     selectedTags: choiceTags,
@@ -140,7 +134,7 @@ const ChoiceDetailScreen = () => {
 
   const fetchChoice = useCallback(async () => {
     if (!choiceServiceRef.current) {
-      console.warn('Choice service not initialized.');
+      logger.warn('Choice service not initialized.');
       return;
     }
     try {
@@ -156,7 +150,7 @@ const ChoiceDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch choice details:', err);
+      logger.error('Failed to fetch choice details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -165,7 +159,7 @@ const ChoiceDetailScreen = () => {
   }, [choiceId, navigation, copy, t]);
 
   const handleChoiceChange = useCallback(
-    async (changedStoryId: string, changedChoiceId: string) => {
+    async (_changedStoryId: string, changedChoiceId: string) => {
       if (changedChoiceId === choiceId && choiceServiceRef.current) {
         const updatedChoice = await choiceServiceRef.current.getById(choiceId);
         if (!updatedChoice || updatedChoice.isDeleted) {
@@ -207,7 +201,7 @@ const ChoiceDetailScreen = () => {
       );
       setChoiceEffects(fetchedEffects);
     } catch (err) {
-      console.error('Failed to fetch choice checks/effects:', err);
+      logger.error('Failed to fetch choice checks/effects:', err);
     }
   }, [choice?.storyId, choiceId]);
 
@@ -223,7 +217,7 @@ const ChoiceDetailScreen = () => {
       setSceneNamesById(Object.fromEntries(allScenes.map((scene) => [scene.id, scene.name])));
       setItemNamesById(Object.fromEntries(allItems.map((item) => [item.id, item.name])));
     } catch (err) {
-      console.error('Failed to fetch scene/item name lookups:', err);
+      logger.error('Failed to fetch scene/item name lookups:', err);
     }
   }, [choice?.storyId]);
 
@@ -286,7 +280,6 @@ const ChoiceDetailScreen = () => {
     isStoryOwner: isStoryOwner,
     currentUserId: currentUserId,
     onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
     commentsByField,
     addComment,
   });

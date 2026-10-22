@@ -105,7 +105,7 @@ const pageOf = (
   });
 
 const load = (sceneIds?: ReadonlySet<string>, readPictures?: boolean) =>
-  loadManuscriptPages(database.db, TEST_USER_ID, TEST_STORY_ID, sceneIds, readPictures);
+  loadManuscriptPages(database.db, TEST_STORY_ID, sceneIds, readPictures);
 
 beforeEach(async () => {
   database = await createTestDatabase();

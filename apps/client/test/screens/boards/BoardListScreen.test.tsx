@@ -141,8 +141,8 @@ const boards = [
 ];
 
 describe('BoardListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

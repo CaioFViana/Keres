@@ -5,6 +5,7 @@ const mockSummarize = jest.fn();
 jest.mock('@/src/db/entityTableRegistry', () => ({
   __esModule: true,
   getEntityTable: (...args: unknown[]) => mockGetEntityTable(...args),
+  columnsOf: (table: unknown) => table,
 }));
 jest.mock('@keres/shared', () => ({
   __esModule: true,

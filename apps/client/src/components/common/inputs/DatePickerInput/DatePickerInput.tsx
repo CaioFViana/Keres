@@ -2,7 +2,14 @@ import { formatAttributeDateForDisplay } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import DatePickerModal from '@/src/components/common/inputs/DatePickerInput/DatePickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -19,7 +26,7 @@ interface DatePickerInputProps {
    * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
    * draws the field's frame, and a second border/height around it misaligns the inner content.
    */
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**

@@ -1,20 +1,26 @@
+import { createHash } from 'node:crypto';
 import type {
-  ManuscriptFormat,
-  ShowcaseOwner,
+  ShowcaseFacets,
+  ShowcaseSearchQuery,
   ShowcaseStoryCard,
   ShowcaseStoryDetail,
-  ShowcaseVersion,
   StoryPublicationSnapshot,
 } from '@keres/shared';
 import { comparePassword } from '@/config/bcrypt';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { effectiveAdultVerified } from '@/services/age-verification/ageVerificationMode';
-import { ACTIVE_ACCOUNT } from '@/services/accounts/UserService';
-import { galleries, stories, storyPublications, storyShowcaseEntries, users } from '@/db/schema';
-
-/** What a cover may be to be served to a page: raster images only, nothing that runs. */
-const COVER_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+import {
+  galleries,
+  stories,
+  storyArcs,
+  storyPublications,
+  storyShowcaseEntries,
+  users,
+} from '@/db/schema';
+import { loadCatalog, visibleEntry } from './showcaseCatalog';
+import { facetsOf, searchCatalog } from './showcaseSearch';
+import { COVER_MIME_TYPES, ownerOf, versionOf } from './showcaseShapes';
 
 /**
  * The public site's anonymous reads.
@@ -24,20 +30,6 @@ const COVER_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'imag
  * a password-protected story before the unlock.
  */
 export class ShowcaseService {
-  private ownerOf(row: {
-    username: string;
-    tag: string;
-    avatarColor: string | null;
-    avatarIcon: string | null;
-  }): ShowcaseOwner {
-    return {
-      username: row.username,
-      tag: row.tag,
-      avatarColor: row.avatarColor,
-      avatarIcon: row.avatarIcon,
-    };
-  }
-
   /**
    * The picture that is the cover of a story, when it has a usable one: a live image of the story's own Gallery,
    * in a format a browser draws without running anything. The site shows the cover as it is now, not as it was in a
@@ -60,36 +52,13 @@ export class ShowcaseService {
     return row && COVER_MIME_TYPES.has(row.mimeType) ? row : null;
   }
 
-  private versionOf(row: typeof storyPublications.$inferSelect): ShowcaseVersion {
-    const snapshot = row.snapshot as StoryPublicationSnapshot;
-    return {
-      id: row.id,
-      // A release of one work names it as it stood then; null is a version of the whole universe.
-      arc: row.arcId ? (snapshot.arc ?? null) : null,
-      label: row.label,
-      byteSize: row.byteSize,
-      mediaIncluded: row.mediaIncluded,
-      mediaTotal: row.mediaTotal,
-      createdAt: row.createdAt.toISOString(),
-      packageIncluded: row.packageIncluded,
-      manuscript:
-        row.manuscriptFormat && row.manuscriptByteSize != null
-          ? {
-              format: row.manuscriptFormat as ManuscriptFormat,
-              byteSize: row.manuscriptByteSize,
-            }
-          : null,
-      reader: row.readerByteSize != null ? { byteSize: row.readerByteSize } : null,
-    };
-  }
-
   /**
    * The listing's signature, for the site's `If-None-Match`. A count plus the most recent instant covers
    * publishing, deleting a version and unpublishing without needing a dedicated column. Computed over
    * exactly what the viewer class may see, and tagged with that class: an NSFW publication must never
    * validate an anonymous cached copy, nor the reverse.
    */
-  async listEtag(includeNsfw: boolean): Promise<string> {
+  async listEtag(includeNsfw: boolean, querySignature = ''): Promise<string> {
     const [row] = await db
       .select({
         count: count(),
@@ -98,17 +67,13 @@ export class ShowcaseService {
       .from(storyShowcaseEntries)
       .innerJoin(stories, eq(stories.id, storyShowcaseEntries.storyId))
       .innerJoin(users, eq(storyShowcaseEntries.ownerUserId, users.id))
-      .where(
-        and(
-          eq(storyShowcaseEntries.visibility, 'public'),
-          eq(stories.isDeleted, false),
-          eq(users.isDeleted, false),
-          ACTIVE_ACCOUNT,
-          ...(includeNsfw ? [] : [eq(stories.isNsfw, false)]),
-        ),
-      );
+      .where(visibleEntry(includeNsfw));
     const viewerClass = includeNsfw ? 'verified' : 'safe';
-    return `W/"showcase-${viewerClass}-${row?.count ?? 0}-${row?.latest ?? 'empty'}"`;
+    // The same catalog answers differently to a different question: a filtered or paged listing is its own tag.
+    const asked = querySignature
+      ? `-${createHash('sha1').update(querySignature).digest('hex').slice(0, 12)}`
+      : '';
+    return `W/"showcase-${viewerClass}-${row?.count ?? 0}-${row?.latest ?? 'empty'}${asked}"`;
   }
 
   /**
@@ -118,52 +83,21 @@ export class ShowcaseService {
    * live flag, not the frozen snapshot, so flagging is effective immediately.
    */
   async listPublicStories(includeNsfw: boolean): Promise<ShowcaseStoryCard[]> {
-    const entries = await db
-      .select({
-        storyId: storyShowcaseEntries.storyId,
-        updatedAt: storyShowcaseEntries.updatedAt,
-        username: users.username,
-        tag: users.tag,
-        avatarColor: users.avatarColor,
-        avatarIcon: users.avatarIcon,
-        isNsfw: stories.isNsfw,
-      })
-      .from(storyShowcaseEntries)
-      .innerJoin(stories, eq(stories.id, storyShowcaseEntries.storyId))
-      .innerJoin(users, eq(storyShowcaseEntries.ownerUserId, users.id))
-      .where(
-        and(
-          eq(storyShowcaseEntries.visibility, 'public'),
-          eq(stories.isDeleted, false),
-          eq(users.isDeleted, false),
-          ACTIVE_ACCOUNT,
-          ...(includeNsfw ? [] : [eq(stories.isNsfw, false)]),
-        ),
-      )
-      .orderBy(desc(storyShowcaseEntries.updatedAt));
+    return (await loadCatalog(includeNsfw)).map((entry) => entry.card);
+  }
 
-    const cards: ShowcaseStoryCard[] = [];
-    for (const entry of entries) {
-      const versions = await db
-        .select()
-        .from(storyPublications)
-        .where(eq(storyPublications.storyId, entry.storyId))
-        .orderBy(desc(storyPublications.createdAt));
-      if (versions.length === 0) {
-        continue;
-      }
-      cards.push({
-        storyId: entry.storyId,
-        isNsfw: entry.isNsfw,
-        snapshot: versions[0].snapshot as StoryPublicationSnapshot,
-        owner: this.ownerOf(entry),
-        versionCount: versions.length,
-        latestVersion: this.versionOf(versions[0]),
-        hasCover: (await this.coverOf(entry.storyId)) !== null,
-        updatedAt: entry.updatedAt.toISOString(),
-      });
-    }
-    return cards;
+  /** The listing, filtered and ordered as asked, and how many matched before the page was cut. */
+  async searchStories(
+    includeNsfw: boolean,
+    query: ShowcaseSearchQuery,
+  ): Promise<{ items: ShowcaseStoryCard[]; total: number }> {
+    const { items, total } = searchCatalog(await loadCatalog(includeNsfw), query);
+    return { items: items.map((entry) => entry.card), total };
+  }
+
+  /** What the listing can be filtered by, counted over what this viewer may see. */
+  async facets(includeNsfw: boolean): Promise<ShowcaseFacets> {
+    return facetsOf(await loadCatalog(includeNsfw));
   }
 
   async getEntry(storyId: string) {
@@ -260,14 +194,74 @@ export class ShowcaseService {
       return null;
     }
 
+    const releasedWorks = [...new Set(versions.flatMap((version) => version.arcId ?? []))];
+
     return {
       storyId,
       snapshot: versions[0].snapshot as StoryPublicationSnapshot,
-      owner: this.ownerOf(entry),
-      versions: versions.map((version) => this.versionOf(version)),
+      owner: ownerOf(entry),
+      versions: versions.map(versionOf),
       hasCover: (await this.coverOf(storyId)) !== null,
+      workCovers: await this.workCoverIds(storyId, releasedWorks),
       updatedAt: entry.updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * The arc ids, out of those given, whose work has a cover the site can show: a live image of the story's own
+   * Gallery, in a format a browser draws without running anything - the same rule as the story's cover. Shown as it
+   * is now, like that cover. A work that was deleted after its release has none.
+   */
+  async workCoverIds(storyId: string, arcIds: readonly string[]): Promise<string[]> {
+    if (arcIds.length === 0) {
+      return [];
+    }
+    const rows = await db
+      .select({ arcId: storyArcs.id, mimeType: galleries.mimeType })
+      .from(storyArcs)
+      .innerJoin(galleries, eq(galleries.id, storyArcs.coverGalleryId))
+      .where(
+        and(
+          eq(storyArcs.storyId, storyId),
+          inArray(storyArcs.id, [...arcIds]),
+          eq(storyArcs.isDeleted, false),
+          eq(galleries.storyId, storyId),
+          eq(galleries.isDeleted, false),
+          eq(galleries.mediaType, 'image'),
+        ),
+      );
+    return rows.filter((row) => COVER_MIME_TYPES.has(row.mimeType)).map((row) => row.arcId);
+  }
+
+  /** The picture of a released work (an arc with at least one version published), when it has a usable one. */
+  async coverOfWork(
+    storyId: string,
+    arcId: string,
+  ): Promise<{ hash: string; mimeType: string } | null> {
+    const [released] = await db
+      .select({ id: storyPublications.id })
+      .from(storyPublications)
+      .where(and(eq(storyPublications.storyId, storyId), eq(storyPublications.arcId, arcId)))
+      .limit(1);
+    if (!released) {
+      return null;
+    }
+    const [row] = await db
+      .select({ hash: galleries.hash, mimeType: galleries.mimeType })
+      .from(storyArcs)
+      .innerJoin(galleries, eq(galleries.id, storyArcs.coverGalleryId))
+      .where(
+        and(
+          eq(storyArcs.id, arcId),
+          eq(storyArcs.storyId, storyId),
+          eq(storyArcs.isDeleted, false),
+          eq(galleries.storyId, storyId),
+          eq(galleries.isDeleted, false),
+          eq(galleries.mediaType, 'image'),
+        ),
+      )
+      .limit(1);
+    return row && COVER_MIME_TYPES.has(row.mimeType) ? row : null;
   }
 
   /**

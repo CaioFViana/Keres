@@ -1,3 +1,5 @@
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 jest.mock('expo-asset', () => ({ Asset: { loadAsync: jest.fn() } }));
 jest.mock('expo-file-system', () => ({ File: jest.fn() }));
 jest.mock('expo-file-system/legacy', () => ({ readAsStringAsync: jest.fn() }));
@@ -72,7 +74,10 @@ describe('pdfFontMatrices', () => {
   it('falls back to null when the asset cannot load', async () => {
     const pdfFontMatrices = await freshMatrices({ asset: new Error('offline') });
 
-    await expect(pdfFontMatrices()).resolves.toBeNull();
+    await withSilencedConsole(['warn'], async (spies) => {
+      await expect(pdfFontMatrices()).resolves.toBeNull();
+      expect(spies.warn).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('fetches the asset when both filesystem APIs are stubs, as on web', async () => {
@@ -103,6 +108,9 @@ describe('pdfFontMatrices', () => {
       legacyError: new Error('no legacy API'),
     });
 
-    await expect(pdfFontMatrices()).resolves.toBeNull();
+    await withSilencedConsole(['warn'], async (spies) => {
+      await expect(pdfFontMatrices()).resolves.toBeNull();
+      expect(spies.warn).toHaveBeenCalledTimes(1);
+    });
   });
 });

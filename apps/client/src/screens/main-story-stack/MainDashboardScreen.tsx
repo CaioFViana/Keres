@@ -24,6 +24,7 @@ import { shouldCompleteFirstStory } from '@/src/utils/ui/tutorialProgress';
 import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
 import { useResumeScene } from '@/src/hooks/scene/useResumeScene';
 import { MainDashboardContent } from './MainDashboardContent';
+import { logger } from '@/src/utils/logging/logger';
 
 const MainDashboardScreen = () => {
   useScreenTour('MainDashboard');
@@ -84,7 +85,7 @@ const MainDashboardScreen = () => {
             }),
           );
         } else {
-          console.error(
+          logger.error(
             'Could not find root stack navigation to dispatch reset action. This is unexpected.',
           );
           navigation.dispatch(
@@ -128,7 +129,7 @@ const MainDashboardScreen = () => {
         setBoardCount(counts.boardCount);
         setForkCount(counts.branchingStoryForkCount);
       } catch (error) {
-        console.error('Error fetching entity counts:', error);
+        logger.error('Error fetching entity counts:', error);
       }
     } else {
       setCharacterCount(undefined);
@@ -157,7 +158,7 @@ const MainDashboardScreen = () => {
       const report = await createStoryAnalysisService(db).analyzeStoryCheap(selectedStory.id);
       setAnalysisIssueCount(report.findings.length);
     } catch (error) {
-      console.error('Error running story analysis:', error);
+      logger.error('Error running story analysis:', error);
       setAnalysisIssueCount(undefined);
     }
   }, [selectedStory?.id, db]);
@@ -178,7 +179,7 @@ const MainDashboardScreen = () => {
       setFirstStoryProgress(db, { done: true })
         .then(() => showNotification(t('first_story_success'), 'success'))
         .catch((error: unknown) => {
-          console.warn('[MainDashboardScreen] failed to complete the first-story trail.', error);
+          logger.warn('[MainDashboardScreen] failed to complete the first-story trail.', error);
         });
     }, [tutorialProgress, db, setFirstStoryProgress, showNotification, t]),
   );

@@ -26,22 +26,22 @@ function put(relative: string, content: string | Buffer) {
   writeFileSync(file, content);
 }
 
-/** The four builds, as the layout `KERES_RESOURCE_ROOT` expects: `client-dist`, `landing-dist`, ... */
+/** The four builds, as the layout `KERES_RESOURCE_ROOT` expects: `dist-client`, `dist-landing`, ... */
 function writeFullTree() {
-  put('client-dist/index.html', '<html><head><title>client</title></head><body>app</body></html>');
-  put('client-dist/_expo/static/js/app-abc123.js', BIG_JS);
-  put('client-dist/assets/logo.png', Buffer.from([137, 80, 78, 71, 1, 2, 3]));
-  put('client-dist/data/info.json', JSON.stringify({ hello: 'x'.repeat(800) }));
-  put('client-dist/other/blob.bin', Buffer.from([1, 2, 3]));
-  put('landing-dist/index.html', '<html><body>landing</body></html>');
-  put('landing-dist/favicon.ico', ICO);
-  put('landing-dist/assets/land.js', BIG_JS);
+  put('dist-client/index.html', '<html><head><title>client</title></head><body>app</body></html>');
+  put('dist-client/_expo/static/js/app-abc123.js', BIG_JS);
+  put('dist-client/assets/logo.png', Buffer.from([137, 80, 78, 71, 1, 2, 3]));
+  put('dist-client/data/info.json', JSON.stringify({ hello: 'x'.repeat(800) }));
+  put('dist-client/other/blob.bin', Buffer.from([1, 2, 3]));
+  put('dist-landing/index.html', '<html><body>landing</body></html>');
+  put('dist-landing/favicon.ico', ICO);
+  put('dist-landing/assets/land.js', BIG_JS);
   put('dist-showcase/index.html', '<html><body>showcase</body></html>');
   put('dist-showcase/favicon.ico', ICO);
   put('dist-showcase/assets/show.css', 'body{color:red}\n'.repeat(80));
-  put('admin-dist/index.html', '<html><body>admin</body></html>');
-  put('admin-dist/favicon.ico', ICO);
-  put('admin-dist/assets/panel.js', BIG_JS);
+  put('dist-admin/index.html', '<html><body>admin</body></html>');
+  put('dist-admin/favicon.ico', ICO);
+  put('dist-admin/assets/panel.js', BIG_JS);
 }
 
 /** The app as a server that has (or has not) built every surface would create it. */
@@ -146,6 +146,28 @@ describe('a server with every surface built', () => {
 
       await setSettings({ hostedClient: false, showcase: false });
       expect((await get(app, '/')).headers.get('location')).toBe('/api/swagger');
+    });
+  });
+
+  describe("the landing's own pages", () => {
+    it.each(['/terms', '/privacy'])(
+      'serves the landing at %s while the administrator has it on',
+      async (path) => {
+        await setSettings({ landing: true });
+
+        const { status, text, headers } = await get(app, path);
+
+        expect(status).toBe(200);
+        expect(text).toContain('landing');
+        expect(headers.get('content-type')).toContain('text/html');
+        expect(headers.get('content-security-policy')).toContain("default-src 'self'");
+      },
+    );
+
+    it.each(['/terms', '/privacy'])('answers 404 at %s while the landing is off', async (path) => {
+      await setSettings({});
+
+      expect((await get(app, path)).status).toBe(404);
     });
   });
 

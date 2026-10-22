@@ -155,7 +155,3 @@ export async function runLauncher(
     process.exitCode = 1;
   }
 }
-
-export function launcherVersion(): string {
-  return APP_RELEASE.version;
-}

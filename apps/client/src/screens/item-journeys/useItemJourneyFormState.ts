@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseItemJourneyFormStateOptions = {
   initialItemJourneyId?: string;
@@ -90,11 +91,11 @@ export function useItemJourneyFormState({
             });
             setLoadedUpdatedAt(fetchedItemJourney.updatedAt?.toISOString?.() ?? null);
           } else {
-            console.warn('Item journey not found:', initialItemJourneyId);
+            logger.warn('Item journey not found:', initialItemJourneyId);
           }
         }
       } catch (err) {
-        console.error('Failed to load item journey:', err);
+        logger.error('Failed to load item journey:', err);
       } finally {
         setLoading(false);
       }
@@ -111,7 +112,7 @@ export function useItemJourneyFormState({
 
   const restoreDraftFields = useCallback((fields: ItemJourneyFormDraftFields) => {
     if (!isItemJourneyFormDraftFields(fields)) {
-      console.error('Corrupt item journey form draft ignored.');
+      logger.error('Corrupt item journey form draft ignored.');
       return;
     }
     setItemId(fields.itemId);

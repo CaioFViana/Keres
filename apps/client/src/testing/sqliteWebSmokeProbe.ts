@@ -99,10 +99,15 @@ export async function runSqliteWebSmokeProbe(database: SQLiteDatabase): Promise<
       isDeleted: false,
     });
     const exported = await stories.exportFullStory(sourceStoryId);
+    // A file import is a new local copy with a new identity; naming the target id is what lets this probe find
+    // the copy again, and puts the orphan above under the id the import clears before it writes.
     const imported = await stories.importFullStory(
       userId,
-      { ...exported, story: { ...exported.story, id: importedStoryId } },
+      exported,
       null,
+      null,
+      undefined,
+      importedStoryId,
     );
     const stored = await db.query.stories.findFirst({
       where: (story, { eq }) => eq(story.id, importedStoryId),

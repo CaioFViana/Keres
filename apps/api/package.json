@@ -1,12 +1,11 @@
 {
   "name": "@keres/api",
-  "version": "1.10.1",
-  "main": "index.ts",
+  "version": "1.10.2",
   "scripts": {
     "start": "bun run src/server.ts",
     "start:launcher": "bun run src/launcher.ts",
     "fonts:fetch": "bun scripts/fetch-pdf-fonts.ts",
-    "prebuild": "bun run fonts:fetch && bun run --cwd ../admin build && bun run --cwd ../client build:hosted && bun run --cwd ../site build:landing",
+    "prebuild": "bun run fonts:fetch && bun run --cwd ../web build && bun run --cwd ../client build:hosted && bun run --cwd ../site build:landing",
     "build": "bun scripts/package-server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome lint --error-on-warnings .",
@@ -48,6 +47,8 @@
     "drizzle-kit": "^0.31.6",
     "typescript": "^5.5.3",
     "vitest": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10"
+    "@vitest/coverage-v8": "^4.1.10",
+    "jszip": "^3.10.2",
+    "png-to-ico": "^3.0.2"
   }
 }

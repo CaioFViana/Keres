@@ -3,17 +3,20 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**
- * Where the API finds migrations, the admin panel, the client's export and the icon - in dev, in
- * the portable zip and in a `bun build --compile`.
+ * Where the API finds migrations, the web bundles and the icon - in dev, in the portable zip and in
+ * a `bun build --compile`.
  *
  * It does not use `process.cwd()`: Docker, shortcuts and the compiled binary start from folders that
  * are not `apps/api`. Candidates, in order:
  *   1. `KERES_RESOURCE_ROOT` (packager / tests);
- *   2. the executable's folder (the zip's layout: `drizzle/`, `admin-dist/`, …);
- *   3. the monorepo tree from this file (`src/config` → `apps/api` / `apps/admin`).
+ *   2. the executable's folder (the zip's layout: `drizzle/`, `dist-admin/`, …);
+ *   3. the monorepo tree from this file (`src/config` → `apps/api` / `apps/web`).
  */
 
 const thisDirectory = path.dirname(fileURLToPath(import.meta.url));
+
+/** `apps/` in the checkout: the sibling apps whose build outputs the API serves. */
+const appsDirectory = path.join(thisDirectory, '..', '..', '..');
 
 export function firstExistingPath(candidates: readonly string[]): string | undefined {
   for (const candidate of candidates) {
@@ -60,95 +63,69 @@ export function migrationsFolder(usingSqlite: boolean): string {
   return found;
 }
 
-export function adminDistPath(): string {
-  const override = resourceOverride();
-  return (
-    firstExistingPath(
-      [
-        override ? path.join(override, 'admin-dist') : undefined,
-        override ? path.join(override, 'admin', 'dist') : undefined,
-        path.join(executableDirectory(), 'admin-dist'),
-        path.join(executableDirectory(), 'admin', 'dist'),
-        path.join(thisDirectory, '..', '..', '..', 'admin', 'dist'),
-      ].filter((value): value is string => Boolean(value)),
-    ) ?? path.join(thisDirectory, '..', '..', '..', 'admin', 'dist')
-  );
-}
-
-export function showcaseDistPath(): string {
-  const override = resourceOverride();
-  return (
-    firstExistingPath(
-      [
-        override ? path.join(override, 'dist-showcase') : undefined,
-        override ? path.join(override, 'admin', 'dist-showcase') : undefined,
-        path.join(executableDirectory(), 'dist-showcase'),
-        path.join(executableDirectory(), 'admin', 'dist-showcase'),
-        path.join(thisDirectory, '..', '..', '..', 'admin', 'dist-showcase'),
-      ].filter((value): value is string => Boolean(value)),
-    ) ?? path.join(thisDirectory, '..', '..', '..', 'admin', 'dist-showcase')
-  );
-}
-
 /**
- * The landing page bundle the API serves at `/`: the `build:landing` output of apps/site, made
- * for the `/_landing` prefix (its base path is part of every URL in it). Not the `dist` the
- * GitHub Pages workflow publishes, which is made for `/Keres/` - the two cannot share a build.
+ * The four web bundles the API serves, once: `packaged` is the folder's name in the zip, the image and
+ * the desktop app (every build folder is `dist-<name>`); `checkout` is where the same build lands in the
+ * monorepo, relative to `apps/`; `buildScript` is the root script that produces it.
+ *
+ * Each is an export made for its own prefix (its base path is part of every URL in it), so none can
+ * stand in for a `dist` made for another place: the client's is not the one Electron loads over `app://`,
+ * the landing page's is not the one GitHub Pages publishes.
  */
-export function landingDistPath(): string {
+export const WEB_BUNDLES = {
+  admin: { packaged: 'dist-admin', checkout: ['web', 'dist'], buildScript: 'web:build' },
+  showcase: {
+    packaged: 'dist-showcase',
+    checkout: ['web', 'dist-showcase'],
+    buildScript: 'web:build',
+  },
+  landing: {
+    packaged: 'dist-landing',
+    checkout: ['site', 'dist-landing'],
+    buildScript: 'site:build:landing',
+  },
+  client: {
+    packaged: 'dist-client',
+    checkout: ['client', 'dist-hosted'],
+    buildScript: 'client:build:hosted',
+  },
+} as const;
+
+export type WebBundleName = keyof typeof WEB_BUNDLES;
+
+/** The bundle's folder: under the override, beside the executable or in the checkout - the checkout's when none exists yet. */
+export function webBundlePath(name: WebBundleName): string {
+  const { packaged, checkout } = WEB_BUNDLES[name];
   const override = resourceOverride();
+  const inCheckout = path.join(appsDirectory, ...checkout);
   return (
     firstExistingPath(
       [
-        override ? path.join(override, 'landing-dist') : undefined,
-        override ? path.join(override, 'site', 'dist-landing') : undefined,
-        path.join(executableDirectory(), 'landing-dist'),
-        path.join(executableDirectory(), 'site', 'dist-landing'),
-        path.join(thisDirectory, '..', '..', '..', 'site', 'dist-landing'),
+        override ? path.join(override, packaged) : undefined,
+        override ? path.join(override, ...checkout) : undefined,
+        path.join(executableDirectory(), packaged),
+        path.join(executableDirectory(), ...checkout),
+        inCheckout,
       ].filter((value): value is string => Boolean(value)),
-    ) ?? path.join(thisDirectory, '..', '..', '..', 'site', 'dist-landing')
+    ) ?? inCheckout
   );
 }
 
-/**
- * The client web export the API serves at `/client`: `build:hosted` in apps/client, an export made for
- * that prefix (its base path is part of every URL in it). Not the `dist` Electron consumes over the
- * `app://` protocol, which is made for the root - the two cannot share a build.
- */
-export function clientDistPath(): string {
-  const override = resourceOverride();
-  return (
-    firstExistingPath(
-      [
-        override ? path.join(override, 'client-dist') : undefined,
-        override ? path.join(override, 'client', 'dist-hosted') : undefined,
-        path.join(executableDirectory(), 'client-dist'),
-        path.join(executableDirectory(), 'client', 'dist-hosted'),
-        path.join(thisDirectory, '..', '..', '..', 'client', 'dist-hosted'),
-      ].filter((value): value is string => Boolean(value)),
-    ) ?? path.join(thisDirectory, '..', '..', '..', 'client', 'dist-hosted')
-  );
-}
+export const adminDistPath = () => webBundlePath('admin');
+export const showcaseDistPath = () => webBundlePath('showcase');
+export const landingDistPath = () => webBundlePath('landing');
+export const clientDistPath = () => webBundlePath('client');
 
 export function desktopIconPath(): string {
   const override = resourceOverride();
+  const inCheckout = path.join(appsDirectory, 'client', 'assets', 'images', 'desktop_icon.png');
   return (
     firstExistingPath(
       [
         override ? path.join(override, 'desktop_icon.png') : undefined,
         path.join(executableDirectory(), 'desktop_icon.png'),
-        path.join(
-          thisDirectory,
-          '..',
-          '..',
-          '..',
-          'client',
-          'assets',
-          'images',
-          'desktop_icon.png',
-        ),
+        inCheckout,
       ].filter((value): value is string => Boolean(value)),
-    ) ??
-    path.join(thisDirectory, '..', '..', '..', 'client', 'assets', 'images', 'desktop_icon.png')
+    ) ?? inCheckout
   );
 }

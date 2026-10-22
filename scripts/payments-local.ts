@@ -9,7 +9,7 @@
  *       the made-up values below; only the database, the media folder and the server's port are
  *       replaced, so a running server of yours is left alone. Proves those two files work together.
  *
- * What it sets up (see docs/payments_local_test.md for the picture):
+ * What it sets up (see docs/procedures/payments_local_test.md for the picture):
  *   - the server on :3300 (not :3000, so it can run next to a server you already have) with a
  *     temporary SQLite file and an administrator `root`;
  *   - the payments service on :3101 with the MOCK provider (a fake bank page, no real money) and Play

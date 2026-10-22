@@ -12,6 +12,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface ItemJourneyService {
   getById(id: string): Promise<ItemJourney | undefined>;
@@ -199,7 +200,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         where: eq(itemJourneys.id, id),
       });
       if (!itemJourneyToDelete) {
-        console.warn(`Attempted to delete non-existent ItemJourney ${id}.`);
+        logger.warn(`Attempted to delete non-existent ItemJourney ${id}.`);
         return;
       }
       await assertStoryIsWritable(db, itemJourneyToDelete.storyId);

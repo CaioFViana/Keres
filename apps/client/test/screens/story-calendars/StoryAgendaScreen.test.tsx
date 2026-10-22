@@ -152,8 +152,8 @@ const sceneEntries = () => [
 ];
 
 describe('StoryAgendaScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

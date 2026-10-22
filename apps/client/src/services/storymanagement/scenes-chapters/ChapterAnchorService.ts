@@ -14,6 +14,7 @@ import {
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * When a container happens, said against the story's own timeline.
@@ -182,7 +183,7 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
         where: eq(chapterAnchors.id, anchorId),
       });
       if (!anchor) {
-        console.warn(`Attempted to delete non-existent ChapterAnchor ${anchorId}.`);
+        logger.warn(`Attempted to delete non-existent ChapterAnchor ${anchorId}.`);
         return;
       }
       await assertStoryIsWritable(db, anchor.storyId);

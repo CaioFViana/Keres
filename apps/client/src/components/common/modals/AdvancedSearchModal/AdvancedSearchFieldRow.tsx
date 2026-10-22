@@ -1,3 +1,4 @@
+import type { AdvancedSearchValue } from '@/src/types/entityFilters';
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance, type StorySchemaEntityType } from '@keres/shared';
 import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
@@ -47,9 +48,9 @@ interface AdvancedSearchFieldRowProps {
   /** The criteria key for this field in its scope (`scene:name`, `custom:<id>`, `name`). */
   name: string;
   label: string;
-  value: any;
+  value: AdvancedSearchValue;
   storyId: string;
-  onChange: (value: any) => void;
+  onChange: (value: AdvancedSearchValue) => void;
   onRemove: () => void;
   /** Enter in a text field applies the filters. */
   onSubmit: () => void;

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import { pingServer, type ServerWithStatus } from '@/src/services/servers/ServerStatusService';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** How often the servers are read again and pinged while the screen is in front. */
 const REFRESH_INTERVAL_MS = 7000;
@@ -48,7 +49,7 @@ export function useServerStatuses(serverId?: string) {
         setServers(await Promise.all(wanted.map(pingServer)));
       }
     } catch (err) {
-      console.error('Failed to load servers:', err);
+      logger.error('Failed to load servers:', err);
       setError(t('failed_to_load_servers'));
     }
   }, [serverService, serverId, t]);

@@ -25,6 +25,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Describing a calendar.
@@ -199,7 +200,7 @@ const StoryCalendarFormScreen = () => {
       }
       navigation.goBack();
     } catch (error) {
-      console.log('StoryCalendarFormScreen: failed to save the calendar.', error);
+      logger.debug('StoryCalendarFormScreen: failed to save the calendar.', error);
       notify(t('calendar_save_failed'), 'error');
     } finally {
       setSaving(false);

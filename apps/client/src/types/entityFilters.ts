@@ -11,4 +11,12 @@ export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
 export type SortDirection = 'asc' | 'desc';
 
-export type AdvancedSearchCriteria = { [key: string]: any };
+/**
+ * One field's value in the advanced search. Its type depends on the field's kind (text, number, yes/no,
+ * entity id, date), which the schema-driven form knows and this bag cannot say, so each consumer reads the
+ * keys it knows by name.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AdvancedSearchValue = any;
+
+export type AdvancedSearchCriteria = { [key: string]: AdvancedSearchValue };

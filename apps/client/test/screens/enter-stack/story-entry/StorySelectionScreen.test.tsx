@@ -242,8 +242,8 @@ describe('StorySelectionScreen', () => {
     mockUpdateFavorite.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.restoreAllMocks();
   });
 
@@ -433,6 +433,22 @@ describe('StorySelectionScreen', () => {
     header.actions[1].onPress();
 
     expect(mockParentNavigate).toHaveBeenCalledWith('ImportStory');
+  });
+
+  it("goes to the showcase from the list: a server's public site is a step away", async () => {
+    await render(<StorySelectionScreen />);
+    const header = mockUseScreenHeader.mock.calls[0][0] as {
+      actions: { label: string; icon: string; visible?: boolean; onPress: () => void }[];
+    };
+
+    expect(header.actions[2]).toMatchObject({
+      label: 'showcase_title',
+      icon: 'storefront-outline',
+      visible: true,
+    });
+    header.actions[2].onPress();
+
+    expect(mockParentNavigate).toHaveBeenCalledWith('ShowcaseDrawer');
   });
 
   it('toggles story favorites', async () => {

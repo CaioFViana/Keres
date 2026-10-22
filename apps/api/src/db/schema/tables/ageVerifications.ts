@@ -13,7 +13,7 @@ import {
 import { users } from './users';
 
 /**
- * One sending of an identity document to an age-verification service (see `docs/age_verification.md`): the account it
+ * One sending of an identity document to an age-verification service (see `docs/compliance/age_verification.md`): the account it
  * is for, the service's own reference, and how it ended. Nothing about the document or the person is in here - the
  * service keeps those, and the only thing that outlives the decision is `identityCommitment`.
  *

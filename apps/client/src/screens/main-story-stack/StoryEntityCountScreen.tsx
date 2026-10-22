@@ -19,53 +19,10 @@ import { createStoryPlanService } from '@/src/services/payments/StoryPlanService
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { ENTITY_COUNT_LABEL_KEYS } from '@/src/utils/entity/entityCountLabels';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
-
-/**
- * What each synchronized entity type is called in the counts. The types the story's vocabulary renames
- * (characters, scenes...) are labelled through it instead; these are the rest, the links and values of the
- * second card included.
- */
-const ENTITY_COUNT_LABEL_KEYS: Record<string, string> = {
-  AttributeValue: 'entity_count_attribute_value',
-  Board: 'entity_count_board',
-  Chapter: 'entity_count_chapter',
-  ChapterAnchor: 'entity_count_chapter_anchor',
-  Character: 'entity_count_character',
-  CharacterRelation: 'entity_count_character_relation',
-  CharacterScene: 'entity_count_character_scene',
-  Choice: 'entity_count_choice',
-  ChoiceCheck: 'entity_count_choice_check',
-  ChoiceCheckGroup: 'entity_count_choice_check_group',
-  Effect: 'entity_count_effect',
-  Gallery: 'entity_count_gallery',
-  GalleryRelation: 'entity_count_gallery_relation',
-  Item: 'entity_count_item',
-  ItemJourney: 'entity_count_item_journey',
-  Location: 'entity_count_location',
-  LocationMap: 'entity_count_location_map',
-  LocationRelation: 'entity_count_location_relation',
-  Mode: 'entity_count_mode',
-  Note: 'entity_count_note',
-  NoteRelation: 'entity_count_note_relation',
-  Plot: 'entity_count_plot',
-  PlotScene: 'entity_count_plot_scene',
-  Route: 'entity_count_route',
-  RouteStep: 'entity_count_route_step',
-  Scene: 'entity_count_scene',
-  SeeAlsoRelation: 'entity_count_see_also_relation',
-  Stat: 'entity_count_stat',
-  StatRelation: 'entity_count_stat_relation',
-  StatStrength: 'entity_count_stat_strength',
-  StoryArc: 'entity_count_story_arc',
-  StoryCalendar: 'entity_count_story_calendar',
-  StorySchemaField: 'entity_count_story_schema_field',
-  Suggestion: 'entity_count_suggestion',
-  Tag: 'entity_count_tag',
-  TagRelation: 'entity_count_tag_relation',
-  WorldRule: 'entity_count_world_rule',
-};
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * How many entities the story has, by type, and - for a story on a server - against the owner's plan.
@@ -109,7 +66,7 @@ const StoryEntityCountScreen = () => {
       setCounts(counted);
       setRelations(linked);
     } catch (countError) {
-      console.error('StoryEntityCountScreen: failed to count entities.', countError);
+      logger.error('StoryEntityCountScreen: failed to count entities.', countError);
       setError(t('entity_count_failed'));
     } finally {
       setLoading(false);

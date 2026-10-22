@@ -2,7 +2,7 @@ import type { Lang } from './http';
 
 /**
  * What a reviewer reads, in English and Portuguese. The checklist is the reviewer's script from
- * `docs/age_verification_reviewer.md`, shortened to what the screen needs; the handbook stays the authority.
+ * `docs/compliance/age_verification_reviewer.md`, shortened to what the screen needs; the handbook stays the authority.
  */
 
 /** The messages a decision can answer with. Typed values are never part of any of them. */

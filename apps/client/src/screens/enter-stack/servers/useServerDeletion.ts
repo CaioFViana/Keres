@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { OwnedServerStory } from '@/src/services/servers/ServerService';
 import { ServerHasOwnedStoriesError } from '@/src/services/servers/ServerService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 /** What the deletion needs of the service that stores the servers locally. */
 interface ServerStore {
@@ -38,7 +39,7 @@ export function useServerDeletion(store: ServerStore, onDeleted: (serverId: stri
           return;
         }
       } catch (err) {
-        console.error('Failed to check stories before deleting server:', err);
+        logger.error('Failed to check stories before deleting server:', err);
         AppAlert.alert(t('error'), t('failed_to_delete_server'));
         return;
       }
@@ -56,7 +57,7 @@ export function useServerDeletion(store: ServerStore, onDeleted: (serverId: stri
                 onDeleted(serverId);
                 AppAlert.alert(t('success'), t('server_deleted_successfully'));
               } catch (err) {
-                console.error('Failed to delete server:', err);
+                logger.error('Failed to delete server:', err);
                 if (err instanceof ServerHasOwnedStoriesError) {
                   showOwnedStoriesBlock(err.ownedStories);
                 } else {

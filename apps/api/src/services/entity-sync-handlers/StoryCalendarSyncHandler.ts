@@ -1,8 +1,8 @@
 import type { CreateStoryCalendarDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateStoryCalendarDataSchema, PartialStoryCalendarSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { storyCalendars } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 /**
  * A story's calendars.
@@ -26,12 +26,8 @@ export class StoryCalendarSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateStoryCalendarDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

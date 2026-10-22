@@ -188,7 +188,7 @@ describe('useWorldRuleFormState durable drafts', () => {
       first.result.current.setTitle('Lei do bronze');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -201,7 +201,7 @@ describe('useWorldRuleFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -223,7 +223,7 @@ describe('useWorldRuleFormState durable drafts', () => {
       first.result.current.setTitle('Dízimo de ferro, revisto');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -254,7 +254,7 @@ describe('useWorldRuleFormState durable drafts', () => {
     expect(first.result.current.section).toBe('rule');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -268,7 +268,7 @@ describe('useWorldRuleFormState durable drafts', () => {
       second.result.current.setTitle('Lei da prata');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -297,7 +297,7 @@ describe('useWorldRuleFormState durable drafts', () => {
     expect(first.result.current.section).toBe('location');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({
@@ -320,7 +320,7 @@ describe('useWorldRuleFormState durable drafts', () => {
       first.result.current.setTitle('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerWorldRule = {

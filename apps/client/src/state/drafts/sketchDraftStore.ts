@@ -20,6 +20,7 @@ import {
   readCanvasDraft,
   writeCanvasDraftNow,
 } from '@/src/services/drafts/canvasDraftPersistence';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Unsaved drawing of the sketch being edited. In memory it holds the decoded documents (the
@@ -129,7 +130,7 @@ function revive(stored: StoredSketchDraft, savedDoc: SketchDocument | null): Ske
       baseVersion: stored.baseVersion,
     };
   } catch (error) {
-    console.error('Corrupt sketch draft ignored:', error);
+    logger.error('Corrupt sketch draft ignored:', error);
     return null;
   }
 }
@@ -142,7 +143,7 @@ async function readDurable(storyId: string, sketchId: string): Promise<StoredSke
       const parsed = JSON.parse(row.content) as unknown;
       return isStored(parsed, storyId, sketchId) ? parsed : null;
     } catch (error) {
-      console.error('Corrupt sketch draft ignored:', error);
+      logger.error('Corrupt sketch draft ignored:', error);
       return null;
     }
   }
@@ -164,7 +165,7 @@ export const useSketchDraftStore = create<SketchDraftState>((set, get) => ({
       const current = get().draft;
       if (current)
         void persistNow(current).catch((error) =>
-          console.error('Failed to write sketch draft:', error),
+          logger.error('Failed to write sketch draft:', error),
         );
     }, WRITE_DELAY_MS);
   },

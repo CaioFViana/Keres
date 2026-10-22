@@ -1,0 +1,139 @@
+/*
+ * The thread's frame, its drawing and the forks it splits at (see thread.ts). The same file in apps/site and
+ * apps/web. It reads the site's own tokens (--color-*, --radius-*) and, on a page that wears a palette, its tint
+ * (--page-tint); nothing here chooses a colour.
+ */
+.thread-page {
+  --thread: var(--page-tint, var(--color-primary));
+  --thread-dim: color-mix(in srgb, var(--color-text) 28%, transparent);
+  --thread-rail: 40px;
+  --thread-col: 76px;
+  --thread-mark: 72px;
+  --thread-fork-gap: 40px;
+  position: relative;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 0 0;
+}
+
+@media (min-width: 761px) {
+  .thread-page {
+    --thread-rail: 110px;
+    --thread-col: 172px;
+    --thread-mark: 140px;
+    --thread-fork-gap: 92px;
+  }
+}
+
+/* Behind the content: the cards and the text sit over the thread, never the other way round. */
+.thread {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.thread-base {
+  fill: none;
+  stroke: var(--thread-dim);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+}
+
+.thread-lit {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+
+.thread-dot {
+  fill: var(--color-bg);
+  stroke: var(--tint, var(--thread-dim));
+  stroke-width: 1.8;
+  transition:
+    fill 0.35s,
+    stroke 0.35s;
+}
+
+.thread-dot.is-small {
+  stroke-width: 1.4;
+}
+
+.thread-dot.is-on {
+  fill: var(--tint, var(--thread));
+  stroke: var(--tint, var(--thread));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-lit {
+    stroke-dashoffset: 0 !important;
+  }
+
+  .thread-dot {
+    transition: none;
+  }
+}
+
+/* Where the thread starts: the mark's hair ends on the rail. */
+.thread-origin {
+  width: var(--thread-mark);
+  margin: 40px 0 0 calc(var(--thread-rail) - var(--thread-mark) * 0.569);
+}
+
+.thread-origin img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Content that stands to the right of the rail. */
+.thread-col {
+  position: relative;
+  margin-left: var(--thread-col);
+}
+
+.thread-fork {
+  padding: var(--thread-fork-gap) 0;
+}
+
+.thread-fork.is-single {
+  padding: 36px 0 12px;
+}
+
+.thread-branches {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  margin-left: var(--thread-col);
+}
+
+@media (min-width: 761px) {
+  .thread-branches {
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+    gap: 22px;
+    align-items: stretch;
+  }
+
+  .thread-fork.is-single .thread-branches {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 880px;
+  }
+
+  .thread-fork.is-wide .thread-branches {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Four columns need room: below this width the branches stack on the rail, like on a phone. */
+@media (min-width: 1000px) {
+  .thread-fork.is-wide .thread-branches {
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    gap: 16px;
+  }
+}

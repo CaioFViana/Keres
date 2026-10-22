@@ -594,8 +594,8 @@ beforeEach(() => {
 });
 
 describe('NarrativeElementsListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('requests its guided tour', async () => {
@@ -1035,7 +1035,6 @@ describe('NarrativeElementsListScreen', () => {
       undefined,
       undefined,
       undefined,
-      'all',
       { text: 'Sail' },
     );
     await waitFor(() => expect(rowNames(view)).toEqual(['Arrival']));

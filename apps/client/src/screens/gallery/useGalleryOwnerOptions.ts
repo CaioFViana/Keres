@@ -12,6 +12,7 @@ import { useDrizzle } from '@/src/db';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import * as schema from '@/src/db/schema';
 import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story's entities a media file can be linked to, ready for a picker.
@@ -139,7 +140,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
 
       setOptions(collected);
     } catch (error) {
-      console.error('Failed to load gallery owner options:', error);
+      logger.error('Failed to load gallery owner options:', error);
       setOptions([]);
     } finally {
       setLoading(false);

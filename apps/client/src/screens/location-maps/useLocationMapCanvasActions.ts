@@ -23,6 +23,7 @@ import {
 } from '@/src/utils/location-map/locationMapContent';
 import { imageSizeOf } from '@/src/services/media/locationMapMedia';
 import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
+import { logger } from '@/src/utils/logging/logger';
 
 type GalleryMediaById = Record<
   string,
@@ -139,7 +140,7 @@ export function useLocationMapCanvasActions({
               height = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalHeight * scale));
             }
           } catch (sizeError) {
-            console.log('LocationMapScreen: failed to read image size, using default.', sizeError);
+            logger.debug('LocationMapScreen: failed to read image size, using default.', sizeError);
           }
         }
         sized.push({ galleryId, width, height });
@@ -385,7 +386,7 @@ export function useLocationMapCanvasActions({
         setDestination(created.id);
         showNotification(t('location_map_destination_created'), 'success');
       } catch (createError) {
-        console.log('LocationMapScreen: failed to create destination map.', createError);
+        logger.debug('LocationMapScreen: failed to create destination map.', createError);
         showNotification(t('location_map_save_failed'), 'error');
       }
     },

@@ -199,8 +199,8 @@ function makeMedia(overrides = {}) {
 }
 
 describe('GalleryDetailContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

@@ -21,6 +21,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { logger } from '@/src/utils/logging/logger';
 
 type Nav = NativeStackNavigationProp<NarrativeElementsStackParamList, 'NewSession'>;
 
@@ -66,7 +67,7 @@ const NewSessionScreen = () => {
       });
       navigation.replace('SceneEditor', { sceneId: scene.id });
     } catch (error) {
-      console.log('NewSessionScreen: failed to start the session.', error);
+      logger.debug('NewSessionScreen: failed to start the session.', error);
       showNotification(t('new_session_failed'), 'error');
       setSaving(false);
     }

@@ -30,10 +30,6 @@ export interface CommentableDetailFieldProps {
     criticality: number;
   }) => Promise<void>;
   onDeleteComment: (commentId: string) => Promise<void>;
-  onUpdateComment: (
-    commentId: string,
-    changes: { commentText?: string; criticality?: number },
-  ) => Promise<void>;
 }
 
 /**
@@ -55,7 +51,6 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   currentUserId,
   onAddComment,
   onDeleteComment,
-  onUpdateComment,
 }) => {
   const { colors } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
@@ -125,7 +120,6 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
         currentUserId={currentUserId}
         onSubmit={onAddComment}
         onDelete={onDeleteComment}
-        onUpdate={onUpdateComment}
       />
     </View>
   );

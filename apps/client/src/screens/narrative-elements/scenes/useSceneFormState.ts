@@ -8,6 +8,7 @@ import { createAttributeValueService } from '@/src/services/storymanagement/enti
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import type { StorySchemaField } from '@keres/shared';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseSceneFormStateOptions = {
   initialSceneId?: string;
@@ -172,7 +173,7 @@ export function useSceneFormState({
           setChapterId(initialChapterId);
         }
       } catch (error) {
-        console.error('Failed to load scene:', error);
+        logger.error('Failed to load scene:', error);
       } finally {
         setLoading(false);
       }
@@ -196,7 +197,7 @@ export function useSceneFormState({
 
   const restoreDraftFields = useCallback((fields: SceneFormDraftFields) => {
     if (!isSceneFormDraftFields(fields)) {
-      console.error('Corrupt scene form draft ignored.');
+      logger.error('Corrupt scene form draft ignored.');
       return;
     }
     setChapterId(fields.chapterId);

@@ -180,8 +180,8 @@ function statsData(overrides: any = {}) {
 }
 
 describe('StatListScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

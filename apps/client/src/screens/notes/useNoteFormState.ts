@@ -8,6 +8,7 @@ import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseNoteFormStateOptions = {
   initialNoteId?: string;
@@ -101,11 +102,11 @@ export function useNoteFormState({
                 : fromDb,
             );
           } else {
-            console.warn('Note not found:', initialNoteId);
+            logger.warn('Note not found:', initialNoteId);
           }
         }
       } catch (err) {
-        console.error('Failed to load note:', err);
+        logger.error('Failed to load note:', err);
       } finally {
         setLoading(false);
       }
@@ -122,7 +123,7 @@ export function useNoteFormState({
 
   const restoreDraftFields = useCallback((fields: NoteFormDraftFields) => {
     if (!isNoteFormDraftFields(fields)) {
-      console.error('Corrupt note form draft ignored.');
+      logger.error('Corrupt note form draft ignored.');
       return;
     }
     setTitle(fields.title);

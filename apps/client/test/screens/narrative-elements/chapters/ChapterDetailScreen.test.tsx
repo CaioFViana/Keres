@@ -565,8 +565,8 @@ beforeEach(() => {
 });
 
 describe('ChapterDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('stays on loading while the chapter resolves', async () => {

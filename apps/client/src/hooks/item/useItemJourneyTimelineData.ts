@@ -13,6 +13,7 @@ import { createChoiceService } from '@/src/services/storymanagement/choices-stat
 import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 export function useItemJourneyTimelineData(storyId: string, itemId: string) {
   const drizzleDb = useDrizzle();
@@ -42,7 +43,7 @@ export function useItemJourneyTimelineData(storyId: string, itemId: string) {
       setChoices(fetchedChoices);
       setCharacters(fetchedCharacters);
     } catch (err) {
-      console.error('Failed to load item journey timeline:', err);
+      logger.error('Failed to load item journey timeline:', err);
     } finally {
       loadedRef.current = true;
       setLoading(false);

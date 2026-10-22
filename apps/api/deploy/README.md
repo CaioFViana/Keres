@@ -78,7 +78,7 @@ What the ledger does **not** cover is the rest of the list below. After every re
 
 ## Age verification service
 
-The verification service described in [`docs/age_verification.md`](../../../docs/age_verification.md)
+The verification service described in [`docs/compliance/age_verification.md`](../../../docs/compliance/age_verification.md)
 (`apps/verification`) runs from its **own** compose file, image and port, behind its own reverse proxy. This compose
 carries only the Keres server's side: the `AGE_VERIFICATION_*` values below. `required` cannot boot without a service
 to point at. The official server runs `manual` (the default): no service, accounts start unverified, and an

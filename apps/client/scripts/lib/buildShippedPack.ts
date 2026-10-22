@@ -144,5 +144,3 @@ export function buildPack(definition: ShippedPackDefinition, language: PackLangu
     },
   };
 }
-
-export type ShippedPackFile = ReturnType<typeof buildPack>;

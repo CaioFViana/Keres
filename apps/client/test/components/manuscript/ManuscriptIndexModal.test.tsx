@@ -78,8 +78,8 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 describe('ManuscriptIndexModal', () => {

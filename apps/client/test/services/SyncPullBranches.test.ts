@@ -173,8 +173,8 @@ describe('applyRemoteCreate of a row already here', () => {
     );
 
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: { version: 0 } }),
+      STORY_ID,
     );
   });
 
@@ -193,7 +193,7 @@ describe('applyRemoteCreate of a row already here', () => {
 
     await pull.applyRemoteCreate(create, handler);
 
-    expect(handler.applyCreate).toHaveBeenCalledWith(STORY_ID, create);
+    expect(handler.applyCreate).toHaveBeenCalledWith(create, STORY_ID);
   });
 });
 
@@ -272,8 +272,8 @@ describe('alignEchoedWholeRow', () => {
     );
 
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: { name: 'Server' } }),
+      STORY_ID,
     );
   });
 

@@ -63,7 +63,7 @@ const repoRoot = path.join(__dirname, '..');
 const clientSrcPath = path.join(repoRoot, 'apps', 'client', 'src');
 const localesPath = path.join(clientSrcPath, 'locales');
 const sharedSrcPath = path.join(repoRoot, 'packages', 'shared');
-const adminSrcPath = path.join(repoRoot, 'apps', 'admin', 'src');
+const adminSrcPath = path.join(repoRoot, 'apps', 'web', 'src');
 const adminLocalesPath = path.join(adminSrcPath, 'i18n', 'locales');
 const showcaseSrcPath = path.join(adminSrcPath, 'showcase');
 const adminLanguageSelectPath = path.join(adminSrcPath, 'i18n', 'LanguageSelect.tsx');
@@ -262,6 +262,14 @@ function isTranslationCallee(expression: ts.LeftHandSideExpression): boolean {
   return false;
 }
 
+/**
+ * Functions that translate a key they are handed, with the `t` function first and the key second:
+ * `siteText(t, 'contact.title')` reads `contact.title`, or `contact.title_official` where the page has a text
+ * context (the landing served from keres.me). The call inside the helper passes a variable, so the key is only
+ * visible at the call sites of the helper.
+ */
+const TRANSLATION_HELPERS = new Set(['siteText']);
+
 function scanFile(filePath: string): ScanResult {
   const content = fs.readFileSync(filePath, 'utf8');
   const scriptKind = filePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
@@ -324,6 +332,21 @@ function scanFile(filePath: string): ScanResult {
           file: filePath,
           line: lineOf(arg.getStart(sourceFile)),
         });
+      }
+    }
+
+    // `siteText(t, 'key')`: the key is a real request (it must exist), and the variants of its context
+    // (`key_official`) are never written out in code, so the call is the evidence of use for every `key_<context>`.
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      TRANSLATION_HELPERS.has(node.expression.text) &&
+      node.arguments.length > 1
+    ) {
+      const key = node.arguments[1];
+      if (ts.isStringLiteral(key) || ts.isNoSubstitutionTemplateLiteral(key)) {
+        exactUsages.push({ key: key.text, file: filePath, line: lineOf(key.getStart(sourceFile)) });
+        allTemplatePatterns.push(new RegExp(`^${escapeRegExp(key.text)}_[^.]+$`));
       }
     }
 

@@ -218,8 +218,8 @@ function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unkno
 }
 
 describe('CharacterFormScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

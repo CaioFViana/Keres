@@ -122,8 +122,8 @@ function chronology(overrides: any = {}) {
 }
 
 describe('RouteTimelineScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

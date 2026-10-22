@@ -84,8 +84,8 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
   (Platform as { OS: string }).OS = 'ios';
   jest.restoreAllMocks();
 });

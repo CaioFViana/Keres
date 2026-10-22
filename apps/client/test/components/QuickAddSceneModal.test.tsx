@@ -37,8 +37,8 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 const baseProps = {
@@ -71,7 +71,7 @@ describe('QuickAddSceneModal', () => {
       '  Betrayal  ',
     );
     await act(async () => {
-      fireEvent.press(view.getByTestId('quick-add-scene-row-submit'));
+      await fireEvent.press(view.getByTestId('quick-add-scene-row-submit'));
     });
 
     expect(onSubmit).toHaveBeenCalledWith('Betrayal');
@@ -85,7 +85,7 @@ describe('QuickAddSceneModal', () => {
 
     await fireEvent.changeText(view.getByPlaceholderText('quick_add_scene_placeholder'), '   ');
     await act(async () => {
-      fireEvent.press(view.getByTestId('quick-add-scene-row-submit'));
+      await fireEvent.press(view.getByTestId('quick-add-scene-row-submit'));
     });
 
     expect(onSubmit).not.toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe('QuickAddSceneModal', () => {
 
     await fireEvent.changeText(view.getByPlaceholderText('quick_add_scene_placeholder'), 'Arrival');
     await act(async () => {
-      fireEvent.press(view.getByTestId('quick-add-scene-row-submit'));
+      await fireEvent.press(view.getByTestId('quick-add-scene-row-submit'));
     });
 
     expect(onSubmit).toHaveBeenCalledWith('Arrival');

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The current user's effective role on a story, kept fresh from `stories.myRole` (set the
@@ -43,7 +44,7 @@ export function useStoryRole(storyId: string | undefined | null): {
       });
       setRole(!story?.serverId ? 'owner' : (story.myRole ?? null));
     } catch (error) {
-      console.error(`Failed to load story role for ${storyId}:`, error);
+      logger.error(`Failed to load story role for ${storyId}:`, error);
       setRole(null);
     } finally {
       setLoading(false);

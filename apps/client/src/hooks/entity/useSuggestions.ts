@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Catalog of saved + in-story values for a suggestion type. Reload is owned by the caller. */
 export function useSuggestions(storyId: string | undefined, type: string | undefined) {
@@ -18,7 +19,7 @@ export function useSuggestions(storyId: string | undefined, type: string | undef
     try {
       setSuggestions(await service.getSuggestions(type, storyId));
     } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
+      logger.error('Failed to fetch suggestions:', error);
       setSuggestions([]);
     } finally {
       setLoading(false);

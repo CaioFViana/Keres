@@ -24,6 +24,7 @@ import {
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 import type { FavoriteFilterState } from '@/src/types/entityFilters';
 import { softDeleteRowSync } from '@/src/db/softDelete';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -37,7 +38,7 @@ const LOCAL_ONLY_FIELDS = ['localPath', 'uploadState', 'downloadState', 'thumbna
  * would fill the log with one device's file paths, which mean nothing on any other, and would make
  * conflict resolution see "changes" where only a download finished.
  */
-function syncablePayload(row: Record<string, any>): Record<string, any> {
+function syncablePayload(row: Record<string, unknown>): Record<string, unknown> {
   const payload = { ...row };
   for (const field of LOCAL_ONLY_FIELDS) {
     delete payload[field];
@@ -253,7 +254,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         downloadState: 'downloaded',
       } as Create<GalleryInsert>);
 
-      const favorite = await normalizeFavoriteCreate(db, newGallery.storyId, 'Gallery', newGallery);
+      const favorite = await normalizeFavoriteCreate(db, newGallery.storyId, newGallery);
       newGallery = favorite.data;
 
       const userIdToLog = await getUserIdForOperation(
@@ -348,7 +349,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
     async deleteGallery(currentUserId, galleryId): Promise<void> {
       const toDelete = await db.query.galleries.findFirst({ where: eq(galleries.id, galleryId) });
       if (!toDelete) {
-        console.warn(`Attempted to delete non-existent gallery ${galleryId}.`);
+        logger.warn(`Attempted to delete non-existent gallery ${galleryId}.`);
         return;
       }
       await assertStoryIsWritable(db, toDelete.storyId);

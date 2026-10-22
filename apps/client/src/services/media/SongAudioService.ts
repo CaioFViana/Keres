@@ -9,6 +9,7 @@ import {
 } from '@keres/shared';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
+import { logger } from '@/src/utils/logging/logger';
 
 export { PREVIEW_MAX_SECONDS } from '@/src/utils/music/songPlayback';
 
@@ -96,7 +97,7 @@ function nativeStore(): SongAudioStore {
           entry.file.delete();
           total -= entry.size;
         } catch (error) {
-          console.log('SongAudioService: could not drop a rendering.', error);
+          logger.debug('SongAudioService: could not drop a rendering.', error);
         }
       }
     },
@@ -179,7 +180,7 @@ export function createSongAudioService(deps: SongAudioDeps = {}) {
       const uri = await store.put(key, encodeWav(samples, options.sampleRate ?? SAMPLE_RATE));
       // Pruning is housekeeping: a failure to do it must not fail the song that was just made.
       store.prune(maxBytes).catch((error) => {
-        console.log('SongAudioService: could not prune the renderings.', error);
+        logger.debug('SongAudioService: could not prune the renderings.', error);
       });
       return { uri, seconds, cached: false };
     },

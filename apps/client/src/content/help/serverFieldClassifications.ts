@@ -70,7 +70,24 @@ export const serverFieldClassifications: Record<string, EntityPropertyClassifica
   },
   ShowcaseStoryDetail: {
     documented: [],
-    invisible: ['storyId', 'snapshot', 'owner', 'versions', 'hasCover', 'updatedAt'],
+    invisible: ['storyId', 'snapshot', 'owner', 'versions', 'hasCover', 'workCovers', 'updatedAt'],
+  },
+  // What the public site reads to list its authors and draw their pages (the page's own texts are `OwnPublicProfile`).
+  ShowcaseAuthorCard: {
+    documented: [],
+    invisible: ['owner', 'storyCount', 'updatedAt'],
+  },
+  ShowcaseAuthorPage: {
+    documented: [],
+    invisible: ['owner', 'biography', 'links', 'theme', 'stories', 'updatedAt'],
+  },
+  ShowcaseFacet: {
+    documented: [],
+    invisible: ['value', 'count'],
+  },
+  ShowcaseFacets: {
+    documented: [],
+    invisible: ['genres', 'languages', 'mediums', 'types'],
   },
   ShowcaseVersion: {
     documented: [],
@@ -155,6 +172,15 @@ export const serverFieldClassifications: Record<string, EntityPropertyClassifica
       'isDeleted',
       'deletedAt',
     ],
+  },
+  // What the user writes for their author page on a server's public showcase (the `PublicProfile` screen).
+  OwnPublicProfile: {
+    documented: ['biography', 'links', 'theme'],
+    invisible: [],
+  },
+  ProfileLink: {
+    documented: ['label', 'url'],
+    invisible: [],
   },
   UserPublicInfo: {
     documented: ['username', 'tag', 'avatarColor', 'avatarIcon', 'bio'],

@@ -33,6 +33,7 @@ import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'BoardsStack'>,
@@ -66,7 +67,7 @@ const BoardListScreen = () => {
       setBoards(await createBoardService(db).getBoardsForStory(storyId));
       setError(null);
     } catch (loadError) {
-      console.log('BoardListScreen: failed to load boards.', loadError);
+      logger.debug('BoardListScreen: failed to load boards.', loadError);
       setError(t('board_load_failed'));
     }
   }, [db, storyId, t]);
@@ -124,7 +125,7 @@ const BoardListScreen = () => {
             });
             await reload();
           } catch (duplicateError) {
-            console.log('BoardListScreen: failed to duplicate board.', duplicateError);
+            logger.debug('BoardListScreen: failed to duplicate board.', duplicateError);
             showNotification(t('board_save_failed'), 'error');
           }
         },
@@ -150,7 +151,7 @@ const BoardListScreen = () => {
       setEditingBoard(null);
       await reload();
     } catch (updateError) {
-      console.log('BoardListScreen: failed to update board details.', updateError);
+      logger.debug('BoardListScreen: failed to update board details.', updateError);
       showNotification(t('board_save_failed'), 'error');
     }
   };
@@ -210,7 +211,7 @@ const BoardListScreen = () => {
             });
             navigation.navigate('BoardCanvas', { boardId: created.id });
           } catch (createError) {
-            console.log('BoardListScreen: failed to create a board.', createError);
+            logger.debug('BoardListScreen: failed to create a board.', createError);
             showNotification(t('board_save_failed'), 'error');
           }
         }}

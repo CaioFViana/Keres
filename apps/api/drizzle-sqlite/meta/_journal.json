@@ -477,6 +477,13 @@
       "when": 1791992288707,
       "tag": "0067_registration_tiers_display",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "6",
+      "when": 1792588061616,
+      "tag": "0068_user_public_profile",
+      "breakpoints": true
     }
   ]
 }

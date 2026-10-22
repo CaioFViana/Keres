@@ -19,6 +19,9 @@ import {
 } from '@/src/utils/io/packBundle';
 import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import { logger } from '@/src/utils/logging/logger';
+import { columnsOf } from '@/src/db/entityTableRegistry';
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 /**
  * Packs: the reusable part of a story's structure.
@@ -34,7 +37,7 @@ import { createStoryService } from '@/src/services/storymanagement/story-lifecyc
  * through the per-entity services. That is what gives the feature its defining property: the import
  * path records **no operations at all**, so a story created from packs starts with an empty log and
  * is bootstrapped to a server whole, by the machinery that already exists. Applying a pack to an
- * existing story is deliberately impossible - see `docs/packs_feature_plan.md`.
+ * existing story is deliberately impossible - see `docs/decisions/packs_feature_plan.md`.
  */
 
 export interface PackSummary {
@@ -172,7 +175,7 @@ function parseContent(raw: string): PackContentType | null {
   try {
     return validatePackContent(JSON.parse(raw));
   } catch (error) {
-    console.error('Failed to parse pack content:', error);
+    logger.error('Failed to parse pack content:', error);
     return null;
   }
 }
@@ -333,7 +336,7 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       } catch (error) {
         // A type with no harvestable column (a custom field's catalogue, say) is not an error - it
         // simply has nothing to sweep in beyond what is already stored.
-        console.debug(`No harvestable usages for suggestion type ${type}:`, error);
+        logger.debug(`No harvestable usages for suggestion type ${type}:`, error);
         continue;
       }
       for (const [value] of used) {
@@ -372,11 +375,12 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
   ): Promise<PackContentType['extras']> {
     // One where clause for thirteen tables, mirroring the exporter's generic read: every
     // extras table carries `storyId` and soft-delete flags.
-    const liveRows = async <T>(table: object): Promise<T[]> => {
+    const liveRows = async <T>(table: SQLiteTable): Promise<T[]> => {
+      const columns = columnsOf(table);
       const rows = await db
         .select()
-        .from(table as any)
-        .where(and(eq((table as any).storyId, storyId), eq((table as any).isDeleted, false)))
+        .from(table)
+        .where(and(eq(columns.storyId, storyId), eq(columns.isDeleted, false)))
         .all();
       return rows as T[];
     };

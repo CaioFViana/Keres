@@ -223,8 +223,8 @@ function makeFinding(overrides = {}) {
 }
 
 describe('StoryAnalysisScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

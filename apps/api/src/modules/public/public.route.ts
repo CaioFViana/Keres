@@ -1,4 +1,4 @@
-import { APP_RELEASE } from '@keres/shared';
+import { APP_RELEASE, ShowcaseSearchQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { jwtShowcase } from '@/config/jwt';
 import type { JWTPayload } from '@/index';
@@ -10,6 +10,7 @@ import { showcaseService } from '@/services/showcase/ShowcaseService';
 import { showcaseSettingsService } from '@/services/showcase/ShowcaseSettingsService';
 import { AppError } from '@/utils/errors';
 import { createAttemptLimiter } from '@/utils/rateLimiter';
+import { publicDirectoryRoutes } from './publicDirectory.route';
 import { publicReaderRoutes } from './publicReader.route';
 import {
   manuscriptMetaOf,
@@ -74,6 +75,8 @@ export const publicRoutes = new Elysia()
       const settings = await showcaseSettingsService.getOrCreate();
       return {
         showcaseEnabled: settings.isShowcaseEnabled,
+        // Whether the root of this server is the landing page: the showcase offers its way back only then.
+        landingEnabled: settings.isLandingEnabled,
         // Absent on older servers: a client that finds no such field publishes the legacy way.
         // A constant, not a setting: this server always takes client-compiled bytes.
         compiledUpload: true,
@@ -89,6 +92,7 @@ export const publicRoutes = new Elysia()
     {
       response: t.Object({
         showcaseEnabled: t.Boolean(),
+        landingEnabled: t.Boolean(),
         compiledUpload: t.Boolean(),
         serverVersion: t.String(),
         siteName: t.String(),
@@ -150,9 +154,17 @@ export const publicRoutes = new Elysia()
       )
       .get(
         '/stories',
-        async ({ set, headers, user }) => {
+        async ({ set, headers, user, query }) => {
+          const parsed = ShowcaseSearchQuerySchema.safeParse(query);
+          if (!parsed.success) {
+            throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid search.');
+          }
           const includeNsfw = await showcaseService.viewerIncludesNsfw(user);
-          const etag = await showcaseService.listEtag(includeNsfw);
+          // A listing asked for with filters or a page is a different answer from the whole one: its own tag.
+          const etag = await showcaseService.listEtag(
+            includeNsfw,
+            Object.keys(query).length > 0 ? JSON.stringify(parsed.data) : '',
+          );
           const cacheControl = 'public, max-age=0, must-revalidate';
           if (headers['if-none-match'] === etag) {
             // A raw `Response`: a 304 cannot have a body, and returning a value from here would make Elysia
@@ -168,13 +180,25 @@ export const publicRoutes = new Elysia()
           // The list of one viewer class never validates another's cache: the etag carries the
           // class, and a forged etag only earns a refetch of what the forger may already see.
           set.headers['vary'] = 'Authorization';
-          return showcaseService.listPublicStories(includeNsfw);
+          const { items, total } = await showcaseService.searchStories(includeNsfw, parsed.data);
+          set.headers['x-total-count'] = String(total);
+          return items;
         },
         {
+          query: t.Object({
+            q: t.Optional(t.String()),
+            genre: t.Optional(t.String()),
+            language: t.Optional(t.String()),
+            type: t.Optional(t.String()),
+            medium: t.Optional(t.String()),
+            sort: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+          }),
           detail: {
-            summary: 'List the public stories',
+            summary: 'List and search the public stories',
             description:
-              'Password-protected stories are never included. Supports If-None-Match so the page can poll cheaply.',
+              'Password-protected stories are never included. Filter by text (q), genre, language, structure (type) and the medium of a released work; order by recent, title or author; cut a page with limit and offset (the match count rides in X-Total-Count). Without a query the whole list answers. Supports If-None-Match so the page can poll cheaply.',
             tags: ['Showcase'],
           },
         },
@@ -252,6 +276,7 @@ export const publicRoutes = new Elysia()
               owner: OwnerSchema,
               versions: t.Array(VersionSchema),
               hasCover: t.Optional(t.Boolean()),
+              workCovers: t.Optional(t.Array(t.String())),
               updatedAt: t.String(),
             }),
           ]),
@@ -535,4 +560,5 @@ export const publicRoutes = new Elysia()
         },
       ),
   )
+  .use(publicDirectoryRoutes)
   .use(publicReaderRoutes);

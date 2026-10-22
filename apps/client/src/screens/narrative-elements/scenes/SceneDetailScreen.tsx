@@ -41,6 +41,7 @@ import type { NarrativeElementsScreenNavigationProp } from '@/src/screens/narrat
 import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';
 import { useSceneDetailServices } from './useSceneDetailServices';
+import { logger } from '@/src/utils/logging/logger';
 
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
 
@@ -86,15 +87,8 @@ const SceneDetailScreen = () => {
   } = useSceneDetailServices(selectedStory?.id);
   const [scene, setScene] = useState<SceneSelect | null>(null);
   const { canEdit } = useStoryRole(scene?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(scene?.storyId, 'Scene', sceneId);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(scene?.storyId, 'Scene', sceneId);
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined);
@@ -123,7 +117,7 @@ const SceneDetailScreen = () => {
 
   const fetchScene = useCallback(async () => {
     if (!sceneServiceRef.current) {
-      console.warn('Scene service not initialized.');
+      logger.warn('Scene service not initialized.');
       return;
     }
     try {
@@ -139,7 +133,7 @@ const SceneDetailScreen = () => {
         setHeaderTitle(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch scene details:', err);
+      logger.error('Failed to fetch scene details:', err);
       setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
@@ -166,7 +160,7 @@ const SceneDetailScreen = () => {
       const fetchedChapter = await chapterServiceRef.current.getById(scene.chapterId);
       setChapter(fetchedChapter || null);
     } catch (err) {
-      console.error('Failed to fetch chapter details:', err);
+      logger.error('Failed to fetch chapter details:', err);
       setChapter(null);
     }
   }, [chapterServiceRef, scene?.chapterId]);
@@ -180,7 +174,7 @@ const SceneDetailScreen = () => {
       const fetchedLocation = await locationServiceRef.current.getById(scene.locationId);
       setLocation(fetchedLocation || null);
     } catch (err) {
-      console.error('Failed to fetch location details:', err);
+      logger.error('Failed to fetch location details:', err);
       setLocation(null);
     }
   }, [locationServiceRef, scene?.locationId]);
@@ -206,7 +200,7 @@ const SceneDetailScreen = () => {
       setPreviousScene(previousScene);
       setNextScene(nextScene);
     } catch (err) {
-      console.error('Failed to fetch previous/next scenes:', err);
+      logger.error('Failed to fetch previous/next scenes:', err);
       setPreviousScene(undefined);
       setNextScene(undefined);
     }
@@ -231,12 +225,11 @@ const SceneDetailScreen = () => {
         undefined,
         undefined,
         undefined,
-        undefined,
         { sceneId },
       );
       setChoicesForScene(choices);
     } catch (err) {
-      console.error('Failed to fetch choices for scene:', err);
+      logger.error('Failed to fetch choices for scene:', err);
       setChoicesForScene([]);
     }
   }, [choiceServiceRef, selectedStory?.id, sceneId, selectedStory?.type]);
@@ -257,12 +250,11 @@ const SceneDetailScreen = () => {
         undefined,
         undefined,
         undefined,
-        undefined,
         { nextSceneId: sceneId },
       );
       setIncomingChoicesForScene(choices);
     } catch (err) {
-      console.error('Failed to fetch incoming choices for scene:', err);
+      logger.error('Failed to fetch incoming choices for scene:', err);
       setIncomingChoicesForScene([]);
     }
   }, [choiceServiceRef, selectedStory?.id, sceneId, selectedStory?.type]);
@@ -276,7 +268,7 @@ const SceneDetailScreen = () => {
       const allScenes = await sceneServiceRef.current.getAllByStoryId(selectedStory.id);
       setSceneNamesById(Object.fromEntries(allScenes.map((s) => [s.id, s.name])));
     } catch (err) {
-      console.error('Failed to fetch scene name lookups:', err);
+      logger.error('Failed to fetch scene name lookups:', err);
     }
   }, [sceneServiceRef, selectedStory?.id, selectedStory?.type]);
 
@@ -292,7 +284,7 @@ const SceneDetailScreen = () => {
       );
       setCharacterSceneRelations(fetchedRelations);
     } catch (err) {
-      console.error('Failed to fetch character-scene relations:', err);
+      logger.error('Failed to fetch character-scene relations:', err);
     }
   }, [characterSceneServiceRef, selectedStory?.id, sceneId]);
 
@@ -305,7 +297,7 @@ const SceneDetailScreen = () => {
       const fetchedItems = await itemServiceRef.current.getItemsByStoryId(selectedStory.id);
       setAllItems(fetchedItems);
     } catch (err) {
-      console.error('Failed to fetch all items:', err);
+      logger.error('Failed to fetch all items:', err);
     }
   }, [itemServiceRef, selectedStory?.id]);
 
@@ -321,7 +313,7 @@ const SceneDetailScreen = () => {
       );
       setItemJourneys(fetchedJourneys);
     } catch (err) {
-      console.error('Failed to fetch item journeys for scene:', err);
+      logger.error('Failed to fetch item journeys for scene:', err);
     }
   }, [itemJourneyServiceRef, selectedStory?.id, sceneId]);
 
@@ -338,7 +330,7 @@ const SceneDetailScreen = () => {
       );
       setSceneEffects(fetchedEffects);
     } catch (err) {
-      console.error('Failed to fetch scene effects:', err);
+      logger.error('Failed to fetch scene effects:', err);
     }
   }, [effectServiceRef, selectedStory?.id, sceneId]);
 
@@ -352,7 +344,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleItemChange = useCallback(
-    (changedStoryId: string, changedItemId: string) => {
+    (changedStoryId: string, _changedItemId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllItems();
       }
@@ -361,7 +353,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, changedItemJourneyId: string) => {
+    (changedStoryId: string, _changedItemJourneyId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchItemJourneysForScene();
       }
@@ -370,7 +362,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleSceneChange = useCallback(
-    async (changedStoryId: string, changedSceneId: string) => {
+    async (_changedStoryId: string, changedSceneId: string) => {
       if (changedSceneId === sceneId) {
         if (sceneServiceRef.current) {
           const updatedScene = await sceneServiceRef.current.getById(sceneId);
@@ -406,7 +398,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleCharacterSceneChange = useCallback(
-    (changedStoryId: string, changedSceneId: string) => {
+    (_changedStoryId: string, changedSceneId: string) => {
       if (changedSceneId === sceneId) {
         fetchCharacterSceneRelations();
       }
@@ -570,7 +562,6 @@ const SceneDetailScreen = () => {
     isStoryOwner: isStoryOwner,
     currentUserId: currentUserId,
     onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
     commentsByField,
     addComment,
   });

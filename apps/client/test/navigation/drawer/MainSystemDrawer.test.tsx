@@ -75,7 +75,7 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { surface: '#fff', text: '#111', primary: '#00f' } }),
   // `ColorPickerModal` (pulled in by the location map node sheet) calls these at module load.
-  hsvToRgb: (h: number, s: number, v: number) => ({ r: 0, g: 0, b: 0 }),
+  hsvToRgb: () => ({ r: 0, g: 0, b: 0 }),
   rgbToHex: () => '#000000',
   hexToRgb: () => ({ r: 0, g: 0, b: 0 }),
   rgbToHsv: () => ({ h: 0, s: 0, v: 0 }),

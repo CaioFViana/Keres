@@ -246,8 +246,8 @@ describe('ColdInstallScreen', () => {
     mockInitializeTheme.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.restoreAllMocks();
   });
 

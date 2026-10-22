@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchLandingTiers, type LandingTier, type LandingTiersResponse } from '../api/landing';
 import { formatBytes, formatPrice, yearlyDiscountPercent } from '../content/pricing';
-import { SITE_TEXT_CONTEXT } from '../variant';
+import { siteText } from '../variant';
 
 type TiersState =
   | { status: 'loading' }
@@ -35,15 +35,17 @@ function TierCard({
   const hero = monthly ?? yearly;
   const heroPeriod = monthly !== null ? t('tiers.perMonth') : t('tiers.perYear');
   const showYearlyLine = monthly !== null && yearly !== null && !(monthly === 0 && yearly === 0);
-  const heroPrice =
-    hero === null ? null : hero === 0 ? (
-      t('tiers.free')
-    ) : (
-      <>
-        {formatPrice(hero, currency, i18n.language)}
-        <span className="tier-period">{heroPeriod}</span>
-      </>
-    );
+  // The default plan is the one every new account starts on and nobody pays for: left without a price
+  // it is still free, not "ask us". Any other plan without a price is the one sold by arrangement.
+  const isFree = hero === 0 || (hero === null && tier.isDefault);
+  const heroPrice = isFree ? (
+    t('tiers.free')
+  ) : hero === null ? null : (
+    <>
+      {formatPrice(hero, currency, i18n.language)}
+      <span className="tier-period">{heroPeriod}</span>
+    </>
+  );
 
   return (
     <article className={`feature-card tier-card${tier.isDefault ? ' is-default' : ''}`}>
@@ -131,8 +133,8 @@ export function TiersSection() {
     <section className="band" id="tiers">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{infoOnly ? t('tiers.infoTitle') : t('tiers.title')}</h2>
-          <p>{infoOnly ? t('tiers.infoLead') : t('tiers.lead', { context: SITE_TEXT_CONTEXT })}</p>
+          <h2 data-thread-knot>{infoOnly ? t('tiers.infoTitle') : t('tiers.title')}</h2>
+          <p>{infoOnly ? t('tiers.infoLead') : siteText(t, 'tiers.lead')}</p>
         </header>
         {state.status === 'loading' && <p className="muted">{t('tiers.loading')}</p>}
         {state.status === 'error' && (
@@ -145,9 +147,7 @@ export function TiersSection() {
         )}
         {state.status === 'ready' &&
           (state.data.tiers.length === 0 ? (
-            <p className="muted">
-              {infoOnly ? t('tiers.infoEmpty') : t('tiers.empty', { context: SITE_TEXT_CONTEXT })}
-            </p>
+            <p className="muted">{infoOnly ? t('tiers.infoEmpty') : siteText(t, 'tiers.empty')}</p>
           ) : (
             <>
               <div className="tiers-grid">

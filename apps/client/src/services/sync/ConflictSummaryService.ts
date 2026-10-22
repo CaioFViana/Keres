@@ -10,6 +10,7 @@ import {
 import type { TFunction } from 'i18next';
 import type { EntityRef } from '@/src/services/entity-solvers/EntityNameBatchResolver';
 import type { PendingConflict } from './SyncConflictService';
+import type { WireValues } from '@/src/types/wireValues';
 
 /** "extraNotes" -> "Extra Notes" - fallback for a field `entityFieldMetadata` doesn't cover.
  *  Same helper as `OperationLogDetailScreen.tsx`'s, duplicated rather than imported since that
@@ -135,10 +136,7 @@ export function collectConflictEntityRefs(conflicts: PendingConflict[]): EntityR
  * the one the user edited offline - only the local row's snapshot (which the remote deletion never
  * got round to erasing) still has that information.
  */
-function mergedValuesOf(
-  conflict: PendingConflict,
-  snapshots: Map<string, Record<string, any>>,
-): Record<string, any> {
+function mergedValuesOf(conflict: PendingConflict, snapshots: Map<string, WireValues>): WireValues {
   const snapshot = snapshots.get(snapshotKey(conflict.entityType, conflict.entityId)) ?? {};
   return { ...snapshot, ...(conflict.serverValues ?? {}), ...conflict.localValues };
 }
@@ -151,11 +149,11 @@ function mergedValuesOf(
  */
 export function collectEntityRefs(
   conflicts: PendingConflict[],
-  snapshots: Map<string, Record<string, any>>,
+  snapshots: Map<string, WireValues>,
 ): EntityRef[] {
   const refs: EntityRef[] = [];
   for (const conflict of conflicts) {
-    if (RELATION_ENTITY_TYPES.has(conflict.entityType as any)) {
+    if (RELATION_ENTITY_TYPES.has(conflict.entityType)) {
       const merged = mergedValuesOf(conflict, snapshots);
       for (const target of getEntityRowReferences(conflict.entityType, merged)) {
         refs.push({ entityType: target.entityType, entityId: target.id });
@@ -196,7 +194,7 @@ function nameOf(
 
 function buildRelationSummary(
   conflict: PendingConflict,
-  snapshots: Map<string, Record<string, any>>,
+  snapshots: Map<string, WireValues>,
   names: Map<string, string>,
   t: TFunction,
 ): { title: string; detail: string } {
@@ -236,7 +234,7 @@ function keepMineCanLand(conflict: PendingConflict): boolean {
 
 export function buildConflictSummaries(
   conflicts: PendingConflict[],
-  snapshots: Map<string, Record<string, any>>,
+  snapshots: Map<string, WireValues>,
   names: Map<string, string>,
   t: TFunction,
 ): ConflictSummary[] {

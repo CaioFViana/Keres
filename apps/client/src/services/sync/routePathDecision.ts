@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The decision about a route's whole path (`routePaths.ts` records it): what it looks like, and how
@@ -41,6 +42,6 @@ export async function landRoutePath(
       conflict.localValues.steps as RoutePathStep[],
     );
   } catch (error) {
-    console.warn(`The path of Route ${conflict.entityId} cannot land:`, error);
+    logger.warn(`The path of Route ${conflict.entityId} cannot land:`, error);
   }
 }

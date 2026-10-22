@@ -123,8 +123,8 @@ function statsData(overrides: any = {}) {
 }
 
 describe('StatLadderScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

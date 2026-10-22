@@ -6,6 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "noImplicitReturns": true,
     // A type import is written as such, and the compiler does not guess: what is written is what
     // remains in the bundle. Complements `@typescript-eslint/consistent-type-imports`, which already
     // enforces the same thing line by line.
@@ -14,6 +15,7 @@
     // classes of carelessness: forgotten variable/import, `case` falling through to the next, and
     // a method overriding the base class's without saying so.
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,

@@ -20,22 +20,13 @@ import { compilePublishArtifacts } from '@/src/services/storymanagement/scenes-c
 import { fetchServerStoryPreviews } from '@/src/services/sync/StoryTransfer';
 import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { usePublishManuscript } from './usePublishManuscript';
+import { buildStoryPublicUrl } from '@/src/utils/format/showcaseUrls';
+import { logger } from '@/src/utils/logging/logger';
 
-/**
- * A story's public address.
- *
- * Assembled here from `servers.url` because the app already knows where the server lives - the
- * showcase is served by the same process and on the same origin as the API, under `/showcase` (the
- * web client is under `/client`; see `SHOWCASE_PATH_PREFIX` and `HOSTED_CLIENT_PATH_PREFIX` in
- * apps/api/src/services/static-delivery/hostedClient.ts), so
- * there is nothing to ask the server.
- */
-export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {
-  return `${serverUrl.replace(/\/+$/, '')}/showcase/story/${storyId}`;
-}
+// A story's public address lives with the author's (see `showcaseUrls`); the publish screen reads it from here.
+export { buildStoryPublicUrl };
 
 /**
  * Why the story cannot be published at all, as opposed to not right now (`reason`): it never left this
@@ -83,7 +74,6 @@ export function useStoryPublishing(storyId: string | undefined) {
   const { t, i18n } = useTranslation();
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
-  const userId = useUserSettingsStore((state) => state.userId);
   const isOffline = useConnectivityStore((state) => state.isOffline);
   const manuscript = usePublishManuscript(drizzleDb);
   const { resetForStory } = manuscript;
@@ -191,7 +181,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         setShowcase(remote);
       } catch (remoteError) {
         if (!isOfflineError(remoteError)) {
-          console.log('useStoryPublishing: could not read showcase state.', remoteError);
+          logger.debug('useStoryPublishing: could not read showcase state.', remoteError);
         }
       }
 
@@ -210,7 +200,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         resetForStory(found);
       }
     } catch (loadError) {
-      console.log('useStoryPublishing: failed to load the story.', loadError);
+      logger.debug('useStoryPublishing: failed to load the story.', loadError);
       setError(t('failed_to_load_story'));
     } finally {
       setLoading(false);
@@ -273,7 +263,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         // A verdict on the bytes themselves (rejected options, over the
         // ceiling, unsupported type): retrying the same bytes changes nothing,
         // so it is told once and never retried blindly.
-        console.log('useStoryPublishing: publish refused.', uploadError);
+        logger.debug('useStoryPublishing: publish refused.', uploadError);
         const message = t('publish_failed');
         setPublishError({ message, kind: 'upload', retryable: false });
         notifyFailure(message);
@@ -282,7 +272,7 @@ export function useStoryPublishing(storyId: string | undefined) {
         setPublishError({ message, kind: 'upload', retryable: true });
         notifyFailure(message);
       } else {
-        console.log('useStoryPublishing: publish failed.', uploadError);
+        logger.debug('useStoryPublishing: publish failed.', uploadError);
         const message = t('publish_failed');
         setPublishError({ message, kind: 'upload', retryable: true });
         notifyFailure(message);
@@ -402,7 +392,6 @@ export function useStoryPublishing(storyId: string | undefined) {
           compiled = await compilePublishArtifacts(
             drizzleDb,
             story,
-            userId ?? '',
             manuscriptOptions,
             readerOptions,
             t,
@@ -415,7 +404,7 @@ export function useStoryPublishing(storyId: string | undefined) {
           }
           // Nothing compiled, so there is nothing to upload and nothing to
           // keep: a retry rebuilds from scratch.
-          console.log('useStoryPublishing: compile failed.', compileError);
+          logger.debug('useStoryPublishing: compile failed.', compileError);
           const message = t('publish_compile_failed');
           setPublishError({ message, kind: 'compile', retryable: true });
           showNotification(message, 'error');
@@ -500,7 +489,6 @@ export function useStoryPublishing(storyId: string | undefined) {
     story,
     t,
     usePassword,
-    userId,
   ]);
 
   /**
@@ -603,19 +591,35 @@ export function useStoryPublishing(storyId: string | undefined) {
     const opensProtectedVersions =
       !usePassword && showcase?.visibility === 'password' && showcase.publications.length > 0;
 
-    if (!opensProtectedVersions) {
-      void runPublish();
+    const askAboutProtectedVersions = () => {
+      if (!opensProtectedVersions || !showcase) {
+        void runPublish();
+        return;
+      }
+      AppAlert.alert(
+        t('publish_opening_protected_title'),
+        t('publish_opening_protected_message', { count: showcase.publications.length }),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          { text: t('publish_opening_protected_confirm'), onPress: () => void runPublish() },
+        ],
+      );
+    };
+
+    // The story file is the whole story, not the text: every note, summary and Gallery file the author wrote for
+    // themselves goes public with it. A switch left on by default is not consent to that, so it is asked, every time.
+    if (manuscript.includePackage && manuscript.releaseArcId === null) {
+      AppAlert.alert(t('publish_package_confirm_title'), t('publish_package_confirm_message'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('publish_package_confirm'),
+          style: 'destructive',
+          onPress: askAboutProtectedVersions,
+        },
+      ]);
       return;
     }
-
-    AppAlert.alert(
-      t('publish_opening_protected_title'),
-      t('publish_opening_protected_message', { count: showcase.publications.length }),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('publish_opening_protected_confirm'), onPress: () => void runPublish() },
-      ],
-    );
+    askAboutProtectedVersions();
   }, [manuscript, password, runPublish, showcase, showNotification, t, usePassword]);
 
   const deleteVersion = useCallback(
@@ -637,7 +641,7 @@ export function useStoryPublishing(storyId: string | undefined) {
                 showNotification(t('publish_version_deleted'), 'success');
                 await load();
               } catch (deleteError) {
-                console.log('useStoryPublishing: delete failed.', deleteError);
+                logger.debug('useStoryPublishing: delete failed.', deleteError);
                 showNotification(t('publish_failed'), 'error');
               } finally {
                 setBusy(false);
@@ -665,7 +669,7 @@ export function useStoryPublishing(storyId: string | undefined) {
             showNotification(t('publish_unpublished'), 'success');
             await load();
           } catch (unpublishError) {
-            console.log('useStoryPublishing: unpublish failed.', unpublishError);
+            logger.debug('useStoryPublishing: unpublish failed.', unpublishError);
             showNotification(t('publish_failed'), 'error');
           } finally {
             setBusy(false);

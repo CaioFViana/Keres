@@ -1,38 +1,48 @@
-class EventEmitter {
-  private listeners: { [event: string]: Function[] } = {};
+import type { EntityEventName, EntityEventPayloads } from './entityEvents';
 
-  on(event: string, listener: Function) {
+type Listener<E extends EntityEventName> = (...args: EntityEventPayloads[E]) => void;
+
+/**
+ * The app's global event bus. Events and their arguments are declared in `entityEvents.ts`; nothing
+ * outside that map can be emitted or listened to.
+ */
+class EventEmitter {
+  private listeners: { [event: string]: ((...args: never[]) => void)[] } = {};
+
+  on<E extends EntityEventName>(event: E, listener: Listener<E>) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
-    this.listeners[event].push(listener);
+    this.listeners[event].push(listener as (...args: never[]) => void);
   }
 
-  off(event: string, listener: Function) {
+  off<E extends EntityEventName>(event: E, listener: Listener<E>) {
     if (!this.listeners[event]) {
       return;
     }
     this.listeners[event] = this.listeners[event].filter((l) => l !== listener);
   }
 
-  emit(event: string, ...args: any[]) {
+  emit<E extends EntityEventName>(event: E, ...args: EntityEventPayloads[E]) {
     if (!this.listeners[event]) {
       return;
     }
-    this.listeners[event].forEach((listener) => listener(...args));
+    this.listeners[event].forEach((listener) => (listener as Listener<E>)(...args));
   }
 
-  async emitAsync(event: string, ...args: any[]): Promise<void> {
+  async emitAsync<E extends EntityEventName>(
+    event: E,
+    ...args: EntityEventPayloads[E]
+  ): Promise<void> {
     if (!this.listeners[event]) return;
-    await Promise.all(this.listeners[event].map((listener) => Promise.resolve(listener(...args))));
+    await Promise.all(
+      this.listeners[event].map((listener) => Promise.resolve((listener as Listener<E>)(...args))),
+    );
   }
 }
 
 export const entityEventEmitter = new EventEmitter();
-// Values in use for the global entityEventEmitter.
-// ----- Character  as example. all entities with CRUD/Menus have them -----
-//  character_changed - Update character when crud happens or sync engine gets new info. Makes the characterdetail/list reloads it, if on that screen
-//
+
 // `*_navigation_reset` events used to exist here too (reset an entity's stack to its list
 // screen when the drawer tab changed), fired on the Drawer.Screen's `blur`. Removed: `blur`
 // fires on *any* navigation away from the stack, including the cross-entity jumps

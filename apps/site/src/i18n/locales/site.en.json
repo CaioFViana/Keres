@@ -47,6 +47,10 @@
       }
     }
   },
+  "end": {
+    "title": "The end. Or the start of yours.",
+    "lead": "The thread stops where you decide to cut it. Until then, it runs through everything you write."
+  },
   "faq": {
     "title": "Frequently asked questions",
     "items": {
@@ -87,6 +91,8 @@
     }
   },
   "features": {
+    "title": "What Keres keeps and connects",
+    "lead": "Four fronts, one workspace: open any item to read what it does.",
     "universe": {
       "title": "The narrative universe",
       "lead": "Everything a story needs to keep, linked together.",
@@ -192,6 +198,7 @@
     "tagline": "A writing companion for planning stories.",
     "source": "Open source on GitHub",
     "docs": "Documentation in the repository",
+    "showcase": "Showcase",
     "terms": "Terms",
     "privacy": "Privacy"
   },
@@ -201,12 +208,16 @@
     "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
     "ctaTry": "Try it now, offline",
     "tryNote": "Runs in your browser with no server and no account: your stories stay on this device. Server features (sync, collaboration, publishing) are not part of this version.",
+    "ctaShowcase": "Browse the showcase",
     "landingCtaTry": "Open the web client",
     "landingTryNote": "Connected to this server, with sync, collaboration, and publishing.",
     "landingTryNote_official": "Connected to Keres, with sync, collaboration, and publishing.",
     "ctaDownload": "Download",
     "ctaGithub": "View on GitHub",
-    "ctaFeatures": "See what's included"
+    "ctaFeatures": "See what's included",
+    "choice": "Every story starts with a choice.",
+    "showcaseNote": "Stories published here by the people who wrote them: to read, download and import.",
+    "downloadNote": "Android, iOS, Windows, macOS and Linux, or your own server."
   },
   "language": {
     "label": "Language"
@@ -223,7 +234,9 @@
     "retry": "Try again",
     "unavailable": "This server has no public legal texts.",
     "version": "Version {{version}} · {{date}}",
-    "contactCta": "Questions? Contact us"
+    "contactCta": "Questions? Contact us",
+    "home": "← Back to the start",
+    "contactTitle": "Questions about this?"
   },
   "meta": {
     "title": "Keres — Organize universes, connect narratives",
@@ -238,6 +251,7 @@
     "download": "Download",
     "contact": "Contact",
     "legal": "Legal",
+    "showcase": "Showcase",
     "github": "GitHub",
     "menu": "Menu"
   },

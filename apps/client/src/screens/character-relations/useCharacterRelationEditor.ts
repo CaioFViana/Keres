@@ -6,6 +6,7 @@ import { createCharacterRelationService } from '@/src/services/storymanagement/r
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 interface EditorTarget {
   /** The character whose relations are being edited: the node that was in focus. */
@@ -95,7 +96,7 @@ export function useCharacterRelationEditor({
         entityEventEmitter.emit('character_relation_changed', storyId, target.characterId);
         await reload();
       } catch (error) {
-        console.error('Failed to save character relation:', error);
+        logger.error('Failed to save character relation:', error);
         AppAlert.alert(t('error'), t('failed_to_save_relation'));
       }
     },
@@ -121,7 +122,7 @@ export function useCharacterRelationEditor({
           entityEventEmitter.emit('character_relation_changed', storyId, characterId);
           await reload();
         } catch (error) {
-          console.error('Failed to delete character relation:', error);
+          logger.error('Failed to delete character relation:', error);
           AppAlert.alert(t('error'), t('failed_to_delete_relation'));
         }
       };

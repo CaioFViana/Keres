@@ -5,6 +5,8 @@ import { createChapterService } from '@/src/services/storymanagement/scenes-chap
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 interface ChapterExtraActions {
   reorderChapters: (
@@ -51,13 +53,13 @@ export const useChapterStore = createEntityStore<
     reorderChapters: async (newOrder: { id: string; newIndex: number }[], type?: ChapterType) => {
       const { service, storyId } = get();
       if (!service || !storyId) {
-        console.warn('Chapter service or storyId not initialized for reordering.');
+        logger.warn('Chapter service or storyId not initialized for reordering.');
         return;
       }
 
       const userId = useUserSettingsStore.getState().userId;
       if (!userId) {
-        console.error('User ID not available. Cannot reorder chapters.');
+        logger.error('User ID not available. Cannot reorder chapters.');
         return;
       }
 
@@ -66,22 +68,22 @@ export const useChapterStore = createEntityStore<
         await service.reorderChapters(userId, storyId, newOrder, type);
         entityEventEmitter.emit('chapter_changed', storyId, 'reorder');
         await refetch(); // Re-fetch to pick up the new order and entity versions
-      } catch (err: any) {
-        console.error('Failed to reorder chapters:', err);
-        setPartial({ error: err?.message || 'Failed to reorder chapters', loading: false });
+      } catch (err) {
+        logger.error('Failed to reorder chapters:', err);
+        setPartial({ error: errorMessageOf(err) || 'Failed to reorder chapters', loading: false });
       }
     },
 
     convertChapterType: async (chapterId: string, targetType: ChapterType, position?: number) => {
       const { service, storyId } = get();
       if (!service || !storyId) {
-        console.warn('Chapter service or storyId not initialized for conversion.');
+        logger.warn('Chapter service or storyId not initialized for conversion.');
         return;
       }
 
       const userId = useUserSettingsStore.getState().userId;
       if (!userId) {
-        console.error('User ID not available. Cannot convert a chapter.');
+        logger.error('User ID not available. Cannot convert a chapter.');
         return;
       }
 
@@ -90,9 +92,12 @@ export const useChapterStore = createEntityStore<
         await service.convertChapterType(userId, chapterId, targetType, position);
         entityEventEmitter.emit('chapter_changed', storyId, chapterId);
         await refetch();
-      } catch (err: any) {
-        console.error('Failed to convert the chapter:', err);
-        setPartial({ error: err?.message || 'Failed to convert the chapter', loading: false });
+      } catch (err) {
+        logger.error('Failed to convert the chapter:', err);
+        setPartial({
+          error: errorMessageOf(err) || 'Failed to convert the chapter',
+          loading: false,
+        });
         // Rethrown, unlike `reorderChapters` above: converting is a deliberate act on one container
         // and the screen has to be able to tell the writer it did not happen. Swallowing here would
         // close the modal and leave nothing behind, which reads as the app ignoring them.

@@ -47,14 +47,10 @@ describe('secondary entity listing services', () => {
     const service = createChoiceService(database.db);
     expect(
       (
-        await service.getChoicesByStoryId(
-          TEST_STORY_ID,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          { sceneId: 'scene-a', unsupported: 'value' },
-        )
+        await service.getChoicesByStoryId(TEST_STORY_ID, undefined, undefined, undefined, {
+          sceneId: 'scene-a',
+          unsupported: 'value',
+        })
       ).map((choice) => choice.id),
     ).toEqual(['leave']);
   });

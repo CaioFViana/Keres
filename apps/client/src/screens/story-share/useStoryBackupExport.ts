@@ -10,6 +10,7 @@ import {
   deliverStoryExport,
   deliverStoryZipExport,
 } from '@/src/utils/io/storyTransfer';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The whole story as a file to keep: the data alone (`.json`), or with the media this device already has
@@ -37,7 +38,7 @@ export function useStoryBackupExport(story: { id: string; title: string } | null
         );
       }
     } catch (exportError) {
-      console.log(`useStoryBackupExport: failed to export story ${story.id}.`, exportError);
+      logger.debug(`useStoryBackupExport: failed to export story ${story.id}.`, exportError);
       showNotification(t('export_story_failed'), 'error');
     } finally {
       setExporting(false);
@@ -71,7 +72,7 @@ export function useStoryBackupExport(story: { id: string; title: string } | null
         showNotification(t('export_story_success', { fileName: result.fileName }), 'success');
       }
     } catch (exportError) {
-      console.log(`useStoryBackupExport: failed to export story ${story.id} as zip.`, exportError);
+      logger.debug(`useStoryBackupExport: failed to export story ${story.id} as zip.`, exportError);
       showNotification(t('export_story_failed'), 'error');
     } finally {
       setExporting(false);

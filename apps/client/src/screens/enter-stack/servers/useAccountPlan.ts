@@ -4,6 +4,7 @@ import type { ServerSelect } from '@/src/db/schema';
 import { userApiService } from '@/src/services/api/UserApiService';
 import { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
 import {
+  type EntityEventSubscription,
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
@@ -43,7 +44,7 @@ export function useAccountPlan(server: ServerSelect | undefined, online: boolean
   }, [online, reload]);
   useEntityInitialLoad(look);
 
-  const subscriptions = useMemo(
+  const subscriptions = useMemo<EntityEventSubscription[]>(
     () => [
       {
         event: PAYMENTS_CHANGED,

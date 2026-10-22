@@ -100,12 +100,12 @@ describe("the collaborator's way out of a story", () => {
     mockCollaboration = { ...base, isOwnerOnServer: true, collaborators: [] };
     const owner = await render(section());
     expect(owner.queryByTestId('leave-story-zone')).toBeNull();
-    owner.unmount();
+    await owner.unmount();
 
     mockCollaboration = { ...base, isOwnerOnServer: null };
     const unknown = await render(section());
     expect(unknown.queryByTestId('leave-story-zone')).toBeNull();
-    unknown.unmount();
+    await unknown.unmount();
 
     mockCollaboration = { ...base, serverId: null, linkedServer: null, isOwnerOnServer: false };
     const local = await render(section());

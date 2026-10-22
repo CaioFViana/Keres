@@ -86,7 +86,7 @@ it('renders the story comment list for the selected story', async () => {
 it('navigates to the tapped comment target entity', async () => {
   const screen = await render(<CommentListScreen />);
 
-  fireEvent.press(screen.getByTestId('comment-list-stub'));
+  await fireEvent.press(screen.getByTestId('comment-list-stub'));
 
   expect(mockNavigateToDetail).toHaveBeenCalledWith('Character', 'character-1');
 });

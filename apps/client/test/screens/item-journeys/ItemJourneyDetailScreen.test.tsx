@@ -243,8 +243,8 @@ beforeEach(() => {
   mockGetItemJourneyById.mockResolvedValue(makeJourney());
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders the journey with linked item, scene and owner', async () => {

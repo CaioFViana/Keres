@@ -15,7 +15,7 @@ import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
-import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import {
   findContestedFields,
   mergeLocalOperationPayloads,
@@ -29,6 +29,8 @@ import type { SyncContext } from './SyncContext';
 import type { FavoritesFingerprint } from './syncFavoritesFingerprint';
 import { computeLocalFavoritesFingerprint } from './syncFavoritesFingerprint';
 import { deriveBaseVersion, onlyMoves, onlyPlaces, throwIfSyncAborted } from './syncPure';
+import { logger } from '@/src/utils/logging/logger';
+import type { WireValues } from '@/src/types/wireValues';
 
 interface SyncPullOptions {
   context: SyncContext;
@@ -69,10 +71,10 @@ interface PullPageResponse {
 }
 
 /** Parses a local op payload without ever throwing; null means corrupted or not an object. */
-function parseLocalOpPayload(payload: string): Record<string, any> | null {
+function parseLocalOpPayload(payload: string): WireValues | null {
   try {
     const parsed: unknown = JSON.parse(payload);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, any>) : null;
+    return parsed && typeof parsed === 'object' ? (parsed as WireValues) : null;
   } catch {
     return null;
   }
@@ -110,7 +112,7 @@ export class SyncPull {
         ? await computeLocalFavoritesFingerprint(this.context.db(), storyId)
         : null;
 
-    console.log(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
+    logger.debug(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
     const remoteUpdates: StoryUpdate[] = [];
     let publicFavorites: Favorite[] = [];
     let role = input.fallbackRole;
@@ -166,7 +168,7 @@ export class SyncPull {
     // The ceiling warning only fires when paging stopped for running out of pages: a short
     // final page proves the backlog is drained, even on the last allowed page.
     if (pagesFetched >= maxPages && !backlogExhausted) {
-      console.log(
+      logger.debug(
         `Pull reached the ${maxPages}-page ceiling for story ${storyId} with ` +
           `${remoteUpdates.length} updates collected; any remaining backlog continues on the next cycle.`,
       );
@@ -274,23 +276,26 @@ export class SyncPull {
               data: { ...createUpdate.data, storyId: this.context.storyId() },
             } as CreateStoryUpdate)
           : createUpdate;
-      await handler.applyCreate(this.context.storyId()!, scoped);
+      await handler.applyCreate(scoped, this.context.storyId()!);
       return;
     }
 
-    await handler.applyUpdate(this.context.storyId()!, {
-      ...createUpdate,
-      type: 'update',
-      id: update.id!,
-      changes: {
-        // An arranged row's position follows its rank here; the create's copy is not written.
-        ...withoutDerivedPosition(update.entity, createUpdate.data ?? {}),
-        version:
-          typeof createUpdate.data?.version === 'number'
-            ? createUpdate.data.version
-            : (createUpdate.version ?? 0),
-      },
-    } as UpdateStoryUpdate);
+    await handler.applyUpdate(
+      {
+        ...createUpdate,
+        type: 'update',
+        id: update.id!,
+        changes: {
+          // An arranged row's position follows its rank here; the create's copy is not written.
+          ...withoutDerivedPosition(update.entity, createUpdate.data ?? {}),
+          version:
+            typeof createUpdate.data?.version === 'number'
+              ? createUpdate.data.version
+              : (createUpdate.version ?? 0),
+        },
+      } as UpdateStoryUpdate,
+      this.context.storyId()!,
+    );
   }
 
   /**
@@ -305,7 +310,7 @@ export class SyncPull {
     handler: ClientSyncEntityHandler,
     runner: AppDrizzleClient | AppDrizzleTransaction = this.context.db(),
   ): Promise<void> {
-    await handler.applyDelete(this.context.storyId(), update);
+    await handler.applyDelete(update, this.context.storyId());
     const table = getEntityTable(update.entity);
     if (!table || !update.id) return;
     const tombstone = toEntityColumns(update.entity, update.data ?? {});
@@ -318,7 +323,7 @@ export class SyncPull {
     await runner
       .update(table)
       .set({ ...tombstone, ...version } as never)
-      .where(eq((table as any).id, update.id));
+      .where(eq(columnsOf(table).id, update.id));
   }
 
   /**
@@ -357,11 +362,14 @@ export class SyncPull {
       ),
     );
     if (Object.keys(changes).length === 0) return;
-    await handler.applyUpdate(this.context.storyId(), {
-      ...update,
-      type: 'update',
-      changes,
-    } as UpdateStoryUpdate);
+    await handler.applyUpdate(
+      {
+        ...update,
+        type: 'update',
+        changes,
+      } as UpdateStoryUpdate,
+      this.context.storyId(),
+    );
   }
 
   /**
@@ -463,7 +471,7 @@ export class SyncPull {
     const fieldOps = pendingLocalOps;
     const pushableOps = fieldOps.filter((op) => op.conflictState === null);
     const hasOpenConflict = pushableOps.length < fieldOps.length;
-    const refreshOpenConflict = async (serverValues: Record<string, any>) => {
+    const refreshOpenConflict = async (serverValues: WireValues) => {
       if (!hasOpenConflict) return;
       await this.context.conflictService().refreshServerSnapshot({
         storyId: this.context.storyId()!,
@@ -514,7 +522,7 @@ export class SyncPull {
     const firstOpSnapshot = fieldOps[0] ? parseLocalOpPayload(fieldOps[0].payload) : null;
     const recordConflict = async (
       reason: 'deleted_on_server' | 'edited_on_server' | 'concurrent_edit',
-      serverValues: Record<string, any> | null,
+      serverValues: WireValues | null,
     ) =>
       this.context.conflictService().recordConflict({
         storyId: this.context.storyId()!,
@@ -578,7 +586,7 @@ export class SyncPull {
         `SyncPull: cannot reconcile remote operation type '${remoteType}' for ${remoteEntity} ${entityId}.`,
       );
     }
-    const remoteValues: Record<string, any> =
+    const remoteValues: WireValues =
       update.type === 'create'
         ? { ...(update as CreateStoryUpdate).data }
         : { ...(update as UpdateStoryUpdate).changes };
@@ -592,12 +600,15 @@ export class SyncPull {
           Object.entries(remoteValues).filter(([key]) => key !== 'version'),
         );
         if (Object.keys(placement).length > 0) {
-          await handler.applyUpdate(this.context.storyId()!, {
-            ...update,
-            type: 'update',
-            id: entityId,
-            changes: placement,
-          } as UpdateStoryUpdate);
+          await handler.applyUpdate(
+            {
+              ...update,
+              type: 'update',
+              id: entityId,
+              changes: placement,
+            } as UpdateStoryUpdate,
+            this.context.storyId()!,
+          );
         }
         await rebaseOnto(update.version);
         await refreshOpenConflict(remoteValues);
@@ -623,12 +634,15 @@ export class SyncPull {
     );
 
     if (mergeableEntries.length > 0) {
-      await handler.applyUpdate(this.context.storyId()!, {
-        ...update,
-        type: 'update',
-        id: entityId,
-        changes: Object.fromEntries(mergeableEntries),
-      } as UpdateStoryUpdate);
+      await handler.applyUpdate(
+        {
+          ...update,
+          type: 'update',
+          id: entityId,
+          changes: Object.fromEntries(mergeableEntries),
+        } as UpdateStoryUpdate,
+        this.context.storyId()!,
+      );
     }
 
     if (contestedFields.length === 0) {
@@ -652,7 +666,7 @@ export class SyncPull {
    */
   private async deriveFreshClientVersion(
     op: OperationLogSelect,
-    snapshot: Record<string, any> | null,
+    snapshot: WireValues | null,
   ): Promise<number | null> {
     try {
       const row = await this.context.db()!.query.operationLogs.findFirst({
@@ -666,7 +680,7 @@ export class SyncPull {
       // Fall through to the in-memory snapshot below.
     }
     if (!snapshot) {
-      console.warn(
+      logger.warn(
         `Local operation ${op.id} has a payload that cannot be parsed; recording the conflict without a client version.`,
       );
       return null;

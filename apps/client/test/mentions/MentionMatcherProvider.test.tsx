@@ -180,7 +180,7 @@ it('unsubscribes on unmount', async () => {
   const screen = await renderProvider({ id: 'story-1', autoLinkMentions: true }, drizzleDb);
   // The `off` calls run in the effect cleanup, which only flushes inside `act`.
   await act(async () => {
-    screen.unmount();
+    await screen.unmount();
   });
   expect(entityEventEmitter.off).toHaveBeenCalledTimes(10);
 });

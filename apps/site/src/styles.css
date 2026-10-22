@@ -46,7 +46,16 @@ html {
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  /* The hero's wash: it sits on the canvas so the thread runs over it, not behind a band. */
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      color-mix(in srgb, var(--color-primary) 18%, transparent),
+      transparent 520px
+    )
+    top / 100% 760px no-repeat,
+    linear-gradient(180deg, var(--color-hero-from), var(--color-hero-to)) top / 100% 760px no-repeat,
+    var(--color-bg);
   color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.55;
@@ -132,6 +141,55 @@ a {
   color: var(--color-text);
 }
 
+/* The legal entry: one place in the menu that opens both documents. */
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nav-menu-button::after {
+  content: "▾";
+  margin-left: 4px;
+  font-size: 0.8em;
+}
+
+.nav-menu-button:hover,
+.nav-menu-button[aria-expanded="true"] {
+  color: var(--color-text);
+}
+
+.nav-menu-list {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 200px;
+  padding: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.nav-menu-list a {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.nav-menu-list a:hover {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
 .nav-toggle {
   display: none;
   padding: 6px 12px;
@@ -176,15 +234,46 @@ a {
 }
 
 .hero {
-  background:
-    radial-gradient(
-      circle at 12% 20%,
-      color-mix(in srgb, var(--color-primary) 18%, transparent),
-      transparent 42%
-    ),
-    linear-gradient(180deg, var(--color-hero-from), var(--color-hero-to));
-  border-bottom: 1px solid var(--color-border);
-  padding: 72px 0 64px;
+  padding: 28px 0 8px;
+}
+
+/* On the thread's page every section stands to the right of the rail instead of centred. */
+.thread-page .section-inner,
+.thread-page .hero-inner {
+  max-width: none;
+  margin: 0 0 0 var(--thread-col);
+  padding: 0;
+}
+
+.thread-page .hero.thread-col .hero-inner {
+  margin: 0;
+}
+
+.thread-page .section-head h2::before {
+  display: none;
+}
+
+.hero-choice {
+  margin: 22px 0 0;
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+.card-number {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-primary);
+}
+
+.choice {
+  display: block;
+}
+
+.choice p {
+  margin: 0;
 }
 
 .hero-inner {
@@ -292,17 +381,6 @@ a {
   color: var(--color-text-secondary);
 }
 
-.pillar-grid,
-.download-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.pillar-grid,
-.download-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
 .card,
 .feature-card {
   background: var(--color-surface);
@@ -319,12 +397,12 @@ a {
 
 /* The accent line on top of a card: a short stub at rest, the full edge on hover. */
 .feature-card,
-.pillar-grid .card {
+.thread-branches .card {
   overflow: hidden;
 }
 
 .feature-card::before,
-.pillar-grid .card::before {
+.thread-branches .card::before {
   content: "";
   position: absolute;
   top: 0;
@@ -336,7 +414,8 @@ a {
   transition: width 0.25s ease;
 }
 
-.feature-card:hover::before {
+.feature-card:hover::before,
+.thread-branches .card:hover::before {
   width: 100%;
 }
 
@@ -381,10 +460,96 @@ a {
     border-color 0.16s ease;
 }
 
-.feature-card:hover {
+.feature-card:hover,
+.thread-branches .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
   border-color: var(--color-primary);
+}
+
+.thread-branches .card {
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+/* A group of features: its items are beads on a short thread of their own, echoing the page's. */
+.group-card .beads {
+  position: relative;
+  margin: 16px 0 0;
+  padding: 0 0 0 20px;
+  list-style: none;
+}
+
+.group-card .beads::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 4px;
+  border-left: 1.5px dashed var(--thread-dim);
+}
+
+.group-card .beads li {
+  position: relative;
+}
+
+.group-card .beads li::before {
+  content: "";
+  position: absolute;
+  top: 0.95em;
+  left: -20px;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.group-card .beads summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 5px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.group-card .beads summary::-webkit-details-marker {
+  display: none;
+}
+
+.group-card .beads summary::after {
+  content: "+";
+  float: right;
+  color: var(--color-text-secondary);
+}
+
+.group-card .beads details[open] summary::after {
+  content: "−";
+}
+
+.group-card .beads details p {
+  margin: 0 0 8px;
+  font-size: 0.86rem;
+}
+
+.group-card > p {
+  font-size: 0.88rem;
+}
+
+.end-lead {
+  max-width: 52ch;
+  margin: 14px 0 0;
+  color: var(--color-text-secondary);
+}
+
+.end .hero-actions {
+  margin-top: 22px;
+}
+
+.band.end {
+  padding-bottom: 40px;
 }
 
 .download-card {
@@ -436,44 +601,6 @@ code {
   color: var(--color-text);
 }
 
-/* Columns by how many cards there are, so the last row is never a lone orphan: groups of 4 and 8
-   run 4 / 2 / 1 wide, a group of 3 runs 3 / 1. */
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.feature-grid[data-count="3"] {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-@media (max-width: 960px) {
-  .feature-grid,
-  .feature-grid[data-count="4"],
-  .feature-grid[data-count="8"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .feature-grid[data-count="3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .feature-grid[data-count="3"] {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .feature-grid,
-  .feature-grid[data-count="4"],
-  .feature-grid[data-count="8"] {
-    grid-template-columns: 1fr;
-  }
-}
-
 .faq-list {
   display: grid;
   gap: 10px;
@@ -522,7 +649,8 @@ code {
   color: var(--color-primary);
 }
 
-@media (max-width: 800px) {
+/* The landing has many entries: the menu folds up before they stop fitting on one line. */
+@media (max-width: 1080px) {
   .nav-toggle {
     display: inline-flex;
   }
@@ -552,6 +680,22 @@ code {
     border-radius: var(--radius-sm);
   }
 
+  /* In the collapsed menu the two documents are listed in place, not in a floating box. */
+  .nav-menu-button {
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .nav-menu-list {
+    position: static;
+    min-width: 0;
+    padding: 0 0 0 12px;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
   .site-header {
     position: sticky;
   }
@@ -563,7 +707,9 @@ code {
   .theme-toggle-text {
     display: none;
   }
+}
 
+@media (max-width: 800px) {
   .hero-title {
     max-width: none;
   }
@@ -1058,22 +1204,24 @@ code {
 
 /* Legal. The two documents switch in tabs; the text itself reads like the FAQ -
    headed sections with breathing room, capped in width so long lines stay readable. */
-.legal-tabs {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+.legal-version {
+  margin: 14px 0 18px;
 }
 
-.legal-text {
-  display: grid;
-  gap: 24px;
+/* A document on a page of its own: each section a knot of the thread, with room to breathe. */
+.legal-body {
+  padding-top: 40px;
+}
+
+.legal-section {
   max-width: 72ch;
+  padding: 18px 0 22px;
 }
 
-.legal-section h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
+.legal-section h2 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
 }
 
 .legal-section p {

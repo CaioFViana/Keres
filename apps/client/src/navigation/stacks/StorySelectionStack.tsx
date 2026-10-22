@@ -19,11 +19,17 @@ import ConversationScreen from '@/src/screens/enter-stack/social/ConversationScr
 import FriendshipListScreen from '@/src/screens/enter-stack/social/FriendshipListScreen';
 import MessageInboxScreen from '@/src/screens/enter-stack/social/MessageInboxScreen';
 import ImportStoryScreen from '@/src/screens/enter-stack/story-entry/ImportStoryScreen';
+import ShowcaseAuthorScreen from '@/src/screens/showcase/ShowcaseAuthorScreen';
+import ShowcaseBrowseScreen from '@/src/screens/showcase/ShowcaseBrowseScreen';
+import ShowcaseHomeScreen from '@/src/screens/showcase/ShowcaseHomeScreen';
+import ShowcasePackScreen from '@/src/screens/showcase/ShowcasePackScreen';
+import ShowcaseStoryScreen from '@/src/screens/showcase/ShowcaseStoryScreen';
 import PackBrowseScreen from '@/src/screens/packs/PackBrowseScreen';
 import PackFormScreen from '@/src/screens/packs/PackFormScreen';
 import PackListScreen from '@/src/screens/packs/PackListScreen';
 import ShippedPacksScreen from '@/src/screens/packs/ShippedPacksScreen';
 import MyProfileScreen from '@/src/screens/enter-stack/account/MyProfileScreen';
+import PublicProfileScreen from '@/src/screens/enter-stack/account/PublicProfileScreen';
 import ServerDetailScreen from '@/src/screens/enter-stack/servers/ServerDetailScreen';
 import ServerManagementScreen from '@/src/screens/enter-stack/servers/ServerManagementScreen';
 import ServerPaymentHistoryScreen from '@/src/screens/enter-stack/servers/ServerPaymentHistoryScreen';
@@ -55,10 +61,12 @@ export type ServerManagementStackParamList = {
   ServerPaymentHistory: { serverId: string };
   /** The same screen as the friendship stack's: opened from a server, back returns to the server. */
   Conversation: { serverId: string; peer: string; peerName?: string };
-  ServerRegistration: { serverId?: string };
+  /** `address`: a server the person came across (a pasted link) and may want to register. */
+  ServerRegistration: { serverId?: string; address?: string };
   /** The age check of a pending account on this server; opened by registration or login, back returns to the server list. */
   ServerVerification: { serverId: string };
   MyProfile: { serverId: string };
+  PublicProfile: { serverId: string };
   ChangePassword: { serverId: string };
 };
 
@@ -88,6 +96,24 @@ export type PacksStackParamList = {
   ShippedPacks: undefined;
 };
 
+/** Whose public site a showcase screen shows: a server the person registered, or the origin of one they only have a link to. */
+export type ShowcaseSourceParams = { serverId?: string; guestOrigin?: string };
+
+/**
+ * The showcase stack: the public sites of servers, read from inside the app. Stories open *from* the home (where
+ * a link is pasted) and belong behind it, for the same reason as the packs' screens.
+ */
+export type ShowcaseTab = 'stories' | 'authors' | 'packs';
+
+export type ShowcaseStackParamList = {
+  ShowcaseHome: undefined;
+  /** The lists of one server's public site: its stories, its authors and its packs. */
+  ShowcaseBrowse: ShowcaseSourceParams & { tab?: ShowcaseTab };
+  ShowcaseStory: ShowcaseSourceParams & { storyId: string };
+  ShowcaseAuthor: ShowcaseSourceParams & { username: string };
+  ShowcasePack: ShowcaseSourceParams & { packId: string };
+};
+
 /**
  * The settings stack: the credits screen is reached *from* Settings (tapping the Keres emblem)
  * and belongs behind it, so it gets a back arrow instead of a hamburger.
@@ -104,6 +130,7 @@ export type StorySelectionDrawerParamList = {
   ImportStory: undefined;
   ExampleStories: undefined;
   PacksDrawer: NavigatorScreenParams<PacksStackParamList>;
+  ShowcaseDrawer: NavigatorScreenParams<ShowcaseStackParamList>;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
@@ -113,6 +140,7 @@ const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainSta
 const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
 const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
 const PacksStack = createNativeStackNavigator<PacksStackParamList>();
+const ShowcaseStack = createNativeStackNavigator<ShowcaseStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 const storySelectionStackRootScreens = new Set([
@@ -120,6 +148,7 @@ const storySelectionStackRootScreens = new Set([
   'ServerManagement',
   'FriendshipList',
   'PackList',
+  'ShowcaseHome',
   // The same reason as the story's drawer: the root of a stack opened from the menu shows no arrow.
   'HelpIndex',
   // The settings stack's own root: the drawer entry it sits behind is called `Settings`.
@@ -197,6 +226,11 @@ const ServerManagementStackNavigator = () => {
         name="MyProfile"
         component={MyProfileScreen}
         options={{ headerTitle: t('my_profile_title') }}
+      />
+      <ServerManagementStack.Screen
+        name="PublicProfile"
+        component={PublicProfileScreen}
+        options={{ headerTitle: t('author_page_title') }}
       />
       <ServerManagementStack.Screen
         name="ChangePassword"
@@ -280,6 +314,44 @@ const PacksStackNavigator = () => {
         options={{ headerTitle: t('shipped_packs_title') }}
       />
     </PacksStack.Navigator>
+  );
+};
+
+const ShowcaseStackNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <ShowcaseStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
+      <ShowcaseStack.Screen
+        name="ShowcaseHome"
+        component={ShowcaseHomeScreen}
+        options={{ headerTitle: t('showcase_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcaseBrowse"
+        component={ShowcaseBrowseScreen}
+        options={{ headerTitle: t('showcase_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcaseAuthor"
+        component={ShowcaseAuthorScreen}
+        options={{ headerTitle: t('showcase_author_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcasePack"
+        component={ShowcasePackScreen}
+        options={{ headerTitle: t('showcase_pack_title') }}
+      />
+      <ShowcaseStack.Screen
+        name="ShowcaseStory"
+        component={ShowcaseStoryScreen}
+        options={{ headerTitle: t('showcase_story_title') }}
+      />
+    </ShowcaseStack.Navigator>
   );
 };
 
@@ -390,6 +462,16 @@ const StorySelectionNavigator = () => {
                 drawerIcon: ({ color, size }) => <ServerDrawerIcon color={color} size={size} />,
               }}
               listeners={drawerItemListeners('ServerManagementDrawer', 'ServerManagement')}
+            />
+            <Drawer.Screen
+              name="ShowcaseDrawer"
+              component={ShowcaseStackNavigator}
+              options={{
+                title: t('showcase_title'),
+                drawerLabel: t('showcase_title'),
+                drawerIcon: drawerIcon('storefront-outline'),
+              }}
+              listeners={drawerItemListeners('ShowcaseDrawer', 'ShowcaseHome')}
             />
             <Drawer.Screen
               name="FriendshipDrawer"

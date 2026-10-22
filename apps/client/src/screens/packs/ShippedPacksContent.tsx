@@ -17,6 +17,7 @@ import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { packExtrasChips } from '@/src/services/storymanagement/packs/packChips';
+import { logger } from '@/src/utils/logging/logger';
 
 interface ShippedPacksContentProps {
   /**
@@ -100,7 +101,7 @@ const ShippedPacksContent: React.FC<ShippedPacksContentProps> = ({
           showNotification(t('shipped_packs_install_failed'), 'error');
         }
       } catch (error) {
-        console.error(`ShippedPacksContent: failed to install ${slug}/${language}.`, error);
+        logger.error(`ShippedPacksContent: failed to install ${slug}/${language}.`, error);
         showNotification(t('shipped_packs_install_failed'), 'error');
       } finally {
         setInstallingSlug(null);

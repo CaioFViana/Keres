@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type {
   CreatePlotSceneDataType,
   CreateStoryUpdate,
@@ -56,10 +56,8 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
       );
   }
   async create(
-    _: string,
-    storyId: string,
     update: CreateStoryUpdate,
-    database: CompatibleDb = db,
+    { storyId, database = db }: SyncWriteContext,
   ): Promise<void> {
     const data: CreatePlotSceneDataType = this.createSchema.parse(update.data);
     await this.validate(storyId, data.plotId, data.sceneId, database);
@@ -90,12 +88,11 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
     });
   }
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     const changes = this.updateSchema.parse(update.changes);
     await this.validate(
       storyId,
@@ -103,16 +100,15 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
       changes.sceneId ?? current.sceneId,
       database,
     );
-    await super.update(userId, storyId, update, current, database);
+    await super.update(update, current, ctx);
   }
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
+    const { storyId, database = db } = ctx;
     await this.validate(storyId, current.plotId, current.sceneId, database);
-    await super.delete(userId, storyId, update, current, database);
+    await super.delete(update, current, ctx);
   }
 }

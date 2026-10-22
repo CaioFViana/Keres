@@ -20,9 +20,10 @@ import {
   type ExampleStoryLanguage,
 } from './lib/exampleStoryBuilderSupport';
 import { exampleStoryNarratives } from './lib/exampleStoryNarrative';
+import type { ExampleRow } from './lib/exampleStoryTypes';
 
 type Language = ExampleStoryLanguage;
-type StoryDocument = Record<string, any>;
+type StoryDocument = ExampleRow;
 
 const CONTENT_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -39,7 +40,12 @@ const EXAMPLE_USER_ID = 'EXAMPLEUSERPLACEHOLDER0000';
  * seven scenes was published with twelve, and its ending flag moved onto the padding. It is a
  * refusal now: a story that has not been written is not something a script can finish.
  */
-function requireCount(source: any[] | undefined, count: number, what: string, slug: string): any[] {
+function requireCount(
+  source: ExampleRow[] | undefined,
+  count: number,
+  what: string,
+  slug: string,
+): ExampleRow[] {
   const rows = source ?? [];
   if (rows.length < count) {
     throw new Error(
@@ -55,7 +61,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
   const storyId = source.story.id as string;
   const id = (key: string) => deterministicUlid(slug, key);
 
-  const characters = requireCount(source.characters, 6, 'characters', slug).map(
+  const characters: ExampleRow[] = requireCount(source.characters, 6, 'characters', slug).map(
     (character, index) => ({
       ...character,
       storyId,
@@ -64,16 +70,18 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     }),
   );
 
-  const locations = requireCount(source.locations, 5, 'locations', slug).map((location) => ({
-    ...location,
-    storyId,
-    description: location.description,
-  }));
+  const locations: ExampleRow[] = requireCount(source.locations, 5, 'locations', slug).map(
+    (location) => ({
+      ...location,
+      storyId,
+      description: location.description,
+    }),
+  );
 
   // The current story format always owns one default Arc internally. Examples deliberately do
   // not add authored arcs beyond that mandatory container: their narratives are too short to need
   // campaign-level grouping.
-  const storyArcs = [
+  const storyArcs: ExampleRow[] = [
     {
       ...base(id('arc-default'), storyId),
       title: 'Arc',
@@ -86,7 +94,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     },
   ];
 
-  const chapters = Array.from({ length: 3 }, (_, index) => {
+  const chapters: ExampleRow[] = Array.from({ length: 3 }, (_, index) => {
     const old = source.chapters?.[index];
     return {
       ...base(old?.id ?? id(`chapter-${index}`), storyId),
@@ -101,53 +109,57 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     };
   });
 
-  const scenes = requireCount(source.scenes, 12, 'scenes', slug).map((scene, index) => {
-    const chapterIndex = Math.floor(index / 4);
-    const durationUnits = ['minutes', 'hours', 'days', 'minutes', 'years'] as const;
-    const gapUnits = ['minutes', 'hours', 'days', 'minutes'] as const;
-    return {
-      ...base(scene.id, storyId),
-      ...scene,
-      storyId,
-      chapterId: chapters[chapterIndex].id,
-      locationId: locations[index % locations.length].id,
-      name: scene.name,
-      index: (index % 4) + 1,
-      summary: scene.summary,
-      gap: index === 0 ? 0 : index % 7 === 0 ? -2 : [15, 2, 1, 30][index % 4],
-      gapType: gapUnits[index % gapUnits.length],
-      calendarDateOverride: null,
-      calendarDateOverrideCalendarId: null,
-      duration: [10, 2, 1, 45, 1][index % 5],
-      durationType: durationUnits[index % durationUnits.length],
-      isStart: index === 0,
-      isFinish: source.story.type === 'branching' ? index >= 10 : index === 11,
-      isFavorite: index === 0,
-      extraNotes: scene.extraNotes ?? null,
-    };
-  });
+  const scenes: ExampleRow[] = requireCount(source.scenes, 12, 'scenes', slug).map(
+    (scene, index) => {
+      const chapterIndex = Math.floor(index / 4);
+      const durationUnits = ['minutes', 'hours', 'days', 'minutes', 'years'] as const;
+      const gapUnits = ['minutes', 'hours', 'days', 'minutes'] as const;
+      return {
+        ...base(scene.id, storyId),
+        ...scene,
+        storyId,
+        chapterId: chapters[chapterIndex].id,
+        locationId: locations[index % locations.length].id,
+        name: scene.name,
+        index: (index % 4) + 1,
+        summary: scene.summary,
+        gap: index === 0 ? 0 : index % 7 === 0 ? -2 : [15, 2, 1, 30][index % 4],
+        gapType: gapUnits[index % gapUnits.length],
+        calendarDateOverride: null,
+        calendarDateOverrideCalendarId: null,
+        duration: [10, 2, 1, 45, 1][index % 5],
+        durationType: durationUnits[index % durationUnits.length],
+        isStart: index === 0,
+        isFinish: source.story.type === 'branching' ? index >= 10 : index === 11,
+        isFavorite: index === 0,
+        extraNotes: scene.extraNotes ?? null,
+      };
+    },
+  );
 
-  const items = requireCount(source.items, 3, 'items', slug).map((item) => ({
+  const items: ExampleRow[] = requireCount(source.items, 3, 'items', slug).map((item) => ({
     ...item,
     storyId,
     description: item.description,
     initialState: item.initialState,
   }));
 
-  const worldRules = requireCount(source.worldRules, 3, 'worldRules', slug).map((rule) => ({
-    ...rule,
-    storyId,
-    description: rule.description,
-  }));
+  const worldRules: ExampleRow[] = requireCount(source.worldRules, 3, 'worldRules', slug).map(
+    (rule) => ({
+      ...rule,
+      storyId,
+      description: rule.description,
+    }),
+  );
 
-  const notes = Array.from({ length: 3 }, (_, index) => ({
+  const notes: ExampleRow[] = Array.from({ length: 3 }, (_, index) => ({
     ...base(id(`note-${index}`), storyId),
     title: source.notes?.[index]?.title ?? '',
     body: source.notes?.[index]?.body ?? '',
     isFavorite: false,
     extraNotes: null,
   }));
-  const tags = Array.from({ length: 4 }, (_, index) => ({
+  const tags: ExampleRow[] = Array.from({ length: 4 }, (_, index) => ({
     ...base(id(`tag-${index}`), storyId),
     name: source.tags?.[index]?.name ?? '',
     color: ['#7C3AED', '#0EA5E9', '#F59E0B', '#10B981'][index],
@@ -155,7 +167,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     extraNotes: null,
   }));
 
-  const characterScenes: any[] = [];
+  const characterScenes: ExampleRow[] = [];
   const presencePatterns = [
     [0, 1, 2, 3, 4, 5, 6, 7],
     [0, 2, 4, 6, 8, 10],
@@ -192,14 +204,14 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       second += 1
     )
       relationPairs.push([first, second]);
-  const characterRelations = relationPairs.map(([first, second], index) => ({
+  const characterRelations: ExampleRow[] = relationPairs.map(([first, second], index) => ({
     ...base(id(`character-relation-${index}`), storyId),
     character1Id: characters[first].id,
     character2Id: characters[second].id,
     relationType: '',
   }));
 
-  const locationRelations = [
+  const locationRelations: ExampleRow[] = [
     [0, 1, 'contains'],
     [1, 2, 'contains'],
     [2, 3, 'connected_to'],
@@ -211,7 +223,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     relationType,
   }));
 
-  const itemJourneys = items.slice(0, 3).flatMap((item, itemIndex) =>
+  const itemJourneys: ExampleRow[] = items.slice(0, 3).flatMap((item, itemIndex) =>
     [itemIndex, itemIndex + 4, itemIndex + 8].map((sceneIndex, journeyIndex) => ({
       ...base(id(`item-journey-${itemIndex}-${journeyIndex}`), storyId),
       itemId: item.id,
@@ -231,7 +243,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     ['WorldRule', worldRules[0].id],
     ['Location', locations[2].id],
   ];
-  const noteRelations = noteTargets.map(([relationType, relationId], index) => ({
+  const noteRelations: ExampleRow[] = noteTargets.map(([relationType, relationId], index) => ({
     ...base(id(`note-relation-${index}`), storyId),
     noteId: notes[index % notes.length].id,
     relationId,
@@ -250,7 +262,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     ['Scene', scenes[8].id],
     ['Chapter', chapters[2].id],
   ];
-  const tagRelations = tagTargets.map(([relationType, relationId], index) => ({
+  const tagRelations: ExampleRow[] = tagTargets.map(([relationType, relationId], index) => ({
     ...base(id(`tag-relation-${index}`), storyId),
     tagId: tags[index % tags.length].id,
     relationId,
@@ -278,13 +290,13 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     characters,
     locations,
   });
-  let choices: any[] = [];
-  let routes: any[] = [];
-  let routeSteps: any[] = [];
-  let choiceCheckGroups: any[] = [];
-  let choiceChecks: any[] = [];
-  let plots: any[] = [];
-  let plotScenes: any[] = [];
+  let choices: ExampleRow[] = [];
+  let routes: ExampleRow[] = [];
+  let routeSteps: ExampleRow[] = [];
+  let choiceCheckGroups: ExampleRow[] = [];
+  let choiceChecks: ExampleRow[] = [];
+  let plots: ExampleRow[] = [];
+  let plotScenes: ExampleRow[] = [];
   if (source.story.type === 'branching') {
     const edges = [
       ...Array.from({ length: 10 }, (_, index) => [index, index + 1]),
@@ -416,7 +428,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     );
   }
 
-  const effects = [
+  const effects: ExampleRow[] = [
     ['itemGrant', items[0].id, null],
     ['itemTake', items[1].id, null],
     ['triggerSet', null, 'path_revealed'],
@@ -430,7 +442,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     triggerName,
   }));
 
-  const comments = [
+  const comments: ExampleRow[] = [
     ['Character', characters[0].id, 'description', characters[0].description],
     ['Scene', scenes[4].id, 'summary', scenes[4].summary],
     ['Item', items[1].id, 'description', items[1].description],
@@ -447,7 +459,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     commentText: text.comments[index],
     criticality: [1, 3, 5, 3][index],
   }));
-  const seeAlsoRelations = [
+  const seeAlsoRelations: ExampleRow[] = [
     ['Character', characters[0].id, 'Location', locations[0].id],
     ['Scene', scenes[2].id, 'Item', items[0].id],
     ['Chapter', chapters[1].id, 'WorldRule', worldRules[0].id],
@@ -459,7 +471,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     entityBType,
     entityBId,
   }));
-  const favorites = [
+  const favorites: ExampleRow[] = [
     ['Story', storyId],
     ['Character', characters[0].id],
     ['Scene', scenes[0].id],

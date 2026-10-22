@@ -7,7 +7,7 @@
   <p><a href="README.md">English</a> · <strong>Português</strong></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
-  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-54-000020?logo=expo" alt="Expo 54" /></a>
+  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-57-000020?logo=expo" alt="Expo 57" /></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 16" /></a>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&amp;logoColor=white" alt="Docker ready" /></a>
 </div>
@@ -21,7 +21,7 @@ O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras d
 | `apps/client` | React Native, Expo, SQLite | Aplicação principal para Android, iOS e web |
 | `apps/desktop` | Electron | Distribuição desktop do mesmo cliente web |
 | `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Autenticação, sincronização, colaboração e mídia |
-| `apps/admin` | React, Vite | Painel administrativo servido pela própria API em `/admin` |
+| `apps/web` | React, Vite | Painel administrativo (`/admin`) e vitrine pública (`/showcase`), ambos servidos pela própria API |
 | `apps/site` | React, Vite | Landing pública publicada no GitHub Pages |
 | `packages/shared` | TypeScript, Zod | Entidades, contratos e metadados compartilhados |
 
@@ -83,7 +83,7 @@ bun install --frozen-lockfile
 3. Em um terminal, compile o painel e inicie a API:
 
    ```bash
-   bun run admin:build
+   bun run web:build
    bun run api:start
    ```
 
@@ -113,7 +113,7 @@ Serviços disponíveis:
 - Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/client/` — precisa de `bun run client:build:hosted` (um export feito para `/client`, não o de `client:build`)
 - Vitrine de histórias publicadas: `http://localhost:3000/showcase`
 - Landing page na raiz (opcional, desligada por padrão): ative no painel em Configurações → Páginas hospedadas — precisa de `bun run site:build:landing`
-- Painel administrativo com hot reload: `bun run admin:start` e abra `http://localhost:5173/admin/`
+- Painel administrativo com hot reload: `bun run web:start` e abra `http://localhost:5173/admin/`
 
 ### Stack Docker local
 
@@ -293,7 +293,7 @@ Na raiz, cada projeto é chamado por `<projeto>:<verbo>`:
 ```bash
 bun run client:start      # Expo
 bun run api:start         # API em Postgres
-bun run admin:start       # painel com hot reload
+bun run web:start       # painel com hot reload
 bun run site:start        # landing
 bun run desktop:start     # Electron
 bun run api:build         # zip do Keres Server (constrói painel e cliente antes)
@@ -358,18 +358,20 @@ Isso grava `apps/site/public/showcase/screens/<tela>.<idioma>.<tema>.png`, que f
 no repositório - o build da landing não roda a captura. Rode de novo quando uma tela da vitrine
 mudar de forma. As telas, histórias e tamanhos de janela ficam em
 `apps/desktop/scripts/capture-screens.ts`; o modo de URL que leva o app direto a uma tela fica
-em `apps/client/src/showcase/`.
+em `apps/client/src/services/showcase/`.
 
 O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` (a branch padrão). O environment `github-pages` recusa outras branches. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
 
 ## Documentação técnica
 
-- [Estrutura do monorepo e convenções de arquivos (onde vai um arquivo novo)](docs/file_structure.md)
-- [Plano e arquitetura do projeto](docs/project_plan.md)
-- [Fluxo de telas](docs/screen_flow.md)
-- [Mecânicas de escolhas](docs/choice_mechanics.md)
-- [Sistema de status e gráfico radar](docs/stat_system.md)
-- [Sincronização e resolução de conflitos](docs/conflict_resolution_client_strategy.md)
+A documentação técnica está em inglês. Quem chega agora deve começar por [CONTRIBUTING.md](CONTRIBUTING.md); os documentos ficam em `docs/`, em pastas por finalidade (`structure/`, `procedures/`, `compliance/`, `product/`, `decisions/`, `extras/`).
+
+- [Estrutura do monorepo e convenções de arquivos (onde vai um arquivo novo)](docs/structure/file_structure.md)
+- [Plano e arquitetura do projeto](docs/structure/project_plan.md)
+- [Fluxo de telas](docs/structure/screen_flow.md)
+- [Mecânicas de escolhas](docs/structure/choice_mechanics.md)
+- [Sistema de status e gráfico radar](docs/structure/stat_system.md)
+- [Sincronização e resolução de conflitos](docs/structure/conflict_resolution_client_strategy.md)
 
 ## Segurança operacional
 

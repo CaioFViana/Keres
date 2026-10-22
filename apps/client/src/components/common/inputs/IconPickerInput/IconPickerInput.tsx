@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -16,7 +16,7 @@ interface IconPickerInputProps {
    * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
    * draws the field's frame, and a second border/height around it misaligns the inner content.
    */
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 const IconPickerInput: React.FC<IconPickerInputProps> = ({

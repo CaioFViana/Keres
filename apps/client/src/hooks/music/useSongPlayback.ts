@@ -18,6 +18,7 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createSongAudioService } from '@/src/services/media/SongAudioService';
 import { PREVIEW_MAX_SECONDS } from '@/src/utils/music/songPlayback';
+import { logger } from '@/src/utils/logging/logger';
 
 export type PlaybackPhase = 'idle' | 'preparing' | 'playing';
 
@@ -191,7 +192,7 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
         player.play();
         setPhase('playing');
       } catch (error) {
-        console.log('useSongPlayback: could not prepare the song.', error);
+        logger.debug('useSongPlayback: could not prepare the song.', error);
         if (run.current === mine) {
           setProblem('failed');
           setPhase('idle');
@@ -232,7 +233,7 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
         tonePlayer.replace({ uri });
         tonePlayer.play();
       } catch (error) {
-        console.log('useSongPlayback: could not play the key.', error);
+        logger.debug('useSongPlayback: could not play the key.', error);
       }
     },
     [service, tonePlayer],

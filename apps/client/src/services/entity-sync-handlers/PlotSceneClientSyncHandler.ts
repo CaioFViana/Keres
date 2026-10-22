@@ -1,63 +1,8 @@
-import type {
-  CreateStoryUpdate,
-  DeleteStoryUpdate,
-  PlotScene,
-  UpdateStoryUpdate,
-} from '@keres/shared';
-import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import { TableClientSyncHandler } from './TableClientSyncHandler';
 
-export class PlotSceneClientSyncHandler implements ClientSyncEntityHandler {
-  entityName = 'PlotScene';
-  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
-
-  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
-    this.dbInstance = dbInstance;
-  }
-
-  private get db(): AppDrizzleClient | AppDrizzleTransaction {
-    if (!this.dbInstance)
-      throw new Error('PlotSceneClientSyncHandler: Drizzle client (db) not set.');
-    return this.dbInstance;
-  }
-
-  async applyCreate(_: string, update: CreateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName || !update.id) return;
-    const data = update.data as PlotScene;
-    await this.db.insert(schema.plotScenes).values({
-      ...data,
-      id: update.id,
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
-    });
-  }
-
-  async applyUpdate(_: string, update: UpdateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName || !update.id || !update.changes) return;
-    const changes = update.changes as Partial<PlotScene>;
-    await this.db
-      .update(schema.plotScenes)
-      .set({
-        ...changes,
-        createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
-        updatedAt: new Date(),
-        deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
-      })
-      .where(eq(schema.plotScenes.id, update.id));
-  }
-
-  async applyDelete(_: string, update: DeleteStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName || !update.id) return;
-    await this.db
-      .update(schema.plotScenes)
-      .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
-      .where(eq(schema.plotScenes.id, update.id));
-  }
-
-  async getById(id: string): Promise<PlotScene | undefined> {
-    return this.db.query.plotScenes.findFirst({ where: eq(schema.plotScenes.id, id) });
-  }
+/** Applies PlotScene operations received from the server to the local table. */
+export class PlotSceneClientSyncHandler extends TableClientSyncHandler<typeof schema.plotScenes> {
+  readonly entityName = 'PlotScene';
+  protected readonly table = schema.plotScenes;
 }

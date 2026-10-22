@@ -20,9 +20,9 @@ describe('useSyncConflictActions', () => {
     const view = await renderHook(() => useSyncConflictActions());
     const values = { title: 'local title' };
     await act(async () => {
-      view.result.current.keepLocal('conflict-1', values);
-      view.result.current.keepServer('conflict-2');
-      view.result.current.keepServerAndCloneBoard('conflict-3', 'user-1', 'Copy');
+      await view.result.current.keepLocal('conflict-1', values);
+      await view.result.current.keepServer('conflict-2');
+      await view.result.current.keepServerAndCloneBoard('conflict-3', 'user-1', 'Copy');
     });
     expect(view.result.current.isResolving).toBe(true);
     expect(mockStore.keepLocal).toHaveBeenCalledWith(mockDb, 'conflict-1', values);

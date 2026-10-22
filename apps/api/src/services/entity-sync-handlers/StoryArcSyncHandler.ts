@@ -3,7 +3,11 @@ import { CreateStoryArcDataSchema, PartialStoryArcSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { db, type CompatibleDb } from '@/db';
 import { storyArcs } from '@/db/schema';
-import { BaseSyncEntityHandler, type SyncEntityRow } from './BaseSyncEntityHandler';
+import {
+  BaseSyncEntityHandler,
+  type SyncEntityRow,
+  type SyncWriteContext,
+} from './BaseSyncEntityHandler';
 
 export class StoryArcSyncHandler extends BaseSyncEntityHandler<
   typeof CreateStoryArcDataSchema,
@@ -24,12 +28,8 @@ export class StoryArcSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const data: CreateStoryArcDataType = this.createSchema.parse(update.data);
     const existing = await this.findById(update.id!, database);
     if (existing) {

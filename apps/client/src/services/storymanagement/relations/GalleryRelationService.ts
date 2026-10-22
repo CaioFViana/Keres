@@ -12,6 +12,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** An entity a media file is (or can be) linked to. */
 export interface GalleryOwnerRef {
@@ -199,7 +200,7 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
       });
 
       if (!relation) {
-        console.warn(
+        logger.warn(
           `Gallery relation between ${galleryId} and ${owner.ownerType} ${owner.ownerId} not found or already removed.`,
         );
         return;

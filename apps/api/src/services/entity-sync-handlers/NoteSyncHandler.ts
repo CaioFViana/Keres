@@ -1,8 +1,8 @@
 import type { CreateNoteDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateNoteDataSchema, PartialNoteSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { notes } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 export class NoteSyncHandler extends BaseSyncEntityHandler<
   typeof CreateNoteDataSchema,
@@ -22,12 +22,8 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<
     // Currently no related entities to validate for Note
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Validate incoming data against the create schema
     const validatedData: CreateNoteDataType = this.createSchema.parse(update.data);
 

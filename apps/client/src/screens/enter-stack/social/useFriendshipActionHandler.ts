@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schema';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface FriendshipActionOptions {
   /**
@@ -47,7 +48,7 @@ export function useFriendshipActionHandler(
             showNotification(successMessage, 'success');
             onSuccess();
           } catch (error) {
-            console.error(`Error during friendship action (ID: ${friendshipId}):`, error);
+            logger.error(`Error during friendship action (ID: ${friendshipId}):`, error);
             showNotification(errorMessage, 'error');
           }
         };

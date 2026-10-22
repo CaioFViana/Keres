@@ -1,8 +1,8 @@
 import type { CreateStoryUpdate, CreateWorldRuleDataType } from '@keres/shared';
 import { CreateWorldRuleDataSchema, PartialWorldRuleSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { worldRules } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
   typeof CreateWorldRuleDataSchema,
@@ -22,12 +22,8 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
     // WorldRule has no direct related entities to validate
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     // Validate incoming data against the create schema
     const validatedData: CreateWorldRuleDataType = this.createSchema.parse(update.data);
 

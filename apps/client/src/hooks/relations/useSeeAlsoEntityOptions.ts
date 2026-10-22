@@ -16,6 +16,7 @@ import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface SeeAlsoEntityOption {
   label: string;
@@ -105,7 +106,7 @@ export function useSeeAlsoEntityOptions(
 
       setOptions(collected);
     } catch (error) {
-      console.error('Failed to load See Also entity options:', error);
+      logger.error('Failed to load See Also entity options:', error);
       setOptions([]);
     } finally {
       setLoading(false);

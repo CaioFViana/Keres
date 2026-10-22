@@ -135,7 +135,7 @@ Não há build iOS de release automatizado no momento: ele exige identificador d
 
 ## Referências internas
 
-- [Fluxo de telas](../../docs/screen_flow.md)
-- [Estrutura do projeto](../../docs/file_structure.md)
-- [Sincronização e resolução de conflitos](../../docs/conflict_resolution_client_strategy.md)
-- [Mecânicas de escolhas](../../docs/choice_mechanics.md)
+- [Fluxo de telas](../../docs/structure/screen_flow.md)
+- [Estrutura do projeto](../../docs/structure/file_structure.md)
+- [Sincronização e resolução de conflitos](../../docs/structure/conflict_resolution_client_strategy.md)
+- [Mecânicas de escolhas](../../docs/structure/choice_mechanics.md)

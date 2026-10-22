@@ -13,9 +13,11 @@ import { createStatRelationService } from '@/src/services/storymanagement/relati
 import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
 import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import type { EntityEventName } from '@/src/state/events/entityEvents';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { resolveLadder, type StatTier } from '@keres/shared/graphs/stats/statLadder';
 import { indexStatValues, type StatValueIndex } from '@/src/utils/stats/statValues';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * Everything a stats screen needs, in a single query and refreshed by event.
@@ -70,7 +72,7 @@ export function useStoryStats(storyId: string | undefined | null): StoryStatsDat
       ]);
       setData({ characters, stats, strengths, modes, values });
     } catch (error) {
-      console.error('Failed to load the stat system of the story:', error);
+      logger.error('Failed to load the stat system of the story:', error);
       setData(EMPTY);
     } finally {
       setLoading(false);
@@ -80,7 +82,7 @@ export function useStoryStats(storyId: string | undefined | null): StoryStatsDat
   useEntityInitialLoad(reload);
 
   useEffect(() => {
-    const events = [
+    const events: EntityEventName[] = [
       'stat_changed',
       'stat_strength_changed',
       'stat_relation_changed',

@@ -11,7 +11,7 @@
  *                                         `--mode=disabled` is accepted as an alias of `--mode=manual`.
  *                                         `--mode=required` is the default.
  *
- * What it sets up (see docs/age_verification.md, "Trying it locally"):
+ * What it sets up (see docs/compliance/age_verification.md, "Trying it locally"):
  *   - the verification service on 127.0.0.1:3102 (or the next free port), with DATA_DIR and KEY_DIR as two sibling
  *     temporary folders under the OS temp folder: the keys never sit beside the data they protect;
  *   - the Keres API on 127.0.0.1:3301 (or the next free port) in `AGE_VERIFICATION_MODE=required`, with a temporary
@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const drive = process.argv.includes('--drive');
-// `manual` runs the API alone, with no external service (see "Modes" in docs/age_verification.md). `disabled` is the legacy name.
+// `manual` runs the API alone, with no external service (see "Modes" in docs/compliance/age_verification.md). `disabled` is the legacy name.
 const modeArgument = process.argv.find((argument) => argument.startsWith('--mode='));
 const requestedMode = modeArgument ? modeArgument.slice('--mode='.length) : 'required';
 const mode = requestedMode === 'disabled' ? 'manual' : requestedMode;

@@ -31,7 +31,7 @@ jobs:
           - name: client
           - name: api
           - name: payments
-          - name: admin
+          - name: web
           - name: desktop
           - name: site
     name: verify (${{ matrix.name }})
@@ -44,23 +44,23 @@ jobs:
       # `--only` runs the script in one package (see scripts/run-all.ts), skipping cleanly
       # when the package does not declare it.
       - run: bun scripts/run-all.ts typecheck --only ${{ matrix.name }}
-      # Lint here is ESLint, in the client and the admin only: Biome's packages are checked once, for
+      # Lint here is ESLint, in the client and the web app only: Biome's packages are checked once, for
       # all of them, by the `static` job below. The client's ESLint is the slow one - minutes from
-      # cold - so its cache, and the admin's, are restored first. Both scripts ask ESLint to key the
+      # cold - so its cache, and the web app's, are restored first. Both scripts ask ESLint to key the
       # cache by file content (`--cache-strategy content`): a checkout gives every file a fresh
       # mtime, which would make the default strategy miss on every run. A stale cache only costs
       # time, never a wrong result.
-      - if: matrix.name == 'client' || matrix.name == 'admin'
+      - if: matrix.name == 'client' || matrix.name == 'web'
         uses: actions/cache@v4
         with:
           path: |
             apps/client/.expo/cache/eslint
-            apps/admin/node_modules/.cache/eslint
+            apps/web/node_modules/.cache/eslint
           key: eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
             eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-
             eslint-${{ matrix.name }}-
-      - if: matrix.name == 'client' || matrix.name == 'admin'
+      - if: matrix.name == 'client' || matrix.name == 'web'
         run: bun scripts/run-all.ts lint --only ${{ matrix.name }}
       # With coverage, not `bun run test`: that is what enforces the thresholds set in each
       # workspace. Without it the floors would sit in the file and never be checked. `CI` is set
@@ -82,6 +82,12 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun run check
+      # Dead code and undeclared dependencies (`knip.json`). Runs in the same job: it needs no build.
+      - run: bun run knip
+      # Every file and link the documents name has to exist (`scripts/verify-doc-paths.ts`).
+      - run: bun run docs:audit
+      # No workspace of ours with a private copy of zod, drizzle-orm or elysia (`scripts/verify-single-versions.ts`).
+      - run: bun run deps:audit
 
   # The repository's own scripts are not a package, but they are TypeScript. `run-all.ts`
   # checks them on unfiltered local `typecheck` runs; here they get their own tiny job so the
@@ -182,3 +188,114 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun run --cwd apps/api test:integration:sqlite
+
+  # The client's sync engine against the real API, not against its in-memory reference model: three
+  # devices of one user edit one story at random and have to converge on the server's rows. The unit and
+  # integration suites each test one side; this is the one run where the two meet over HTTP. The local
+  # equivalent is `docker compose -f apps/api/docker-compose.test.yml up -d && bun run test:sync-fuzz-api`
+  # (`SYNC_FUZZ_SEEDS=200` for a deeper run; a failing seed is reproduced with `SYNC_FUZZ_FIRST_SEED`).
+  sync-fuzz:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: keres_test
+          POSTGRES_PASSWORD: keres_test
+          POSTGRES_DB: keres_test
+        ports:
+          - 45432:5432
+        options: >-
+          --tmpfs /var/lib/postgresql/data:rw
+          --health-cmd "pg_isready -U keres_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keres_test:keres_test@127.0.0.1:45432/keres_test
+      JWT_SECRET: ci-jwt-secret-that-is-at-least-thirty-two-characters
+      JWT_SECRET_REFRESH: ci-refresh-secret-that-is-at-least-thirty-two-characters
+      # 24 seeds of 40 steps is the test's own default: about two minutes. Pinned here so a change of the
+      # default for local use does not silently change what CI checks.
+      SYNC_FUZZ_SEEDS: '24'
+      SYNC_FUZZ_STEPS: '40'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run test:sync-fuzz-api
+
+  # The web client's build, served the way GitHub Pages serves it, opened in a real browser: the bundle boots under
+  # the Pages path, the service worker isolates the page, the WASM SQLite opens and what it stores survives a reload.
+  # None of that exists in Jest (better-sqlite3, mocked natives), and all of it has broken a release before.
+  # The local equivalent is `bun run --cwd apps/client build:pages` with `KERES_WEB_BASE_URL=/Keres/client`, then
+  # `E2E_CHANNEL=chrome bun run --cwd apps/e2e test` (the installed Chrome stands in for Playwright's Chromium).
+  e2e-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run --cwd apps/e2e typecheck
+      - name: Build the web client as the Pages deploy does
+        run: bun run --cwd apps/client build:pages
+        env:
+          KERES_WEB_BASE_URL: /Keres/client
+      - name: Install the browser
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run the browser tests
+        run: bun run --cwd apps/e2e test:pages
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-web-traces
+          path: apps/e2e/test-results
+          if-no-files-found: ignore
+
+  # The desktop app's web SQLite, in Electron: wa-sqlite over OPFS with SharedArrayBuffer, which depends on the
+  # COOP/COEP headers the main process's `app://` protocol sends and on a Web Worker channel that once truncated long
+  # results (the probe is `apps/client/src/testing/sqliteWebSmokeProbe.ts`). Only this path runs that combination. The
+  # build carries the probe, so it is its own export; Electron needs a display, which `xvfb-run` fakes, and a runner
+  # cannot give the browser sandbox its setuid helper.
+  desktop-sqlite-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      # Bun does not always run the `electron` package's install script, which is what downloads the binary.
+      - name: Make sure the Electron binary is there
+        run: node node_modules/electron/install.js
+      - name: Build the client with the probe, then run it in Electron
+        run: xvfb-run -a bun run --cwd apps/desktop test:sqlite-web
+        env:
+          ELECTRON_DISABLE_SANDBOX: '1'
+
+  # The client a person uses with a server, in two browser profiles of one account against the real API on a throwaway
+  # SQLite database: sign-up, a story sent to the server, the pull on sign-in on the second device, and each device
+  # seeing the other's edit. The API serves the hosted client itself (`apps/e2e/api-server.ts`). Its own job, parallel
+  # to `e2e-web`: the two builds are separate exports of the client and each takes minutes.
+  e2e-online:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Build the hosted web client
+        run: bun run --cwd apps/client build:hosted
+      - name: Install the browser
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run the online journey
+        run: bun run --cwd apps/e2e test:online
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-online-traces
+          path: apps/e2e/test-results
+          if-no-files-found: ignore

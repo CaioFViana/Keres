@@ -11,6 +11,7 @@ import { isOfflineError } from '@/src/services/api/apiClient';
 import { createFriendshipService } from './FriendshipService';
 import { messageApi, type MessagePeerRef } from '@/src/services/api/MessageApiService';
 import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { MessagePeerRef };
 
@@ -171,7 +172,7 @@ export class MessageService {
           }
         } catch (error) {
           if (!isOfflineError(error)) {
-            console.warn(`Could not read the messages of ${server.name}:`, error);
+            logger.warn(`Could not read the messages of ${server.name}:`, error);
           }
           unreachableServerIds.push(server.id);
         }
@@ -221,7 +222,7 @@ export class MessageService {
       conversations = await messageApi.getConversations(server);
     } catch (error) {
       if (!isOfflineError(error)) {
-        console.warn(`Could not read the messages of ${server.name}:`, error);
+        logger.warn(`Could not read the messages of ${server.name}:`, error);
       }
       return;
     }

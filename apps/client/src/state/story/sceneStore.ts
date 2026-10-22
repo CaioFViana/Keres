@@ -4,6 +4,8 @@ import { createSceneService } from '@/src/services/storymanagement/scenes-chapte
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 interface SceneExtraActions {
   reorderScenes: (chapterId: string, newOrder: { id: string; newIndex: number }[]) => Promise<void>;
@@ -38,13 +40,13 @@ export const useSceneStore = createEntityStore<
     reorderScenes: async (chapterId: string, newOrder: { id: string; newIndex: number }[]) => {
       const { service, storyId } = get();
       if (!service || !storyId) {
-        console.warn('Scene service or storyId not initialized for reordering.');
+        logger.warn('Scene service or storyId not initialized for reordering.');
         return;
       }
 
       const userId = useUserSettingsStore.getState().userId;
       if (!userId) {
-        console.error('User ID not available. Cannot reorder scenes.');
+        logger.error('User ID not available. Cannot reorder scenes.');
         return;
       }
 
@@ -53,9 +55,9 @@ export const useSceneStore = createEntityStore<
         await service.reorderScenes(userId, storyId, chapterId, newOrder);
         entityEventEmitter.emit('scene_changed', storyId, 'reorder');
         await refetch(); // Re-fetch to pick up the new order and entity versions
-      } catch (err: any) {
-        console.error('Failed to reorder scenes:', err);
-        setPartial({ error: err?.message || 'Failed to reorder scenes', loading: false });
+      } catch (err) {
+        logger.error('Failed to reorder scenes:', err);
+        setPartial({ error: errorMessageOf(err) || 'Failed to reorder scenes', loading: false });
       }
     },
   }),

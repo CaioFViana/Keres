@@ -326,8 +326,8 @@ async function headerState() {
 }
 
 describe('LocationMapScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

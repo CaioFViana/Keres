@@ -1,8 +1,8 @@
 import type { CreateSongDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateSongDataSchema, PartialSongSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { songs } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 /**
  * Songs arriving from a client. The text fields are validated against the limits real songs fit in;
@@ -22,12 +22,8 @@ export class SongSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    _userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const data: CreateSongDataType = this.createSchema.parse(update.data);
 
     if (await this.findById(update.id!, database)) {

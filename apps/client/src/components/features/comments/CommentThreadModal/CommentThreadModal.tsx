@@ -29,6 +29,7 @@ import {
   DEFAULT_CRITICALITY,
 } from '@/src/utils/entity/commentCriticality';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import { logger } from '@/src/utils/logging/logger';
 
 interface CommentThreadModalProps {
   visible: boolean;
@@ -46,10 +47,6 @@ interface CommentThreadModalProps {
     criticality: number;
   }) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
-  onUpdate: (
-    commentId: string,
-    changes: { commentText?: string; criticality?: number },
-  ) => Promise<void>;
   /** Manuscript prose composer: explain that the first match anchors the comment. */
   showExcerptAnchorNotice?: boolean;
   /** A fresh text selection, pre-filled into the excerpt composer on open. */
@@ -73,7 +70,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   currentUserId,
   onSubmit,
   onDelete,
-  onUpdate,
   showExcerptAnchorNotice = false,
   initialExcerpt = null,
 }) => {
@@ -147,7 +143,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       setExcerptText('');
       setCriticality(DEFAULT_CRITICALITY);
     } catch (error) {
-      console.error('Failed to post comment:', error);
+      logger.error('Failed to post comment:', error);
       AppAlert.alert(t('error'), t('failed_to_post_comment'));
     } finally {
       setSubmitting(false);
@@ -165,7 +161,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
             try {
               await onDelete(commentId);
             } catch (error) {
-              console.error('Failed to delete comment:', error);
+              logger.error('Failed to delete comment:', error);
               AppAlert.alert(t('error'), t('failed_to_delete_comment'));
             }
           },

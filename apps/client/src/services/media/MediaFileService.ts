@@ -23,6 +23,7 @@ import {
   wantsImageThumbnail,
 } from '@/src/services/platform-web/webImageThumbnail';
 import { captureVideoThumbnail } from '@/src/services/platform-web/webVideoThumbnail';
+import { logger } from '@/src/utils/logging/logger';
 
 const isWeb = Platform.OS === 'web';
 
@@ -236,7 +237,7 @@ async function generateWebVideoThumbnail(
     await webMediaStore.writeBytes(thumbnailRelativePath, frame);
     return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + thumbnailRelativePath;
   } catch (error) {
-    console.warn('Could not generate video thumbnail:', error);
+    logger.warn('Could not generate video thumbnail:', error);
     return undefined;
   }
 }
@@ -259,7 +260,7 @@ async function generateWebImageThumbnail(
     await webMediaStore.writeBytes(thumbnailRelativePath, bytes);
     return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + thumbnailRelativePath;
   } catch (error) {
-    console.warn('Could not generate picture thumbnail:', error);
+    logger.warn('Could not generate picture thumbnail:', error);
     return undefined;
   }
 }
@@ -305,7 +306,7 @@ async function generateVideoThumbnail(
     await new File(saved.uri).copy(destination);
     return destination.uri;
   } catch (error) {
-    console.warn('Could not generate video thumbnail:', error);
+    logger.warn('Could not generate video thumbnail:', error);
     return undefined;
   } finally {
     player?.release();
@@ -690,7 +691,7 @@ export const mediaFileService = {
         const relativePath = localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length);
         webMediaStore
           .deleteFile(relativePath)
-          .catch((error) => console.warn('Could not delete local media file:', localPath, error));
+          .catch((error) => logger.warn('Could not delete local media file:', localPath, error));
         // `media/<story>/<hash>.<ext>` has its thumbnail at `media/<story>/<hash>_thumb.jpg`; there is none
         // for most files, so a missing one is the normal case.
         const thumbnailRelativePath = relativePath.replace(/\.[^./]+$/, '_thumb.jpg');
@@ -711,7 +712,7 @@ export const mediaFileService = {
     } catch (error) {
       // Failing to delete a local file must not bring down the deletion of the medium itself: the
       // record is the source of truth, the orphaned file is wasted space, not a bug.
-      console.warn('Could not delete local media file:', localPath, error);
+      logger.warn('Could not delete local media file:', localPath, error);
     }
   },
 
@@ -721,7 +722,7 @@ export const mediaFileService = {
       webMediaStore
         .deleteDirectory(`media/${storyId}`)
         .catch((error) =>
-          console.warn('Could not delete media directory for story:', storyId, error),
+          logger.warn('Could not delete media directory for story:', storyId, error),
         );
       return;
     }
@@ -731,7 +732,7 @@ export const mediaFileService = {
         directory.delete();
       }
     } catch (error) {
-      console.warn('Could not delete media directory for story:', storyId, error);
+      logger.warn('Could not delete media directory for story:', storyId, error);
     }
   },
 
@@ -755,7 +756,7 @@ export const mediaFileService = {
     } catch (error) {
       // Orphaned media must not leave the reset half-complete. Its database references
       // are removed below, so a cleanup failure only means reclaiming disk space failed.
-      console.warn('Could not remove every local media file during app reset:', error);
+      logger.warn('Could not remove every local media file during app reset:', error);
     }
   },
 };

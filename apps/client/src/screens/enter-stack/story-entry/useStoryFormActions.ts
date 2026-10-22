@@ -10,6 +10,7 @@ import type { PackService } from '@/src/services/storymanagement/packs/PackServi
 import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StoryFormState } from './useStoryFormState';
+import { logger } from '@/src/utils/logging/logger';
 
 type StoryFormNavigation = NavigationProp<{
   StoryForm: { storyId?: string; start?: 'blank' | 'packs' };
@@ -163,7 +164,7 @@ export function useStoryFormActions({
         }
         navigation.goBack();
       } catch (err) {
-        console.error('Failed to save story:', err);
+        logger.error('Failed to save story:', err);
         state.setError(t('failed_to_save_story'));
         AppAlert.alert(t('error'), t('failed_to_save_story'));
       }
@@ -195,7 +196,7 @@ export function useStoryFormActions({
                 AppAlert.alert(t('success'), t('story_deleted_successfully'));
                 navigation.goBack();
               } catch (err) {
-                console.error('Failed to delete story:', err);
+                logger.error('Failed to delete story:', err);
                 state.setError(t('failed_to_delete_story'));
                 AppAlert.alert(t('error'), t('failed_to_delete_story'));
               } finally {

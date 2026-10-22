@@ -24,6 +24,7 @@ import {
   MentionMatcherContext,
 } from './MentionContext';
 import { customAttributeMentionFields } from './customAttributeMentions';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The entity types a writer refers to by name in prose.
@@ -298,7 +299,7 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
       setBacklinks(buildMentionBacklinkIndex(sources, nextMatcher));
       setAmbiguities(buildAmbiguousMentionIndex(sources, nextMatcher));
     } catch (error) {
-      console.error('Failed to build the mention matcher:', error);
+      logger.error('Failed to build the mention matcher:', error);
       if (token === loadToken.current) {
         setMatcher(EMPTY_MENTION_MATCHER);
         setBacklinks(new Map());

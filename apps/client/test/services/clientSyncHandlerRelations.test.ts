@@ -51,13 +51,12 @@ describe('collaboration sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('Comment', 'comment-1', comment));
-    await handler.applyCreate(STORY_ID, createUpdate('Comment', 'comment-1', comment));
+    await handler.applyCreate(createUpdate('Comment', 'comment-1', comment), STORY_ID);
+    await handler.applyCreate(createUpdate('Comment', 'comment-1', comment), STORY_ID);
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Comment', 'comment-1', { commentText: 'Nome aprovado' }),
     );
-    await handler.applyDelete(STORY_ID, deleteUpdate('Comment', 'comment-1'));
+    await handler.applyDelete(deleteUpdate('Comment', 'comment-1'));
 
     expect(await handler.getById('comment-1')).toEqual(
       expect.objectContaining({ commentText: 'Nome aprovado', isDeleted: true }),
@@ -67,7 +66,7 @@ describe('collaboration sync handlers', () => {
   it('refuses comment work before a database is set', async () => {
     const handler = new CommentClientSyncHandler();
 
-    await expect(handler.applyCreate(STORY_ID, createUpdate('Comment', 'c-1', {}))).rejects.toThrow(
+    await expect(handler.applyCreate(createUpdate('Comment', 'c-1', {}), STORY_ID)).rejects.toThrow(
       /database not set/,
     );
   });
@@ -76,9 +75,9 @@ describe('collaboration sync handlers', () => {
     const handler = new CommentClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'c-1', {}));
-    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'c-1', {}));
-    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'c-1'));
+    await handler.applyCreate(createUpdate('OutraEntidade', 'c-1', {}), STORY_ID);
+    await handler.applyUpdate(updateUpdate('OutraEntidade', 'c-1', {}));
+    await handler.applyDelete(deleteUpdate('OutraEntidade', 'c-1'));
 
     expect(await database.db.select().from(schema.comments).all()).toEqual([]);
   });
@@ -87,14 +86,14 @@ describe('collaboration sync handlers', () => {
     const handler = new CommentClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Comment', data: {} } as never);
-    await handler.applyUpdate(STORY_ID, {
+    await handler.applyCreate({ type: 'create', entity: 'Comment', data: {} } as never, STORY_ID);
+    await handler.applyUpdate({
       type: 'update',
       entity: 'Comment',
       changes: {},
     } as never);
-    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Comment', id: 'c-1' } as never);
-    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Comment' } as never);
+    await handler.applyUpdate({ type: 'update', entity: 'Comment', id: 'c-1' } as never);
+    await handler.applyDelete({ type: 'delete', entity: 'Comment' } as never);
 
     expect(await database.db.select().from(schema.comments).all()).toEqual([]);
   });
@@ -104,7 +103,6 @@ describe('collaboration sync handlers', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Comment', 'comment-9', {
         entityType: 'Character',
         entityId: 'character-1',
@@ -118,6 +116,7 @@ describe('collaboration sync handlers', () => {
         isDeleted: true,
         deletedAt: CREATED_AT,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('comment-9');
@@ -129,7 +128,6 @@ describe('collaboration sync handlers', () => {
     const handler = new CommentClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Comment', 'comment-1', {
         entityType: 'Character',
         entityId: 'character-1',
@@ -143,10 +141,10 @@ describe('collaboration sync handlers', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Comment', 'comment-1', {
         commentText: 'new',
         createdAt: CREATED_AT,
@@ -178,8 +176,8 @@ describe('collaboration sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('Favorite', 'favorite-1', favorite));
-    await handler.applyCreate(STORY_ID, createUpdate('Favorite', 'favorite-1', favorite));
+    await handler.applyCreate(createUpdate('Favorite', 'favorite-1', favorite), STORY_ID);
+    await handler.applyCreate(createUpdate('Favorite', 'favorite-1', favorite), STORY_ID);
     await database.db.insert(schema.favorites).values({
       ...favorite,
       id: 'favorite-2',
@@ -187,7 +185,7 @@ describe('collaboration sync handlers', () => {
       createdAt: new Date(CREATED_AT),
       updatedAt: new Date(CREATED_AT),
     });
-    await handler.applyDelete(STORY_ID, deleteUpdate('Favorite', 'favorite-1'));
+    await handler.applyDelete(deleteUpdate('Favorite', 'favorite-1'));
 
     expect(await handler.getById('favorite-1')).toEqual(
       expect.objectContaining({ isDeleted: true }),
@@ -201,7 +199,7 @@ describe('collaboration sync handlers', () => {
     const handler = new FavoriteClientSyncHandler();
 
     await expect(
-      handler.applyCreate(STORY_ID, createUpdate('Favorite', 'f-1', {})),
+      handler.applyCreate(createUpdate('Favorite', 'f-1', {}), STORY_ID),
     ).rejects.toThrow(/database not set/);
   });
 
@@ -209,9 +207,9 @@ describe('collaboration sync handlers', () => {
     const handler = new FavoriteClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'f-1', {}));
-    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'f-1', {}));
-    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'f-1'));
+    await handler.applyCreate(createUpdate('OutraEntidade', 'f-1', {}), STORY_ID);
+    await handler.applyUpdate(updateUpdate('OutraEntidade', 'f-1', {}));
+    await handler.applyDelete(deleteUpdate('OutraEntidade', 'f-1'));
 
     expect(await database.db.select().from(schema.favorites).all()).toEqual([]);
   });
@@ -220,14 +218,14 @@ describe('collaboration sync handlers', () => {
     const handler = new FavoriteClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Favorite', data: {} } as never);
-    await handler.applyUpdate(STORY_ID, {
+    await handler.applyCreate({ type: 'create', entity: 'Favorite', data: {} } as never, STORY_ID);
+    await handler.applyUpdate({
       type: 'update',
       entity: 'Favorite',
       changes: {},
     } as never);
-    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Favorite', id: 'f-1' } as never);
-    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Favorite' } as never);
+    await handler.applyUpdate({ type: 'update', entity: 'Favorite', id: 'f-1' } as never);
+    await handler.applyDelete({ type: 'delete', entity: 'Favorite' } as never);
 
     expect(await database.db.select().from(schema.favorites).all()).toEqual([]);
   });
@@ -236,7 +234,6 @@ describe('collaboration sync handlers', () => {
     const handler = new FavoriteClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Favorite', 'favorite-1', {
         entityId: 'character-1',
         entityType: 'Character',
@@ -247,10 +244,10 @@ describe('collaboration sync handlers', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Favorite', 'favorite-1', {
         entityId: 'character-2',
         createdAt: CREATED_AT,
@@ -270,7 +267,6 @@ describe('collaboration sync handlers', () => {
     const handler = new FavoriteClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Favorite', 'favorite-1', {
         entityId: 'character-1',
         entityType: 'Character',
@@ -281,12 +277,10 @@ describe('collaboration sync handlers', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
-    await handler.applyUpdate(
-      STORY_ID,
-      updateUpdate('Favorite', 'favorite-1', { entityId: 'character-2' }),
-    );
+    await handler.applyUpdate(updateUpdate('Favorite', 'favorite-1', { entityId: 'character-2' }));
 
     expect(await handler.getById('favorite-1')).toMatchObject({ entityId: 'character-2' });
   });
@@ -296,7 +290,6 @@ describe('collaboration sync handlers', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Favorite', 'favorite-9', {
         entityId: 'character-1',
         entityType: 'Character',
@@ -307,6 +300,7 @@ describe('collaboration sync handlers', () => {
         isDeleted: true,
         deletedAt: CREATED_AT,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('favorite-9');
@@ -335,13 +329,12 @@ describe('collaboration sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('SeeAlsoRelation', 'see-1', relation));
+    await handler.applyCreate(createUpdate('SeeAlsoRelation', 'see-1', relation), STORY_ID);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('SeeAlsoRelation', 'see-2', { ...relation, id: 'see-2' }),
+      STORY_ID,
     );
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('SeeAlsoRelation', 'see-1', { entityBId: 'location-2' }),
     );
 
@@ -355,7 +348,7 @@ describe('collaboration sync handlers', () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
 
     await expect(
-      handler.applyCreate(STORY_ID, createUpdate('SeeAlsoRelation', 'see-1', {})),
+      handler.applyCreate(createUpdate('SeeAlsoRelation', 'see-1', {}), STORY_ID),
     ).rejects.toThrow(/database not set/);
   });
 
@@ -363,9 +356,9 @@ describe('collaboration sync handlers', () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'see-1', {}));
-    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'see-1', {}));
-    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'see-1'));
+    await handler.applyCreate(createUpdate('OutraEntidade', 'see-1', {}), STORY_ID);
+    await handler.applyUpdate(updateUpdate('OutraEntidade', 'see-1', {}));
+    await handler.applyDelete(deleteUpdate('OutraEntidade', 'see-1'));
 
     expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([]);
   });
@@ -374,22 +367,25 @@ describe('collaboration sync handlers', () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, {
-      type: 'create',
-      entity: 'SeeAlsoRelation',
-      data: {},
-    } as never);
-    await handler.applyUpdate(STORY_ID, {
+    await handler.applyCreate(
+      {
+        type: 'create',
+        entity: 'SeeAlsoRelation',
+        data: {},
+      } as never,
+      STORY_ID,
+    );
+    await handler.applyUpdate({
       type: 'update',
       entity: 'SeeAlsoRelation',
       changes: {},
     } as never);
-    await handler.applyUpdate(STORY_ID, {
+    await handler.applyUpdate({
       type: 'update',
       entity: 'SeeAlsoRelation',
       id: 'see-1',
     } as never);
-    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'SeeAlsoRelation' } as never);
+    await handler.applyDelete({ type: 'delete', entity: 'SeeAlsoRelation' } as never);
 
     expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([]);
   });
@@ -398,7 +394,6 @@ describe('collaboration sync handlers', () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('SeeAlsoRelation', 'see-1', {
         entityAType: 'Character',
         entityAId: 'character-1',
@@ -410,9 +405,10 @@ describe('collaboration sync handlers', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
-    await handler.applyDelete(STORY_ID, deleteUpdate('SeeAlsoRelation', 'see-1'));
+    await handler.applyDelete(deleteUpdate('SeeAlsoRelation', 'see-1'));
 
     const row = await handler.getById('see-1');
     expect(row).toMatchObject({ isDeleted: true });
@@ -424,7 +420,6 @@ describe('collaboration sync handlers', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('SeeAlsoRelation', 'see-9', {
         entityAType: 'Character',
         entityAId: 'character-1',
@@ -436,6 +431,7 @@ describe('collaboration sync handlers', () => {
         isDeleted: true,
         deletedAt: CREATED_AT,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('see-9');
@@ -447,7 +443,6 @@ describe('collaboration sync handlers', () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('SeeAlsoRelation', 'see-1', {
         entityAType: 'Character',
         entityAId: 'character-1',
@@ -459,10 +454,10 @@ describe('collaboration sync handlers', () => {
         isDeleted: false,
         deletedAt: null,
       }),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('SeeAlsoRelation', 'see-1', {
         entityBId: 'location-2',
         createdAt: CREATED_AT,
@@ -494,12 +489,12 @@ describe('collaboration sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('GalleryRelation', relation.id, relation));
+    await handler.applyCreate(createUpdate('GalleryRelation', relation.id, relation), STORY_ID);
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('GalleryRelation', relation.id, { ownerId: 'character-2' }),
+      STORY_ID,
     );
-    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', relation.id));
+    await handler.applyDelete(deleteUpdate('OutraEntidade', relation.id), STORY_ID);
 
     expect(await handler.getById(relation.id)).toEqual(
       expect.objectContaining({ ownerId: 'character-2', isDeleted: false }),
@@ -537,25 +532,25 @@ describe('LocationRelationClientSyncHandler mirroring', () => {
   it('takes every relation the server sends, whatever else this device holds', async () => {
     const handler = withHandler();
     await handler.applyCreate(
-      STORY_ID,
       createUpdate(
         'LocationRelation',
         'local',
         relation('local', { updatedAt: '2026-08-11T12:00:00.000Z' }),
       ),
+      STORY_ID,
     );
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'remote', relation('remote')),
+      STORY_ID,
     );
     await handler.applyCreate(
-      STORY_ID,
       createUpdate(
         'LocationRelation',
         'parent',
         relation('parent', { relationType: 'contains', locationBId: 'child' }),
       ),
+      STORY_ID,
     );
 
     const rows = await database.db.select().from(schema.locationRelations).all();
@@ -569,21 +564,21 @@ describe('LocationRelationClientSyncHandler mirroring', () => {
   it('applies an update as the server made it, never judging it against other rows', async () => {
     const handler = withHandler();
     await handler.applyCreate(
-      STORY_ID,
       createUpdate(
         'LocationRelation',
         'target',
         relation('target', { locationAId: 'location-c', locationBId: 'location-d' }),
       ),
+      STORY_ID,
     );
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'other', relation('other')),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('LocationRelation', 'target', { relationType: 'contains' }),
+      STORY_ID,
     );
 
     expect(await handler.getById('target')).toEqual(
@@ -595,29 +590,38 @@ describe('LocationRelationClientSyncHandler mirroring', () => {
   it('ignores malformed, misaddressed, and missing local operations without mutating a relation', async () => {
     const handler = withHandler();
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'relation-1', relation('relation-1')),
+      STORY_ID,
     );
 
-    await handler.applyCreate(STORY_ID, {
-      type: 'create',
-      entity: 'LocationRelation',
-      data: relation('missing-id'),
-    } as unknown as CreateStoryUpdate);
-    await handler.applyUpdate(STORY_ID, {
-      type: 'update',
-      entity: 'LocationRelation',
-      id: 'relation-1',
-    } as UpdateStoryUpdate);
-    await handler.applyUpdate(
+    await handler.applyCreate(
+      {
+        type: 'create',
+        entity: 'LocationRelation',
+        data: relation('missing-id'),
+      } as unknown as CreateStoryUpdate,
       STORY_ID,
-      updateUpdate('LocationRelation', 'unknown', { relationType: 'contains' }),
     );
-    await handler.applyDelete(STORY_ID, {
-      type: 'delete',
-      entity: 'LocationRelation',
-    } as DeleteStoryUpdate);
-    await handler.applyDelete(STORY_ID, deleteUpdate('OtherEntity', 'relation-1'));
+    await handler.applyUpdate(
+      {
+        type: 'update',
+        entity: 'LocationRelation',
+        id: 'relation-1',
+      } as UpdateStoryUpdate,
+      STORY_ID,
+    );
+    await handler.applyUpdate(
+      updateUpdate('LocationRelation', 'unknown', { relationType: 'contains' }),
+      STORY_ID,
+    );
+    await handler.applyDelete(
+      {
+        type: 'delete',
+        entity: 'LocationRelation',
+      } as DeleteStoryUpdate,
+      STORY_ID,
+    );
+    await handler.applyDelete(deleteUpdate('OtherEntity', 'relation-1'), STORY_ID);
 
     expect(await handler.getById('relation-1')).toEqual(
       expect.objectContaining({ isDeleted: false }),

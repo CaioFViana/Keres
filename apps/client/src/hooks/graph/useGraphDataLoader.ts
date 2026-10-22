@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useGraphStoryReload } from './useGraphStoryReload';
+import { logger } from '@/src/utils/logging/logger';
 
 interface GraphDataLoader<T> {
   /** The latest data, or null until the first load succeeds. */
@@ -48,7 +49,7 @@ export function useGraphDataLoader<T>({
       setData(loaded);
       setError(null);
     } catch (loadError) {
-      console.log(logMessage, loadError);
+      logger.debug(logMessage, loadError);
       // A refresh that fails leaves what is on screen alone; only the first load reports it.
       if (first) setError(errorMessage);
     } finally {

@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { createContext, useContext } from 'react';
 import * as schema from './schema';
+import { logger } from '@/src/utils/logging/logger';
 
 /** Module-level singleton. Null until `initializeDrizzle` runs, and after `resetDatabase`. */
 export let db: AppDrizzleClient | null = null;
@@ -37,17 +38,17 @@ export function initializeDrizzle(dbInstance: SQLiteDatabase) {
 }
 
 export async function resetDatabase(dbInstance: SQLiteDatabase) {
-  console.log('Resetting database...');
+  logger.debug('Resetting database...');
   const tableNamesResult = await dbInstance.getAllAsync<{ name: string }>(
     "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';",
   );
   const tableNames = tableNamesResult.map((row) => row.name);
 
   for (const tableName of tableNames) {
-    console.log(`Dropping table: ${tableName}`);
+    logger.debug(`Dropping table: ${tableName}`);
     await dbInstance.execAsync(`DROP TABLE IF EXISTS ${tableName};`);
   }
-  console.log('All tables dropped.');
+  logger.debug('All tables dropped.');
   // Clearing the singleton forces re-initialization; a stale client would point at dropped tables.
   db = null;
 }

@@ -170,8 +170,8 @@ beforeEach(() => {
   );
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('loads maps and opens one on press', async () => {

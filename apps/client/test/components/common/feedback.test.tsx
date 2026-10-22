@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { Platform, StyleSheet } from 'react-native';
 import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
 import NotificationItem from '@/src/components/common/feedback/NotificationItem/NotificationItem';
@@ -85,7 +85,9 @@ describe('ScreenError', () => {
 });
 
 describe('AppAlertHost', () => {
-  afterEach(() => {
+  // Unmount first: a store change reaches a component that is still mounted as an update outside act().
+  afterEach(async () => {
+    await cleanup();
     useAppAlertStore.setState({ current: null });
   });
 
@@ -317,7 +319,8 @@ describe('NotificationPopup', () => {
 });
 
 describe('NotificationItem', () => {
-  afterEach(() => {
+  afterEach(async () => {
+    await cleanup();
     useNotificationStore.setState({ currentNotifications: [null, null, null], queue: [] });
   });
 

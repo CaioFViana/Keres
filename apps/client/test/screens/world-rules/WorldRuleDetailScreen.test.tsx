@@ -258,8 +258,8 @@ beforeEach(() => {
   mockGetWorldRuleById.mockResolvedValue(makeWorldRule());
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('renders the rule with section, fields and managers', async () => {

@@ -1,9 +1,9 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncStoredEntityFor, SyncWriteContext } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateStoryDataSchema, PartialStorySchema } from '@keres/shared';
 import { ownerOnlyFieldsIn } from '@keres/shared';
 import type { z } from 'zod';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { stories } from '@/db/schema';
 import {
   BaseSyncEntityHandler,
@@ -86,12 +86,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     return entity.id === storyId;
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { userId, database = db } = ctx;
     // Validate incoming data against the create schema
     const validatedData: z.infer<typeof CreateStoryDataSchema> = this.createSchema.parse(
       update.data,
@@ -114,24 +110,20 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
   }
 
   async update(
-    userId: string,
-    storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
     this.updateSchema.parse(update.changes);
-    await super.update(userId, storyId, update, currentEntity, database);
+    await super.update(update, currentEntity, ctx);
   }
 
   async delete(
-    userId: string,
-    storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
+    ctx: SyncWriteContext,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity, database);
+    await super.delete(update, currentEntity, ctx);
     // No blob sweep here: it runs in the push coordinator after the commit (see
     // `collectPushMediaGarbage`). Inside this transaction the check would read stale state - and
     // bytes deleted first would stay deleted if the transaction then rolled back.

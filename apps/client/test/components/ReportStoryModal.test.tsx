@@ -42,8 +42,8 @@ jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
   jest.clearAllMocks();
 });
 
@@ -71,7 +71,7 @@ describe('ReportStoryModal', () => {
 
     await fireEvent.changeText(view.getByTestId('report-reason-input'), '  spam links  ');
     await act(async () => {
-      fireEvent.press(view.getByTestId('report-send'));
+      await fireEvent.press(view.getByTestId('report-send'));
     });
 
     expect(onSend).toHaveBeenCalledWith('spam links', 'other');
@@ -87,13 +87,13 @@ describe('ReportStoryModal', () => {
 
     // Empty: the send button is disabled, so nothing is sent.
     await act(async () => {
-      fireEvent.press(view.getByTestId('report-send'));
+      await fireEvent.press(view.getByTestId('report-send'));
     });
     expect(onSend).not.toHaveBeenCalled();
 
     await fireEvent.changeText(view.getByTestId('report-reason-input'), 'rude');
     await act(async () => {
-      fireEvent.press(view.getByTestId('report-send'));
+      await fireEvent.press(view.getByTestId('report-send'));
     });
     expect(onSend).toHaveBeenCalledWith('rude', 'other');
     expect(onClose).not.toHaveBeenCalled();
@@ -109,7 +109,7 @@ describe('ReportStoryModal', () => {
     await fireEvent.changeText(view.getByTestId('report-reason-input'), 'my chapter');
     await fireEvent.press(view.getByTestId('report-type-copyright'));
     await act(async () => {
-      fireEvent.press(view.getByTestId('report-send'));
+      await fireEvent.press(view.getByTestId('report-send'));
     });
 
     expect(onSend).toHaveBeenCalledWith('my chapter', 'copyright');

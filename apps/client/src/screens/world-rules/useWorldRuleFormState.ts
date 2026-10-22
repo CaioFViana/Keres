@@ -9,6 +9,7 @@ import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { WorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseWorldRuleFormStateOptions = {
   initialWorldRuleId?: string;
@@ -144,11 +145,11 @@ export function useWorldRuleFormState({
                 : fromDb,
             );
           } else {
-            console.warn('World rule not found:', initialWorldRuleId);
+            logger.warn('World rule not found:', initialWorldRuleId);
           }
         }
       } catch (err) {
-        console.error('Failed to load world rule:', err);
+        logger.error('Failed to load world rule:', err);
       } finally {
         setLoading(false);
       }
@@ -165,7 +166,7 @@ export function useWorldRuleFormState({
 
   const restoreDraftFields = useCallback((fields: WorldRuleFormDraftFields) => {
     if (!isWorldRuleFormDraftFields(fields)) {
-      console.error('Corrupt world rule form draft ignored.');
+      logger.error('Corrupt world rule form draft ignored.');
       return;
     }
     setTitle(fields.title);

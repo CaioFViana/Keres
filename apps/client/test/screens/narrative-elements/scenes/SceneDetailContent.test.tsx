@@ -358,7 +358,6 @@ function commentField(_field: string, value: string): Omit<CommentableDetailFiel
     currentUserId: null,
     onAddComment: async () => {},
     onDeleteComment: async () => {},
-    onUpdateComment: async () => {},
   };
 }
 
@@ -414,8 +413,8 @@ const openTab = async (view: unknown, key: 'details' | 'relations' | 'other') =>
   );
 
 describe('SceneDetailContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the title, tags fallback and chapter numbering for linear stories', async () => {
@@ -700,7 +699,7 @@ describe('SceneDetailContent', () => {
       );
       expect(onSummary.getByTestId('commentable-summary')).toBeTruthy();
 
-      cleanup();
+      await cleanup();
       const onNotes = await render(
         <SceneDetailContent {...baseProps({ occurrence: { field: 'extraNotes' } })} />,
       );

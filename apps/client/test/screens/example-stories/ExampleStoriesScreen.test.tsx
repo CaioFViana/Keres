@@ -136,8 +136,8 @@ beforeEach(() => {
   mockCreateStoryService.mockReturnValue({});
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('shows the empty catalog state', async () => {

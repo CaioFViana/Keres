@@ -44,6 +44,7 @@ import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStory
 import { useTheme } from '@/src/theme';
 
 import type { NotesScreenNavigationProp } from './NoteListScreen';
+import { logger } from '@/src/utils/logging/logger';
 
 // Define the parameter list for this screen
 export type NoteDetailScreenParamList = {
@@ -107,7 +108,7 @@ const NoteDetailScreen = () => {
 
   const fetchNote = useCallback(async () => {
     if (!noteServiceRef.current) {
-      console.warn('Note service not initialized.');
+      logger.warn('Note service not initialized.');
       return;
     }
     try {
@@ -123,7 +124,7 @@ const NoteDetailScreen = () => {
         setHeaderTitle(t('note_not_found'));
       }
     } catch (err) {
-      console.error('Failed to fetch note details:', err);
+      logger.error('Failed to fetch note details:', err);
       setError(t('failed_to_load_note'));
       setHeaderTitle(t('error'));
     } finally {
@@ -144,13 +145,13 @@ const NoteDetailScreen = () => {
       );
       setNoteTags(fetchedTags);
     } catch (err) {
-      console.error('Failed to fetch tags for note:', err);
+      logger.error('Failed to fetch tags for note:', err);
     }
   }, [note?.storyId, noteId]);
 
   const fetchNoteRelations = useCallback(async () => {
     if (!noteRelationServiceRef.current || !note?.storyId || !noteId) {
-      console.warn('NoteRelationService or story not initialized for fetching relations.');
+      logger.warn('NoteRelationService or story not initialized for fetching relations.');
       return;
     }
     try {
@@ -160,7 +161,7 @@ const NoteDetailScreen = () => {
       );
       setAllNoteRelations(relations);
     } catch (err) {
-      console.error('Failed to fetch note relations:', err);
+      logger.error('Failed to fetch note relations:', err);
     }
   }, [note?.storyId, noteId]);
 
@@ -207,7 +208,7 @@ const NoteDetailScreen = () => {
   }, [allNoteRelations, drizzleDb, note?.storyId, t]);
 
   const handleNoteChange = useCallback(
-    async (changedStoryId: string, changedNoteId: string) => {
+    async (_changedStoryId: string, changedNoteId: string) => {
       if (changedNoteId === noteId) {
         if (noteServiceRef.current) {
           const updatedNote = await noteServiceRef.current.getById(noteId);
@@ -225,7 +226,7 @@ const NoteDetailScreen = () => {
   );
 
   const handleNoteRelationChange = useCallback(
-    (changedStoryId: string, changedRelationId: string) => {
+    (_changedStoryId: string, _changedRelationId: string) => {
       // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
       // However, for simplicity and ensuring data consistency, we'll refetch all relations for this note.
       // A more optimized approach would involve parsing changedRelationId if it contains noteId.
@@ -235,7 +236,7 @@ const NoteDetailScreen = () => {
   );
 
   const handleTagRelationChange = useCallback(
-    (changedStoryId: string, changedEntityId: string) => {
+    (_changedStoryId: string, changedEntityId: string) => {
       if (changedEntityId === noteId) {
         fetchTagsForNote();
       }

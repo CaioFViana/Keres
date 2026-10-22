@@ -13,6 +13,7 @@ import {
   type LocationMapExportMedia,
 } from '@/src/services/media/locationMapExport';
 import { bytesToBase64 } from '@/src/services/media/locationMapMedia';
+import { logger } from '@/src/utils/logging/logger';
 
 interface BuildLocationMapSvgOptions {
   title: string;
@@ -60,7 +61,7 @@ export async function buildStandaloneBoardSvg(
       const mimeType = media.mediaType === 'image' ? media.mimeType || 'image/jpeg' : 'image/jpeg';
       galleryImages[node.entityId] = `data:${mimeType};base64,${bytesToBase64(bytes)}`;
     } catch (readError) {
-      console.log('BoardCanvasScreen: failed to read gallery image for export.', readError);
+      logger.debug('BoardCanvasScreen: failed to read gallery image for export.', readError);
     }
   }
 

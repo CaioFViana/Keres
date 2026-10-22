@@ -51,8 +51,27 @@ module.exports = defineConfig([
     },
   },
   {
-    files: ['test/**/*.ts', 'test/**/*.tsx'],
+    // The app's code and its build scripts; tests are off in their own block below. The example-story scripts name
+    // their loose rows once (`scripts/lib/exampleStoryTypes.ts`).
+    files: ['src/**/*.ts', 'src/**/*.tsx', 'scripts/**/*.ts'],
     rules: {
+      /**
+       * `any` switches the checker off for everything it touches. Use `unknown` and narrow, or the real type;
+       * where a library's own generics leave no honest type, suppress the line and say why.
+       */
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  {
+    files: ['test/**/*.ts', 'test/**/*.tsx'],
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: __dirname } },
+    rules: {
+      /**
+       * Testing Library 14 made `render`, `renderHook`, `fireEvent.*` and `cleanup` async, each wrapping its
+       * own `act()`. One left without `await` runs its `act` while the next call opens another (the
+       * "overlapping act" warning) and lets the test assert before the update lands.
+       */
+      '@typescript-eslint/no-floating-promises': 'error',
       /**
        * A test loads a module late on purpose: after `jest.mock`, after the environment or a fake clock is
        * set up, after `jest.resetModules()`, or to read the real one through `jest.requireActual`. A static

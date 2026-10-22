@@ -37,15 +37,8 @@ export default function ManuscriptExplorer({
   const simulation = useStorySimulation(data);
   const scene = simulation.current;
   const sceneIds = useMemo(() => (scene ? [scene.id] : []), [scene]);
-  const {
-    commentsBySceneId,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    updateComment,
-    deleteComment,
-  } = useSceneBodyComments(storyId, sceneIds);
+  const { commentsBySceneId, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useSceneBodyComments(storyId, sceneIds);
   const sceneComments = useMemo(
     () => (scene ? (commentsBySceneId[scene.id] ?? []) : []),
     [scene, commentsBySceneId],
@@ -128,7 +121,6 @@ export default function ManuscriptExplorer({
             addComment(scene.id, { ...input, contentSnapshot: scene.body })
           }
           onDeleteThread={deleteComment}
-          onUpdateThread={updateComment}
           testID="manuscript-explorer-review-tools"
         />
       )}

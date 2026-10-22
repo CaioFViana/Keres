@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { StoryNarrative } from './exampleStoryNarrative';
+import type { ExampleRow } from './exampleStoryTypes';
 
 /**
  * Writes an authored narrative over a bundled example story, in place.
@@ -16,8 +17,8 @@ import type { StoryNarrative } from './exampleStoryNarrative';
  * "The price of change".
  */
 
-type Row = Record<string, any>;
-type StoryDocument = Record<string, any>;
+type Row = ExampleRow;
+type StoryDocument = ExampleRow;
 
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 

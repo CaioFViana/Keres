@@ -14,7 +14,8 @@ import {
   recordLocalOperationSync,
   runLocalWrite,
 } from '@/src/services/sync/syncUtils'; // Imports for logging operations
-import { createServerService } from '@/src/services/servers/ServerService'; // Import ServerService to get userId
+import { createServerService } from '@/src/services/servers/ServerService';
+import { logger } from '@/src/utils/logging/logger'; // Import ServerService to get userId
 
 export type CharacterRelationWithNames = CharacterRelation & {
   char1Name: string;
@@ -79,7 +80,7 @@ export const createCharacterRelationService = (
       characterId: string,
     ): Promise<CharacterRelation[]> {
       if (!storyId || !characterId) {
-        console.error('getRelationsForCharacter: storyId and characterId are required.');
+        logger.error('getRelationsForCharacter: storyId and characterId are required.');
         return [];
       }
       try {
@@ -99,7 +100,7 @@ export const createCharacterRelationService = (
           .all();
         return relations;
       } catch (error) {
-        console.error(`Error fetching character relations for character ${characterId}:`, error);
+        logger.error(`Error fetching character relations for character ${characterId}:`, error);
         return [];
       }
     },
@@ -111,7 +112,7 @@ export const createCharacterRelationService = (
       // Added currentUserId
       await assertStoryIsWritable(db, relation.storyId);
       try {
-        console.log(
+        logger.debug(
           'Attempting to save relation with ID:',
           relation.id,
           'and storyId:',
@@ -232,7 +233,7 @@ export const createCharacterRelationService = (
             delete changes.updatedAt;
 
             if (Object.keys(changes).length === 0) {
-              console.log(
+              logger.debug(
                 `CharacterRelation ${relation.id}: No significant changes detected. Skipping update and operation log.`,
               );
               return oldRelation; // Return the original relation as no update occurred
@@ -261,7 +262,7 @@ export const createCharacterRelationService = (
                 .get();
 
               if (!updated) {
-                console.error(
+                logger.error(
                   'Update operation did not return any updated rows for ID:',
                   relation.id,
                 );
@@ -287,7 +288,7 @@ export const createCharacterRelationService = (
             );
             return resultRelation; // Early return for successful update
           }
-          console.log(
+          logger.debug(
             `Relation with ID ${relation.id} not found for update, attempting insert instead.`,
           );
           // If exists is false, fall through to insert logic
@@ -329,11 +330,11 @@ export const createCharacterRelationService = (
           newRelationData.storyId,
           currentUserId,
         );
-        console.log('Inserting new relation with generated ID:', newRelationData.id);
+        logger.debug('Inserting new relation with generated ID:', newRelationData.id);
         resultRelation = await runLocalWrite(db, newRelationData.storyId, () => {
           const inserted = db.insert(characterRelations).values(newRelationData).returning().get();
           if (!inserted) {
-            console.error('Insert operation did not return any inserted rows.');
+            logger.error('Insert operation did not return any inserted rows.');
             throw new Error('Failed to retrieve inserted relation after insert operation.');
           }
           recordLocalOperationSync(
@@ -355,7 +356,7 @@ export const createCharacterRelationService = (
 
         return resultRelation; // Return the actual inserted object from DB
       } catch (error) {
-        console.error('Error saving character relation:', error);
+        logger.error('Error saving character relation:', error);
         throw error;
       }
     },
@@ -366,7 +367,7 @@ export const createCharacterRelationService = (
         where: eq(characterRelations.id, relationId),
       });
       if (!relationToDelete) {
-        console.warn(`Attempted to delete non-existent character relation ${relationId}.`);
+        logger.warn(`Attempted to delete non-existent character relation ${relationId}.`);
         return false; // Return false if not found
       }
       // Outside the try below: that catch swallows everything into `false`, which would
@@ -421,7 +422,7 @@ export const createCharacterRelationService = (
 
         return true;
       } catch (error) {
-        console.error(`Error deleting character relation ${relationId}:`, error);
+        logger.error(`Error deleting character relation ${relationId}:`, error);
         return false;
       }
     },
@@ -492,7 +493,7 @@ export const createCharacterRelationService = (
             query = query.orderBy(order(characterRelations.updatedAt));
             break;
           default:
-            console.warn(`Unknown sortBy field for CharacterRelation: ${sortBy}`);
+            logger.warn(`Unknown sortBy field for CharacterRelation: ${sortBy}`);
             break;
         }
       } else {

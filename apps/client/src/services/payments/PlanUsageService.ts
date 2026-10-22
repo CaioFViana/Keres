@@ -6,6 +6,7 @@ import i18n from '@/src/utils/format/i18n';
 import { evaluatePlanUsage, type PlanUsage } from '@/src/utils/billing/planUsage';
 import { createStoryEntityCountService } from '@/src/services/storymanagement/story-lifecycle/StoryEntityCountService';
 import { createStoryPlanService } from './StoryPlanService';
+import { logger } from '@/src/utils/logging/logger';
 
 /** The plan is the server's and changes rarely; it is read again after this long, not on every edit. */
 export const PLAN_CACHE_MS = 2 * 60 * 1000;
@@ -88,6 +89,6 @@ export async function refreshPlanUsage(
     }
   } catch (error) {
     // An indicator is not worth a failure of anything else.
-    console.warn('PlanUsageService: could not look at the plan usage.', error);
+    logger.warn('PlanUsageService: could not look at the plan usage.', error);
   }
 }

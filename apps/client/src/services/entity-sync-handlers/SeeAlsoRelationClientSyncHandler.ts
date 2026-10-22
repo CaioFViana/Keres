@@ -21,7 +21,7 @@ export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as SeeAlsoRelation;
     await this.db
@@ -38,7 +38,7 @@ export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler
       .run();
   }
 
-  async applyUpdate(_storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<SeeAlsoRelation>;
     await this.db
@@ -53,7 +53,7 @@ export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler
       .run();
   }
 
-  async applyDelete(_storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(seeAlsoRelations)

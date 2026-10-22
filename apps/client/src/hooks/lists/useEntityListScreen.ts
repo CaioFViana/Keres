@@ -8,6 +8,7 @@ import type {
   SortDirection,
 } from '@/src/types/entityFilters';
 import { debounce } from '@/src/utils/sync/debounce';
+import type { EntityChangeEvent } from '@/src/state/events/entityEvents';
 import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
 
 /**
@@ -15,6 +16,7 @@ import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
  * `EntityStore<TKey, TEntity, TService>` directly so TypeScript can infer the entity type
  * from the collection property - it cannot infer through a mapped type's value position.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- stores have no index signature, so only `any` accepts every concrete one
 type AnyEntityStore = EntityStoreCore<unknown> & Record<string, any>;
 
 export interface UseEntityListScreenOptions<
@@ -25,7 +27,7 @@ export interface UseEntityListScreenOptions<
   useStore: () => TStore;
   collectionKey: TKey;
   /** Emitted when the entity changes anywhere in the app; triggers a refetch. */
-  changeEvent: string;
+  changeEvent: EntityChangeEvent;
   /** How long to wait after typing stops before querying; a local query, so short enough to feel live. */
   searchDebounceMs?: number;
 }

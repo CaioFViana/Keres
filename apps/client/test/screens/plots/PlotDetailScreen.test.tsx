@@ -145,8 +145,8 @@ function plotsData(overrides: any = {}) {
 }
 
 describe('PlotDetailScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

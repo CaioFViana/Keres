@@ -141,7 +141,7 @@ describe('useTagFormState durable drafts', () => {
       first.result.current.setName('Herói');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -154,7 +154,7 @@ describe('useTagFormState durable drafts', () => {
     const { view: first } = await renderState({});
     await waitFor(() => expect(first.result.current.loading).toBe(false));
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({});
@@ -173,7 +173,7 @@ describe('useTagFormState durable drafts', () => {
       first.result.current.setName('Urgente, revisto');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ tagId: 'tag-1', tag: persistedTag });
@@ -200,7 +200,7 @@ describe('useTagFormState durable drafts', () => {
     expect(first.result.current.name).toBe('');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
@@ -214,7 +214,7 @@ describe('useTagFormState durable drafts', () => {
       second.result.current.setName('Vilão');
     });
     await act(async () => {
-      second.unmount();
+      await second.unmount();
     });
     const { view: third } = await renderState({});
     await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
@@ -240,7 +240,7 @@ describe('useTagFormState durable drafts', () => {
     expect(first.result.current.color).toBe('#f00');
     expect(first.result.current.isDirty).toBe(false);
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const { view: second } = await renderState({ tagId: 'tag-1', tag: persistedTag });
@@ -257,7 +257,7 @@ describe('useTagFormState durable drafts', () => {
       first.result.current.setName('Rascunho velho');
     });
     await act(async () => {
-      first.unmount();
+      await first.unmount();
     });
 
     const newerTag = {

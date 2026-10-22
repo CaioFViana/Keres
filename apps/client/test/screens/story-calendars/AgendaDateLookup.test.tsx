@@ -232,7 +232,7 @@ describe('CustomCalendarDateLookup', () => {
 
     const moved = partsToDayNumber(definition, { year: 3, month: 2, day: 15 });
     await act(async () => {
-      screen.rerender(
+      await screen.rerender(
         <CustomCalendarDateLookup
           definition={definition}
           cursor={moved}

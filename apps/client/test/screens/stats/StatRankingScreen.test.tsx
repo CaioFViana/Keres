@@ -133,8 +133,8 @@ function statsData(overrides: any = {}) {
 }
 
 describe('StatRankingScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
     jest.clearAllMocks();
   });
 

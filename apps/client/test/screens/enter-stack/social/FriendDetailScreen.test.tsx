@@ -13,8 +13,10 @@ const mockHeader = jest.fn();
 const mockCanGoBack = jest.fn();
 const mockUnsubscribe = jest.fn();
 const mockFocusListeners: (() => void)[] = [];
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
   navigate: (...args: unknown[]) => mockNavigate(...args),
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
   goBack: (...args: unknown[]) => mockGoBack(...args),
   canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
   addListener: (_event: string, cb: () => void) => {
@@ -129,6 +131,11 @@ jest.mock('@/src/screens/enter-stack/social/useFriendActivity', () => ({
   useFriendActivity: () => mockActivity.current,
 }));
 
+const mockAuthorPage: { current: unknown } = { current: null };
+jest.mock('@/src/screens/enter-stack/social/useFriendAuthorPage', () => ({
+  useFriendAuthorPage: () => mockAuthorPage.current,
+}));
+
 const mockInvitationActions = {
   accept: jest.fn(),
   decline: jest.fn(),
@@ -221,6 +228,7 @@ describe('FriendDetailScreen', () => {
     jest.clearAllMocks();
     mockCompact.current = false;
     mockActivity.current = { ...NO_ACTIVITY };
+    mockAuthorPage.current = null;
     mockInvitations.current = { received: [], sent: [], busyId: null };
     mockInviteState.current = { stories: null, busy: false, invite: jest.fn(async () => true) };
     mockFocusListeners.length = 0;
@@ -236,8 +244,8 @@ describe('FriendDetailScreen', () => {
     mockUnblacklist.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('shows a received request with accept, decline and blacklist', async () => {
@@ -313,6 +321,114 @@ describe('FriendDetailScreen', () => {
     // Nothing to open before the friendship is loaded.
     mockHeader.mock.calls[0][0].actions[0].onPress();
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  describe("what the friend has published on their server's public site", () => {
+    const card = (n: number) => ({
+      storyId: `story-${n}`,
+      snapshot: { title: `Story ${n}`, genre: n === 1 ? 'Fantasy' : null },
+    });
+    const pageOf = (count: number) => ({
+      owner: { username: 'Zoe' },
+      stories: Array.from({ length: count }, (_, at) => card(at + 1)),
+    });
+    beforeEach(() => {
+      mockGetAllServers.mockResolvedValue([server]);
+      mockGetAllFriendships.mockResolvedValue([friendship({ status: FriendStatus.FRIEND })]);
+    });
+
+    it('lists a few of the stories, and the header offers the author page', async () => {
+      mockAuthorPage.current = pageOf(2);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.getByText('friend_published_title')).toBeTruthy();
+      expect(view.getByText('Story 1')).toBeTruthy();
+      expect(view.getByText('Fantasy')).toBeTruthy();
+      expect(view.getByText('Story 2')).toBeTruthy();
+      // With nothing left over, the button says what it is: the author page.
+      expect(
+        within(view.getByTestId('friend-published-more')).getByText('friend_author_page'),
+      ).toBeTruthy();
+
+      const header = mockHeader.mock.calls
+        .at(-1)![0]
+        .actions.find((action: { id: string }) => action.id === 'author-page');
+      expect(header).toMatchObject({ icon: 'person-circle-outline', visible: true });
+    });
+
+    it('opens the author page from the header and from the button', async () => {
+      mockAuthorPage.current = pageOf(1);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      mockHeader.mock.calls
+        .at(-1)![0]
+        .actions.find((action: { id: string }) => action.id === 'author-page')
+        .onPress();
+      await fireEvent.press(view.getByTestId('friend-published-more'));
+
+      // Inside the app, in the showcase, under its home: back goes there and not out of the section.
+      expect(mockParentNavigate).toHaveBeenCalledTimes(2);
+      for (const call of mockParentNavigate.mock.calls) {
+        expect(call).toEqual([
+          'ShowcaseDrawer',
+          {
+            screen: 'ShowcaseAuthor',
+            params: { serverId: 'srv-1', username: 'Zoe' },
+            initial: false,
+          },
+        ]);
+      }
+    });
+
+    it('opens a story in the showcase from its row', async () => {
+      mockAuthorPage.current = pageOf(1);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      await fireEvent.press(view.getByTestId('friend-published-story-story-1'));
+
+      expect(mockParentNavigate).toHaveBeenCalledWith('ShowcaseDrawer', {
+        screen: 'ShowcaseStory',
+        params: { serverId: 'srv-1', storyId: 'story-1' },
+        initial: false,
+      });
+    });
+
+    it('shows only the first few and says how many the author page has besides', async () => {
+      mockAuthorPage.current = pageOf(5);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.getByText('Story 3')).toBeTruthy();
+      expect(view.queryByText('Story 4')).toBeNull();
+      expect(view.getByText('friend_published_more')).toBeTruthy();
+    });
+
+    it('shows nothing, and no header action, when the friend has no page', async () => {
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.queryByTestId('friend-published-stories')).toBeNull();
+      const header = mockHeader.mock.calls
+        .at(-1)![0]
+        .actions.find((action: { id: string }) => action.id === 'author-page');
+      expect(header.visible).toBe(false);
+      // Nothing to open before the friendship is loaded either.
+      mockHeader.mock.calls[0][0].actions
+        .find((a: { id: string }) => a.id === 'author-page')
+        .onPress();
+      expect(mockParentNavigate).not.toHaveBeenCalled();
+    });
+
+    it('keeps the header action but lists nothing when the page has no stories', async () => {
+      mockAuthorPage.current = pageOf(0);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByText('Zoe');
+
+      expect(view.queryByTestId('friend-published-stories')).toBeNull();
+    });
   });
 
   it('shows a sent request with a single cancel action', async () => {

@@ -2,6 +2,7 @@ import { asc, desc, eq, or, sql, type SQL } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import { columnsOf } from '@/src/db/entityTableRegistry';
 import type { FavoriteFilterState, SortDirection } from '@/src/types/entityFilters';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The list queries of the story entity services share a shape: scope to one story, drop the
@@ -88,7 +89,7 @@ export function applyListSort<TQuery extends OrderableSelect<TQuery>>(
   // The sort key comes from outside, so the column is checked: a name the table lacks reads as undefined.
   const column: SQLiteColumn | undefined = columnsOf(table)[sortBy];
   if (!column) {
-    console.warn(`Unknown sortBy field: ${sortBy}`);
+    logger.warn(`Unknown sortBy field: ${sortBy}`);
     return query;
   }
   const orderBy = sortDirection === 'desc' ? desc : asc;
@@ -116,7 +117,7 @@ export function applyKeyedListSort<TQuery extends OrderableSelect<TQuery>>(
     ? sortColumns[sortBy]
     : undefined;
   if (!column) {
-    console.warn(`Unknown sortBy field: ${sortBy}`);
+    logger.warn(`Unknown sortBy field: ${sortBy}`);
     return query;
   }
   const orderBy = sortDirection === 'desc' ? desc : asc;

@@ -26,7 +26,7 @@ import { repoRoot } from './lib/packages';
  *
  * `--normalize <package root>` moves nothing: it rewrites every parent-relative (`../`) specifier of
  * that package to its alias. The import rule of the repo is: alias across folders, `./` for the same
- * folder or below, never `../` (see docs/file_structure.md). `packages/shared` is exempt: it is
+ * folder or below, never `../` (see docs/structure/file_structure.md). `packages/shared` is exempt: it is
  * consumed as source by the apps, and an alias inside it would not resolve for them.
  */
 
@@ -55,7 +55,7 @@ interface Resolved {
 
 /** Package roots, longest first, so `apps/client` wins over a hypothetical `apps`. */
 const PACKAGE_ROOTS = [
-  'apps/admin',
+  'apps/web',
   'apps/api',
   'apps/client',
   'apps/desktop',
@@ -67,7 +67,7 @@ const PACKAGE_ROOTS = [
 
 /** Where each package's source and test roots are, for the `mirrorTests` convention. */
 const MIRROR_ROOTS: Record<string, { src: string; test: string }> = {
-  'apps/admin': { src: 'apps/admin/src/', test: 'apps/admin/test/' },
+  'apps/web': { src: 'apps/web/src/', test: 'apps/web/test/' },
   'apps/api': { src: 'apps/api/src/', test: 'apps/api/test/' },
   'apps/client': { src: 'apps/client/src/', test: 'apps/client/test/' },
   'packages/shared': { src: 'packages/shared/', test: 'packages/shared/test/' },
@@ -79,10 +79,10 @@ const MIRROR_ROOTS: Record<string, { src: string; test: string }> = {
  */
 const ALIASES: Record<string, { prefix: string; dir: string }[]> = {
   'apps/client': [{ prefix: '@/', dir: 'apps/client' }],
-  'apps/admin': [
-    { prefix: '@/', dir: 'apps/admin/src' },
-    { prefix: '@test/', dir: 'apps/admin/test' },
-    { prefix: '@root/', dir: 'apps/admin' },
+  'apps/web': [
+    { prefix: '@/', dir: 'apps/web/src' },
+    { prefix: '@test/', dir: 'apps/web/test' },
+    { prefix: '@root/', dir: 'apps/web' },
   ],
   'apps/api': [
     { prefix: '@/', dir: 'apps/api/src' },

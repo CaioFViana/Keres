@@ -22,7 +22,7 @@ describe('landing page', () => {
     const { container, unmount } = await render(<SiteApp />);
 
     const link = container.querySelector<HTMLAnchorElement>('[data-testid="try-web-client"]')!;
-    expect(link.textContent).toBe(siteEn.hero.ctaTry);
+    expect(link.querySelector('h3')?.textContent).toBe(siteEn.hero.ctaTry);
     expect(link.getAttribute('href')).toBe(WEB_CLIENT_URL);
     // Under the site's own base path, so it follows the repository name the workflow injects.
     expect(WEB_CLIENT_URL).toBe(`${import.meta.env.BASE_URL}client/`);
@@ -37,7 +37,7 @@ describe('landing page', () => {
     await i18n.changeLanguage('pt');
     const { container, unmount } = await render(<SiteApp />);
 
-    expect(container.querySelector('[data-testid="try-web-client"]')!.textContent).toBe(
+    expect(container.querySelector('[data-testid="try-web-client"] h3')!.textContent).toBe(
       sitePt.hero.ctaTry,
     );
     expect(container.textContent).toContain(sitePt.hero.tryNote);
@@ -167,32 +167,35 @@ describe('landing page', () => {
     await unmount();
   });
 
-  it('renders feature groups and platforms as cards', async () => {
+  it('renders each feature group as a card whose items are beads, and the platforms as a fork', async () => {
     const { container, unmount } = await render(<SiteApp />);
+    const features = siteEn.features as unknown as Record<
+      string,
+      { title: string; items: Record<string, { title: string; body: string }> }
+    >;
 
-    for (const group of FEATURE_GROUPS) {
-      const sectionId = group.id === 'universe' ? 'universe' : group.id;
-      const cards = [...container.querySelectorAll(`#${sectionId} article.feature-card`)];
-      expect(cards).toHaveLength(group.items.length);
-      // The stylesheet picks the column count from this, so no row ends in a lone card.
-      expect(
-        container.querySelector(`#${sectionId} .feature-grid`)?.getAttribute('data-count'),
-      ).toBe(String(group.items.length));
-      expect(cards.map((card) => card.querySelector('h3')?.textContent)).toEqual(
-        group.items.map(
-          (item) =>
-            (siteEn.features as Record<string, { items: Record<string, { title: string }> }>)[
-              group.id
-            ].items[item].title,
-        ),
-      );
-    }
-
-    const platforms = [...container.querySelectorAll('#platforms article.feature-card')];
-    expect(platforms).toHaveLength(PLATFORMS.length);
-    expect(container.querySelector('#platforms .feature-grid')?.getAttribute('data-count')).toBe(
-      String(PLATFORMS.length),
+    const groups = [...container.querySelectorAll('article.group-card')];
+    expect(groups.map((card) => card.querySelector('h3')?.textContent)).toEqual(
+      FEATURE_GROUPS.map((group) => features[group.id].title),
     );
+    FEATURE_GROUPS.forEach((group, index) => {
+      const items = [...groups[index].querySelectorAll('.beads details')];
+      expect(items.map((item) => item.querySelector('summary')?.textContent)).toEqual(
+        group.items.map((item) => features[group.id].items[item].title),
+      );
+      // The text of an item is on the page, folded under its title.
+      expect(items.map((item) => item.querySelector('p')?.textContent)).toEqual(
+        group.items.map((item) => features[group.id].items[item].body),
+      );
+    });
+
+    // The four groups and the four platforms each sit in a fork that stacks where there is no room for four.
+    const forks = [...container.querySelectorAll('[data-thread-fork]')];
+    expect(forks.filter((fork) => fork.classList.contains('is-wide'))).toHaveLength(3);
+    const platformTitles = siteEn.platforms.items as Record<string, { title: string }>;
+    for (const platform of PLATFORMS) {
+      expect(container.textContent).toContain(platformTitles[platform].title);
+    }
 
     await unmount();
   });

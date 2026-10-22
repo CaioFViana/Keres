@@ -5,6 +5,7 @@ import { useDrizzle } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { MenuBadges } from '@/src/navigation/drawer/drawerMenuModel';
 import { createPublicationService } from '@/src/services/publication/PublicationService';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * What the story's menu says about its entries without opening them: the history shows the changes still to
@@ -63,7 +64,7 @@ export function useStoryMenuBadges(storyId: string | undefined, refreshKey: stri
         if (!cancelled) setBadges({ storyId, value: next });
       } catch (error) {
         // The menu is usable without its badges.
-        console.log('useStoryMenuBadges: could not read the badges.', error);
+        logger.debug('useStoryMenuBadges: could not read the badges.', error);
       }
     };
     void read();

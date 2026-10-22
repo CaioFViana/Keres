@@ -11,7 +11,6 @@ type Bindings = Pick<
   | 'isStoryOwner'
   | 'currentUserId'
   | 'onDeleteComment'
-  | 'onUpdateComment'
 > &
   Pick<ReturnType<typeof useEntityComments>, 'commentsByField' | 'addComment'>;
 
@@ -41,7 +40,6 @@ export function createEntityCommentFieldBindings(
     isStoryOwner: comments.isStoryOwner,
     currentUserId: comments.currentUserId,
     onDeleteComment: comments.deleteComment,
-    onUpdateComment: comments.updateComment,
     commentsByField: comments.commentsByField,
     addComment: comments.addComment,
   });

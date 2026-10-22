@@ -52,6 +52,7 @@ import {
 import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -242,7 +243,7 @@ const NarrativeElementsListScreen = () => {
         });
         await loadOutline();
       } catch (error) {
-        console.error('Failed to quick-add scene:', error);
+        logger.error('Failed to quick-add scene:', error);
         AppAlert.alert(t('error'), t('failed_to_quick_add_scene'));
         throw error;
       }

@@ -93,15 +93,8 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   const fields = useStorySchemaFields(storyId, entityType);
   const { definition: calendar } = useStoryCalendar(storyId);
   const { values, resolvedEntityNames } = useCustomAttributeValues(storyId, entityId, fields);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(storyId, entityType as CommentEntityType, entityId);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(storyId, entityType as CommentEntityType, entityId);
 
   if (fields.length === 0) {
     return null;
@@ -144,7 +137,6 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
               addComment({ fieldId: field.id }, { ...input, contentSnapshot: displayValue })
             }
             onDeleteComment={deleteComment}
-            onUpdateComment={updateComment}
           />
         );
       })}

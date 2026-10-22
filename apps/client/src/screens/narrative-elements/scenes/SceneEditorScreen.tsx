@@ -44,6 +44,7 @@ import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { logger } from '@/src/utils/logging/logger';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type SceneEditorNavigation = NativeStackNavigationProp<
@@ -90,15 +91,8 @@ function SceneEditorContent({
   const openComments = useCallback(() => setCommentsOpen(true), []);
   const { containerRef, readSelection } = useWebSelectionClip(`scene-body-${scene.id}`);
   const { canEdit } = useStoryRole(scene.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(scene.storyId, 'Scene', scene.id);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(scene.storyId, 'Scene', scene.id);
   const bodyComments = useMemo(
     () => commentsByField[SCENE_BODY_DRAFT_FIELD] ?? [],
     [commentsByField],
@@ -332,7 +326,6 @@ function SceneEditorContent({
         currentUserId={currentUserId}
         onSubmit={handleAddComment}
         onDelete={deleteComment}
-        onUpdate={updateComment}
       />
     </View>
   );
@@ -371,7 +364,7 @@ const SceneEditorScreen = () => {
         setError(copy.notFound);
       }
     } catch (err) {
-      console.error('Failed to fetch scene for the editor:', err);
+      logger.error('Failed to fetch scene for the editor:', err);
       setError(copy.failedToLoad);
     } finally {
       setLoading(false);

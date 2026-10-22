@@ -39,7 +39,7 @@ describe('buildStatRadarLayout', () => {
     // Primeiro eixo no topo: mesmo x do centro, y menor.
     expect(layout.axes[0]!.end.x).toBeCloseTo(layout.center.x, 1);
     expect(layout.axes[0]!.end.y).toBeLessThan(layout.center.y);
-    // Segundo eixo à direita, um quarto de volta adiante.
+    // The second axis points right, a quarter turn ahead.
     expect(layout.axes[1]!.end.x).toBeGreaterThan(layout.center.x);
     expect(layout.axes[1]!.end.y).toBeCloseTo(layout.center.y, 1);
   });

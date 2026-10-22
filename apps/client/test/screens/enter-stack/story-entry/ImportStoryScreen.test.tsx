@@ -130,8 +130,8 @@ describe('ImportStoryScreen', () => {
     mockPickFile.mockResolvedValue(null);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('says what it takes and where a story is taken out instead', async () => {

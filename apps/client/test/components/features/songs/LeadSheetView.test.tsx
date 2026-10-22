@@ -17,8 +17,8 @@ jest.mock('@/src/theme', () => ({
 
 const words = { verse: 'Verse', chorus: 'Chorus', bridge: 'Bridge' };
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 describe('LeadSheetView', () => {

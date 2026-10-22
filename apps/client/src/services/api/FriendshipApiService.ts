@@ -2,6 +2,8 @@ import type { EnrichedFriendship, Friendship, SharedStory } from '@keres/shared'
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { logger } from '@/src/utils/logging/logger';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 export class FriendshipApiService {
   // Friendships are cross-server: the shared `apiClient` singleton only ever points at
@@ -79,13 +81,13 @@ export class FriendshipApiService {
     try {
       const response = await this.clientFor(server).get(`/user/details/${userId}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       // Use 'any' to access response property
       // Handle 404 specifically, return undefined if user not found
-      if (error.response && error.response.status === 404) {
+      if (httpStatusOf(error) === 404) {
         return undefined;
       }
-      console.error('Error fetching user details:', error);
+      logger.error('Error fetching user details:', error);
       throw error; // Re-throw other errors
     }
   }

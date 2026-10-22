@@ -100,8 +100,8 @@ jest.mock('react-i18next', () => {
 });
 
 describe('StoryEntityCountScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {

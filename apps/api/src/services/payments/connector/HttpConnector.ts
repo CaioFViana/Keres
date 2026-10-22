@@ -36,7 +36,7 @@ export type HttpConnectorOptions = SignedClientOptions & {
 
 /**
  * The payment connector as the server uses it: a separate service, spoken to over HTTP, in the contract of
- * `docs/payment_connectors.md`. Nothing of it is loaded into this process - what it can do is what it says in
+ * `docs/compliance/payment_connectors.md`. Nothing of it is loaded into this process - what it can do is what it says in
  * `/v1/info`, and each optional call exists only when the connector said it implements it.
  *
  * Everything it returns has been signed by the connector and validated against the contract before it is used; what

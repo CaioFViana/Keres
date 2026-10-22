@@ -261,8 +261,8 @@ beforeEach(() => {
   }));
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('shows the loading state', async () => {

@@ -9,6 +9,7 @@ import type { createPlotService } from '@/src/services/storymanagement/entities/
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 import type { PlotFormState } from './usePlotFormState';
+import { logger } from '@/src/utils/logging/logger';
 
 type PlotService = ReturnType<typeof createPlotService>;
 type PlotSceneService = ReturnType<typeof createPlotSceneService>;
@@ -80,7 +81,7 @@ export function usePlotFormActions({
       await plotSceneServiceRef.current.save(userId, relation);
       await reloadPlotData();
     } catch (error) {
-      console.error('Failed to save plot-scene relation:', error);
+      logger.error('Failed to save plot-scene relation:', error);
       AppAlert.alert(t('error'), t('failed_to_save_plot_scene_relation'));
     }
   };
@@ -95,7 +96,7 @@ export function usePlotFormActions({
       await plotSceneServiceRef.current.delete(userId, relationId);
       await reloadPlotData();
     } catch (error) {
-      console.error('Failed to delete plot-scene relation:', error);
+      logger.error('Failed to delete plot-scene relation:', error);
       AppAlert.alert(t('error'), t('failed_to_delete_plot_scene'));
     }
   };

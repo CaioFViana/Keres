@@ -59,8 +59,8 @@ describe('buildPlotCoverage', () => {
   });
 
   /**
-   * É o que a barra dividida veio responder: duas tramas com a mesma cobertura, uma concentrada
-   * e outra espalhada, deixam de parecer a mesma coisa.
+   * This is what the split bar answers: two plots with the same coverage, one concentrated and
+   * one spread out, stop looking like the same thing.
    */
   it('tells a plot concentrated in one act apart from one that crosses the whole story', () => {
     const [concentrada, espalhada] = buildPlotCoverage({

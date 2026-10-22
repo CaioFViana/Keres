@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LandingApiError, sendContactMessage } from '../api/landing';
-import { SITE_TEXT_CONTEXT } from '../variant';
+import { siteText } from '../variant';
 
 const BODY_LIMIT = 5000;
 
@@ -73,8 +73,8 @@ export function ContactSection() {
     <section className="band" id="contact">
       <div className="section-inner contact-layout">
         <header className="section-head contact-intro">
-          <h2>{t('contact.title', { context: SITE_TEXT_CONTEXT })}</h2>
-          <p>{t('contact.lead', { context: SITE_TEXT_CONTEXT })}</p>
+          <h2 data-thread-knot>{siteText(t, 'contact.title')}</h2>
+          <p>{siteText(t, 'contact.lead')}</p>
           <ul className="contact-points">
             {POINTS.map((point) => (
               <li key={point}>

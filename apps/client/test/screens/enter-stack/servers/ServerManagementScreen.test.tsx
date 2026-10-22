@@ -116,8 +116,8 @@ describe('ServerManagementScreen', () => {
     );
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('lists every server with where it is, who the user is there, and its tag', async () => {
@@ -189,13 +189,13 @@ describe('ServerManagementScreen', () => {
 
     mockIsFocused.value = false;
     await act(async () => {
-      view.rerender(<ServerManagementScreen />);
+      await view.rerender(<ServerManagementScreen />);
     });
     expect(mockGetAllServers.mock.calls.length).toBe(callsAfterMount);
 
     mockIsFocused.value = true;
     await act(async () => {
-      view.rerender(<ServerManagementScreen />);
+      await view.rerender(<ServerManagementScreen />);
     });
     await view.findByText('Main');
     expect(mockGetAllServers.mock.calls.length).toBe(callsAfterMount + 1);

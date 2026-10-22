@@ -1,8 +1,8 @@
 import type { CreateSketchDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateSketchDataSchema, PartialSketchSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '@/db';
+import { db } from '@/db';
 import { sketches } from '@/db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, type SyncWriteContext } from './BaseSyncEntityHandler';
 
 /**
  * Sketches arriving from a client.
@@ -24,12 +24,8 @@ export class SketchSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(
-    userId: string,
-    storyId: string,
-    update: CreateStoryUpdate,
-    database: CompatibleDb = db,
-  ): Promise<void> {
+  async create(update: CreateStoryUpdate, ctx: SyncWriteContext): Promise<void> {
+    const { storyId, database = db } = ctx;
     const validatedData: CreateSketchDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

@@ -31,7 +31,7 @@ const IMPORT = /(?:from|import)\s+['"]([^'"]+)['"]/g;
 const importsOf = (path: string) =>
   Array.from(readFileSync(path, 'utf8').matchAll(IMPORT), (match) => match[1]);
 
-/** O caminho, dentro de `src`, para onde um especificador aponta - ou `null` se sai do app. */
+/** The path, inside `src`, a specifier points to - or `null` when it leaves the app. */
 function areaOf(specifier: string, origin: string): string | null {
   if (specifier.startsWith('@/src/')) return specifier.slice('@/src/'.length);
   if (!specifier.startsWith('.')) return null;

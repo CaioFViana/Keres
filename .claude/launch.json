@@ -4,13 +4,13 @@
     {
       "name": "admin",
       "runtimeExecutable": "bun",
-      "runtimeArgs": ["run", "admin:start"],
+      "runtimeArgs": ["run", "web:start"],
       "port": 5173
     },
     {
       "name": "showcase",
       "runtimeExecutable": "bun",
-      "runtimeArgs": ["run", "--cwd", "apps/admin", "start:showcase"],
+      "runtimeArgs": ["run", "--cwd", "apps/web", "start:showcase"],
       "port": 5174
     },
     {

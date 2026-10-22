@@ -6,6 +6,7 @@ import { storyInvitationApi } from '@/src/services/api/StoryInvitationApiService
 import { createStoryInvitationService } from '@/src/services/social/StoryInvitationService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
+import { logger } from '@/src/utils/logging/logger';
 
 export type InviteRole = 'reader' | 'writer';
 export type InvitableStory = { id: string; title: string };
@@ -76,7 +77,7 @@ export function useInviteFriendToStory({
         onInvited();
         return true;
       } catch (error) {
-        console.error('Failed to invite a friend to a story:', error);
+        logger.error('Failed to invite a friend to a story:', error);
         // The server refuses whoever is not age-verified on an adults-only story, with the friendship intact.
         const status = (error as { response?: { status?: number } })?.response?.status;
         // 429: the owner's plan has no room left for another collaborator on this story.

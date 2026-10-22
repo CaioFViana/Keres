@@ -125,8 +125,8 @@ describe('LegalUpdateScreen', () => {
     mockSetAccepted.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('names the screen in the page title', async () => {

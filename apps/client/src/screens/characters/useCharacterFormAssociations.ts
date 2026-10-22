@@ -16,6 +16,7 @@ import { createModeService } from '@/src/services/storymanagement/entities/ModeS
 import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { logger } from '@/src/utils/logging/logger';
 
 type UseCharacterFormAssociationsOptions = {
   /** Route id when opening an existing character — used to restore durable pending relations. */
@@ -75,7 +76,7 @@ export function useCharacterFormAssociations({
       const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(storyId);
       setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
     } catch (err) {
-      console.error('Failed to fetch all characters:', err);
+      logger.error('Failed to fetch all characters:', err);
     }
   }, [characterServiceRef, storyId]);
 
@@ -91,7 +92,7 @@ export function useCharacterFormAssociations({
       );
       setCharacterRelations(fetchedRelations);
     } catch (err) {
-      console.error('Failed to fetch character relations:', err);
+      logger.error('Failed to fetch character relations:', err);
     }
   }, [characterRelationServiceRef, storyId, currentCharacterId]);
 
@@ -151,7 +152,7 @@ export function useCharacterFormAssociations({
       } catch (error) {
         setPendingCharacterRelations(previous);
         AppAlert.alert(t('error'), t('failed_to_save_relation'));
-        console.error('Failed to save pending character relation draft:', error);
+        logger.error('Failed to save pending character relation draft:', error);
       }
       return;
     }
@@ -175,7 +176,7 @@ export function useCharacterFormAssociations({
       AppAlert.alert(t('success'), t('relation_saved_successfully'));
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_save_relation'));
-      console.error('Failed to save character relation:', error);
+      logger.error('Failed to save character relation:', error);
     }
   };
 
@@ -193,7 +194,7 @@ export function useCharacterFormAssociations({
       } catch (error) {
         setPendingCharacterRelations(previous);
         AppAlert.alert(t('error'), t('failed_to_delete_relation'));
-        console.error('Failed to delete pending character relation draft:', error);
+        logger.error('Failed to delete pending character relation draft:', error);
       }
       return;
     }
@@ -215,7 +216,7 @@ export function useCharacterFormAssociations({
       }
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_delete_relation'));
-      console.error('Failed to delete character relation:', error);
+      logger.error('Failed to delete character relation:', error);
     }
   };
 

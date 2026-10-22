@@ -34,8 +34,6 @@ describe('story and gallery sync entity handlers', () => {
     const secondChapterId = newId();
     const operationTime = '2025-01-02T03:04:05.000Z';
     await stories.create(
-      userId,
-      storyId,
       create(
         'Story',
         storyId,
@@ -55,10 +53,9 @@ describe('story and gallery sync entity handlers', () => {
         },
         operationTime,
       ),
+      { userId, storyId },
     );
     await chapters.create(
-      userId,
-      storyId,
       create('Chapter', firstChapterId, {
         name: 'Primeiro',
         index: 1,
@@ -66,10 +63,9 @@ describe('story and gallery sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
     await chapters.create(
-      userId,
-      storyId,
       create('Chapter', secondChapterId, {
         name: 'Segundo',
         index: 2,
@@ -77,14 +73,13 @@ describe('story and gallery sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
 
     const current = await stories.findByIdOrThrow(storyId);
     expect(current.createdAt).toEqual(new Date(operationTime));
     // The handler stores the rank it is given; the push derives the numbers from it afterwards.
     await chapters.create(
-      userId,
-      storyId,
       create('Chapter', newId(), {
         name: 'Terceiro',
         index: 3,
@@ -93,6 +88,7 @@ describe('story and gallery sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
     expect((await chapters.findByIdOrThrow(firstChapterId)).version).toBe(1);
   });
@@ -102,15 +98,12 @@ describe('story and gallery sync entity handlers', () => {
     const stories = new StorySyncHandler();
     const galleries = new GallerySyncHandler();
     await stories.create(
-      userId,
-      storyId,
       create('Story', storyId, { title: 'A Queda', type: 'linear' }, '2025-01-02T03:04:05.000Z'),
+      { userId, storyId },
     );
 
     await expect(
       galleries.create(
-        userId,
-        storyId,
         create('Gallery', newId(), {
           mediaType: 'image',
           mimeType: 'video/mp4',
@@ -121,13 +114,12 @@ describe('story and gallery sync entity handlers', () => {
           isFavorite: false,
           extraNotes: null,
         }),
+        { userId, storyId },
       ),
     ).rejects.toThrow(/does not match/i);
 
     const id = newId();
     await galleries.create(
-      userId,
-      storyId,
       create('Gallery', id, {
         mediaType: 'image',
         mimeType: 'image/png',
@@ -138,11 +130,10 @@ describe('story and gallery sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
     const current = await galleries.findByIdOrThrow(id);
     await galleries.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Gallery',
@@ -150,6 +141,7 @@ describe('story and gallery sync entity handlers', () => {
         changes: { mimeType: 'audio/mpeg', mediaType: 'audio', fileName: 'nyx.mp3', version: 1 },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
     expect(await galleries.findByIdOrThrow(id)).toMatchObject({
       mimeType: 'audio/mpeg',
@@ -168,14 +160,11 @@ describe('story and gallery sync entity handlers', () => {
     const stories = new StorySyncHandler();
     const galleries = new GallerySyncHandler();
     await stories.create(
-      userId,
-      storyId,
       create('Story', storyId, { title: 'A Queda', type: 'linear' }, '2025-01-02T03:04:05.000Z'),
+      { userId, storyId },
     );
     const id = newId();
     await galleries.create(
-      userId,
-      storyId,
       create('Gallery', id, {
         mediaType: 'image',
         mimeType: 'image/png',
@@ -186,12 +175,11 @@ describe('story and gallery sync entity handlers', () => {
         isFavorite: false,
         extraNotes: null,
       }),
+      { userId, storyId },
     );
     const current = await galleries.findByIdOrThrow(id);
 
     const stale = galleries.update(
-      userId,
-      storyId,
       {
         type: 'update',
         entity: 'Gallery',
@@ -199,6 +187,7 @@ describe('story and gallery sync entity handlers', () => {
         changes: { fileName: 'nao-deveria-gravar.png', version: 99 },
       } as UpdateStoryUpdate,
       current,
+      { userId, storyId },
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });

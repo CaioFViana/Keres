@@ -22,7 +22,7 @@ import {
  *
  * The key store (`keys.sqlite`) is never opened, read or copied, and no secret of the service is written: a backup is
  * ciphertext plus the metadata that names it, and it is unreadable once the key of a sending is destroyed (see
- * `docs/age_verification.md`). The folder is written under a temporary name and renamed when complete, so a run that
+ * `docs/compliance/age_verification.md`). The folder is written under a temporary name and renamed when complete, so a run that
  * stops halfway leaves no `verification-*` folder behind.
  */
 

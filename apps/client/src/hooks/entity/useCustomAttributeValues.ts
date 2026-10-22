@@ -7,6 +7,7 @@ import { EntityService } from '@/src/services/entity-solvers/EntityService';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /** EAV values and resolved entity names for a detail screen's custom fields. */
 export function useCustomAttributeValues(
@@ -51,7 +52,7 @@ export function useCustomAttributeValues(
         ),
       );
     } catch (error) {
-      console.error('Failed to load attribute values:', error);
+      logger.error('Failed to load attribute values:', error);
       setValues({});
       setResolvedEntityNames({});
     }

@@ -35,6 +35,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
+import { logger } from '@/src/utils/logging/logger';
 
 export type { FavoriteFilterState };
 
@@ -266,7 +267,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     ): Promise<SceneSelect> {
       await assertStoryIsWritable(db, sceneData.storyId);
       let newScene = prepareNewEntityData<SceneInsert>({ ...sceneData, index: 1, rank: '' });
-      const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
+      const favorite = await normalizeFavoriteCreate(db, newScene.storyId, newScene);
       newScene = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -360,7 +361,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(
+        logger.debug(
           `No significant changes detected for scene ${sceneId}. Skipping update and operation log.`,
         );
         return originalScene;
@@ -423,7 +424,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     async deleteScene(currentUserId: string, sceneId: string): Promise<void> {
       const sceneToDelete = await db.query.scenes.findFirst({ where: eq(scenes.id, sceneId) });
       if (!sceneToDelete) {
-        console.warn(`Attempted to delete non-existent scene ${sceneId}.`);
+        logger.warn(`Attempted to delete non-existent scene ${sceneId}.`);
         return;
       }
       await assertStoryIsWritable(db, sceneToDelete.storyId);
@@ -444,7 +445,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
 
     async getAllByStoryId(storyId: string): Promise<SceneSelect[]> {
       if (!storyId) {
-        console.error('getAllByStoryId: storyId is required.');
+        logger.error('getAllByStoryId: storyId is required.');
         return [];
       }
       try {
@@ -456,7 +457,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
           .all();
         return withLiveChapters(allScenes);
       } catch (error) {
-        console.error(`Error fetching all scenes for story ${storyId}:`, error);
+        logger.error(`Error fetching all scenes for story ${storyId}:`, error);
         return [];
       }
     },
@@ -485,7 +486,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
           const originalScene = db.select().from(scenes).where(eq(scenes.id, sceneId)).get();
 
           if (!originalScene) {
-            console.warn(`Scene with ID ${sceneId} not found during batch update.`);
+            logger.warn(`Scene with ID ${sceneId} not found during batch update.`);
             continue; // or throw? continue is safer for a batch.
           }
 

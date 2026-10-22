@@ -40,8 +40,9 @@ import {
   describeEffect,
 } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { buildStoryMapFileName } from '@/src/utils/io/storyTransfer';
-import { ChoiceViewContent } from './ChoiceViewContent';
+import { ChoiceViewContent, type SceneNodeConnection } from './ChoiceViewContent';
 import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
+import { logger } from '@/src/utils/logging/logger';
 
 /**
  * The story map: the scenes and the choices that link one to another.
@@ -55,15 +56,6 @@ import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 
 /** Above that the choices' text pollutes more than it informs; the user can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
-
-interface SceneNodeConnection {
-  choiceId: string;
-  text: string;
-  sceneId: string;
-  sceneName: string;
-  /** A compact summary of the Choice's checks/effects - undefined when it has none. */
-  extra?: string;
-}
 
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -131,7 +123,7 @@ const ChoiceViewScreen = () => {
       setPlots(loadedPlots);
       setPlotScenes(loadedPlotScenes);
     } catch (loadError) {
-      console.log('ChoiceViewScreen: failed to load graph data.', loadError);
+      logger.debug('ChoiceViewScreen: failed to load graph data.', loadError);
       setError(t('failed_to_load_graph_data'));
     } finally {
       setLoading(false);

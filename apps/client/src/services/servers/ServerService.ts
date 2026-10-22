@@ -22,6 +22,7 @@ import { isOfflineError } from '@/src/services/api/apiClient';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
 import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { deleteStoryChildRows } from '@/src/services/storymanagement/story-lifecycle/storyLocalPurge';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface OwnedServerStory {
   id: string;
@@ -205,7 +206,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       if (!tokens) {
         // Persistent state (the server was never authenticated), re-evaluated on every
         // sync cycle - log it, but don't notify the user every interval.
-        console.log(
+        logger.debug(
           `Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`,
         );
         return server;
@@ -213,11 +214,11 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
 
       // Check if the JWT is actually expired before trying to refresh
       if (!isJwtExpired(tokens.accessToken)) {
-        console.log(`JWT for server ${server.name} is not expired. No refresh needed.`);
+        logger.debug(`JWT for server ${server.name} is not expired. No refresh needed.`);
         return server; // Return current server if not expired
       }
 
-      console.log(`Attempting to refresh token for server ${server.name}...`);
+      logger.debug(`Attempting to refresh token for server ${server.name}...`);
       try {
         // Trigger the token refresh via the AuthTokenManager
         // This will update the tokens in the database and the user settings store
@@ -232,26 +233,26 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
           // here) - the request's own interceptor already reported the server unreachable
           // to `connectivityStore` before returning, so that's the signal to tell them apart.
           if (useConnectivityStore.getState().isOffline(server.id)) {
-            console.log(`Server ${server.name} is unreachable; deferring token refresh.`);
+            logger.debug(`Server ${server.name} is unreachable; deferring token refresh.`);
             return server;
           }
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
-          console.log(message);
+          logger.debug(message);
           showNotification(message, 'error');
           return server; // Return original server if refresh failed
         }
 
-        console.log(`Successfully refreshed tokens for server ${server.name}.`);
+        logger.debug(`Successfully refreshed tokens for server ${server.name}.`);
         showNotification(`Tokens for ${server.name} refreshed successfully.`, 'success');
         return server;
       } catch (error) {
         if (isOfflineError(error)) {
           // Can't refresh while the server is unreachable - not a credentials problem.
-          console.log(`Server ${server.name} is unreachable, token refresh deferred.`);
+          logger.debug(`Server ${server.name} is unreachable, token refresh deferred.`);
           return server;
         }
         const message = `Failed to refresh token for server ${server.name}. Please re-authenticate.`;
-        console.log(message, (error as Error)?.message || error);
+        logger.debug(message, (error as Error)?.message || error);
         showNotification(message, 'error');
         return server; // Return original server on any refresh error
       }

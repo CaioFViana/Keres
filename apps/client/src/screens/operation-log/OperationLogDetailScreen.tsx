@@ -29,6 +29,7 @@ import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { logger } from '@/src/utils/logging/logger';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -84,7 +85,7 @@ const OperationLogDetailScreen: React.FC = () => {
         setError(t('operation_log_not_found'));
       }
     } catch (err) {
-      console.error('Failed to fetch operation log details:', err);
+      logger.error('Failed to fetch operation log details:', err);
       setError(t('failed_to_load_operation_log_details'));
     } finally {
       setLoading(false);

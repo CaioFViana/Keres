@@ -112,6 +112,14 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   // the previous render", React error #310).
   const resolvedUri = useResolvedMediaUri(media?.localPath);
 
+  // Opening something else (another gallery, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ galleryId, galleryService });
+  if (opened.galleryId !== galleryId || opened.galleryService !== galleryService) {
+    setOpened({ galleryId, galleryService });
+    setLoading(true);
+  }
+
   const load = useCallback(async () => {
     if (!storyId) {
       setError(t('no_story_selected'));
@@ -119,7 +127,6 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       return;
     }
 
-    setLoading(true);
     try {
       const found = await galleryService.getById(galleryId);
       if (!found) {

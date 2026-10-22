@@ -137,8 +137,15 @@ const BoardCanvasScreen = () => {
   });
   useScreenTour('BoardCanvas', canEdit);
 
-  const load = useCallback(async () => {
+  // Opening something else (another board, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ boardId, db });
+  if (opened.boardId !== boardId || opened.db !== db) {
+    setOpened({ boardId, db });
     setLoading(true);
+  }
+
+  const load = useCallback(async () => {
     try {
       const row = await createBoardService(db).getById(boardId);
       if (!row || row.isDeleted) {
@@ -249,14 +256,17 @@ const BoardCanvasScreen = () => {
     const entityNodes = content.nodes.filter(
       (node): node is Extract<BoardNodeType, { kind: 'entity' }> => node.kind === 'entity',
     );
-    void Promise.all(
-      entityNodes.map(
-        async (node) =>
-          [node.id, await loadBoardEntitySummary(db, node.entityType, node.entityId)] as const,
-      ),
-    ).then((entries) => {
-      if (!cancelled) setSummariesByNode(Object.fromEntries(entries));
-    });
+    fireAndLog(
+      Promise.all(
+        entityNodes.map(
+          async (node) =>
+            [node.id, await loadBoardEntitySummary(db, node.entityType, node.entityId)] as const,
+        ),
+      ).then((entries) => {
+        if (!cancelled) setSummariesByNode(Object.fromEntries(entries));
+      }),
+      'BoardCanvasScreen',
+    );
     return () => {
       cancelled = true;
     };

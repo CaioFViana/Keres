@@ -193,8 +193,15 @@ const SketchCanvasScreen = () => {
   });
   useScreenTour('SketchCanvas', canEdit);
 
-  const load = useCallback(async () => {
+  // Opening something else (another sketch, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ sketchId, db });
+  if (opened.sketchId !== sketchId || opened.db !== db) {
+    setOpened({ sketchId, db });
     setLoading(true);
+  }
+
+  const load = useCallback(async () => {
     try {
       const row = await createSketchService(db).getById(sketchId);
       if (!row || row.isDeleted) {

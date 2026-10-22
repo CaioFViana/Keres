@@ -94,5 +94,13 @@ export function useDetailRecord<T extends { isDeleted?: boolean | null }>({
     ),
   );
 
-  return { record, loading, failure };
+  /** Puts the row a save just returned on screen, and drops any read still on its way with older data. */
+  const replace = useCallback((next: T) => {
+    request.current += 1;
+    setRecord(next);
+    setFailure(null);
+    setLoading(false);
+  }, []);
+
+  return { record, loading, failure, replace };
 }

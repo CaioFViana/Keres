@@ -115,8 +115,15 @@ const LocationMapScreen = () => {
     onBack: () => navigation.goBack(),
   });
   useScreenTour('LocationMap', canEdit);
-  const load = useCallback(async () => {
+  // Opening something else (another map, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ mapId, db });
+  if (opened.mapId !== mapId || opened.db !== db) {
+    setOpened({ mapId, db });
     setLoading(true);
+  }
+
+  const load = useCallback(async () => {
     try {
       const [row, loadedLocations, loadedGalleries, loadedRelations, loadedMaps] =
         await Promise.all([

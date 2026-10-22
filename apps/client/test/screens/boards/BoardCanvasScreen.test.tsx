@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import BoardCanvasScreen from '@/src/screens/boards/BoardCanvasScreen';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
@@ -412,6 +412,22 @@ describe('BoardCanvasScreen', () => {
       expect(await headerState()).toBe('dirty');
       expect(mockNotify).toHaveBeenCalledWith('canvas_draft_restored', 'info');
     });
+  });
+
+  it('is loading again, with nothing of the old board, when it is given another board', async () => {
+    const view = await render(<BoardCanvasScreen />);
+    await view.findByTestId('canvas-nodes');
+
+    let answer: (value: unknown) => void = () => undefined;
+    mockGetBoard.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    mockRouteParams = { boardId: 'board-2' };
+    await view.rerender(<BoardCanvasScreen />);
+
+    expect(view.queryByTestId('canvas-nodes')).toBeNull();
+    expect(view.getByText('loading')).toBeTruthy();
+
+    await act(async () => answer(null));
+    expect(await view.findByText('board_not_found')).toBeTruthy();
   });
 
   it('shows the not-found error', async () => {

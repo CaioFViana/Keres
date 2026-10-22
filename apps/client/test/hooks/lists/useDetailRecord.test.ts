@@ -156,6 +156,26 @@ describe('useDetailRecord', () => {
     expect(view.result.current.loading).toBe(false);
   });
 
+  it('shows a row a save returned, and drops a read that was still on its way', async () => {
+    const slow = deferred<Row>();
+    const load = jest.fn().mockReturnValue(slow.promise);
+    const view = await renderRecord(load);
+
+    await act(async () => {
+      view.result.current.replace({ id: 'r-1', name: 'Saved' });
+    });
+    expect(view.result.current).toMatchObject({
+      record: { id: 'r-1', name: 'Saved' },
+      loading: false,
+      failure: null,
+    });
+
+    await act(async () => {
+      slow.resolve({ id: 'r-1', name: 'Older' });
+    });
+    expect(view.result.current.record).toEqual({ id: 'r-1', name: 'Saved' });
+  });
+
   it('drops a slow read that answers after a newer one', async () => {
     const slow = deferred<Row>();
     const fast = deferred<Row>();

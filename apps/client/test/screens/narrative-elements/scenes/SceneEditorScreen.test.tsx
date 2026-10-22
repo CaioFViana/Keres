@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
 import SceneEditorScreen from '@/src/screens/narrative-elements/scenes/SceneEditorScreen';
 import type { SceneSelect } from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -21,7 +22,6 @@ const mockEditorFocus = jest.fn();
 const mockEditorRef = { current: { focus: mockEditorFocus } };
 
 let mockHeaderArgs: { title: string; actions?: readonly HeaderAction[] } | null = null;
-let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
 let mockCanEdit = true;
 let mockCommentsByField: Record<string, { id: string; excerptText?: string }[]> = {};
 let mockBodyText = 'Saved prose.';
@@ -77,23 +77,6 @@ jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
     mockHeaderArgs = args;
   },
 }));
-
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const react = jest.requireActual('react') as typeof import('react');
-  return {
-    __esModule: true,
-    useEntityInitialLoad: (callback: () => void) => {
-      react.useEffect(() => {
-        callback();
-      }, [callback]);
-    },
-    useEntityEventSubscriptions: (
-      subscriptions: { event: string; listener: (...args: never[]) => unknown }[],
-    ) => {
-      mockSubscriptions = subscriptions;
-    },
-  };
-});
 
 jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
@@ -296,7 +279,6 @@ function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
 beforeEach(() => {
   jest.clearAllMocks();
   mockHeaderArgs = null;
-  mockSubscriptions = [];
   mockCanEdit = true;
   mockCommentsByField = {};
   mockBodyText = 'Saved prose.';
@@ -331,7 +313,7 @@ function headerAction(id: string): HeaderAction {
 
 async function pressHeaderAction(id: string) {
   await act(async () => {
-    headerAction(id).onPress();
+    await headerAction(id).onPress();
   });
 }
 
@@ -556,16 +538,62 @@ describe('SceneEditorScreen', () => {
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
+  it('says so when the scene cannot be read', async () => {
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockGetById.mockRejectedValue(new Error('disk'));
+    const view = await render(<SceneEditorScreen />);
+
+    await waitFor(() =>
+      expect(view.getByTestId('screen-error').props.children).toBe('failed-Scene'),
+    );
+    logged.mockRestore();
+  });
+
+  it('puts the row a save returns on screen at once', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    mockUpdateScene.mockResolvedValue(makeScene({ name: 'After save', body: 'New prose.' }));
+    await act(async () => {
+      await mockUseSceneBodyDraftOptions?.persist('New prose.');
+    });
+
+    expect(mockHeaderArgs?.title).toBe('After save');
+    expect(mockUseSceneBodyDraftOptions?.savedBody).toBe('New prose.');
+  });
+
+  it('ignores the changes of other scenes', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+    const reads = mockGetById.mock.calls.length;
+
+    await act(async () => {
+      entityEventEmitter.emit('scene_changed', 'story-1', 'scene-2');
+    });
+
+    expect(mockGetById.mock.calls.length).toBe(reads);
+  });
+
+  it('leaves when the scene is deleted while open', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    mockGetById.mockResolvedValue(makeScene({ isDeleted: true }));
+    await act(async () => {
+      entityEventEmitter.emit('scene_changed', 'story-1', 'scene-1');
+    });
+
+    await waitFor(() => expect(mockGoBack).toHaveBeenCalledTimes(1));
+  });
+
   it('refreshes the scene on change events', async () => {
     const view = await render(<SceneEditorScreen />);
     await view.findByTestId('scene-body-editor.input');
 
     mockGetById.mockResolvedValue(makeScene({ name: 'Rewritten' }));
-    const changed = mockSubscriptions.find((sub) => sub.event === 'scene_changed');
-    await (changed?.listener as (storyId: string, sceneId: string) => Promise<void>)(
-      'story-1',
-      'scene-1',
-    );
+    await act(async () => {
+      entityEventEmitter.emit('scene_changed', 'story-1', 'scene-1');
+    });
 
     await waitFor(() => expect(mockHeaderArgs?.title).toBe('Rewritten'));
   });

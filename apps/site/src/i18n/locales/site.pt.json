@@ -47,6 +47,10 @@
       }
     }
   },
+  "end": {
+    "title": "Fim. Ou o começo da sua.",
+    "lead": "O fio acaba onde você decidir cortá-lo. Até lá, ele passa por tudo o que você escrever."
+  },
   "faq": {
     "title": "Perguntas frequentes",
     "items": {
@@ -411,9 +415,5 @@
     "contributorsPerStory": "Colaboradores por história",
     "unlimited": "Ilimitado",
     "none": "Nenhuma"
-  },
-  "end": {
-    "title": "Fim. Ou o começo da sua.",
-    "lead": "O fio acaba onde você decidir cortá-lo. Até lá, ele passa por tudo o que você escrever."
   }
 }

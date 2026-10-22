@@ -47,6 +47,10 @@
       }
     }
   },
+  "end": {
+    "title": "The end. Or the start of yours.",
+    "lead": "The thread stops where you decide to cut it. Until then, it runs through everything you write."
+  },
   "faq": {
     "title": "Frequently asked questions",
     "items": {
@@ -411,9 +415,5 @@
     "contributorsPerStory": "Collaborators per story",
     "unlimited": "Unlimited",
     "none": "None"
-  },
-  "end": {
-    "title": "The end. Or the start of yours.",
-    "lead": "The thread stops where you decide to cut it. Until then, it runs through everything you write."
   }
 }

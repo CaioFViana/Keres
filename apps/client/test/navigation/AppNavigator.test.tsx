@@ -7,6 +7,7 @@ import { getClientSettings } from '@/src/services/account/ClientSettingsService'
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import { logger } from '@/src/utils/logging/logger';
 import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
 import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
 
@@ -184,11 +185,18 @@ describe('legal texts on reopen', () => {
   });
 
   it('starts at story selection when the records cannot be read', async () => {
-    (getAcceptedClientLegal as jest.Mock).mockRejectedValue(new Error('storage unavailable'));
+    const failure = new Error('storage unavailable');
+    const warned = jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    (getAcceptedClientLegal as jest.Mock).mockRejectedValue(failure);
     await renderNavigator();
 
     expect(rootNavigator()).toMatchObject({ initialRouteName: 'StorySelection' });
     expect(console.error).not.toHaveBeenCalled();
+    // Not asking again is a decision, and it leaves its reason behind.
+    expect(warned).toHaveBeenCalledWith(
+      'Could not read the accepted legal texts; not asking again now.',
+      failure,
+    );
   });
 
   it('does not check the legal records when no settings exist', async () => {

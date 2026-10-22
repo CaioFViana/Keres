@@ -44,7 +44,9 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   // The native window's background shows for an instant during stack and Modal transitions. Keeping it
   // in sync with the palette avoids revealing the default white outside the React tree.
   useEffect(() => {
-    SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+    SystemUI.setBackgroundColorAsync(colors.background).catch((error) =>
+      logger.debug('Setting the system background failed.', error),
+    );
   }, [colors.background]);
 
   return (

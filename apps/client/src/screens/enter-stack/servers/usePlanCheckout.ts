@@ -17,6 +17,7 @@ import {
   type EntityEventSubscription,
   useEntityEventSubscriptions,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { logger } from '@/src/utils/logging/logger';
 
 /** How often an open payment is asked about while the person is on the screen: the provider may be slow to tell. */
 export const CHECKOUT_POLL_MS = 4000;
@@ -55,9 +56,9 @@ export interface NativeCheckoutCreate {
  * period it sells and relays the token. Anything unknown or refused stays unfinished (false) for
  * the next pass - only a confirmed purchase is ever finished with the store.
  */
-async function confirmTicket(
+export async function confirmTicket(
   server: ServerSelect,
-  request: NativeCheckoutCreate,
+  request: Pick<NativeCheckoutCreate, 'tiers' | 'packageName'>,
   ticket: PlayPurchaseTicket,
 ): Promise<boolean> {
   const offer = offerForPlayProduct(request.tiers, ticket.productId);
@@ -70,7 +71,9 @@ async function confirmTicket(
       packageName: request.packageName,
     });
     return answer.active;
-  } catch {
+  } catch (error) {
+    // Not confirmed is not refused: the purchase stays unfinished and the next pass asks again.
+    logger.warn('Play purchase check failed; leaving the purchase unfinished.', error);
     return false;
   }
 }

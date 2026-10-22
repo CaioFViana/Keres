@@ -2,8 +2,10 @@ import { act, renderHook } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import {
   CHECKOUT_POLL_MS,
+  confirmTicket,
   usePlanCheckout,
 } from '@/src/screens/enter-stack/servers/usePlanCheckout';
+import { logger } from '@/src/utils/logging/logger';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { PlayPurchaseError } from '@/src/utils/billing/playPurchaseTypes';
 
@@ -370,5 +372,46 @@ describe('usePlanCheckout natively (the store sheet)', () => {
     expect(result.current.phase).toBe('idle');
     expect(result.current.error).toBe('payment_error_play_inactive');
     expect(mockFinish).not.toHaveBeenCalled();
+  });
+});
+
+describe('confirmTicket', () => {
+  const tiers = [
+    {
+      id: 'tier-pro',
+      name: 'Pro',
+      playMonthlyProductId: 'plus_monthly',
+      playYearlyProductId: null,
+    },
+  ];
+  const ticket = { purchaseToken: 'token-abc', productId: 'plus_monthly' } as never;
+
+  it('is true only when the server says the subscription is active', async () => {
+    mockVerify.mockResolvedValueOnce({ active: true, subscription: null });
+    expect(await confirmTicket(server, { tiers, packageName: 'com.test.app' }, ticket)).toBe(true);
+
+    mockVerify.mockResolvedValueOnce({ active: false, subscription: null });
+    expect(await confirmTicket(server, { tiers, packageName: 'com.test.app' }, ticket)).toBe(false);
+  });
+
+  it('leaves a product no plan sells unconfirmed without asking the server', async () => {
+    const unknown = { purchaseToken: 'token', productId: 'other_product' } as never;
+
+    expect(await confirmTicket(server, { tiers, packageName: 'com.test.app' }, unknown)).toBe(
+      false,
+    );
+    expect(mockVerify).not.toHaveBeenCalled();
+  });
+
+  it('leaves the purchase unfinished, and says why, when the server cannot be asked', async () => {
+    const failure = new Error('offline');
+    const warned = jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    mockVerify.mockRejectedValueOnce(failure);
+
+    expect(await confirmTicket(server, { tiers, packageName: 'com.test.app' }, ticket)).toBe(false);
+    expect(warned).toHaveBeenCalledWith(
+      'Play purchase check failed; leaving the purchase unfinished.',
+      failure,
+    );
   });
 });

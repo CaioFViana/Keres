@@ -18,17 +18,15 @@ import PlanStatusCard from '@/src/components/features/servers/PlanStatusCard';
 import { usePaymentOverview } from '@/src/screens/enter-stack/servers/usePaymentOverview';
 import { usePlanCancellation } from '@/src/screens/enter-stack/servers/usePlanCancellation';
 import { useSwitchQuote } from '@/src/screens/enter-stack/servers/useSwitchQuote';
-import { usePlanCheckout } from '@/src/screens/enter-stack/servers/usePlanCheckout';
+import { confirmTicket, usePlanCheckout } from '@/src/screens/enter-stack/servers/usePlanCheckout';
 import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerStatuses';
 import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
-import { verifyPlayPurchase } from '@/src/services/payments/PaymentService';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import {
   formatMoney,
   formatPlanDate,
   isMethodSoldForOffer,
-  offerForPlayProduct,
   offersFrom,
   playProductForOffer,
   type PlanOffer,
@@ -39,6 +37,7 @@ import {
   devicePaymentCapabilities,
   visiblePaymentMethods,
 } from '@/src/utils/billing/paymentMethodVisibility';
+import { logger } from '@/src/utils/logging/logger';
 
 type ServerPlanRouteProp = RouteProp<ServerManagementStackParamList, 'ServerPlan'>;
 type ServerPlanNavigationProp = NativeStackNavigationProp<
@@ -162,22 +161,10 @@ const ServerPlanScreen = () => {
     const tiers = overview.plans.tiers;
     const currentServer = server;
     void playDriver
-      .reconcileUnfinished(async (ticket) => {
-        const offer = offerForPlayProduct(tiers, ticket.productId);
-        if (!offer) return false;
-        try {
-          const answer = await verifyPlayPurchase(currentServer, {
-            ...offer,
-            productId: ticket.productId,
-            purchaseToken: ticket.purchaseToken,
-            packageName: playDriver.packageName(),
-          });
-          return answer.active;
-        } catch {
-          return false;
-        }
-      })
-      .catch(() => undefined);
+      .reconcileUnfinished((ticket) =>
+        confirmTicket(currentServer, { tiers, packageName: playDriver.packageName() }, ticket),
+      )
+      .catch((error) => logger.warn('Reconciling the store purchases failed.', error));
   }, [online, overview, server]);
 
   const styles = useThemedStyles(createStyles);

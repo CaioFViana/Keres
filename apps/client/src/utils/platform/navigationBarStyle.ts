@@ -1,5 +1,6 @@
 import { requireNativeModule } from 'expo';
 import { Platform } from 'react-native';
+import { logger } from '@/src/utils/logging/logger';
 
 type Style = 'light' | 'dark';
 
@@ -20,7 +21,9 @@ type Style = 'light' | 'dark';
 export function applyNavigationBarStyle(style: Style): void {
   if (Platform.OS !== 'android') return;
   try {
-    void Promise.resolve(requireNativeModule('ExpoNavigationBar').setStyle(style)).catch(() => {});
+    void Promise.resolve(requireNativeModule('ExpoNavigationBar').setStyle(style)).catch((error) =>
+      logger.debug('Setting the navigation bar style failed.', error),
+    );
   } catch {
     // Cosmetic only.
   }

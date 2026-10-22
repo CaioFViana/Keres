@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { logger } from '@/src/utils/logging/logger';
 
 const STORAGE_KEY = '@keres/music-tools';
 
@@ -43,6 +44,8 @@ export const useMusicToolsStore = create<MusicToolsState>((set) => ({
   reset: () => {
     hydration = null;
     set({ enabled: false });
-    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    AsyncStorage.removeItem(STORAGE_KEY).catch((error) =>
+      logger.debug('Clearing the music tools failed.', error),
+    );
   },
 }));

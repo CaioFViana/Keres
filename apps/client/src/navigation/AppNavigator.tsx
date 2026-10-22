@@ -52,7 +52,8 @@ async function isLegalUpdateNeeded(): Promise<boolean> {
     ]);
     const behind = legalIsBehind(terms?.version ?? null, privacy?.version ?? null);
     return behind.terms || behind.privacy;
-  } catch {
+  } catch (error) {
+    logger.warn('Could not read the accepted legal texts; not asking again now.', error);
     return false;
   }
 }

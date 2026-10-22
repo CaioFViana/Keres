@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
+import { logger } from '@/src/utils/logging/logger';
 
 type OpenState = Record<string, boolean>;
 
@@ -47,7 +48,7 @@ export function useDrawerGroupState(storageKey: string | null) {
           );
         }
       })
-      .catch(() => {});
+      .catch((error) => logger.debug('Reading the drawer groups failed.', error));
     return () => {
       cancelled = true;
     };
@@ -57,7 +58,10 @@ export function useDrawerGroupState(storageKey: string | null) {
     (groupId: string, open: boolean) => {
       const next = { ...current.open, [groupId]: open };
       setCurrent({ key: storageKey, open: next });
-      if (storageKey) AsyncStorage.setItem(storageKey, JSON.stringify(next)).catch(() => {});
+      if (storageKey)
+        AsyncStorage.setItem(storageKey, JSON.stringify(next)).catch((error) =>
+          logger.debug('Saving the drawer groups failed.', error),
+        );
     },
     [current.open, storageKey],
   );

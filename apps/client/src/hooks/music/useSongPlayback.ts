@@ -98,7 +98,9 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
 
   useEffect(() => {
     // A phone in silent mode would otherwise play nothing: this is the point of pressing play.
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+    setAudioModeAsync({ playsInSilentMode: true }).catch((error) =>
+      logger.debug('Setting the audio mode failed.', error),
+    );
   }, []);
 
   const stop = useCallback(() => {

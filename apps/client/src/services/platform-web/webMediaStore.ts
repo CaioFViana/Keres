@@ -144,7 +144,8 @@ const opfsBackend: MediaBackend = {
   async listAllFiles() {
     try {
       return await opfsList(await opfsRoot(), '');
-    } catch {
+    } catch (error) {
+      logger.debug('webMediaStore: the file listing failed; reading it as empty.', error);
       return [];
     }
   },

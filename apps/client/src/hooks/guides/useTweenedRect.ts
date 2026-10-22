@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import type { GuideRect } from '@/src/guides/types';
+import { logger } from '@/src/utils/logging/logger';
 
 /** How long the hole and the card take to slide to the next target. */
 export const SLIDE_MS = 220;
@@ -26,7 +27,7 @@ export function useTweenedRect(target: GuideRect | null, duration = SLIDE_MS): G
       .then((enabled) => {
         if (alive) reduceMotion.current = enabled;
       })
-      .catch(() => {});
+      .catch((error) => logger.debug('Measuring the guide target failed.', error));
     return () => {
       alive = false;
     };

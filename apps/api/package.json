@@ -1,6 +1,6 @@
 {
   "name": "@keres/api",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "scripts": {
     "start": "bun run src/server.ts",
     "start:launcher": "bun run src/launcher.ts",

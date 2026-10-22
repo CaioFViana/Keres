@@ -29,16 +29,6 @@ jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const chapters = [
   { id: 'chapter-1', name: 'Beginning', index: 1 },
   { id: 'chapter-2', name: 'End', index: 2 },

@@ -34,16 +34,6 @@ jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const sceneService = { getAllByStoryId: jest.fn().mockResolvedValue([{ id: 'scene' }]) };
 
 beforeEach(() => {

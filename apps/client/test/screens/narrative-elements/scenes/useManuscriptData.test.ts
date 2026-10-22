@@ -37,18 +37,6 @@ jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   createChoiceService: () => ({ getAllByStoryId: mockGetChoices }),
 }));
 
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const react = jest.requireActual('react') as typeof import('react');
-  return {
-    __esModule: true,
-    useEntityInitialLoad: (callback: () => void) => {
-      react.useEffect(() => {
-        callback();
-      }, [callback]);
-    },
-  };
-});
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockGetChapters.mockResolvedValue([{ id: 'ch-1' }]);

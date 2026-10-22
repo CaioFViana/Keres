@@ -9,16 +9,6 @@ jest.mock('@/src/services/storymanagement/notes-tags-comments/CommentService', (
   __esModule: true,
   createCommentService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => void) =>
-      React.useEffect(() => {
-        load();
-      }, [load]),
-  };
-});
-
 const getAllCommentsForStory = jest.fn();
 
 beforeEach(() => {

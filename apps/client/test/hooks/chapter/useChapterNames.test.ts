@@ -9,16 +9,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () =>
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const scenes = [{ storyId: 'story' }] as never;
 const getAllByStoryId = jest.fn();
 

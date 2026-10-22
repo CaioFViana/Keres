@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { fieldsDiffer, pickFields, useFormFields } from '@/src/hooks/forms/useFormFields';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
@@ -32,6 +33,8 @@ const CREATE_PRISTINE: NoteFormDraftFields = {
   extraNotes: null,
 };
 
+const FIELD_KEYS = Object.keys(CREATE_PRISTINE) as (keyof NoteFormDraftFields)[];
+
 function isNoteFormDraftFields(value: unknown): value is NoteFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -52,10 +55,7 @@ export function useNoteFormState({
   customFields,
 }: UseNoteFormStateOptions) {
   const [currentNoteId, setCurrentNoteId] = useState<string | undefined>(initialNoteId);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
+  const { fields, setters, setAll } = useFormFields(CREATE_PRISTINE);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -80,16 +80,9 @@ export function useNoteFormState({
         if (initialNoteId) {
           const fetchedNote = await noteServiceRef.current.getById(initialNoteId);
           if (fetchedNote) {
-            setTitle(fetchedNote.title);
-            setBody(fetchedNote.body);
-            setIsFavorite(fetchedNote.isFavorite);
-            setExtraNotes(fetchedNote.extraNotes);
-            setLoadedPristine({
-              title: fetchedNote.title,
-              body: fetchedNote.body,
-              isFavorite: fetchedNote.isFavorite,
-              extraNotes: fetchedNote.extraNotes,
-            });
+            const row = pickFields(fetchedNote, FIELD_KEYS);
+            setAll(row);
+            setLoadedPristine(row);
             setLoadedUpdatedAt(fetchedNote.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
@@ -112,7 +105,7 @@ export function useNoteFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialNoteId, noteServiceRef, storyId]);
+  }, [drizzleDb, initialNoteId, noteServiceRef, setAll, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -121,16 +114,16 @@ export function useNoteFormState({
     }
   }, [isEditing, customFields]);
 
-  const restoreDraftFields = useCallback((fields: NoteFormDraftFields) => {
-    if (!isNoteFormDraftFields(fields)) {
-      logger.error('Corrupt note form draft ignored.');
-      return;
-    }
-    setTitle(fields.title);
-    setBody(fields.body);
-    setIsFavorite(fields.isFavorite);
-    setExtraNotes(fields.extraNotes);
-  }, []);
+  const restoreDraftFields = useCallback(
+    (restored: NoteFormDraftFields) => {
+      if (!isNoteFormDraftFields(restored)) {
+        logger.error('Corrupt note form draft ignored.');
+        return;
+      }
+      setAll({ ...CREATE_PRISTINE, ...restored });
+    },
+    [setAll],
+  );
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -140,15 +133,14 @@ export function useNoteFormState({
       entityType: 'Note',
       entityId: initialNoteId,
       enabled: !!storyId && !loading,
-      snapshot: { title, body, isFavorite, extraNotes },
+      snapshot: fields,
       pristine: loadedPristine ?? CREATE_PRISTINE,
       baseUpdatedAt: initialNoteId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
-  const isDirty =
-    JSON.stringify({ title, body, isFavorite, extraNotes }) !== JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -157,24 +149,15 @@ export function useNoteFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? CREATE_PRISTINE;
-    setTitle(target.title);
-    setBody(target.body);
-    setIsFavorite(target.isFavorite);
-    setExtraNotes(target.extraNotes);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, deleteStoredDraft]);
+  }, [loadedPristine, deleteStoredDraft, setAll]);
 
   return {
     currentNoteId,
     retainPersistedNoteId,
-    title,
-    setTitle,
-    body,
-    setBody,
-    isFavorite,
-    setIsFavorite,
-    extraNotes,
-    setExtraNotes,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

@@ -4,6 +4,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppDrizzleClient, SceneSelect } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { fieldsDiffer, useFormFields } from '@/src/hooks/forms/useFormFields';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
@@ -53,6 +54,26 @@ const CREATE_PRISTINE: SceneFormDraftFields = {
   isFinish: false,
 };
 
+/** The numbers are typed as text in the form, and an unset one is a blank field. */
+function sceneToFields(scene: SceneSelect): SceneFormDraftFields {
+  return {
+    chapterId: scene.chapterId,
+    locationId: scene.locationId,
+    name: scene.name,
+    summary: scene.summary,
+    isFavorite: scene.isFavorite,
+    extraNotes: scene.extraNotes,
+    gapInput: scene.gap === null ? '' : String(scene.gap),
+    gapType: scene.gapType,
+    calendarDateOverride: scene.calendarDateOverride ?? '',
+    calendarDateOverrideCalendarId: scene.calendarDateOverrideCalendarId,
+    durationInput: scene.duration === null ? '' : String(scene.duration),
+    durationType: scene.durationType,
+    isStart: scene.isStart,
+    isFinish: scene.isFinish,
+  };
+}
+
 function isSceneFormDraftFields(value: unknown): value is SceneFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -85,22 +106,7 @@ export function useSceneFormState({
   customFields,
 }: UseSceneFormStateOptions) {
   const [currentSceneId, setCurrentSceneId] = useState<string | undefined>(initialSceneId);
-  const [chapterId, setChapterId] = useState<string | null>(null);
-  const [locationId, setLocationId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [summary, setSummary] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [gapInput, setGapInput] = useState('');
-  const [gapType, setGapType] = useState<string | null>(null);
-  const [calendarDateOverride, setCalendarDateOverride] = useState('');
-  const [calendarDateOverrideCalendarId, setCalendarDateOverrideCalendarId] = useState<
-    string | null
-  >(null);
-  const [durationInput, setDurationInput] = useState('');
-  const [durationType, setDurationType] = useState<string | null>(null);
-  const [isStart, setIsStart] = useState(false);
-  const [isFinish, setIsFinish] = useState(false);
+  const { fields, setters, setAll } = useFormFields(CREATE_PRISTINE);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -114,40 +120,6 @@ export function useSceneFormState({
   }, []);
 
   useEffect(() => {
-    const applyScene = (scene: SceneSelect) => {
-      setChapterId(scene.chapterId);
-      setLocationId(scene.locationId);
-      setName(scene.name);
-      setSummary(scene.summary);
-      setIsFavorite(scene.isFavorite);
-      setExtraNotes(scene.extraNotes);
-      setGapInput(scene.gap === null ? '' : String(scene.gap));
-      setGapType(scene.gapType);
-      setCalendarDateOverride(scene.calendarDateOverride ?? '');
-      setCalendarDateOverrideCalendarId(scene.calendarDateOverrideCalendarId);
-      setDurationInput(scene.duration === null ? '' : String(scene.duration));
-      setDurationType(scene.durationType);
-      setIsStart(scene.isStart);
-      setIsFinish(scene.isFinish);
-      setLoadedPristine({
-        chapterId: scene.chapterId,
-        locationId: scene.locationId,
-        name: scene.name,
-        summary: scene.summary,
-        isFavorite: scene.isFavorite,
-        extraNotes: scene.extraNotes,
-        gapInput: scene.gap === null ? '' : String(scene.gap),
-        gapType: scene.gapType,
-        calendarDateOverride: scene.calendarDateOverride ?? '',
-        calendarDateOverrideCalendarId: scene.calendarDateOverrideCalendarId,
-        durationInput: scene.duration === null ? '' : String(scene.duration),
-        durationType: scene.durationType,
-        isStart: scene.isStart,
-        isFinish: scene.isFinish,
-      });
-      setLoadedUpdatedAt(scene.updatedAt?.toISOString?.() ?? null);
-    };
-
     const load = async () => {
       if (!sceneServiceRef.current || !storyId) {
         setLoading(false);
@@ -158,7 +130,10 @@ export function useSceneFormState({
         if (initialSceneId) {
           const scene = await sceneServiceRef.current.getById(initialSceneId);
           if (scene) {
-            applyScene(scene);
+            const row = sceneToFields(scene);
+            setAll(row);
+            setLoadedPristine(row);
+            setLoadedUpdatedAt(scene.updatedAt?.toISOString?.() ?? null);
             const values =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialSceneId);
             const fromDb = Object.fromEntries(values.map((value) => [value.fieldId, value.value]));
@@ -170,7 +145,7 @@ export function useSceneFormState({
             );
           }
         } else if (initialChapterId) {
-          setChapterId(initialChapterId);
+          setters.setChapterId(initialChapterId);
         }
       } catch (error) {
         logger.error('Failed to load scene:', error);
@@ -179,7 +154,7 @@ export function useSceneFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialChapterId, initialSceneId, sceneServiceRef, storyId]);
+  }, [drizzleDb, initialChapterId, initialSceneId, sceneServiceRef, setAll, setters, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -195,26 +170,16 @@ export function useSceneFormState({
     [initialChapterId],
   );
 
-  const restoreDraftFields = useCallback((fields: SceneFormDraftFields) => {
-    if (!isSceneFormDraftFields(fields)) {
-      logger.error('Corrupt scene form draft ignored.');
-      return;
-    }
-    setChapterId(fields.chapterId);
-    setLocationId(fields.locationId);
-    setName(fields.name);
-    setSummary(fields.summary);
-    setIsFavorite(fields.isFavorite);
-    setExtraNotes(fields.extraNotes);
-    setGapInput(fields.gapInput);
-    setGapType(fields.gapType);
-    setCalendarDateOverride(fields.calendarDateOverride);
-    setCalendarDateOverrideCalendarId(fields.calendarDateOverrideCalendarId);
-    setDurationInput(fields.durationInput);
-    setDurationType(fields.durationType);
-    setIsStart(fields.isStart);
-    setIsFinish(fields.isFinish);
-  }, []);
+  const restoreDraftFields = useCallback(
+    (restored: SceneFormDraftFields) => {
+      if (!isSceneFormDraftFields(restored)) {
+        logger.error('Corrupt scene form draft ignored.');
+        return;
+      }
+      setAll(restored);
+    },
+    [setAll],
+  );
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -224,45 +189,14 @@ export function useSceneFormState({
       entityType: 'Scene',
       entityId: initialSceneId,
       enabled: !!storyId && !loading,
-      snapshot: {
-        chapterId,
-        locationId,
-        name,
-        summary,
-        isFavorite,
-        extraNotes,
-        gapInput,
-        gapType,
-        calendarDateOverride,
-        calendarDateOverrideCalendarId,
-        durationInput,
-        durationType,
-        isStart,
-        isFinish,
-      },
+      snapshot: fields,
       pristine: loadedPristine ?? createPristine,
       baseUpdatedAt: initialSceneId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? createPristine;
-  const isDirty =
-    JSON.stringify({
-      chapterId,
-      locationId,
-      name,
-      summary,
-      isFavorite,
-      extraNotes,
-      gapInput,
-      gapType,
-      calendarDateOverride,
-      calendarDateOverrideCalendarId,
-      durationInput,
-      durationType,
-      isStart,
-      isFinish,
-    }) !== JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -271,54 +205,15 @@ export function useSceneFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? createPristine;
-    setChapterId(target.chapterId);
-    setLocationId(target.locationId);
-    setName(target.name);
-    setSummary(target.summary);
-    setIsFavorite(target.isFavorite);
-    setExtraNotes(target.extraNotes);
-    setGapInput(target.gapInput);
-    setGapType(target.gapType);
-    setCalendarDateOverride(target.calendarDateOverride);
-    setCalendarDateOverrideCalendarId(target.calendarDateOverrideCalendarId);
-    setDurationInput(target.durationInput);
-    setDurationType(target.durationType);
-    setIsStart(target.isStart);
-    setIsFinish(target.isFinish);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, createPristine, deleteStoredDraft]);
+  }, [loadedPristine, createPristine, deleteStoredDraft, setAll]);
 
   return {
     currentSceneId,
     retainPersistedSceneId,
-    chapterId,
-    setChapterId,
-    locationId,
-    setLocationId,
-    name,
-    setName,
-    summary,
-    setSummary,
-    isFavorite,
-    setIsFavorite,
-    extraNotes,
-    setExtraNotes,
-    gapInput,
-    setGapInput,
-    gapType,
-    setGapType,
-    calendarDateOverride,
-    setCalendarDateOverride,
-    calendarDateOverrideCalendarId,
-    setCalendarDateOverrideCalendarId,
-    durationInput,
-    setDurationInput,
-    durationType,
-    setDurationType,
-    isStart,
-    setIsStart,
-    isFinish,
-    setIsFinish,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

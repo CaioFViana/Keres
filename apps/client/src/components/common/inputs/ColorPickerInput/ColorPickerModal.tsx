@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +16,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '@/src/utils/format/colorMath';
 import type { PanResponderGestureState } from 'react-native';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 const SLIDER_HEIGHT = 20;
 
@@ -176,53 +176,45 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     [],
   );
 
-  const [saturationValuePanResponder] = useState(
-    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (_evt, gestureState) => {
-          saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
-            setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
-            handleColorSelect(
-              gestureState,
-              { x: pageX, y: pageY, width: _width, height: _height },
-              false,
-            );
-          });
-        },
-        onPanResponderMove: (_evt, gestureState) => {
-          if (pickerLayout.width > 0) {
-            handleColorSelect(gestureState, pickerLayout, false);
-          }
-        },
-      }),
-  );
+  const saturationValuePanResponder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (_evt, gestureState) => {
+      saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+        setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
+        handleColorSelect(
+          gestureState,
+          { x: pageX, y: pageY, width: _width, height: _height },
+          false,
+        );
+      });
+    },
+    onPanResponderMove: (_evt, gestureState) => {
+      if (pickerLayout.width > 0) {
+        handleColorSelect(gestureState, pickerLayout, false);
+      }
+    },
+  });
 
-  const [huePanResponder] = useState(
-    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (_evt, gestureState) => {
-          hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
-            setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
-            handleColorSelect(
-              gestureState,
-              { x: pageX, y: pageY, width: _width, height: _height },
-              true,
-            );
-          });
-        },
-        onPanResponderMove: (_evt, gestureState) => {
-          if (hueLayout.width > 0) {
-            handleColorSelect(gestureState, hueLayout, true);
-          }
-        },
-      }),
-  );
+  const huePanResponder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (_evt, gestureState) => {
+      hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+        setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
+        handleColorSelect(
+          gestureState,
+          { x: pageX, y: pageY, width: _width, height: _height },
+          true,
+        );
+      });
+    },
+    onPanResponderMove: (_evt, gestureState) => {
+      if (hueLayout.width > 0) {
+        handleColorSelect(gestureState, hueLayout, true);
+      }
+    },
+  });
 
   const getBackgroundColorForSatValPicker = useCallback(() => {
     const { r, g, b } = hsvToRgb(hue, 100, 100); // Max saturation and value for the base hue

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useTheme } from '@/src/theme';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 const DRAG_THRESHOLD = 5;
 const DESTINATION_HOLD_DURATION = 550;
@@ -128,98 +129,81 @@ const LocationMapNodeView: React.FC<Props> = ({
     [],
   );
 
-  const pan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture: () => false,
-        onStartShouldSetPanResponder: () => {
-          if (overlayEditingRef.current) return false;
-          if (connectionModeRef.current) return true;
-          if (layoutEditingRef.current && selectedRef.current) return false;
-          handlers.current.onDragStart(nodeId.current);
-          return true;
-        },
-        onMoveShouldSetPanResponderCapture: () =>
-          !overlayEditingRef.current &&
-          (dragging.current || connectionModeRef.current) &&
-          !(layoutEditingRef.current && selectedRef.current),
-        onMoveShouldSetPanResponder: (_event, gesture) =>
-          !overlayEditingRef.current &&
-          (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
-          Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: (event) => {
-          dragging.current = false;
-          // eslint-disable-next-line react-hooks/purity -- runs only when the gesture grants; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
-          pressedAt.current = Date.now();
-          origin.current = { x: position.current.x, y: position.current.y };
-          if (connectionModeRef.current) handlers.current.onConnectionStart?.(nodeId.current);
-          else handlers.current.onDragStart(nodeId.current);
-          if (!connectionModeRef.current && destinationMapId.current) {
-            destinationHoldHintTimer.current = setTimeout(() => {
-              destinationHoldHintTimer.current = null;
-              setShowDestinationHoldHint(true);
-            }, DESTINATION_HOLD_HINT_DELAY);
-          }
-          capturePointer(event);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          const zoom = Math.max(scaleRef.current, 0.01);
-          if (connectionModeRef.current) {
-            handlers.current.onConnectionMove?.(
-              nodeId.current,
-              gesture.dx / zoom,
-              gesture.dy / zoom,
-            );
-            return;
-          }
-          if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
-          clearDestinationHoldHint();
-          dragging.current = true;
-          handlers.current.onMove(
-            nodeId.current,
-            origin.current.x + gesture.dx / zoom,
-            origin.current.y + gesture.dy / zoom,
-          );
-        },
-        onPanResponderRelease: (event, gesture) => {
-          releasePointer(event);
-          if (connectionModeRef.current) {
-            const zoom = Math.max(scaleRef.current, 0.01);
-            handlers.current.onConnectionEnd?.(
-              nodeId.current,
-              gesture.dx / zoom,
-              gesture.dy / zoom,
-            );
-            dragging.current = false;
-            return;
-          }
-          handlers.current.onDragEnd(nodeId.current);
-          clearDestinationHoldHint();
-          if (!dragging.current) {
-            // A regular tap always opens the point sheet. Holding a linked point is the deliberate
-            // action that changes maps, which prevents an accidental map switch while editing.
-            if (
-              destinationMapId.current &&
-              // eslint-disable-next-line react-hooks/purity -- runs only when the gesture releases; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
-              Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION
-            )
-              handlers.current.onOpenDestination?.(nodeId.current);
-            else handlers.current.onSelect(nodeId.current);
-          }
-          dragging.current = false;
-        },
-        onPanResponderTerminate: (event) => {
-          releasePointer(event);
-          if (connectionModeRef.current) handlers.current.onConnectionCancel?.();
-          else handlers.current.onDragEnd(nodeId.current);
-          clearDestinationHoldHint();
-          dragging.current = false;
-        },
-      }),
-    [],
-  );
+  const pan = usePanResponder({
+    onStartShouldSetPanResponderCapture: () => false,
+    onStartShouldSetPanResponder: () => {
+      if (overlayEditingRef.current) return false;
+      if (connectionModeRef.current) return true;
+      if (layoutEditingRef.current && selectedRef.current) return false;
+      handlers.current.onDragStart(nodeId.current);
+      return true;
+    },
+    onMoveShouldSetPanResponderCapture: () =>
+      !overlayEditingRef.current &&
+      (dragging.current || connectionModeRef.current) &&
+      !(layoutEditingRef.current && selectedRef.current),
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !overlayEditingRef.current &&
+      (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
+      Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: (event) => {
+      dragging.current = false;
+
+      pressedAt.current = Date.now();
+      origin.current = { x: position.current.x, y: position.current.y };
+      if (connectionModeRef.current) handlers.current.onConnectionStart?.(nodeId.current);
+      else handlers.current.onDragStart(nodeId.current);
+      if (!connectionModeRef.current && destinationMapId.current) {
+        destinationHoldHintTimer.current = setTimeout(() => {
+          destinationHoldHintTimer.current = null;
+          setShowDestinationHoldHint(true);
+        }, DESTINATION_HOLD_HINT_DELAY);
+      }
+      capturePointer(event);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const zoom = Math.max(scaleRef.current, 0.01);
+      if (connectionModeRef.current) {
+        handlers.current.onConnectionMove?.(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
+        return;
+      }
+      if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
+      clearDestinationHoldHint();
+      dragging.current = true;
+      handlers.current.onMove(
+        nodeId.current,
+        origin.current.x + gesture.dx / zoom,
+        origin.current.y + gesture.dy / zoom,
+      );
+    },
+    onPanResponderRelease: (event, gesture) => {
+      releasePointer(event);
+      if (connectionModeRef.current) {
+        const zoom = Math.max(scaleRef.current, 0.01);
+        handlers.current.onConnectionEnd?.(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
+        dragging.current = false;
+        return;
+      }
+      handlers.current.onDragEnd(nodeId.current);
+      clearDestinationHoldHint();
+      if (!dragging.current) {
+        // A regular tap always opens the point sheet. Holding a linked point is the deliberate
+        // action that changes maps, which prevents an accidental map switch while editing.
+        if (destinationMapId.current && Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION)
+          handlers.current.onOpenDestination?.(nodeId.current);
+        else handlers.current.onSelect(nodeId.current);
+      }
+      dragging.current = false;
+    },
+    onPanResponderTerminate: (event) => {
+      releasePointer(event);
+      if (connectionModeRef.current) handlers.current.onConnectionCancel?.();
+      else handlers.current.onDragEnd(nodeId.current);
+      clearDestinationHoldHint();
+      dragging.current = false;
+    },
+  });
 
   useEffect(() => {
     // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it

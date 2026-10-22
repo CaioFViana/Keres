@@ -1,16 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
   Modal,
-  PanResponder,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 /**
  * A full-screen image viewer, with pinch zoom, drag and double tap.
@@ -167,103 +167,97 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     [content, publish, zoomAround],
   );
 
-  const panResponder = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (event, gestureState) =>
-          event.nativeEvent.touches.length > 1 ||
-          Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD,
+  const panResponder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (event, gestureState) =>
+      event.nativeEvent.touches.length > 1 ||
+      Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD,
 
-        onPanResponderGrant: (event) => {
-          gesture.current = {
-            lastDx: 0,
-            lastDy: 0,
-            pinchDistance: 0,
-            pinchScale: transform.current.scale,
-          };
-          const touch = event.nativeEvent.touches[0];
-          tapCandidate.current = {
-            startX: touch?.pageX ?? 0,
-            startY: touch?.pageY ?? 0,
-            moved: false,
-          };
-        },
+    onPanResponderGrant: (event) => {
+      gesture.current = {
+        lastDx: 0,
+        lastDy: 0,
+        pinchDistance: 0,
+        pinchScale: transform.current.scale,
+      };
+      const touch = event.nativeEvent.touches[0];
+      tapCandidate.current = {
+        startX: touch?.pageX ?? 0,
+        startY: touch?.pageY ?? 0,
+        moved: false,
+      };
+    },
 
-        onPanResponderMove: (event, gestureState) => {
-          const touches = event.nativeEvent.touches;
+    onPanResponderMove: (event, gestureState) => {
+      const touches = event.nativeEvent.touches;
 
-          if (touches.length >= 2) {
-            const [first, second] = touches;
-            const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
-            const focus = {
-              x: (first.pageX + second.pageX) / 2,
-              y: (first.pageY + second.pageY) / 2,
-            };
+      if (touches.length >= 2) {
+        const [first, second] = touches;
+        const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
+        const focus = {
+          x: (first.pageX + second.pageX) / 2,
+          y: (first.pageY + second.pageY) / 2,
+        };
 
-            if (gesture.current.pinchDistance === 0) {
-              gesture.current.pinchDistance = distance;
-              gesture.current.pinchScale = transform.current.scale;
-            } else if (distance > 0) {
-              zoomAround(
-                (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
-                focus,
-              );
-            }
-            gesture.current.lastDx = gestureState.dx;
-            gesture.current.lastDy = gestureState.dy;
-            tapCandidate.current.moved = true;
-            return;
-          }
+        if (gesture.current.pinchDistance === 0) {
+          gesture.current.pinchDistance = distance;
+          gesture.current.pinchScale = transform.current.scale;
+        } else if (distance > 0) {
+          zoomAround(
+            (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
+            focus,
+          );
+        }
+        gesture.current.lastDx = gestureState.dx;
+        gesture.current.lastDy = gestureState.dy;
+        tapCandidate.current.moved = true;
+        return;
+      }
 
-          if (Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD) {
-            tapCandidate.current.moved = true;
-          }
+      if (Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD) {
+        tapCandidate.current.moved = true;
+      }
 
-          gesture.current.pinchDistance = 0;
-          // Dragging only makes sense zoomed in; without this a drag at normal size
-          // would decentre the image for no reason.
-          if (transform.current.scale > MIN_SCALE + 0.01) {
-            transform.current.x += gestureState.dx - gesture.current.lastDx;
-            transform.current.y += gestureState.dy - gesture.current.lastDy;
-            clamp();
-            publish();
-          }
-          gesture.current.lastDx = gestureState.dx;
-          gesture.current.lastDy = gestureState.dy;
-        },
+      gesture.current.pinchDistance = 0;
+      // Dragging only makes sense zoomed in; without this a drag at normal size
+      // would decentre the image for no reason.
+      if (transform.current.scale > MIN_SCALE + 0.01) {
+        transform.current.x += gestureState.dx - gesture.current.lastDx;
+        transform.current.y += gestureState.dy - gesture.current.lastDy;
+        clamp();
+        publish();
+      }
+      gesture.current.lastDx = gestureState.dx;
+      gesture.current.lastDy = gestureState.dy;
+    },
 
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: () => {
-          gesture.current.pinchDistance = 0;
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderRelease: () => {
+      gesture.current.pinchDistance = 0;
 
-          if (tapCandidate.current.moved) {
-            return;
-          }
+      if (tapCandidate.current.moved) {
+        return;
+      }
 
-          // eslint-disable-next-line react-hooks/purity -- runs only inside the tap responder; the wiring invokes nothing during render, and time-stamping a tap is not render impurity.
-          const now = Date.now();
-          const focus = { x: tapCandidate.current.startX, y: tapCandidate.current.startY };
-          const previousTap = lastTap.current;
+      const now = Date.now();
+      const focus = { x: tapCandidate.current.startX, y: tapCandidate.current.startY };
+      const previousTap = lastTap.current;
 
-          if (
-            previousTap &&
-            now - previousTap.time < DOUBLE_TAP_MAX_DELAY &&
-            Math.hypot(focus.x - previousTap.x, focus.y - previousTap.y) < 40
-          ) {
-            lastTap.current = null;
-            handleDoubleTap(focus);
-          } else {
-            lastTap.current = { time: now, x: focus.x, y: focus.y };
-          }
-        },
-        onPanResponderTerminate: () => {
-          gesture.current.pinchDistance = 0;
-        },
-      }),
-    [clamp, handleDoubleTap, publish, zoomAround],
-  );
+      if (
+        previousTap &&
+        now - previousTap.time < DOUBLE_TAP_MAX_DELAY &&
+        Math.hypot(focus.x - previousTap.x, focus.y - previousTap.y) < 40
+      ) {
+        lastTap.current = null;
+        handleDoubleTap(focus);
+      } else {
+        lastTap.current = { time: now, x: focus.x, y: focus.y };
+      }
+    },
+    onPanResponderTerminate: () => {
+      gesture.current.pinchDistance = 0;
+    },
+  });
 
   return (
     <Modal

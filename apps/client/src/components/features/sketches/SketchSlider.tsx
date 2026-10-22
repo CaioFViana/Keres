@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/src/theme';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 interface SketchSliderProps {
   label: string;
@@ -53,24 +54,21 @@ const SketchSlider: React.FC<SketchSliderProps> = ({
   });
   const startX = useRef(0);
 
-  const responder = useMemo(() => {
-    const apply = (x: number) => {
-      const { min: lo, max: hi, onChange: change, curve: shape, trackWidth: width } = live.current;
-      if (width <= 0) return;
-      change(fromRatio((x - THUMB / 2) / (width - THUMB), lo, hi, shape));
-    };
-    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: (event) => {
-        startX.current = event.nativeEvent.locationX;
-        apply(startX.current);
-      },
-      onPanResponderMove: (_, gesture) => apply(startX.current + gesture.dx),
-    });
-  }, []);
+  const apply = (x: number) => {
+    const { min: lo, max: hi, onChange: change, curve: shape, trackWidth: width } = live.current;
+    if (width <= 0) return;
+    change(fromRatio((x - THUMB / 2) / (width - THUMB), lo, hi, shape));
+  };
+  const responder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: (event) => {
+      startX.current = event.nativeEvent.locationX;
+      apply(startX.current);
+    },
+    onPanResponderMove: (_, gesture) => apply(startX.current + gesture.dx),
+  });
 
   const ratio = toRatio(value, min, max, curve);
   const styles = useMemo(

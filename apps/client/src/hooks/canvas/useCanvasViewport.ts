@@ -1,7 +1,7 @@
 import type React from 'react';
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { View } from 'react-native';
-import { Animated, PanResponder, Platform } from 'react-native';
+import { Animated, Platform } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
@@ -31,6 +31,7 @@ import {
   type Transform,
   wrapAngle,
 } from '@/src/utils/canvas/canvasViewportTypes';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 /**
  * Pan and zoom for every canvas in the app: boards and location maps as well as the story,
@@ -506,132 +507,126 @@ export function useCanvasViewport(
     [stopAutoPan],
   );
 
-  const panResponder = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        // It does not capture the touch's start: that way a simple tap reaches the node and opens the
-        // details. The drag is stolen from the node later, in the move's capture phase.
-        onStartShouldSetPanResponderCapture: () => false,
-        // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
-        // `onTap` all start here, instead of the gesture being dropped for want of an owner.
-        onStartShouldSetPanResponder: () => !childDragging.current,
-        onMoveShouldSetPanResponder: (event, gestureState) => {
-          const touches = event.nativeEvent.touches ?? [];
-          if (touches.length > 1) return true;
-          if (childDragging.current) return false;
-          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
-        },
-        onMoveShouldSetPanResponderCapture: (event, gestureState) => {
-          const touches = event.nativeEvent.touches ?? [];
-          if (touches.length > 1) return true;
-          if (childDragging.current) return false;
-          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
-        },
+  const panResponder = usePanResponder({
+    // It does not capture the touch's start: that way a simple tap reaches the node and opens the
+    // details. The drag is stolen from the node later, in the move's capture phase.
+    onStartShouldSetPanResponderCapture: () => false,
+    // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
+    // `onTap` all start here, instead of the gesture being dropped for want of an owner.
+    onStartShouldSetPanResponder: () => !childDragging.current,
+    onMoveShouldSetPanResponder: (event, gestureState) => {
+      const touches = event.nativeEvent.touches ?? [];
+      if (touches.length > 1) return true;
+      if (childDragging.current) return false;
+      return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+    },
+    onMoveShouldSetPanResponderCapture: (event, gestureState) => {
+      const touches = event.nativeEvent.touches ?? [];
+      if (touches.length > 1) return true;
+      if (childDragging.current) return false;
+      return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+    },
 
-        onPanResponderGrant: (event) => {
-          stopAutoPan();
-          gesture.current = {
-            lastDx: 0,
-            lastDy: 0,
-            pinchDistance: 0,
-            pinchScale: transform.current.scale,
-            pinchAngle: 0,
-            pinchAngleSet: false,
-          };
-          tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
-          capturePointer(event);
-        },
+    onPanResponderGrant: (event) => {
+      stopAutoPan();
+      gesture.current = {
+        lastDx: 0,
+        lastDy: 0,
+        pinchDistance: 0,
+        pinchScale: transform.current.scale,
+        pinchAngle: 0,
+        pinchAngleSet: false,
+      };
+      tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
+      capturePointer(event);
+    },
 
-        onPanResponderMove: (event, gestureState) => {
-          const touches = event.nativeEvent.touches ?? [];
+    onPanResponderMove: (event, gestureState) => {
+      const touches = event.nativeEvent.touches ?? [];
 
-          if (touches.length >= 2) {
-            tapping.current = false;
-            const [first, second] = touches;
-            const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
-            const focus = {
-              x: (first.pageX + second.pageX) / 2 - viewportOrigin.current.x,
-              y: (first.pageY + second.pageY) / 2 - viewportOrigin.current.y,
-            };
+      if (touches.length >= 2) {
+        tapping.current = false;
+        const [first, second] = touches;
+        const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
+        const focus = {
+          x: (first.pageX + second.pageX) / 2 - viewportOrigin.current.x,
+          y: (first.pageY + second.pageY) / 2 - viewportOrigin.current.y,
+        };
 
-            if (gesture.current.pinchDistance === 0) {
-              gesture.current.pinchDistance = distance;
-              gesture.current.pinchScale = transform.current.scale;
-            } else if (distance > 0) {
-              zoomAround(
-                (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
-                focus,
-              );
+        if (gesture.current.pinchDistance === 0) {
+          gesture.current.pinchDistance = distance;
+          gesture.current.pinchScale = transform.current.scale;
+        } else if (distance > 0) {
+          zoomAround(
+            (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
+            focus,
+          );
+          syncOverlays();
+        }
+        if (rotationEnabled && first && second) {
+          // Two-finger twist rotates the view around the viewport center; zoom above
+          // keeps running, so pinch-twist zooms and spins in one gesture like a
+          // sketchbook. A small dead zone keeps pure pinches from wobbling the angle.
+          const angle = Math.atan2(second.pageY - first.pageY, second.pageX - first.pageX);
+          if (!gesture.current.pinchAngleSet) {
+            gesture.current.pinchAngle = angle;
+            gesture.current.pinchAngleSet = true;
+          } else {
+            let delta = angle - gesture.current.pinchAngle;
+            if (delta > Math.PI) delta -= Math.PI * 2;
+            if (delta < -Math.PI) delta += Math.PI * 2;
+            if (Math.abs(delta) > 0.02) {
+              gesture.current.pinchAngle = angle;
+              rotationRef.current = wrapAngle(rotationRef.current + delta);
+              setRotationState(rotationRef.current);
+              publish();
               syncOverlays();
             }
-            if (rotationEnabled && first && second) {
-              // Two-finger twist rotates the view around the viewport center; zoom above
-              // keeps running, so pinch-twist zooms and spins in one gesture like a
-              // sketchbook. A small dead zone keeps pure pinches from wobbling the angle.
-              const angle = Math.atan2(second.pageY - first.pageY, second.pageX - first.pageX);
-              if (!gesture.current.pinchAngleSet) {
-                gesture.current.pinchAngle = angle;
-                gesture.current.pinchAngleSet = true;
-              } else {
-                let delta = angle - gesture.current.pinchAngle;
-                if (delta > Math.PI) delta -= Math.PI * 2;
-                if (delta < -Math.PI) delta += Math.PI * 2;
-                if (Math.abs(delta) > 0.02) {
-                  gesture.current.pinchAngle = angle;
-                  rotationRef.current = wrapAngle(rotationRef.current + delta);
-                  setRotationState(rotationRef.current);
-                  publish();
-                  syncOverlays();
-                }
-              }
-            }
-            // Zeroes the drag so the finger leaving the pinch does not make the map jump.
-            gesture.current.lastDx = gestureState.dx;
-            gesture.current.lastDy = gestureState.dy;
-            return;
           }
+        }
+        // Zeroes the drag so the finger leaving the pinch does not make the map jump.
+        gesture.current.lastDx = gestureState.dx;
+        gesture.current.lastDy = gestureState.dy;
+        return;
+      }
 
-          gesture.current.pinchDistance = 0;
-          gesture.current.pinchAngleSet = false;
-          if (Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD)
-            tapping.current = false;
-          transform.current.x += gestureState.dx - gesture.current.lastDx;
-          transform.current.y += gestureState.dy - gesture.current.lastDy;
-          gesture.current.lastDx = gestureState.dx;
-          gesture.current.lastDy = gestureState.dy;
-          clamp();
-          publish();
-          syncOverlays();
-        },
+      gesture.current.pinchDistance = 0;
+      gesture.current.pinchAngleSet = false;
+      if (Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD) tapping.current = false;
+      transform.current.x += gestureState.dx - gesture.current.lastDx;
+      transform.current.y += gestureState.dy - gesture.current.lastDy;
+      gesture.current.lastDx = gestureState.dx;
+      gesture.current.lastDy = gestureState.dy;
+      clamp();
+      publish();
+      syncOverlays();
+    },
 
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: (event, gestureState) => {
-          releasePointer(event);
-          gesture.current.pinchDistance = 0;
-          gesture.current.pinchAngleSet = false;
-          setScaleState(transform.current.scale);
-          syncOverlays();
-          const wasTap =
-            tapping.current && Math.hypot(gestureState.dx, gestureState.dy) <= DRAG_THRESHOLD;
-          tapping.current = false;
-          if (!wasTap || !onTap.current) return;
-          const { pageX, pageY } = event.nativeEvent;
-          onTap.current(
-            screenToWorldPoint({
-              x: pageX - viewportOrigin.current.x,
-              y: pageY - viewportOrigin.current.y,
-            }),
-          );
-        },
-        onPanResponderTerminate: () => {
-          gesture.current.pinchDistance = 0;
-          gesture.current.pinchAngleSet = false;
-          tapping.current = false;
-        },
-      }),
-    [clamp, publish, rotationEnabled, screenToWorldPoint, stopAutoPan, syncOverlays, zoomAround],
-  );
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderRelease: (event, gestureState) => {
+      releasePointer(event);
+      gesture.current.pinchDistance = 0;
+      gesture.current.pinchAngleSet = false;
+      setScaleState(transform.current.scale);
+      syncOverlays();
+      const wasTap =
+        tapping.current && Math.hypot(gestureState.dx, gestureState.dy) <= DRAG_THRESHOLD;
+      tapping.current = false;
+      if (!wasTap || !onTap.current) return;
+      const { pageX, pageY } = event.nativeEvent;
+      onTap.current(
+        screenToWorldPoint({
+          x: pageX - viewportOrigin.current.x,
+          y: pageY - viewportOrigin.current.y,
+        }),
+      );
+    },
+    onPanResponderTerminate: () => {
+      gesture.current.pinchDistance = 0;
+      gesture.current.pinchAngleSet = false;
+      tapping.current = false;
+    },
+  });
 
   // Rotating around the viewport center, in the same composition the Skia mirror
   // publishes: T(center) * R * T(t - center) * S. Disabled canvases keep the triple.

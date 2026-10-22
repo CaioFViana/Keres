@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
 import { useTheme } from '@/src/theme';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 const DRAG_THRESHOLD = 5;
 
@@ -99,58 +100,53 @@ const LocationMapImageView: React.FC<Props> = ({
     };
   });
 
-  const pan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture: () => false,
-        onStartShouldSetPanResponder: () => {
-          if (overlayEditingRef.current) return false;
-          if (layoutEditingRef.current && selectedRef.current) return false;
-          if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
-          return true;
-        },
-        onMoveShouldSetPanResponderCapture: () =>
-          !overlayEditingRef.current &&
-          dragging.current &&
-          !(layoutEditingRef.current && selectedRef.current),
-        onMoveShouldSetPanResponder: (_event, gesture) =>
-          !overlayEditingRef.current &&
-          !(layoutEditingRef.current && selectedRef.current) &&
-          !lockedRef.current &&
-          Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
-        onPanResponderTerminationRequest: () => lockedRef.current,
-        onPanResponderGrant: (event) => {
-          dragging.current = false;
-          origin.current = { x: position.current.x, y: position.current.y };
-          if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
-          capturePointer(event);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          if (lockedRef.current) return;
-          if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
-          dragging.current = true;
-          const zoom = Math.max(scaleRef.current, 0.01);
-          handlers.current.onMove(
-            imageId.current,
-            origin.current.x + gesture.dx / zoom,
-            origin.current.y + gesture.dy / zoom,
-          );
-        },
-        onPanResponderRelease: (event) => {
-          releasePointer(event);
-          if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
-          if (!dragging.current) handlers.current.onSelect(imageId.current);
-          dragging.current = false;
-        },
-        onPanResponderTerminate: (event) => {
-          releasePointer(event);
-          if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
-          dragging.current = false;
-        },
-      }),
-    [],
-  );
+  const pan = usePanResponder({
+    onStartShouldSetPanResponderCapture: () => false,
+    onStartShouldSetPanResponder: () => {
+      if (overlayEditingRef.current) return false;
+      if (layoutEditingRef.current && selectedRef.current) return false;
+      if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
+      return true;
+    },
+    onMoveShouldSetPanResponderCapture: () =>
+      !overlayEditingRef.current &&
+      dragging.current &&
+      !(layoutEditingRef.current && selectedRef.current),
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !overlayEditingRef.current &&
+      !(layoutEditingRef.current && selectedRef.current) &&
+      !lockedRef.current &&
+      Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
+    onPanResponderTerminationRequest: () => lockedRef.current,
+    onPanResponderGrant: (event) => {
+      dragging.current = false;
+      origin.current = { x: position.current.x, y: position.current.y };
+      if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
+      capturePointer(event);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      if (lockedRef.current) return;
+      if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
+      dragging.current = true;
+      const zoom = Math.max(scaleRef.current, 0.01);
+      handlers.current.onMove(
+        imageId.current,
+        origin.current.x + gesture.dx / zoom,
+        origin.current.y + gesture.dy / zoom,
+      );
+    },
+    onPanResponderRelease: (event) => {
+      releasePointer(event);
+      if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
+      if (!dragging.current) handlers.current.onSelect(imageId.current);
+      dragging.current = false;
+    },
+    onPanResponderTerminate: (event) => {
+      releasePointer(event);
+      if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
+      dragging.current = false;
+    },
+  });
 
   useEffect(() => {
     // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
@@ -163,30 +159,25 @@ const LocationMapImageView: React.FC<Props> = ({
     sizeRef.current = { width: image.width, height: image.height };
   }, [image.width, image.height]);
   const resizeOrigin = useRef({ width: image.width, height: image.height });
-  const resizePan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => layoutEditing,
-        onMoveShouldSetPanResponder: () => layoutEditing,
-        onPanResponderGrant: () => {
-          resizeOrigin.current = sizeRef.current;
-          handlers.current.onDragStart(imageId.current);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          const zoom = Math.max(scaleRef.current, 0.01);
-          const width = Math.max(80, resizeOrigin.current.width + gesture.dx / zoom);
-          handlers.current.onResize(
-            imageId.current,
-            width,
-            resizeOrigin.current.height * (width / resizeOrigin.current.width),
-          );
-        },
-        onPanResponderRelease: () => handlers.current.onDragEnd(imageId.current),
-        onPanResponderTerminate: () => handlers.current.onDragEnd(imageId.current),
-      }),
-    [layoutEditing],
-  );
+  const resizePan = usePanResponder({
+    onStartShouldSetPanResponder: () => layoutEditing,
+    onMoveShouldSetPanResponder: () => layoutEditing,
+    onPanResponderGrant: () => {
+      resizeOrigin.current = sizeRef.current;
+      handlers.current.onDragStart(imageId.current);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const zoom = Math.max(scaleRef.current, 0.01);
+      const width = Math.max(80, resizeOrigin.current.width + gesture.dx / zoom);
+      handlers.current.onResize(
+        imageId.current,
+        width,
+        resizeOrigin.current.height * (width / resizeOrigin.current.width),
+      );
+    },
+    onPanResponderRelease: () => handlers.current.onDragEnd(imageId.current),
+    onPanResponderTerminate: () => handlers.current.onDragEnd(imageId.current),
+  });
 
   const styles = useMemo(
     () =>

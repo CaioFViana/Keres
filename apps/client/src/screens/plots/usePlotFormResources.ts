@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
 import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
@@ -19,10 +19,9 @@ export function usePlotFormResources(
     reload: reloadPlotData,
   } = useStoryPlots(storyId, storyType);
 
-  useEffect(() => {
-    plotServiceRef.current ??= createPlotService(drizzleDb);
-    plotSceneServiceRef.current ??= createPlotSceneService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  plotServiceRef.current ??= createPlotService(drizzleDb);
+  plotSceneServiceRef.current ??= createPlotSceneService(drizzleDb);
 
   return {
     drizzleDb,

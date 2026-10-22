@@ -21,9 +21,8 @@ export function useChoiceFormResources(storyId?: string) {
     initializeService: initializeItemService,
   } = useItemStore();
 
-  useEffect(() => {
-    choiceServiceRef.current ??= createChoiceService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  choiceServiceRef.current ??= createChoiceService(drizzleDb);
 
   useEffect(() => {
     if (!storyId) return;

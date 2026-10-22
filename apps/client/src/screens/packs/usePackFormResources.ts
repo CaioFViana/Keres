@@ -24,10 +24,9 @@ export function usePackFormResources(userId?: string | null) {
   const [stories, setStories] = useState<StorySelect[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(true);
 
-  useEffect(() => {
-    packServiceRef.current ??= createPackService(drizzleDb);
-    storyServiceRef.current ??= createStoryService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  packServiceRef.current ??= createPackService(drizzleDb);
+  storyServiceRef.current ??= createStoryService(drizzleDb);
 
   useEffect(() => {
     fireAndLog(

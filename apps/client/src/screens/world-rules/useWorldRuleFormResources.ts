@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import {
   createWorldRuleService,
@@ -10,9 +10,8 @@ export function useWorldRuleFormResources() {
   const drizzleDb = useDrizzle();
   const worldRuleServiceRef = useRef<WorldRuleService | null>(null);
 
-  useEffect(() => {
-    worldRuleServiceRef.current ??= createWorldRuleService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  worldRuleServiceRef.current ??= createWorldRuleService(drizzleDb);
 
   return {
     drizzleDb,

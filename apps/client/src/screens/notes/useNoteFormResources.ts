@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import {
   createNoteService,
@@ -10,9 +10,8 @@ export function useNoteFormResources() {
   const drizzleDb = useDrizzle();
   const noteServiceRef = useRef<NoteService | null>(null);
 
-  useEffect(() => {
-    noteServiceRef.current ??= createNoteService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  noteServiceRef.current ??= createNoteService(drizzleDb);
 
   return {
     drizzleDb,

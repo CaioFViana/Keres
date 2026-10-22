@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import {
   createChapterService,
@@ -10,9 +10,8 @@ export function useChapterFormResources() {
   const drizzleDb = useDrizzle();
   const chapterServiceRef = useRef<ChapterService | null>(null);
 
-  useEffect(() => {
-    chapterServiceRef.current ??= createChapterService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  chapterServiceRef.current ??= createChapterService(drizzleDb);
 
   return {
     drizzleDb,

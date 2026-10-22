@@ -2776,7 +2776,7 @@
   "showcase_link_label": "Link to a story, an author or a pack",
   "showcase_link_note": "Links of the servers you registered open as yours. A link from any other server opens as a guest: you can read it and take its files, with nothing of yours sent.",
   "showcase_link_open": "Open",
-  "showcase_link_paste": "Paste from the clipboard",
+  "showcase_link_paste": "Paste",
   "showcase_link_placeholder": "Paste a showcase link",
   "showcase_link_problem_empty": "Paste a link to begin.",
   "showcase_link_problem_insecure_http": "That address is not secure (http). Only https is accepted, except on this device or your local network.",

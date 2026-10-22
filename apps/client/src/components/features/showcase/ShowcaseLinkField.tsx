@@ -1,7 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useTheme } from '@/src/theme';
@@ -61,15 +60,6 @@ const ShowcaseLinkField: React.FC<ShowcaseLinkFieldProps> = ({
           returnKeyType="go"
           testID="showcase-link-input"
         />
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={t('showcase_link_paste')}
-          onPress={onPaste}
-          style={[styles.pasteButton, { borderColor: colors.primary }]}
-          testID="showcase-link-paste"
-        >
-          <Ionicons name="clipboard-outline" size={20} color={colors.primary} />
-        </TouchableOpacity>
       </View>
 
       {status ? (
@@ -83,6 +73,14 @@ const ShowcaseLinkField: React.FC<ShowcaseLinkFieldProps> = ({
       ) : null}
 
       <View style={styles.actions}>
+        <Button
+          variant="secondary"
+          icon="clipboard-outline"
+          onPress={onPaste}
+          testID="showcase-link-paste"
+        >
+          {t('showcase_link_paste')}
+        </Button>
         <Button
           icon="arrow-forward-outline"
           onPress={onOpen}
@@ -110,14 +108,6 @@ const ShowcaseLinkField: React.FC<ShowcaseLinkFieldProps> = ({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   input: { flex: 1 },
-  pasteButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   status: { fontSize: 14, lineHeight: 20, marginTop: 8 },
   actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 12 },
 });

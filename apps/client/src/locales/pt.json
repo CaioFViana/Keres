@@ -2776,7 +2776,7 @@
   "showcase_link_label": "Link de uma história, de um autor ou de um pack",
   "showcase_link_note": "Links dos servidores que você registrou abrem como seus. O link de qualquer outro servidor abre como convidado: dá para ler e baixar os arquivos, sem enviar nada seu.",
   "showcase_link_open": "Abrir",
-  "showcase_link_paste": "Colar da área de transferência",
+  "showcase_link_paste": "Colar",
   "showcase_link_placeholder": "Cole um link da vitrine",
   "showcase_link_problem_empty": "Cole um link para começar.",
   "showcase_link_problem_insecure_http": "Esse endereço não é seguro (http). Só https é aceito, exceto neste aparelho ou na sua rede local.",

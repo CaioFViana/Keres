@@ -85,9 +85,9 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
         const { chapterId, sceneId, nextSceneId, ...otherCriteria } = advancedSearchCriteria;
 
-        if (sceneId) {
+        if (typeof sceneId === 'string' && sceneId) {
           conditions.push(eq(choices.sceneId, sceneId) as SQL<boolean>);
-        } else if (chapterId) {
+        } else if (typeof chapterId === 'string' && chapterId) {
           const sceneIdsInChapter = db
             .select({ id: scenes.id })
             .from(scenes)
@@ -95,7 +95,7 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
           conditions.push(inArray(choices.sceneId, sceneIdsInChapter) as SQL<boolean>);
         }
 
-        if (nextSceneId) {
+        if (typeof nextSceneId === 'string' && nextSceneId) {
           conditions.push(eq(choices.nextSceneId, nextSceneId) as SQL<boolean>);
         }
 

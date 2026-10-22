@@ -23,6 +23,8 @@ interface LoadedResourceOptions<T> {
   entityId?: string;
   /** Reads the resource again (silently, keeping what shows) whenever this changes; `load` receives it. */
   refreshKey?: unknown;
+  /** A new value makes it a new resource, as a new `load` does: what was read goes back to `initial`. */
+  resetKey?: unknown;
   /** Names the resource in the log line when a read fails. */
   label: string;
   /** A failure is expected now and then (a server that cannot be reached): log it as debug, not error. */
@@ -47,11 +49,13 @@ export function useLoadedResource<T>({
   storyId,
   entityId,
   refreshKey,
+  resetKey,
   label,
   quiet = false,
 }: LoadedResourceOptions<T>) {
   const [settled, setSettled] = useState<{
     load: unknown;
+    resetKey: unknown;
     data: T;
     failed: boolean;
     error: unknown;
@@ -63,16 +67,19 @@ export function useLoadedResource<T>({
     const current = ++generation.current;
     try {
       const data = await load(refreshKey);
-      if (current === generation.current) setSettled({ load, data, failed: false, error: null });
+      if (current === generation.current)
+        setSettled({ load, resetKey, data, failed: false, error: null });
     } catch (error) {
       (quiet ? logger.debug : logger.error)(`Failed to fetch ${label}:`, error);
       if (current === generation.current) {
         setSettled((previous) =>
-          previous?.load === load ? previous : { load, data: initial, failed: true, error },
+          previous?.load === load && previous.resetKey === resetKey
+            ? previous
+            : { load, resetKey, data: initial, failed: true, error },
         );
       }
     }
-  }, [load, refreshKey, initial, label, quiet]);
+  }, [load, refreshKey, resetKey, initial, label, quiet]);
 
   useEntityInitialLoad(reload);
   // Whatever is still in flight when the resource changes or the screen leaves no longer counts.
@@ -109,7 +116,7 @@ export function useLoadedResource<T>({
   );
   useEntityEventSubscriptions(subscriptions);
 
-  const current = load && settled?.load === load ? settled : null;
+  const current = load && settled?.load === load && settled.resetKey === resetKey ? settled : null;
   return {
     data: current ? current.data : initial,
     loading: load !== null && current === null,

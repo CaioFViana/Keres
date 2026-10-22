@@ -38,24 +38,18 @@ const LayerNode = memo(function LayerNode({
 }) {
   const plain = useMemo(() => new SketchLayerPictures(), []);
   const moving = useMemo(() => new SketchLayerPictures(), []);
-  const dragging = transform !== null;
-  const pictures = useMemo(() => {
-    const items =
-      dragging && transform
-        ? layer.items.filter((item) => !transform.items.has(item))
-        : layer.items;
-    return plain.update(items);
-    // `transform.items` is stable for the whole drag; its identity is the dependency.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layer.items, dragging, plain, transform?.items]);
-  const movingPictures = useMemo(
+  // `transform.items` is stable for the whole drag: its identity is what the pictures depend on.
+  const draggedItems = transform?.items ?? null;
+  const pictures = useMemo(
     () =>
-      dragging && transform
-        ? moving.update(layer.items.filter((item) => transform.items.has(item)))
-        : [],
-    // Same dependency as `pictures` above: `transform.items` is the only part of `transform` read.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [layer.items, dragging, moving, transform?.items],
+      plain.update(
+        draggedItems ? layer.items.filter((item) => !draggedItems.has(item)) : layer.items,
+      ),
+    [layer.items, draggedItems, plain],
+  );
+  const movingPictures = useMemo(
+    () => (draggedItems ? moving.update(layer.items.filter((item) => draggedItems.has(item))) : []),
+    [layer.items, draggedItems, moving],
   );
   const movingMatrix = useMemo(
     () => (transform ? skiaMatrix(transform.matrix) : null),

@@ -26,11 +26,12 @@ interface Props {
   storyId?: string;
   entityId?: string;
   refreshKey?: unknown;
+  resetKey?: unknown;
 }
 
 function renderResource(initialProps: Props) {
   return renderHook<ReturnType<typeof useLoadedResource<string>>, Props>(
-    ({ load, storyId, entityId, refreshKey }) =>
+    ({ load, storyId, entityId, refreshKey, resetKey }) =>
       useLoadedResource<string>({
         load,
         initial: INITIAL,
@@ -38,6 +39,7 @@ function renderResource(initialProps: Props) {
         storyId,
         entityId,
         refreshKey,
+        resetKey,
         label: 'thing',
       }),
     { initialProps },
@@ -217,6 +219,22 @@ describe('useLoadedResource', () => {
       retried.resolve('fixed');
     });
     await waitFor(() => expect(view.result.current.data).toBe('fixed'));
+  });
+
+  it('starts over, back to loading, when the reset key changes', async () => {
+    const pending = deferred<string>();
+    const load = jest.fn().mockResolvedValueOnce('first').mockReturnValueOnce(pending.promise);
+    const stable = () => load();
+    const view = await renderResource({ load: stable, resetKey: 'a' });
+    await waitFor(() => expect(view.result.current.data).toBe('first'));
+
+    await view.rerender({ load: stable, resetKey: 'b' });
+    expect(view.result.current).toMatchObject({ data: INITIAL, loading: true });
+
+    await act(async () => {
+      pending.resolve('second');
+    });
+    await waitFor(() => expect(view.result.current.data).toBe('second'));
   });
 
   it('hands the current refresh key to the read', async () => {

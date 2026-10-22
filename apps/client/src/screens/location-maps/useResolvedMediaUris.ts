@@ -6,6 +6,10 @@ import {
 } from '@/src/services/platform-web/webMediaStore';
 import { logger } from '@/src/utils/logging/logger';
 
+const uniqueOf = (paths: (string | null | undefined)[]) => [
+  ...new Set(paths.filter((path): path is string => Boolean(path))),
+];
+
 /**
  * Resolves several media paths into renderable URIs at once (the board resolves one at a time;
  * a map has many image bases). Same rules as `useResolvedMediaUri`: native paths pass through,
@@ -16,12 +20,16 @@ export function useResolvedMediaUris(
 ): Record<string, string | null> {
   const [resolved, setResolved] = useState<Record<string, string | null>>({});
   const key = paths.join('|');
-  const uniquePaths = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+  // The unique paths are rebuilt every render; they are kept as state that follows `key`, so the
+  // effect below runs when the paths change and not on every render.
+  const [uniquePaths, setUniquePaths] = useState(() => uniqueOf(paths));
 
   const [prevKey, setPrevKey] = useState(key);
   if (key !== prevKey) {
     setPrevKey(key);
-    if (uniquePaths.length === 0) {
+    const next = uniqueOf(paths);
+    setUniquePaths(next);
+    if (next.length === 0) {
       setResolved({});
     }
   }
@@ -52,10 +60,7 @@ export function useResolvedMediaUris(
     return () => {
       cancelled = true;
     };
-    // `uniquePaths` is rebuilt every render; `key` is its stable identity, so the
-    // effect depends on the key instead of re-resolving on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [uniquePaths]);
 
   return resolved;
 }

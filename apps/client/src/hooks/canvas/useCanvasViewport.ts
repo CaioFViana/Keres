@@ -297,10 +297,7 @@ export function useCanvasViewport(
       overlayRef.current = next;
       setOverlay(next);
     },
-    // visibleWorldRect already re-derives when its own inputs change; rotationEnabled is
-    // fixed for a mounted canvas.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cameraTopLeft, visibleWorldRect],
+    [cameraTopLeft, visibleWorldRect, rotationEnabled],
   );
 
   /**

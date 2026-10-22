@@ -67,11 +67,13 @@ const FieldControl: React.FC<Omit<AdvancedSearchFieldRowProps, 'onRemove'>> = ({
   onSubmit,
 }) => {
   const { t } = useTranslation();
+  // The value is whatever the field's kind stores; the text-like kinds hold a string or nothing.
+  const text = typeof value === 'string' ? value : '';
   if (field.isSuggestion) {
     return (
       <SuggestionTextInput
         placeholder={label}
-        value={value || ''}
+        value={text}
         onChangeText={onChange}
         type={field.suggestionsSource as SuggestionType}
         storyId={storyId}
@@ -85,7 +87,7 @@ const FieldControl: React.FC<Omit<AdvancedSearchFieldRowProps, 'onRemove'>> = ({
       return (
         <TextInput
           testID={`advanced-field-${name}`}
-          value={value || ''}
+          value={text}
           onChangeText={onChange}
           onSubmitEditing={onSubmit}
           returnKeyType="search"
@@ -133,7 +135,7 @@ const FieldControl: React.FC<Omit<AdvancedSearchFieldRowProps, 'onRemove'>> = ({
     case 'color':
       return (
         <ColorPickerInput
-          currentColor={value || ''}
+          currentColor={text}
           onSelectColor={(newColor: string) => onChange(newColor)}
           placeholder={label}
         />
@@ -144,13 +146,19 @@ const FieldControl: React.FC<Omit<AdvancedSearchFieldRowProps, 'onRemove'>> = ({
         <AdvancedEntityPicker
           storyId={storyId}
           entityType={field.entityTargetType as StorySchemaEntityType}
-          value={value ?? null}
+          value={typeof value === 'string' ? value : null}
           onChange={onChange}
           placeholder={label}
         />
       );
     case 'boolean':
-      return <TriStateToggleButton label={label} value={value} onChange={onChange} />;
+      return (
+        <TriStateToggleButton
+          label={label}
+          value={typeof value === 'boolean' ? value : undefined}
+          onChange={onChange}
+        />
+      );
     default:
       return null;
   }

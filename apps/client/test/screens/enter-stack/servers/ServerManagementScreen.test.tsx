@@ -74,6 +74,23 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
+const mockUserSettings = { allowCommunityServers: false };
+jest.mock('@/src/state/app/userSettingsStore', () => ({
+  useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
+    typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
+}));
+
+// The hosted web client talks to the one server that serves it; the official server is then that origin.
+const mockFlavor = { hosted: false };
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/platform/clientFlavor'),
+  isHostedByApi: () => mockFlavor.hosted,
+}));
+jest.mock('@/src/services/auth/browserCookieSession', () => ({
+  ...jest.requireActual('@/src/services/auth/browserCookieSession'),
+  hostedApiOrigin: () => 'https://hosted.example',
+}));
+
 jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
@@ -108,6 +125,8 @@ describe('ServerManagementScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockIsFocused.value = true;
+    mockUserSettings.allowCommunityServers = false;
+    mockFlavor.hosted = false;
     mockGetAllServers.mockResolvedValue([online, offline]);
     mockApiGet.mockImplementation((url: string) =>
       String(url).startsWith('https://a.example')
@@ -156,6 +175,7 @@ describe('ServerManagementScreen', () => {
   });
 
   it('registers a new server from the header action', async () => {
+    mockUserSettings.allowCommunityServers = true;
     const view = await render(<ServerManagementScreen />);
     await view.findByText('Main');
 
@@ -175,7 +195,8 @@ describe('ServerManagementScreen', () => {
 
       mockGetAllServers.mockResolvedValue([]);
       const empty = await render(<ServerManagementScreen />);
-      await empty.findByText('no_servers_found');
+      // No server saved: the invitation to the official server stands where the list would be.
+      await empty.findByTestId('default-server-card');
     });
   });
 
@@ -222,6 +243,117 @@ describe('ServerManagementScreen', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+describe('ServerManagementScreen: the official server and adding by address', () => {
+  const official = {
+    id: 'srv-0',
+    name: 'Keres',
+    url: 'https://keres.me',
+    userName: 'ana',
+    tag: 'ana',
+    lastSyncDate: null,
+  };
+
+  /** The actions the screen last asked its header for. */
+  const lastHeaderActions = () => {
+    const calls = mockUseScreenHeader.mock.calls;
+    return (
+      calls[calls.length - 1][0] as {
+        actions: { id: string; label: string; onPress: () => void }[];
+      }
+    ).actions;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsFocused.value = true;
+    mockUserSettings.allowCommunityServers = false;
+    mockFlavor.hosted = false;
+    mockApiGet.mockResolvedValue({ status: 200, data: { version: '1.2.3' } });
+  });
+
+  afterEach(async () => {
+    await cleanup();
+  });
+
+  it('invites to the official server when none is saved, and the card leads to signing in there', async () => {
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<ServerManagementScreen />);
+
+    await view.findByTestId('default-server-card');
+    expect(view.getByText('default_server_title')).toBeTruthy();
+    expect(view.getByText('https://keres.me')).toBeTruthy();
+    expect(view.queryByTestId('other-servers-title')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('default-server-cta'));
+    expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', {
+      address: 'https://keres.me',
+    });
+  });
+
+  it('keeps the invitation while the setting is off, and lists a community server already saved under other servers', async () => {
+    mockGetAllServers.mockResolvedValue([online]);
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Main');
+
+    expect(view.getByTestId('default-server-card')).toBeTruthy();
+    expect(view.getByTestId('other-servers-title')).toBeTruthy();
+    expect(view.queryByTestId('add-server-by-url')).toBeNull();
+    expect(lastHeaderActions()).toEqual([]);
+  });
+
+  it.each(['https://keres.me', 'https://keres.me/', 'https://KERES.me:443'])(
+    'shows the official server at the top, in place of the card, when it is saved as %s',
+    async (url) => {
+      mockGetAllServers.mockResolvedValue([{ ...official, url }]);
+      const view = await render(<ServerManagementScreen />);
+
+      await view.findByText('Keres');
+      expect(view.queryByTestId('default-server-card')).toBeNull();
+      expect(view.queryByTestId('other-servers-title')).toBeNull();
+    },
+  );
+
+  it('keeps the official server at the top and the other saved servers under their title', async () => {
+    mockGetAllServers.mockResolvedValue([online, official]);
+    const view = await render(<ServerManagementScreen />);
+
+    await view.findByText('Keres');
+    expect(view.getByText('Main')).toBeTruthy();
+    expect(view.getByTestId('other-servers-title')).toBeTruthy();
+    expect(view.queryByTestId('default-server-card')).toBeNull();
+  });
+
+  it('offers adding a server by address from the header and the footer only while the setting is on', async () => {
+    mockUserSettings.allowCommunityServers = true;
+    mockGetAllServers.mockResolvedValue([official]);
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Keres');
+
+    expect(lastHeaderActions()).toEqual([
+      expect.objectContaining({ id: 'action-0', label: 'add_server_by_url' }),
+    ]);
+    await fireEvent.press(view.getByTestId('add-server-by-url'));
+    expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', {});
+
+    mockNavigate.mockClear();
+    lastHeaderActions()[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', {});
+  });
+
+  it('offers no adding by address on the hosted web client, even with the setting on', async () => {
+    mockUserSettings.allowCommunityServers = true;
+    mockFlavor.hosted = true;
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<ServerManagementScreen />);
+
+    await view.findByTestId('default-server-card');
+    expect(view.getByText('default_server_title_hosted')).toBeTruthy();
+    expect(view.getByText('https://hosted.example')).toBeTruthy();
+    expect(view.queryByTestId('add-server-by-url')).toBeNull();
+    expect(lastHeaderActions()).toEqual([]);
   });
 });
 

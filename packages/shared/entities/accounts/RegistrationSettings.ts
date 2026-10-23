@@ -7,6 +7,8 @@ export interface RegistrationSettings {
   maxUsers: number | null;
   autoManage: boolean;
   allowNsfw: boolean;
+  /** The hosted web client asks a new person to sign in or create an account before anything else. */
+  requireAccountOnboarding: boolean;
   defaultTierId: string | null;
   /** ISO-4217 code (`BRL`): the one currency tier prices are expressed in. */
   currency: string;

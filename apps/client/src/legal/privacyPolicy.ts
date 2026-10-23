@@ -1,3 +1,5 @@
+import { KERES_OFFICIAL_HOST } from '@keres/shared';
+
 /**
  * The app's own privacy policy, shown at first install and readable any time from Settings.
  *
@@ -41,7 +43,7 @@ const en: ClientPrivacySection[] = [
   {
     heading: '5. Your rights',
     paragraphs: [
-      'Your work is already yours and portable: stories export to open formats from the app. Data held by a server follows that server policy, including deleting the account and exporting your data. Questions: use the contact form on keres.me.',
+      `Your work is already yours and portable: stories export to open formats from the app. Data held by a server follows that server policy, including deleting the account and exporting your data. Questions: use the contact form on ${KERES_OFFICIAL_HOST}.`,
     ],
   },
   {
@@ -100,7 +102,7 @@ const pt: ClientPrivacySection[] = [
   {
     heading: '5. Seus direitos',
     paragraphs: [
-      'Seu trabalho já é seu e portátil: histórias exportam para formatos abertos no aplicativo. Dados guardados por um servidor seguem a política daquele servidor, incluindo excluir a conta e exportar seus dados. Dúvidas: use o formulário de contato em keres.me.',
+      `Seu trabalho já é seu e portátil: histórias exportam para formatos abertos no aplicativo. Dados guardados por um servidor seguem a política daquele servidor, incluindo excluir a conta e exportar seus dados. Dúvidas: use o formulário de contato em ${KERES_OFFICIAL_HOST}.`,
     ],
   },
   {

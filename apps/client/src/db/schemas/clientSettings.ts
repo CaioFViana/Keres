@@ -27,6 +27,13 @@ export const clientSettings = sqliteTable('client_settings', {
    * sells plans, and only shown while that server answers - a switch so it can never be intrusive.
    */
   warnPaymentDue: integer('warn_payment_due', { mode: 'boolean' }).notNull().default(true),
+  /**
+   * Whether servers other than the official one may be added by address. Off by default: the app points at
+   * the official server, and the add-by-URL form stays out of Server management until this is turned on.
+   */
+  allowCommunityServers: integer('allow_community_servers', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   /** Master switch for the guided first-open tours on this device. */
   showTutorials: integer('show_tutorials', { mode: 'boolean' }).notNull().default(true),
   /** JSON `{version, seen[]}` with the tour ids already completed or skipped (see `tutorialProgress`). */

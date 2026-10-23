@@ -428,6 +428,13 @@
       "when": 1791823938964,
       "tag": "0060_flawless_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1792712346937,
+      "tag": "0061_allow_community_servers",
+      "breakpoints": true
     }
   ]
 }

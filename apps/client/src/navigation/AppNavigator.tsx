@@ -12,8 +12,12 @@ import { useDrizzle } from '@/src/db';
 import { legalIsBehind } from '@/src/legal/clientLegalStatus';
 import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
 import LegalUpdateScreen from '@/src/screens/enter-stack/account/LegalUpdateScreen';
+import RequiredAccountScreen from '@/src/screens/enter-stack/account/RequiredAccountScreen';
 import { getClientSettings } from '@/src/services/account/ClientSettingsService';
+import { fetchAccountRequirement } from '@/src/services/api/AccountRequirementApiService';
 import { VERIFICATION_PENDING_EVENT } from '@/src/services/api/apiClient';
+import { hostedApiOrigin } from '@/src/services/auth/browserCookieSession';
+import { createServerService } from '@/src/services/servers/ServerService';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -28,12 +32,15 @@ import StorySelectionStack, {
   type StorySelectionDrawerParamList,
 } from './stacks/StorySelectionStack';
 import { attachWebHistoryBack, hasScreenBehind } from './links/webHistoryBack';
+import { isHostedByApi } from '@/src/utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
+import type { AppDrizzleClient } from '@/src/db';
 import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
   LegalUpdate: undefined;
+  RequiredAccount: undefined;
   StorySelection: NavigatorScreenParams<StorySelectionDrawerParamList> | undefined;
   MainSystem: undefined;
 };
@@ -54,6 +61,23 @@ async function isLegalUpdateNeeded(): Promise<boolean> {
     return behind.terms || behind.privacy;
   } catch (error) {
     logger.warn('Could not read the accepted legal texts; not asking again now.', error);
+    return false;
+  }
+}
+
+/**
+ * Whether the hosted web client is held at the account gate: the server that serves it asks for an account
+ * and this device has none. Asked only there - every other build never learns what any server wants at
+ * start - and a server that cannot be reached or does not say holds nobody (`fetchAccountRequirement`).
+ */
+async function isAccountGateNeeded(db: AppDrizzleClient): Promise<boolean> {
+  if (!isHostedByApi()) return false;
+  try {
+    const saved = await createServerService(db).getAllServers();
+    if (saved.length > 0) return false;
+    return await fetchAccountRequirement(hostedApiOrigin());
+  } catch (error) {
+    logger.warn('Could not tell whether an account is required; not asking for one.', error);
     return false;
   }
 }
@@ -94,6 +118,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
   const [showcaseReady, setShowcaseReady] = useState(false);
   const [legalUpdateNeeded, setLegalUpdateNeeded] = useState(false);
+  const [accountGateNeeded, setAccountGateNeeded] = useState(false);
   const showcase = readShowcaseRequest();
   const stopWebHistory = useRef<(() => void) | null>(null);
 
@@ -148,6 +173,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
           await initializeUserSettings(drizzleDb);
           await initializeThemeSettings(drizzleDb);
           setLegalUpdateNeeded(await isLegalUpdateNeeded());
+          setAccountGateNeeded(await isAccountGateNeeded(drizzleDb));
           setIsColdInstallNeeded(false);
         }
       } catch (error) {
@@ -177,7 +203,9 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         'MainSystem'
       : legalUpdateNeeded
         ? 'LegalUpdate'
-        : 'StorySelection';
+        : accountGateNeeded
+          ? 'RequiredAccount'
+          : 'StorySelection';
 
   // expo-router/entry used to wrap the whole app in its own navigation container;
   // with the entry registering <App /> directly, the container lives here, owning
@@ -217,6 +245,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         >
           <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
           <RootStack.Screen name="LegalUpdate" component={LegalUpdateScreen} />
+          <RootStack.Screen name="RequiredAccount" component={RequiredAccountScreen} />
           <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
           <RootStack.Screen name="MainSystem" component={MainSystemDrawer} />
         </RootStack.Navigator>

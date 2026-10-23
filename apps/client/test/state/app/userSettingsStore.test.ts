@@ -376,4 +376,75 @@ describe('resetSettings', () => {
     });
     expect(store().tutorialProgress).toEqual({ version: 1, seen: [] });
   });
+
+  it('turns community servers off again', async () => {
+    await store().setAllowCommunityServers(db, true);
+
+    store().resetSettings();
+
+    expect(store().allowCommunityServers).toBe(false);
+  });
+});
+
+describe('allowCommunityServers', () => {
+  it('is off by default, so only the official server is in use', () => {
+    expect(store().allowCommunityServers).toBe(false);
+  });
+
+  it('persists the choice before updating what the screens read', async () => {
+    await store().setAllowCommunityServers(db, true);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      allowCommunityServers: true,
+    });
+    expect(store().allowCommunityServers).toBe(true);
+  });
+
+  it('is still off in the state while the write is in flight', async () => {
+    let seenDuringWrite: boolean | undefined;
+    mockClientSettings.updateClientSettings.mockImplementationOnce(async () => {
+      seenDuringWrite = store().allowCommunityServers;
+    });
+
+    await store().setAllowCommunityServers(db, true);
+
+    expect(seenDuringWrite).toBe(false);
+    expect(store().allowCommunityServers).toBe(true);
+  });
+
+  it('keeps the current choice and propagates the error when the write fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().setAllowCommunityServers(db, true)).rejects.toThrow('banco fora');
+    expect(store().allowCommunityServers).toBe(false);
+  });
+
+  it('is read from what was saved, and off when an older database does not have it yet', async () => {
+    mockClientSettings.getClientSettings.mockResolvedValueOnce({
+      ...SETTINGS,
+      allowCommunityServers: true,
+    });
+    await store().initializeSettings(db);
+    expect(store().allowCommunityServers).toBe(true);
+
+    mockClientSettings.getClientSettings.mockResolvedValueOnce({
+      ...SETTINGS,
+      allowCommunityServers: false,
+    });
+    await store().initializeSettings(db);
+    expect(store().allowCommunityServers).toBe(false);
+
+    await store().setAllowCommunityServers(db, true);
+    mockClientSettings.getClientSettings.mockResolvedValueOnce({ ...SETTINGS });
+    await store().initializeSettings(db);
+    expect(store().allowCommunityServers).toBe(false);
+  });
+
+  it('goes back to off when the settings are reset', async () => {
+    await store().setAllowCommunityServers(db, true);
+
+    store().resetSettings();
+
+    expect(store().allowCommunityServers).toBe(false);
+  });
 });

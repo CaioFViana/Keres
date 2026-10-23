@@ -4,6 +4,7 @@ import FirstStoryStart from '@/src/components/features/story/FirstStoryStart';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { Story } from '@keres/shared/entities/story/Story';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,7 +12,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
+import type { StorySelectionDrawerParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useSyncAccountPrompt } from '@/src/hooks/guides/useSyncAccountPrompt';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
@@ -60,6 +63,8 @@ const StorySelectionScreen = () => {
 
   const { showNotification } = useNotificationStore();
   const [serverNamesById, setServerNamesById] = useState<Record<string, string>>({});
+  // `null` until the servers have been read: the account notice must not mistake "not read yet" for "none".
+  const [serverCount, setServerCount] = useState<number | null>(null);
 
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
@@ -78,6 +83,7 @@ const StorySelectionScreen = () => {
   const fetchServerNames = useCallback(async () => {
     const servers = await serverService.getAllServers();
     setServerNamesById(Object.fromEntries(servers.map((server) => [server.id, server.name])));
+    setServerCount(servers.length);
   }, [serverService]);
 
   useEffect(() => {
@@ -144,6 +150,13 @@ const StorySelectionScreen = () => {
     },
     [navigation, setSelectedStory, setTheme],
   );
+
+  const openServerManagement = useCallback(() => {
+    navigation
+      .getParent<DrawerNavigationProp<StorySelectionDrawerParamList>>()
+      ?.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
+  }, [navigation]);
+  useSyncAccountPrompt(serverCount, openServerManagement);
 
   const handleCreateNewStory = useCallback(() => {
     navigation.navigate('StoryForm', {});

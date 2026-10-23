@@ -63,6 +63,7 @@ export function RegistrationSettingsPage() {
         maxUsers: settings.maxUsers,
         autoManage: settings.autoManage,
         allowNsfw: settings.allowNsfw,
+        requireAccountOnboarding: settings.requireAccountOnboarding,
         defaultTierId: settings.defaultTierId,
         currency: settings.currency,
         tiersDisplay: settings.tiersDisplay,
@@ -132,6 +133,18 @@ export function RegistrationSettingsPage() {
                   {t('settings.registrationOpen')}
                 </label>
               )}
+
+              <label className="checkbox-label switch">
+                <input
+                  type="checkbox"
+                  checked={settings.requireAccountOnboarding}
+                  onChange={(e) =>
+                    setSettings({ ...settings, requireAccountOnboarding: e.target.checked })
+                  }
+                />
+                {t('settings.requireAccountOnboarding')}{' '}
+                <span className="hint">{t('settings.requireAccountOnboardingHint')}</span>
+              </label>
 
               <label className="checkbox-label switch">
                 <input

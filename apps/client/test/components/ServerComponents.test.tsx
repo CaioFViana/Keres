@@ -243,4 +243,35 @@ describe('ServerRegistrationFields', () => {
     });
     expect(props.onPasswordChange).toHaveBeenCalledWith('n3w');
   });
+
+  it('keeps the address and the name editable when the address is not locked', async () => {
+    const screen = await render(
+      <ServerRegistrationFields {...fieldsProps()} addressLocked={false} />,
+    );
+
+    expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(true);
+    expect(screen.getByText('server_name_optional')).toBeTruthy();
+    expect(screen.queryByText('official_server_registration_description')).toBeNull();
+  });
+
+  it('locks the address and hides the name when only the official server is available', async () => {
+    const screen = await render(<ServerRegistrationFields {...fieldsProps()} addressLocked />);
+
+    expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(false);
+    expect(screen.queryByText('server_name_optional')).toBeNull();
+    expect(screen.queryByTestId('input-server_name_placeholder')).toBeNull();
+    expect(screen.getByText('official_server_registration_description')).toBeTruthy();
+    expect(screen.getByText('server_address')).toBeTruthy();
+    expect(screen.getByText('username')).toBeTruthy();
+  });
+
+  it('does not show the official-server line on a hosted same-origin app', async () => {
+    const screen = await render(
+      <ServerRegistrationFields {...fieldsProps()} hostedSameOrigin addressLocked />,
+    );
+
+    expect(screen.queryByText('official_server_registration_description')).toBeNull();
+    expect(screen.getByText('hosted_web_same_origin_notice')).toBeTruthy();
+    expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(false);
+  });
 });

@@ -7,12 +7,14 @@ const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
-const mockRoute: { params?: { serverId?: string } } = { params: {} };
+const mockRoute: { params?: { serverId?: string; address?: string } } = { params: {} };
 const mockReplace = jest.fn();
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
   goBack: (...args: unknown[]) => mockGoBack(...args),
   navigate: (...args: unknown[]) => mockNavigate(...args),
   replace: (...args: unknown[]) => mockReplace(...args),
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
 };
 const mockDrizzle = {};
 const mockServerService = {
@@ -50,6 +52,8 @@ const mockColors = {
 };
 const mockUserSettings = {
   userId: 'user-1',
+  // On: the tests below predate the official-server-only mode, and keep the address the person types.
+  allowCommunityServers: true,
   setActiveServer: (...args: unknown[]) => mockSetActiveServer(...args),
 };
 
@@ -255,6 +259,7 @@ async function fillLogin(view: { getByTestId: (id: string) => unknown }) {
 describe('ServerRegistrationScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUserSettings.allowCommunityServers = true;
     mockRoute.params = {};
     mockCookie.hosted = false;
     mockCookie.origin = null;
@@ -758,6 +763,76 @@ describe('ServerRegistrationScreen', () => {
 
       await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
       expect(mockReplace).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when community servers are off', () => {
+    beforeEach(() => {
+      mockUserSettings.allowCommunityServers = false;
+    });
+
+    const regFields = (view: { getByTestId: (id: string) => { props: { children?: unknown } } }) =>
+      JSON.parse(view.getByTestId('reg-fields').props.children as string) as {
+        address: string;
+        serverId: string | null;
+      };
+
+    it('locks the address of a new server to the official server, and saves to it', async () => {
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      expect(regFields(view).address).toBe('https://keres.me');
+
+      await fillLogin(view);
+      await fireEvent.press(view.getByText('register_server'));
+
+      await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+      expect(mockAuthenticate).toHaveBeenCalledWith(
+        expect.objectContaining({ address: 'https://keres.me' }),
+      );
+      expect(mockServerService.getServerByUrl).toHaveBeenCalledWith('https://keres.me');
+      expect(mockServerService.createServer).toHaveBeenCalledWith(
+        expect.objectContaining({ url: 'https://keres.me' }),
+      );
+    });
+
+    it('shows a block instead of the form for another address, and opens Settings from it', async () => {
+      mockRoute.params = { address: 'https://other.example' };
+      const view = await render(<ServerRegistrationScreen />);
+
+      await view.findByText('community_server_blocked');
+      expect(view.queryByTestId('reg-fields')).toBeNull();
+      expect(view.queryByText('register_server')).toBeNull();
+      expect(mockAuthenticate).not.toHaveBeenCalled();
+
+      await fireEvent.press(view.getByTestId('community-server-open-settings'));
+      expect(mockParentNavigate).toHaveBeenCalledWith('Settings', { screen: 'SettingsHome' });
+    });
+
+    it('shows the normal form when the suggested address is the official server, written another way', async () => {
+      mockRoute.params = { address: 'https://keres.me/' };
+      const view = await render(<ServerRegistrationScreen />);
+
+      await view.findByText('register_server');
+      expect(view.queryByText('community_server_blocked')).toBeNull();
+      expect(regFields(view).address).toBe('https://keres.me');
+    });
+
+    it('keeps the origin as the address on the hosted web client, whatever the setting says', async () => {
+      mockCookie.hosted = true;
+      mockCookie.origin = 'https://host.example';
+      mockRoute.params = { address: 'https://other.example' };
+      const view = await render(<ServerRegistrationScreen />);
+
+      await view.findByText('register_server');
+      expect(view.queryByText('community_server_blocked')).toBeNull();
+      expect(regFields(view).address).toBe('https://host.example');
+
+      await fillLogin(view);
+      await fireEvent.press(view.getByText('register_server'));
+      await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+      expect(mockAuthenticate).toHaveBeenCalledWith(
+        expect.objectContaining({ address: 'https://host.example' }),
+      );
     });
   });
 });

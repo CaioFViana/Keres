@@ -65,9 +65,22 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
 }));
 
 const mockFlavor = { current: 'native' as 'native' | 'desktop' | 'web' | 'serverless-web' };
+const mockHosted = { current: false };
 jest.mock('@/src/utils/platform/clientFlavor', () => ({
   ...jest.requireActual('@/src/utils/platform/clientFlavor'),
   getClientFlavor: () => mockFlavor.current,
+  isHostedByApi: () => mockHosted.current,
+}));
+
+const mockFetchAccountRequirement = jest.fn();
+jest.mock('@/src/services/api/AccountRequirementApiService', () => ({
+  __esModule: true,
+  fetchAccountRequirement: (...args: unknown[]) => mockFetchAccountRequirement(...args),
+}));
+
+jest.mock('@/src/services/auth/browserCookieSession', () => ({
+  ...jest.requireActual('@/src/services/auth/browserCookieSession'),
+  hostedApiOrigin: () => 'https://host.example',
 }));
 
 jest.mock('@react-navigation/native', () => ({
@@ -244,6 +257,8 @@ describe('ColdInstallScreen', () => {
     mockBindDatabase.mockResolvedValue(undefined);
     mockInitializeSettings.mockResolvedValue(undefined);
     mockInitializeTheme.mockResolvedValue(undefined);
+    mockHosted.current = false;
+    mockFetchAccountRequirement.mockResolvedValue(false);
   });
 
   afterEach(async () => {
@@ -591,5 +606,49 @@ describe('ColdInstallScreen', () => {
       ),
     );
     expect(view.getByText('welcome_privacy_accepted')).toBeTruthy();
+  });
+
+  describe('account requirement after the profile is made', () => {
+    /** Fills the welcome in and proceeds, leaving the screen to the navigator's next step. */
+    const provisionProfile = async (view: Awaited<ReturnType<typeof render>>) => {
+      await view.findByText('welcome');
+      await fireEvent.press(view.getByTestId('language-en'));
+      await goToNameStep(view);
+      await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+      await acceptLegal(view);
+      await fireEvent.press(view.getByText('enabled:proceed'));
+      await waitFor(() => expect(mockReplace).toHaveBeenCalled());
+    };
+
+    it('does not ask the server when the app is not the hosted web client', async () => {
+      mockHosted.current = false;
+      const view = await render(<ColdInstallScreen />);
+      await provisionProfile(view);
+
+      expect(mockFetchAccountRequirement).not.toHaveBeenCalled();
+      expect(mockReplace).toHaveBeenCalledWith('StorySelection');
+    });
+
+    it('goes to the required account when the hosted server asks for one', async () => {
+      mockHosted.current = true;
+      mockFetchAccountRequirement.mockResolvedValue(true);
+      const view = await render(<ColdInstallScreen />);
+      await provisionProfile(view);
+
+      expect(mockFetchAccountRequirement).toHaveBeenCalledWith('https://host.example');
+      expect(mockReplace).toHaveBeenCalledWith('RequiredAccount');
+      expect(mockReplace).not.toHaveBeenCalledWith('StorySelection');
+    });
+
+    it('goes to story selection when the hosted server does not ask for an account', async () => {
+      mockHosted.current = true;
+      mockFetchAccountRequirement.mockResolvedValue(false);
+      const view = await render(<ColdInstallScreen />);
+      await provisionProfile(view);
+
+      expect(mockFetchAccountRequirement).toHaveBeenCalledWith('https://host.example');
+      expect(mockReplace).toHaveBeenCalledWith('StorySelection');
+      expect(mockReplace).not.toHaveBeenCalledWith('RequiredAccount');
+    });
   });
 });

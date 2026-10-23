@@ -28,6 +28,12 @@ export const registrationSettings = table('registration_settings', {
    * publication, never trusted from the client.
    */
   allowNsfw: boolean('allow_nsfw').notNull().default(false),
+  /**
+   * Whether the hosted web client (the one this server serves) sends a new person to create or sign in
+   * to an account before they reach their stories. Off by default; read by the client from
+   * `/api/public/config`, never enforced here - sync already needs an account.
+   */
+  requireAccountOnboarding: boolean('require_account_onboarding').notNull().default(false),
   defaultTierId: text('default_tier_id').references(() => tiers.id),
   /** ISO-4217 code: the one currency tier prices are expressed in, system-wide. */
   currency: text('currency').notNull().default('BRL'),

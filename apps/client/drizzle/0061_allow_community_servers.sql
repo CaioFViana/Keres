@@ -1,0 +1,1 @@
+ALTER TABLE `client_settings` ADD `allow_community_servers` integer DEFAULT false NOT NULL;

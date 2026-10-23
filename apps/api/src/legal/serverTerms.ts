@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { AgeVerificationMode } from '@keres/shared';
+import { type AgeVerificationMode, KERES_OFFICIAL_HOST } from '@keres/shared';
 
 /**
  * The server's terms of service, served at `GET /api/keres-tos`.
@@ -179,7 +179,7 @@ const en: ServerTermsText = {
   operator: {
     heading: '11. Operator, privacy and law',
     paragraphs: [
-      "How your data is handled is in the privacy policy, readable before registration and in the server details. Questions about privacy, your data or these terms: use the contact form this server's operator publishes (on the official server, the contact form on keres.me). These terms follow Brazilian law.",
+      `How your data is handled is in the privacy policy, readable before registration and in the server details. Questions about privacy, your data or these terms: use the contact form this server's operator publishes (on the official server, the contact form on ${KERES_OFFICIAL_HOST}). These terms follow Brazilian law.`,
     ],
   },
 };
@@ -306,7 +306,7 @@ const pt: ServerTermsText = {
   operator: {
     heading: '11. Operador, privacidade e lei',
     paragraphs: [
-      'Como seus dados são tratados está na política de privacidade, legível antes do cadastro e nos detalhes do servidor. Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato que o operador deste servidor publica (no servidor oficial, o formulário de contato em keres.me). Estes termos seguem a lei brasileira.',
+      `Como seus dados são tratados está na política de privacidade, legível antes do cadastro e nos detalhes do servidor. Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato que o operador deste servidor publica (no servidor oficial, o formulário de contato em ${KERES_OFFICIAL_HOST}). Estes termos seguem a lei brasileira.`,
     ],
   },
 };

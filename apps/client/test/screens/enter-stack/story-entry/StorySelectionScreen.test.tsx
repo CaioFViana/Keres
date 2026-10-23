@@ -98,6 +98,11 @@ jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
+const mockUseSyncAccountPrompt = jest.fn();
+jest.mock('@/src/hooks/guides/useSyncAccountPrompt', () => ({
+  useSyncAccountPrompt: (...args: unknown[]) => mockUseSyncAccountPrompt(...args),
+}));
+
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
@@ -245,6 +250,37 @@ describe('StorySelectionScreen', () => {
   afterEach(async () => {
     await cleanup();
     jest.restoreAllMocks();
+  });
+
+  it('hands the account notice the server count only once the servers are read, with a way to server management', async () => {
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<StorySelectionScreen />);
+    await view.findByTestId('story-story-1');
+
+    // Before the read the count is unknown, not zero: the notice must wait.
+    expect(mockUseSyncAccountPrompt.mock.calls[0][0]).toBeNull();
+    await waitFor(() =>
+      expect(mockUseSyncAccountPrompt).toHaveBeenLastCalledWith(0, expect.any(Function)),
+    );
+
+    const openServers = mockUseSyncAccountPrompt.mock.calls.at(-1)?.[1] as () => void;
+    openServers();
+    expect(mockParentNavigate).toHaveBeenCalledWith('ServerManagementDrawer', {
+      screen: 'ServerManagement',
+    });
+  });
+
+  it('counts the servers this device knows when handing them to the account notice', async () => {
+    mockGetAllServers.mockResolvedValue([
+      { id: 'srv-1', name: 'Main' },
+      { id: 'srv-2', name: 'Other' },
+    ]);
+    const view = await render(<StorySelectionScreen />);
+    await view.findByTestId('story-story-1');
+
+    await waitFor(() =>
+      expect(mockUseSyncAccountPrompt).toHaveBeenLastCalledWith(2, expect.any(Function)),
+    );
   });
 
   it('loads stories, summary and server names on focus', async () => {

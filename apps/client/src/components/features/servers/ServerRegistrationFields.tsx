@@ -20,6 +20,8 @@ interface ServerRegistrationFieldsProps {
   mode: ServerAuthMode;
   onModeChange: (mode: ServerAuthMode) => void;
   hostedSameOrigin: boolean;
+  /** Only the default server is available (community servers are off): the address and name are not asked for. */
+  addressLocked?: boolean;
   serverAddress: string;
   onServerAddressChange: (value: string) => void;
   serverName: string;
@@ -40,6 +42,7 @@ export default function ServerRegistrationFields({
   mode,
   onModeChange,
   hostedSameOrigin,
+  addressLocked = false,
   serverAddress,
   onServerAddressChange,
   serverName,
@@ -108,6 +111,12 @@ export default function ServerRegistrationFields({
         </Text>
       )}
 
+      {addressLocked && !hostedSameOrigin && !serverId && (
+        <Text style={[styles.hostedNotice, { color: colors.textSecondary }]}>
+          {t('official_server_registration_description')}
+        </Text>
+      )}
+
       <FormField label={t('server_address')}>
         {(fieldAccessibility) => (
           <TextInput
@@ -118,22 +127,24 @@ export default function ServerRegistrationFields({
             style={inputStyle}
             keyboardType="url"
             autoCapitalize="none"
-            editable={!hostedSameOrigin}
+            editable={!hostedSameOrigin && !addressLocked}
           />
         )}
       </FormField>
 
-      <FormField label={t('server_name_optional')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('server_name_placeholder')}
-            value={serverName}
-            onChangeText={onServerNameChange}
-            style={inputStyle}
-          />
-        )}
-      </FormField>
+      {(!addressLocked || !!serverId) && (
+        <FormField label={t('server_name_optional')}>
+          {(fieldAccessibility) => (
+            <TextInput
+              {...fieldAccessibility}
+              placeholder={t('server_name_placeholder')}
+              value={serverName}
+              onChangeText={onServerNameChange}
+              style={inputStyle}
+            />
+          )}
+        </FormField>
+      )}
 
       <FormField label={t('username')}>
         {(fieldAccessibility) => (

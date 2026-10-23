@@ -33,6 +33,7 @@ const settings = (over: Record<string, unknown> = {}) => ({
   autoManage: false,
   maxUsers: null,
   allowNsfw: false,
+  requireAccountOnboarding: false,
   defaultTierId: null,
   currency: 'BRL',
   tiersDisplay: 'sale',

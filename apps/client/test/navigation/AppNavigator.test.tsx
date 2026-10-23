@@ -68,6 +68,27 @@ jest.mock('@/src/legal/clientTermsAcceptance', () => ({
   __esModule: true,
   getAcceptedClientLegal: jest.fn(),
 }));
+const mockHosted = { current: false };
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/platform/clientFlavor'),
+  isHostedByApi: () => mockHosted.current,
+}));
+const mockGetAllServers = jest.fn();
+jest.mock('@/src/services/servers/ServerService', () => ({
+  ...jest.requireActual('@/src/services/servers/ServerService'),
+  createServerService: () => ({
+    getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
+  }),
+}));
+const mockFetchAccountRequirement = jest.fn();
+jest.mock('@/src/services/api/AccountRequirementApiService', () => ({
+  __esModule: true,
+  fetchAccountRequirement: (...args: unknown[]) => mockFetchAccountRequirement(...args),
+}));
+jest.mock('@/src/services/auth/browserCookieSession', () => ({
+  ...jest.requireActual('@/src/services/auth/browserCookieSession'),
+  hostedApiOrigin: () => 'https://host.example',
+}));
 
 const db = { marker: 'db' };
 
@@ -99,6 +120,10 @@ beforeEach(() => {
   acceptedLegal({ terms: CLIENT_TERMS_VERSION, privacy: CLIENT_PRIVACY_VERSION });
   initializeSettings.mockResolvedValue(undefined);
   initializeTheme.mockResolvedValue(undefined);
+  // Not the hosted web client, unless a test says so; with no account gate asked for, the navigator opens as before.
+  mockHosted.current = false;
+  mockGetAllServers.mockResolvedValue([]);
+  mockFetchAccountRequirement.mockResolvedValue(false);
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -129,6 +154,7 @@ it('starts at story selection after initializing persisted user and theme settin
   expect(mockScreens.map((screen) => screen.name)).toEqual([
     'ColdInstall',
     'LegalUpdate',
+    'RequiredAccount',
     'StorySelection',
     'MainSystem',
   ]);
@@ -205,5 +231,76 @@ describe('legal texts on reopen', () => {
 
     expect(getAcceptedClientLegal).not.toHaveBeenCalled();
     expect(rootNavigator()).toMatchObject({ initialRouteName: 'ColdInstall' });
+  });
+});
+
+describe('account gate on the hosted web client', () => {
+  it('starts at the required account when the hosted server asks for one and this device has no server', async () => {
+    mockHosted.current = true;
+    mockFetchAccountRequirement.mockResolvedValue(true);
+    await renderNavigator();
+
+    expect(mockFetchAccountRequirement).toHaveBeenCalledWith('https://host.example');
+    expect(rootNavigator()).toMatchObject({ initialRouteName: 'RequiredAccount' });
+  });
+
+  it('starts at story selection without asking the server when a server is already saved here', async () => {
+    mockHosted.current = true;
+    mockGetAllServers.mockResolvedValue([{ id: 'srv-1', url: 'https://host.example' }]);
+    mockFetchAccountRequirement.mockResolvedValue(true);
+    await renderNavigator();
+
+    expect(mockFetchAccountRequirement).not.toHaveBeenCalled();
+    expect(rootNavigator()).toMatchObject({ initialRouteName: 'StorySelection' });
+  });
+
+  it('never asks a server outside the hosted web client', async () => {
+    mockHosted.current = false;
+    mockFetchAccountRequirement.mockResolvedValue(true);
+    await renderNavigator();
+
+    expect(mockGetAllServers).not.toHaveBeenCalled();
+    expect(mockFetchAccountRequirement).not.toHaveBeenCalled();
+    expect(rootNavigator()).toMatchObject({ initialRouteName: 'StorySelection' });
+  });
+
+  it('starts at story selection when the server does not ask for an account', async () => {
+    mockHosted.current = true;
+    mockFetchAccountRequirement.mockResolvedValue(false);
+    await renderNavigator();
+
+    expect(mockFetchAccountRequirement).toHaveBeenCalledWith('https://host.example');
+    expect(rootNavigator()).toMatchObject({ initialRouteName: 'StorySelection' });
+  });
+
+  it('starts at story selection, with the reason logged, when the saved servers cannot be read', async () => {
+    mockHosted.current = true;
+    mockFetchAccountRequirement.mockResolvedValue(true);
+    const failure = new Error('servers unavailable');
+    mockGetAllServers.mockRejectedValue(failure);
+    const warned = jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    await renderNavigator();
+
+    expect(mockFetchAccountRequirement).not.toHaveBeenCalled();
+    expect(rootNavigator()).toMatchObject({ initialRouteName: 'StorySelection' });
+    expect(warned).toHaveBeenCalledWith(
+      'Could not tell whether an account is required; not asking for one.',
+      failure,
+    );
+  });
+
+  it('shows the legal update before the account gate when both are due', async () => {
+    mockHosted.current = true;
+    mockFetchAccountRequirement.mockResolvedValue(true);
+    acceptedLegal({ terms: CLIENT_TERMS_VERSION - 1, privacy: CLIENT_PRIVACY_VERSION });
+    await renderNavigator();
+
+    expect(rootNavigator()).toMatchObject({ initialRouteName: 'LegalUpdate' });
+  });
+
+  it('registers the required account screen among the root screens', async () => {
+    await renderNavigator();
+
+    expect(mockScreens.map((screen) => screen.name)).toContain('RequiredAccount');
   });
 });

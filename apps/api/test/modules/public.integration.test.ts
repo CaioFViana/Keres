@@ -6,7 +6,7 @@ import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSetti
 import { showcaseService } from '@/services/showcase/ShowcaseService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { installBunShim } from '@test/helpers/bunShim';
-import { truncateAll } from '@test/helpers/database';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();
@@ -69,6 +69,23 @@ describe('GET /public/config', () => {
   it('advertises client-compiled uploads', async () => {
     const { data } = await request('GET', '/public/config');
     expect(data.compiledUpload).toBe(true);
+  });
+
+  it('says whether a new person must sign in or register first, and follows the admin setting', async () => {
+    const before = await request('GET', '/public/config');
+    expect(before.status).toBe(200);
+    expect(before.data.requireAccountOnboarding).toBe(false);
+
+    const admin = await registerUser('root');
+    await promoteToAdmin(admin.userId);
+    const put = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { requireAccountOnboarding: true },
+    });
+    expect(put.status).toBe(200);
+
+    const after = await request('GET', '/public/config');
+    expect(after.data.requireAccountOnboarding).toBe(true);
   });
 });
 

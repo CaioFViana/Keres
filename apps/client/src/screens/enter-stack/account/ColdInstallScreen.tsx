@@ -42,6 +42,8 @@ import { migrate } from '@/src/db/migrate';
 import { setAuthDb } from '@/src/services/auth/AuthTokenManager';
 import { setEditorDraftDb } from '@/src/services/drafts/EditorDraftService';
 import { createClientSettings } from '@/src/services/account/ClientSettingsService';
+import { fetchAccountRequirement } from '@/src/services/api/AccountRequirementApiService';
+import { hostedApiOrigin } from '@/src/services/auth/browserCookieSession';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useThemeStore } from '@/src/state/ui/themeStore';
@@ -49,7 +51,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { getClientFlavor } from '@/src/utils/platform/clientFlavor';
+import { getClientFlavor, isHostedByApi } from '@/src/utils/platform/clientFlavor';
 import { useDocumentTitle } from '@/src/utils/nav/documentTitle';
 import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
 import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
@@ -57,6 +59,7 @@ import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type RootStackParamList = {
   ColdInstall: undefined;
+  RequiredAccount: undefined;
   StorySelection: undefined;
   MainSystem: undefined;
 };
@@ -146,6 +149,8 @@ const ColdInstallScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
 
   const backPressTimer = useRef<number | null>(null);
+  // The profile is created once: the server question at the end waits on the network, and a second tap meanwhile must not start over.
+  const proceeding = useRef(false);
   const flavor = getClientFlavor();
   // From a tablet up the picture sits beside the text instead of over it, and the welcome gets the
   // room for that: one design for a phone held upright is not what a desktop window should show.
@@ -202,10 +207,19 @@ const ColdInstallScreen = () => {
       setUsernameError(null);
     }
 
-    if (!isValid) {
+    if (!isValid || proceeding.current) {
       return;
     }
+    proceeding.current = true;
+    try {
+      await createProfile();
+    } catch (error) {
+      proceeding.current = false;
+      throw error;
+    }
+  };
 
+  const createProfile = async () => {
     // Run database migrations first
     await migrate(db);
 
@@ -232,7 +246,10 @@ const ColdInstallScreen = () => {
     await initializeUserSettings(drizzleDb);
     await initializeThemeSettings(drizzleDb);
 
-    navigation.replace('StorySelection');
+    // The server that serves the hosted client may ask for an account before anything else. Only that
+    // build asks (the apps never learn what a server wants at install), and an unreachable server asks nothing.
+    const accountRequired = isHostedByApi() && (await fetchAccountRequirement(hostedApiOrigin()));
+    navigation.replace(accountRequired ? 'RequiredAccount' : 'StorySelection');
   };
 
   const handleLanguageChange = (itemValue: string | null) => {

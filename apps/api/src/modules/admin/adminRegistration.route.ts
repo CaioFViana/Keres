@@ -56,6 +56,7 @@ export const adminRegistrationRoutes = new Elysia()
         maxUsers: t.Optional(t.Nullable(t.Number())),
         autoManage: t.Optional(t.Boolean()),
         allowNsfw: t.Optional(t.Boolean()),
+        requireAccountOnboarding: t.Optional(t.Boolean()),
         defaultTierId: t.Optional(t.Nullable(t.String())),
         currency: t.Optional(t.String()),
         // A string, not a union: the Zod schema is the gate, and an unknown mode answers 400 like the other fields.

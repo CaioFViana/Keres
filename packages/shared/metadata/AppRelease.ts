@@ -17,6 +17,14 @@ export const APP_RELEASE = {
     'The first woman to exist. From her grand curiosity a never ending curse, as the world wont go back to what it was ever again.',
 } as const;
 
+/**
+ * The official Keres server: where the apps point by default, and the address the legal texts give for
+ * contact. `apps/site` ships without this package and keeps its own copy (`content/links.ts`), pinned
+ * to this one by a test.
+ */
+export const KERES_OFFICIAL_HOST = 'keres.me';
+export const KERES_OFFICIAL_URL = `https://${KERES_OFFICIAL_HOST}`;
+
 /** Where the source lives; the credits screen links out to it. */
 export const KERES_REPOSITORY_URL = 'https://github.com/CaioFViana/Keres';
 

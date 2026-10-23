@@ -484,6 +484,13 @@
       "when": 1792588061616,
       "tag": "0068_user_public_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "6",
+      "when": 1792712304397,
+      "tag": "0069_registration_require_account",
+      "breakpoints": true
     }
   ]
 }

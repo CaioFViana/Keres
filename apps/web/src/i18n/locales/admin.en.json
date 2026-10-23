@@ -569,6 +569,8 @@
     "registration": "Registration",
     "autoManage": "Auto-manage open/closed based on max users",
     "registrationOpen": "Registration open",
+    "requireAccountOnboarding": "Require an account on first use of the web client",
+    "requireAccountOnboardingHint": "The hosted web client sends a new person to sign in or create an account before their stories. Apps and other builds are not affected.",
     "allowNsfw": "Allow adults-only (+18) content",
     "allowNsfwHint": "Verified adults may flag and publish +18 stories. Off keeps the server free of mature content.",
     "allowNsfwVerifiedOnly": "Adults-only stories are open only to verified accounts.",

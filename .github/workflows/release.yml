@@ -37,23 +37,50 @@ jobs:
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
   # Validate the complete monorepo once before starting the platform-specific release builds.
-  verify:
+  #
+  # The same `release:check --ci` you run on your machine before creating the tag (translations,
+  # typecheck, lint, formatting, version alignment, unit suites with coverage), cut into slices
+  # that run side by side: one for what belongs to no package, one per package. As a single chain
+  # the packages' typechecks, lints and suites added up (the client's lint alone is minutes); cut
+  # up, the check takes as long as the slowest slice. `verify` below is the gate the builds wait on.
+  #
+  # The integration suites stay out on purpose: they need Postgres and SeaweedFS up and have
+  # their own job in ci.yml, which is where a regression should show up - before the release,
+  # not during it.
+  verify-static:
+    name: verify (static)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun install --frozen-lockfile
-      # A single command, the same one you run on your machine before creating the tag:
-      # translations, typecheck, lint, formatting, version alignment, and the unit suites with
-      # coverage. Version alignment is what was missing here - a tag whose `AppRelease.ts` fell
-      # behind now fails before any artifact is compiled, instead of shipping a whole release
+      # Version alignment is what was missing once - a tag whose `AppRelease.ts` fell behind
+      # fails here, before any artifact is compiled, instead of shipping a whole release
       # reporting the wrong version.
-      # The integration suites stay out on purpose: they need Postgres and SeaweedFS up and have
-      # their own job in ci.yml, which is where a regression should show up - before the release,
-      # not during it.
-      - run: bun run release:check --ci
+      - run: bun run release:check --ci --only static
+
+  verify-package:
+    strategy:
+      # A red client must not hide a red api: every package reports its own result.
+      fail-fast: false
+      matrix:
+        name: [shared, client, api, payments, verification, web, desktop, site]
+    name: verify (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run release:check --ci --only ${{ matrix.name }}
+
+  # One name for the builds to wait on, whatever the number of slices above.
+  verify:
+    needs: [verify-static, verify-package]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Every verification slice passed."
 
   # ---- Server: build + publish the API's Docker image to GHCR ----
   docker:

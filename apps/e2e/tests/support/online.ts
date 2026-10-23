@@ -8,10 +8,11 @@ export const PASSWORD = 'Correct-Horse-9-Battery';
 /** What the hosted client logs while nobody is signed in: its first probe of the session answers 401. */
 export const EXPECTED_BEFORE_SIGN_IN = [/status of 401/];
 
+/** Server management with no account yet opens on the invitation to the one server a browser can use. */
 async function openRegisterServer(page: Page) {
   await page.getByTestId('drawer-item-ServerManagementDrawer').click();
   await dismissTour(page);
-  await page.getByLabel('Register New Server').click();
+  await page.getByTestId('default-server-cta').click();
   await dismissTour(page);
 }
 
@@ -38,7 +39,7 @@ export async function createAccount(page: Page, username: string) {
   await page.getByPlaceholder('Enter your password').fill(PASSWORD);
   await page.getByPlaceholder('Re-enter your new password').fill(PASSWORD);
   await page.getByTestId('server-register-adult-switch').click();
-  await page.getByRole('button', { name: 'Create Account' }).last().click();
+  await page.getByRole('button', { name: 'Create Account', exact: true }).last().click();
   await acceptServerDocument(page, 'terms');
   await acceptServerDocument(page, 'privacy');
   await page.getByText('Server registered successfully!').waitFor();

@@ -245,6 +245,19 @@ describe('ServerDetailScreen', () => {
     expect(mockUseScreenHeader.mock.calls.at(-1)![0].title).toBe('official_server_name');
   });
 
+  it('puts the actions that take the account or the server away last, the server itself at the very end', async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByTestId('server-action-connection');
+
+    const order = view.getAllByTestId(/^server-action-/).map((node) => node.props.testID as string);
+    expect(order.at(-1)).toBe('server-action-delete');
+    expect(order.at(-2)).toBe('server-action-delete-account');
+    // Connection settings are something to reach, not something to risk: before the data and the deletions.
+    expect(order.indexOf('server-action-connection')).toBeLessThan(
+      order.indexOf('server-action-export-data'),
+    );
+  });
+
   it('says so when the server never synchronised, and when it does not answer', async () => {
     mockGetAllServers.mockResolvedValue([{ ...server, lastSyncDate: null, tag: null }]);
     mockApiGet.mockRejectedValue(new Error('down'));

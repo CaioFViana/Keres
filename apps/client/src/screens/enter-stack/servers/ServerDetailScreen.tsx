@@ -516,6 +516,13 @@ const ServerDetailScreen = () => {
         />
       ) : null}
       <ServerActionRow
+        icon="create-outline"
+        title={t('server_action_connection')}
+        description={t('server_action_connection_hint')}
+        onPress={() => navigation.navigate('ServerRegistration', { serverId })}
+        testID="server-action-connection"
+      />
+      <ServerActionRow
         icon="download-outline"
         title={t('server_action_export_data')}
         description={t('server_action_export_data_hint')}
@@ -532,13 +539,6 @@ const ServerDetailScreen = () => {
           setDeleteVisible(true);
         }}
         testID="server-action-delete-account"
-      />
-      <ServerActionRow
-        icon="create-outline"
-        title={t('server_action_connection')}
-        description={t('server_action_connection_hint')}
-        onPress={() => navigation.navigate('ServerRegistration', { serverId })}
-        testID="server-action-connection"
       />
       <ServerActionRow
         icon="trash-outline"

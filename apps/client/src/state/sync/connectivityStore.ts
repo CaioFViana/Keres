@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 import i18n from '@/src/utils/format/i18n';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 
@@ -14,8 +15,11 @@ interface ConnectivityState {
   reset: () => void;
 }
 
+// The name arrives as saved - for the official server that is its address: it is named from the translation.
 const label = (key: string, serverName?: string | null) =>
-  serverName ? `${i18n.t(key)}: ${serverName}` : i18n.t(key);
+  serverName
+    ? `${i18n.t(key)}: ${serverDisplayName({ name: serverName, url: serverName }, (k) => i18n.t(k))}`
+    : i18n.t(key);
 
 /**
  * Tracks whether each server is currently reachable, so the app can tell the user about

@@ -23,6 +23,7 @@ import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/comm
 import { useFriendshipFormActions } from './useFriendshipFormActions';
 import { useFriendshipFormResources } from './useFriendshipFormResources';
 import { useFriendshipFormState } from './useFriendshipFormState';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -110,7 +111,9 @@ const FriendshipFormScreen = () => {
         {servers.length > 1 ? (
           <SingleSelectPill
             options={servers.map((server) => ({
-              label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
+              label: server.tag
+                ? `@${server.tag} — ${serverDisplayName(server, t)}`
+                : serverDisplayName(server, t),
               value: server.id,
             }))}
             value={selectedServerId || null}
@@ -122,7 +125,7 @@ const FriendshipFormScreen = () => {
           <View style={styles.oneServer} testID="friend-form-server">
             <Ionicons name="cloud-outline" size={20} color={colors.textSecondary} />
             <Text style={[styles.oneServerText, { color: colors.text }]}>
-              {selectedServer?.name ?? ''}
+              {selectedServer ? serverDisplayName(selectedServer, t) : ''}
             </Text>
           </View>
         )}
@@ -158,7 +161,10 @@ const FriendshipFormScreen = () => {
           <>
             <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
             <Text style={[styles.statusText, { color: colors.text }]}>
-              {t('friend_form_found', { name: friendUsername, server: selectedServer?.name ?? '' })}
+              {t('friend_form_found', {
+                name: friendUsername,
+                server: selectedServer ? serverDisplayName(selectedServer, t) : '',
+              })}
             </Text>
           </>
         )}
@@ -166,7 +172,9 @@ const FriendshipFormScreen = () => {
           <>
             <Ionicons name="close-circle" size={20} color={colors.error} />
             <Text style={[styles.statusText, { color: colors.error }]}>
-              {t('friend_form_not_found', { server: selectedServer?.name ?? '' })}
+              {t('friend_form_not_found', {
+                server: selectedServer ? serverDisplayName(selectedServer, t) : '',
+              })}
             </Text>
           </>
         )}

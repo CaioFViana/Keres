@@ -42,6 +42,7 @@ import { logger } from '@/src/utils/logging/logger';
 import { usePagedShowcase } from './usePagedShowcase';
 import { useShowcasePacks } from './useShowcasePacks';
 import { useShowcaseSource } from './useShowcaseSource';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type Route = RouteProp<ShowcaseStackParamList, 'ShowcaseBrowse'>;
 type Navigation = NativeStackNavigationProp<ShowcaseStackParamList, 'ShowcaseBrowse'>;
@@ -69,7 +70,7 @@ const ShowcaseBrowseScreen = () => {
 
   const title =
     source?.kind === 'server'
-      ? (source.server.name ?? source.server.url)
+      ? serverDisplayName(source.server, t)
       : sourceKey.replace(/^https?:\/\//, '') || t('showcase_title');
   useScreenHeader({ target: 'parent', title });
 

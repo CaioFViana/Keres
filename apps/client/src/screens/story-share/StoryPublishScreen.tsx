@@ -33,6 +33,7 @@ import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { PublishManuscriptSection } from './PublishManuscriptSection';
 import { buildStoryPublicUrl, useStoryPublishing } from './useStoryPublishing';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 const LABEL_MODES: PublicationLabelMode[] = ['both', 'version', 'date'];
 
@@ -135,7 +136,7 @@ const StoryPublishScreen = () => {
             </Text>
             <Text style={styles.statusMeta}>
               {[
-                server.name,
+                serverDisplayName(server, t),
                 t('publish_synced_version', { version: story.lastServerSyncedLog ?? 0 }),
                 showcase.visibility === 'password' ? t('publish_password_protected') : null,
               ]

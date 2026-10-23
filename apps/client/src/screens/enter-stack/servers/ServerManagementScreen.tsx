@@ -12,7 +12,11 @@ import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerSt
 import type { ServerWithStatus } from '@/src/services/servers/ServerStatusService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
-import { defaultServerUrl, isDefaultServerUrl } from '@/src/utils/auth/defaultServer';
+import {
+  defaultServerUrl,
+  isDefaultServerUrl,
+  serverDisplayName,
+} from '@/src/utils/auth/defaultServer';
 import { adminConversationKey } from '@/src/utils/entity/conversationKey';
 import { isHostedByApi } from '@/src/utils/platform/clientFlavor';
 import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
@@ -78,7 +82,7 @@ const ServerManagementScreen = () => {
   const renderServer = (item: ServerWithStatus) => (
     <ServerListItem
       key={item.id}
-      name={item.name}
+      name={serverDisplayName(item, t)}
       url={item.url}
       userName={item.userName}
       tag={item.tag}

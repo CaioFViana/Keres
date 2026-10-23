@@ -10,6 +10,7 @@ import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 /**
  * Sharing a pack: which server, and whether it goes on that server's public showcase.
@@ -81,7 +82,7 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
         <Text style={styles.label}>{t('packs_share_server_label')}</Text>
         <SingleSelectPill
           options={servers.map((server) => ({
-            label: server.name ?? server.url,
+            label: serverDisplayName(server, t),
             value: server.id,
           }))}
           value={serverId}

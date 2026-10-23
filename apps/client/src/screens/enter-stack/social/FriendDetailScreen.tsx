@@ -42,6 +42,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { directConversationKey } from '@/src/utils/entity/conversationKey';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { logger } from '@/src/utils/logging/logger';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
 type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -406,7 +407,7 @@ const FriendDetailScreen = () => {
           visible={inviting}
           onClose={closeInvite}
           friendName={friendship.friendUsername}
-          serverName={server.name}
+          serverName={serverDisplayName(server, t)}
           stories={invite.stories}
           busy={invite.busy}
           onInvite={invite.invite}

@@ -33,6 +33,7 @@ import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -83,9 +84,11 @@ const StorySelectionScreen = () => {
 
   const fetchServerNames = useCallback(async () => {
     const servers = await serverService.getAllServers();
-    setServerNamesById(Object.fromEntries(servers.map((server) => [server.id, server.name])));
+    setServerNamesById(
+      Object.fromEntries(servers.map((server) => [server.id, serverDisplayName(server, t)])),
+    );
     setServerCount(servers.length);
-  }, [serverService]);
+  }, [serverService, t]);
 
   useEffect(() => {
     if (!isFocused) {

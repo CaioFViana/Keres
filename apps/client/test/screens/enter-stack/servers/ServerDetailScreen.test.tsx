@@ -232,6 +232,19 @@ describe('ServerDetailScreen', () => {
     expect(mockUseScreenHeader.mock.calls.at(-1)![0].title).toBe('Main');
   });
 
+  it('calls the official server by its translated name, in the header and on the page, not by its address', async () => {
+    mockGetAllServers.mockResolvedValue([
+      { ...server, name: 'https://keres.me', url: 'https://keres.me' },
+    ]);
+
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('official_server_name');
+
+    // The address is still said, once, under it.
+    expect(view.getAllByText('https://keres.me')).toHaveLength(1);
+    expect(mockUseScreenHeader.mock.calls.at(-1)![0].title).toBe('official_server_name');
+  });
+
   it('says so when the server never synchronised, and when it does not answer', async () => {
     mockGetAllServers.mockResolvedValue([{ ...server, lastSyncDate: null, tag: null }]);
     mockApiGet.mockRejectedValue(new Error('down'));

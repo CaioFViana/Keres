@@ -25,6 +25,7 @@ import { useStoryInvitations } from './useStoryInvitations';
 import { logger } from '@/src/utils/logging/logger';
 import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 /**
  * Server linkage and collaboration state for one story's settings screen.
@@ -502,7 +503,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     handleUnlinkFromServer,
     handleLeaveStory,
     uploadServerOptions: availableServers.map((server) => ({
-      label: server.name,
+      label: serverDisplayName(server, t),
       value: server.id,
     })),
     addableFriendOptions: addableFriends.map((friend) => ({

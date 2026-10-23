@@ -249,7 +249,7 @@ describe('ShowcaseHomeScreen', () => {
     const view = await render(<ShowcaseHomeScreen />);
 
     expect(view.getByText('default_server_title')).toBeTruthy();
-    expect(view.getByText('https://keres.me')).toBeTruthy();
+    expect(view.getByText('official_server_name')).toBeTruthy();
     expect(view.getByText('showcase_default_server_hint')).toBeTruthy();
     expect(view.queryByText('other_servers_title')).toBeNull();
 

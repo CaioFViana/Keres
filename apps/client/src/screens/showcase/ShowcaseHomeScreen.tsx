@@ -4,7 +4,11 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ShowcaseLinkField from '@/src/components/features/showcase/ShowcaseLinkField';
-import { defaultServerUrl, isDefaultServerUrl } from '@/src/utils/auth/defaultServer';
+import {
+  defaultServerUrl,
+  isDefaultServerUrl,
+  serverDisplayName,
+} from '@/src/utils/auth/defaultServer';
 import { isHostedByApi } from '@/src/utils/platform/clientFlavor';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
@@ -66,7 +70,7 @@ const ShowcaseHomeScreen = () => {
         <Ionicons name="storefront-outline" size={22} color={colors.primary} />
         <View style={styles.serverTexts}>
           <Text style={[styles.serverName, { color: colors.text }]} numberOfLines={1}>
-            {defaultServer ? defaultServer.name || defaultServer.url : defaultServerUrl()}
+            {serverDisplayName(defaultServer ?? { url: defaultServerUrl() }, t)}
           </Text>
           <Text style={[styles.serverUrl, { color: colors.textSecondary }]} numberOfLines={2}>
             {t('showcase_default_server_hint')}
@@ -91,7 +95,7 @@ const ShowcaseHomeScreen = () => {
           <Ionicons name="storefront-outline" size={22} color={colors.primary} />
           <View style={styles.serverTexts}>
             <Text style={[styles.serverName, { color: colors.text }]} numberOfLines={1}>
-              {server.name ?? server.url}
+              {serverDisplayName(server, t)}
             </Text>
             <Text style={[styles.serverUrl, { color: colors.textSecondary }]} numberOfLines={1}>
               {server.url}

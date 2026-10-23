@@ -12,9 +12,9 @@ import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRe
 import ServerRegistrationFields, {
   type ServerAuthMode,
 } from '@/src/components/features/servers/ServerRegistrationFields';
-import TermsModal, {
-  type TermsSection,
-} from '@/src/components/features/servers/TermsModal/TermsModal';
+import ServerLegalModals, {
+  type PendingServerLegal,
+} from '@/src/components/features/servers/ServerLegalModals';
 import { useAgeVerificationInfo } from '@/src/screens/enter-stack/servers/useAgeVerificationInfo';
 import { useDebouncedValue } from '@/src/hooks/ui/useDebouncedValue';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -107,20 +107,10 @@ const ServerRegistrationForm = ({
   // Creating an account needs the server's terms first: offered once agreed, the agreed copy
   // travels into the saved server row so it reads offline later. A ref, not state: the agree
   // button continues straight into saving, and state would still read stale in that same tick.
-  const [pendingTerms, setPendingTerms] = useState<{
-    version: number;
-    updatedAt: string;
-    sections: TermsSection[];
-    text: string;
-  } | null>(null);
+  const [pendingTerms, setPendingTerms] = useState<PendingServerLegal | null>(null);
   const agreedTermsRef = useRef<{ version: number; text: string } | null>(null);
   // The privacy policy gates the same way, right after the terms: same shape, second modal.
-  const [pendingPrivacy, setPendingPrivacy] = useState<{
-    version: number;
-    updatedAt: string;
-    sections: TermsSection[];
-    text: string;
-  } | null>(null);
+  const [pendingPrivacy, setPendingPrivacy] = useState<PendingServerLegal | null>(null);
   const agreedPrivacyRef = useRef<{ version: number; text: string } | null>(null);
 
   const hostedSameOrigin = usesHttpOnlyCookieSession();
@@ -616,43 +606,13 @@ const ServerRegistrationForm = ({
         </>
       ) : null}
       {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
-      <TermsModal
-        visible={pendingTerms !== null}
-        title={t('server_terms_title')}
-        subtitle={
-          pendingTerms
-            ? t('server_terms_version', {
-                version: pendingTerms.version,
-                date: pendingTerms.updatedAt,
-              })
-            : undefined
-        }
-        sections={pendingTerms?.sections ?? []}
-        mode="accept"
-        acceptLabel={t('terms_accept')}
-        onAccept={handleAgreeTerms}
-        onClose={() => setPendingTerms(null)}
-        requireScrollToEnd
-        testID="server-terms-modal"
-      />
-      <TermsModal
-        visible={pendingPrivacy !== null}
-        title={t('server_privacy_title')}
-        subtitle={
-          pendingPrivacy
-            ? t('server_privacy_version', {
-                version: pendingPrivacy.version,
-                date: pendingPrivacy.updatedAt,
-              })
-            : undefined
-        }
-        sections={pendingPrivacy?.sections ?? []}
-        mode="accept"
-        acceptLabel={t('terms_accept')}
-        onAccept={handleAgreePrivacy}
-        onClose={() => setPendingPrivacy(null)}
-        requireScrollToEnd
-        testID="server-privacy-modal"
+      <ServerLegalModals
+        terms={pendingTerms}
+        privacy={pendingPrivacy}
+        onAgreeTerms={handleAgreeTerms}
+        onAgreePrivacy={handleAgreePrivacy}
+        onCloseTerms={() => setPendingTerms(null)}
+        onClosePrivacy={() => setPendingPrivacy(null)}
       />
     </EntityFormContainer>
   );

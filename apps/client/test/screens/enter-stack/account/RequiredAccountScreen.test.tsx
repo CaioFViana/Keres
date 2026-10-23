@@ -41,7 +41,7 @@ jest.mock('@/src/utils/nav/documentTitle', () => ({
 }));
 
 /** The form is covered by its own tests; here its two endings are buttons that report what the screen gave it. */
-jest.mock('@/src/components/features/servers/ServerRegistrationForm', () => {
+jest.mock('@/src/screens/enter-stack/servers/ServerRegistrationForm', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

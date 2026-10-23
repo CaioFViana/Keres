@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ServerRegistrationForm, {
   type ServerRegistrationResult,
-} from '@/src/components/features/servers/ServerRegistrationForm';
+} from '@/src/screens/enter-stack/servers/ServerRegistrationForm';
 import type { RootStackParamList } from '@/src/navigation/AppNavigator';
 import { useTheme } from '@/src/theme';
 import { useDocumentTitle } from '@/src/utils/nav/documentTitle';

@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import ServerRegistrationForm, {
   type ServerRegistrationResult,
-} from '@/src/components/features/servers/ServerRegistrationForm';
+} from '@/src/screens/enter-stack/servers/ServerRegistrationForm';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {

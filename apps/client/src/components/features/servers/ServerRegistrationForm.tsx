@@ -1,3 +1,4 @@
+import { KERES_OFFICIAL_HOST } from '@keres/shared';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import {
@@ -552,7 +553,11 @@ const ServerRegistrationForm = ({
       title={title ?? (serverId ? t('edit_server') : t('register_new_server'))}
       description={
         description ??
-        (serverId ? t('edit_server_description') : t('register_new_server_description'))
+        (serverId
+          ? t('edit_server_description')
+          : communityOff
+            ? t('official_server_registration_description', { host: KERES_OFFICIAL_HOST })
+            : t('register_new_server_description'))
       }
       actions={
         serverId ? (

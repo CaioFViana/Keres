@@ -1856,7 +1856,7 @@
   "objects_preset_star": "Star",
   "objects_preset_triangle": "Triangle",
   "objects_stamp": "Stamp",
-  "official_server_registration_description": "Sign in, or create your account, to sync and collaborate.",
+  "official_server_registration_description": "Your account will belong to the official Keres server ({{host}}). Sign in, or create your account, to sync and collaborate.",
   "open_navigation_menu": "Open navigation menu",
   "operation_gallery_relation_added": "{{galleryRelationDescription}} added",
   "operation_gallery_relation_removed": "{{galleryRelationDescription}} removed",

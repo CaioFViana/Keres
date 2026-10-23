@@ -1856,7 +1856,7 @@
   "objects_preset_star": "Estrela",
   "objects_preset_triangle": "Triângulo",
   "objects_stamp": "Carimbo",
-  "official_server_registration_description": "Entre, ou crie sua conta, para sincronizar e colaborar.",
+  "official_server_registration_description": "Sua conta pertencerá ao servidor oficial do Keres ({{host}}). Entre, ou crie sua conta, para sincronizar e colaborar.",
   "open_navigation_menu": "Abrir menu de navegação",
   "operation_gallery_relation_added": "{{galleryRelationDescription}} adicionado",
   "operation_gallery_relation_removed": "{{galleryRelationDescription}} removido",

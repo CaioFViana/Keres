@@ -20,7 +20,7 @@ interface ServerRegistrationFieldsProps {
   mode: ServerAuthMode;
   onModeChange: (mode: ServerAuthMode) => void;
   hostedSameOrigin: boolean;
-  /** Only the default server is available (community servers are off): the address and name are not asked for. */
+  /** Only the default server is available (community servers are off): a new account has no address or name to ask for. */
   addressLocked?: boolean;
   serverAddress: string;
   onServerAddressChange: (value: string) => void;
@@ -59,6 +59,8 @@ export default function ServerRegistrationFields({
 }: ServerRegistrationFieldsProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  // The default server is the only one there is: nothing to type, and the form says whose account this is.
+  const hideAddress = addressLocked && !hostedSameOrigin && !serverId;
 
   return (
     <>
@@ -111,26 +113,22 @@ export default function ServerRegistrationFields({
         </Text>
       )}
 
-      {addressLocked && !hostedSameOrigin && !serverId && (
-        <Text style={[styles.hostedNotice, { color: colors.textSecondary }]}>
-          {t('official_server_registration_description')}
-        </Text>
+      {hideAddress ? null : (
+        <FormField label={t('server_address')}>
+          {(fieldAccessibility) => (
+            <TextInput
+              {...fieldAccessibility}
+              placeholder={t('server_address_placeholder')}
+              value={serverAddress}
+              onChangeText={onServerAddressChange}
+              style={inputStyle}
+              keyboardType="url"
+              autoCapitalize="none"
+              editable={!hostedSameOrigin && !addressLocked}
+            />
+          )}
+        </FormField>
       )}
-
-      <FormField label={t('server_address')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('server_address_placeholder')}
-            value={serverAddress}
-            onChangeText={onServerAddressChange}
-            style={inputStyle}
-            keyboardType="url"
-            autoCapitalize="none"
-            editable={!hostedSameOrigin && !addressLocked}
-          />
-        )}
-      </FormField>
 
       {(!addressLocked || !!serverId) && (
         <FormField label={t('server_name_optional')}>

@@ -781,6 +781,9 @@ describe('ServerRegistrationScreen', () => {
       const view = await render(<ServerRegistrationScreen />);
       await view.findByText('register_server');
       expect(regFields(view).address).toBe('https://keres.me');
+      // The note on whose account this is replaces the generic "enter the server's details" line.
+      expect(view.getByText('official_server_registration_description')).toBeTruthy();
+      expect(view.queryByText('register_new_server_description')).toBeNull();
 
       await fillLogin(view);
       await fireEvent.press(view.getByText('register_server'));

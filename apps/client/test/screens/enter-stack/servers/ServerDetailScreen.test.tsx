@@ -1083,6 +1083,41 @@ describe('ServerDetailScreen', () => {
       expect(view.queryByTestId('server-age-verification')).toBeNull();
     });
   });
+  describe('the age standing of the account', () => {
+    it('says the account is a verified adult, in the card with the other facts of the account', async () => {
+      mockGetOwnProfile.mockResolvedValue({ isAdultVerified: true });
+      const view = await render(<ServerDetailScreen />);
+
+      await view.findByText('age_status_verified');
+      expect(view.getByText('server_age_status_field')).toBeTruthy();
+    });
+
+    it('says the account is not verified when the server says so', async () => {
+      mockGetOwnProfile.mockResolvedValue({ isAdultVerified: false });
+      const view = await render(<ServerDetailScreen />);
+
+      await view.findByText('age_status_unverified');
+      expect(view.queryByText('age_status_verified')).toBeNull();
+    });
+
+    it('says where the check stands while it is not done, instead of "not verified"', async () => {
+      mockGetOwnProfile.mockResolvedValue({ isAdultVerified: false });
+      mockFetchVerificationStatus.mockResolvedValue({ status: 'pending' });
+      const view = await render(<ServerDetailScreen />);
+
+      await view.findByText('age_status_pending');
+      expect(view.queryByText('age_status_unverified')).toBeNull();
+    });
+
+    it('claims nothing while the server has not answered', async () => {
+      mockApiGet.mockRejectedValue(new Error('down'));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('server_status_offline');
+
+      expect(view.queryByText('server_age_status_field')).toBeNull();
+    });
+  });
+
   describe('finishing the age verification', () => {
     const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
 

@@ -5,6 +5,8 @@ import {
   type ExportDeliveryResult,
 } from '@/src/utils/io/storyTransfer';
 import { userApiService } from '@/src/services/api/UserApiService';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
+import i18n from '@/src/utils/format/i18n';
 
 /**
  * "Request my data": asks the server for everything it holds about this account (`GET /user/data`) and hands the
@@ -18,7 +20,7 @@ export async function exportAccountData(
   const data = await userApiService.getOwnData(server);
   return deliverFile(
     JSON.stringify(data, null, 2),
-    buildExportFileName(`${server.name} my data`, now),
+    buildExportFileName(`${serverDisplayName(server, (key) => i18n.t(key))} my data`, now),
     'application/json',
     'public.json',
   );

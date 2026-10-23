@@ -76,6 +76,24 @@ describe('ServerService.refreshServerToken', () => {
     );
   });
 
+  it('calls the official server by its translated name in the notices, not by its address', async () => {
+    const official = {
+      id: 'server-2',
+      name: 'https://keres.me',
+      url: 'https://keres.me',
+    } as ServerSelect;
+    mockGetTokens.mockResolvedValue({ accessToken: 'expired', refreshToken: 'refresh' });
+    mockIsJwtExpired.mockReturnValue(true);
+    mockRefreshAccessToken.mockResolvedValue({ accessToken: 'new', refreshToken: 'new-refresh' });
+
+    await service.refreshServerToken(official);
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      'Tokens for Official server refreshed successfully.',
+      'success',
+    );
+  });
+
   it('reports a rejected refresh as an authentication problem', async () => {
     mockGetTokens.mockResolvedValue({ accessToken: 'expired', refreshToken: 'refresh' });
     mockIsJwtExpired.mockReturnValue(true);

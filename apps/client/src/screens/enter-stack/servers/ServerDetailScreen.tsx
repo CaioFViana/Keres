@@ -25,7 +25,10 @@ import StoryUsageCard from '@/src/components/features/servers/StoryUsageCard';
 import { useDrizzle } from '@/src/db';
 import { useAccountPlan } from '@/src/screens/enter-stack/servers/useAccountPlan';
 import { useServerStoryUsage } from '@/src/screens/enter-stack/servers/useServerStoryUsage';
-import { useAccountVerificationNotice } from '@/src/screens/enter-stack/servers/useAccountVerificationNotice';
+import {
+  accountAgeStatusKey,
+  useAccountVerificationNotice,
+} from '@/src/screens/enter-stack/servers/useAccountVerificationNotice';
 import { useAgeVerificationInfo } from '@/src/screens/enter-stack/servers/useAgeVerificationInfo';
 import { formatDateTime } from '@/src/utils/format/formatDateTime';
 import { usePaymentOverview } from '@/src/screens/enter-stack/servers/usePaymentOverview';
@@ -69,6 +72,7 @@ type ServerDetailNavigationProp = NativeStackNavigationProp<
 interface OwnProfile {
   avatarColor: string | null;
   avatarIcon: string | null;
+  isAdultVerified?: boolean;
 }
 
 /**
@@ -278,6 +282,7 @@ const ServerDetailScreen = () => {
   // screen comes back to the front, because the approval may have happened on the verification screen.
   const focused = useIsFocused();
   const verificationNotice = useAccountVerificationNotice(stableServer, online && focused);
+  const ageStatus = accountAgeStatusKey(profile?.isAdultVerified, verificationNotice);
   // The person's own stories here and how full each is, read again whenever the screen comes back to the front.
   const { stories: storyUsage } = useServerStoryUsage(serverId, focused);
 
@@ -385,6 +390,7 @@ const ServerDetailScreen = () => {
             </TouchableOpacity>
           )}
         </View>
+        {ageStatus ? field(t('server_age_status_field'), t(ageStatus)) : null}
         {server.apiVersion ? field(t('server_api_version_field'), server.apiVersion) : null}
         {field(
           t('last_sync'),

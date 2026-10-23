@@ -10,6 +10,20 @@ function noticeFor(status: string): VerificationNotice | null {
 }
 
 /**
+ * What the account's own age standing on a server is called on screen: the +18 verification it holds, or where
+ * its check stands while it is not done. `null` when nothing is known yet (the server has not answered), so the
+ * screen says nothing rather than claim the account is not verified.
+ */
+export function accountAgeStatusKey(
+  isAdultVerified: boolean | undefined,
+  notice: VerificationNotice | null,
+): string | null {
+  if (notice) return `age_status_${notice}`;
+  if (isAdultVerified === undefined) return null;
+  return isAdultVerified ? 'age_status_verified' : 'age_status_unverified';
+}
+
+/**
  * Whether the account on this server still needs its age check finished, asked while `enabled` (the caller passes
  * "online and in front": a server that cannot be reached is not asked, and the answer is read again when the screen
  * comes back, since the approval may have happened on the verification screen). Null when nothing is to be done,

@@ -38,8 +38,8 @@ describe('useFormResetHeaderAction', () => {
     );
     expect(result.current[0].disabled).toBe(false);
 
-    await act(() => {
-      result.current[0].onPress();
+    await act(async () => {
+      await result.current[0].onPress();
     });
     expect(mockAlert).toHaveBeenCalledTimes(1);
     const [title, message, buttons] = mockAlert.mock.calls[0] as [
@@ -63,8 +63,8 @@ describe('useFormResetHeaderAction', () => {
       useFormResetHeaderAction({ isEditing: true, isDirty: true, resetForm }),
     );
 
-    await act(() => {
-      result.current[0].onPress();
+    await act(async () => {
+      await result.current[0].onPress();
     });
     const [, message, buttons] = mockAlert.mock.calls[0] as [
       string,

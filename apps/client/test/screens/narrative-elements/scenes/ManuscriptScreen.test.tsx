@@ -387,7 +387,7 @@ async function pressHeaderAction(id: string) {
   const action = mockHeaderActions?.find((candidate) => candidate.id === id);
   expect(action).toBeTruthy();
   await act(async () => {
-    action?.onPress();
+    await action?.onPress();
   });
 }
 
@@ -657,7 +657,7 @@ describe('ManuscriptScreen', () => {
       mounted = TestRenderer.create(<ManuscriptScreen />);
     });
     await act(async () => {
-      mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
+      await mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
     });
     const search = mounted.root.findByProps({ testID: 'manuscript-search' });
     const activeTexts = () =>
@@ -1014,7 +1014,7 @@ describe('ManuscriptScreen', () => {
     expect(callbackOf()).toBe(first);
 
     await act(async () => {
-      mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
+      await mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
     });
     expect(callbackOf()).toBe(first);
 
@@ -1035,7 +1035,7 @@ describe('ManuscriptScreen', () => {
       mounted = TestRenderer.create(<ManuscriptScreen />);
     });
     await act(async () => {
-      mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
+      await mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
     });
     const labels = (text: string) =>
       mounted.root.findAll((node) => node.type === Text && node.props.children === text).length;

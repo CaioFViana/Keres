@@ -13,7 +13,7 @@
     "build:hosted": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client expo export -p web --output-dir dist-hosted && bun scripts/inject-web-preloads.ts dist-hosted",
     "build:pages": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_SERVERLESS=1 expo export -p web --output-dir dist-pages && bun scripts/inject-web-preloads.ts dist-pages",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "expo lint src test scripts plugins -- --cache-strategy content --max-warnings 0",
+    "lint": "expo lint src test scripts plugins --no-cache -- --max-warnings 0",
     "test": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB",
     "test:coverage": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB --coverage",
     "test:coverage:ci": "jest --ci --coverage",

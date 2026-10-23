@@ -19,6 +19,8 @@ export interface ServerListItemProps {
   apiVersion: string | null;
   /** The server's administrators wrote something the user has not opened. */
   hasUnseenAdminMessage?: boolean;
+  /** Marks the server the app points at by default: a border in the accent colour and this label beside the name. */
+  badge?: string;
   onPress: () => void;
 }
 
@@ -35,6 +37,7 @@ const ServerListItem: React.FC<ServerListItemProps> = ({
   status,
   apiVersion,
   hasUnseenAdminMessage,
+  badge,
   onPress,
 }) => {
   const { t } = useTranslation();
@@ -48,13 +51,22 @@ const ServerListItem: React.FC<ServerListItemProps> = ({
       accessibilityLabel={
         hasUnseenAdminMessage ? `${name}. ${t('messages_unseen_admin_on', { server: name })}` : name
       }
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [
+        styles.card,
+        badge ? styles.cardHighlighted : null,
+        pressed && styles.cardPressed,
+      ]}
     >
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <Text style={styles.name} numberOfLines={1}>
             {name}
           </Text>
+          {badge ? (
+            <Text style={styles.badge} testID="server-badge">
+              {badge}
+            </Text>
+          ) : null}
           <ServerStatusPill status={status} apiVersion={apiVersion} />
           {hasUnseenAdminMessage ? (
             <View style={styles.unseen} testID="server-unseen-admin">
@@ -95,7 +107,18 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.border,
       backgroundColor: colors.card,
     },
+    cardHighlighted: { borderColor: colors.primary },
     cardPressed: { opacity: 0.85 },
+    badge: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.onPrimary,
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      overflow: 'hidden',
+    },
     body: { flex: 1, minWidth: 0, gap: 3 },
     titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
     name: { flexShrink: 1, fontSize: 18, fontWeight: 'bold', color: colors.text },

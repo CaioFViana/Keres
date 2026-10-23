@@ -1,7 +1,14 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
 import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRecoveryCodesPanel';
 import ServerRegistrationFields from '@/src/components/features/servers/ServerRegistrationFields';
+
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = require('react-native');
+  return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
+});
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,
@@ -279,5 +286,34 @@ describe('ServerRegistrationFields', () => {
 
     expect(screen.getByText('hosted_web_same_origin_notice')).toBeTruthy();
     expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(false);
+  });
+});
+
+describe('ServerListItem: the badge of the default server', () => {
+  const itemProps = () => ({
+    name: 'Keres',
+    url: 'https://keres.me',
+    userName: 'ana',
+    tag: 'ana',
+    lastSync: null,
+    status: 'idle' as const,
+    apiVersion: null,
+    onPress: jest.fn(),
+  });
+
+  it('has no badge and keeps the plain border when none is given', async () => {
+    const screen = await render(<ServerListItem {...itemProps()} />);
+
+    expect(screen.queryByTestId('server-badge')).toBeNull();
+    expect(StyleSheet.flatten(screen.getByLabelText('Keres').props.style).borderColor).toBe('#ddd');
+  });
+
+  it('shows the badge beside the name, with the accent border', async () => {
+    const screen = await render(<ServerListItem {...itemProps()} badge="default_server_badge" />);
+
+    expect(screen.getByTestId('server-badge')).toBeTruthy();
+    expect(screen.getByText('default_server_badge')).toBeTruthy();
+    expect(screen.getByText('Keres')).toBeTruthy();
+    expect(StyleSheet.flatten(screen.getByLabelText('Keres').props.style).borderColor).toBe('#00f');
   });
 });

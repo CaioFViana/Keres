@@ -86,6 +86,11 @@ const ServerManagementScreen = () => {
       status={item.pingStatus}
       apiVersion={item.apiVersion}
       hasUnseenAdminMessage={unseen[adminConversationKey(item.id)] !== undefined}
+      badge={
+        item === defaultServer
+          ? t(hosted ? 'default_server_title_hosted' : 'default_server_badge')
+          : undefined
+      }
       onPress={() => navigation.navigate('ServerDetail', { serverId: item.id })}
     />
   );

@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import ServerManagementScreen from '@/src/screens/enter-stack/servers/ServerManagementScreen';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
@@ -354,6 +354,39 @@ describe('ServerManagementScreen: the official server and adding by address', ()
     expect(view.getByText('https://hosted.example')).toBeTruthy();
     expect(view.queryByTestId('add-server-by-url')).toBeNull();
     expect(lastHeaderActions()).toEqual([]);
+  });
+
+  it.each(['https://keres.me', 'https://keres.me/', 'https://KERES.me:443'])(
+    'badges only the official server when it is saved as %s',
+    async (url) => {
+      mockGetAllServers.mockResolvedValue([online, { ...official, url }]);
+      const view = await render(<ServerManagementScreen />);
+
+      await view.findByText('Keres');
+      expect(view.getAllByTestId('server-badge')).toHaveLength(1);
+      expect(within(view.getByLabelText('Keres')).getByText('default_server_badge')).toBeTruthy();
+      expect(within(view.getByLabelText('Main')).queryByTestId('server-badge')).toBeNull();
+    },
+  );
+
+  it('shows no badge while the official server is only invited, not saved', async () => {
+    mockGetAllServers.mockResolvedValue([online]);
+    const view = await render(<ServerManagementScreen />);
+
+    await view.findByTestId('default-server-card');
+    expect(view.queryByTestId('server-badge')).toBeNull();
+  });
+
+  it('labels the saved default server of the hosted client as this server', async () => {
+    mockFlavor.hosted = true;
+    mockGetAllServers.mockResolvedValue([{ ...official, url: 'https://hosted.example' }]);
+    const view = await render(<ServerManagementScreen />);
+
+    await view.findByText('Keres');
+    expect(
+      within(view.getByLabelText('Keres')).getByText('default_server_title_hosted'),
+    ).toBeTruthy();
+    expect(view.queryByText('default_server_badge')).toBeNull();
   });
 });
 

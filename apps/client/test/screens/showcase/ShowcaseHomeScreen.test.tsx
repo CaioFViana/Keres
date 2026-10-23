@@ -66,7 +66,19 @@ jest.mock('@/src/services/api/ShowcaseApiService', () => ({
   showcaseApiService: { getConfig: (...args: unknown[]) => mockGetConfig(...args) },
 }));
 
+// The default server is the official one, unless this is the hosted client (then the origin that serves it).
+const mockFlavor = { hosted: false };
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/platform/clientFlavor'),
+  isHostedByApi: () => mockFlavor.hosted,
+}));
+jest.mock('@/src/services/auth/browserCookieSession', () => ({
+  ...jest.requireActual('@/src/services/auth/browserCookieSession'),
+  hostedApiOrigin: () => 'https://hosted.example',
+}));
+
 const registered = { id: 'srv-1', name: 'Main', url: 'https://keres.example' };
+const official = { id: 'srv-0', name: 'Keres', url: 'https://keres.me' };
 
 async function typeLink(view: Awaited<ReturnType<typeof render>>, text: string) {
   await fireEvent.changeText(view.getByTestId('showcase-link-input'), text);
@@ -80,6 +92,7 @@ describe('ShowcaseHomeScreen', () => {
     mockGetAllServers.mockResolvedValue([registered]);
     mockGetConfig.mockResolvedValue({ showcaseEnabled: true });
     (Clipboard.getStringAsync as jest.Mock).mockResolvedValue('');
+    mockFlavor.hosted = false;
     openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
   });
 
@@ -223,19 +236,70 @@ describe('ShowcaseHomeScreen', () => {
     const view = await render(<ShowcaseHomeScreen />);
 
     await waitFor(() => expect(view.getByText('Main')).toBeTruthy());
-    // A server with no name is told by its address.
+    // The other servers sit under their own title, and a server with no name is told by its address.
+    expect(view.getByText('other_servers_title')).toBeTruthy();
     expect(view.getAllByText('http://localhost:3187').length).toBeGreaterThan(0);
-    expect(view.queryByTestId('showcase-servers-empty')).toBeNull();
 
     await fireEvent.press(view.getByTestId('showcase-server-srv-1'));
     expect(mockNavigate).toHaveBeenCalledWith('ShowcaseBrowse', { serverId: 'srv-1' });
   });
 
-  it('says there is no server to browse yet', async () => {
+  it('shows the default server with its hint even with no server registered, and opens it as a guest', async () => {
     mockGetAllServers.mockResolvedValue([]);
     const view = await render(<ShowcaseHomeScreen />);
 
-    await waitFor(() => expect(view.getByTestId('showcase-servers-empty')).toBeTruthy());
+    expect(view.getByText('default_server_title')).toBeTruthy();
+    expect(view.getByText('https://keres.me')).toBeTruthy();
+    expect(view.getByText('showcase_default_server_hint')).toBeTruthy();
+    expect(view.queryByText('other_servers_title')).toBeNull();
+
+    await waitFor(() => expect(mockGetAllServers).toHaveBeenCalled());
+    await fireEvent.press(view.getByTestId('showcase-default-server'));
+    expect(mockNavigate).toHaveBeenCalledWith('ShowcaseBrowse', {
+      guestOrigin: 'https://keres.me',
+    });
+  });
+
+  it('opens the default server by its id when the person has registered it', async () => {
+    mockGetAllServers.mockResolvedValue([official]);
+    const view = await render(<ShowcaseHomeScreen />);
+
+    await waitFor(() => expect(view.getByText('Keres')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('showcase-default-server'));
+    expect(mockNavigate).toHaveBeenCalledWith('ShowcaseBrowse', { serverId: 'srv-0' });
+  });
+
+  it('does not list the registered default server again under the other servers', async () => {
+    mockGetAllServers.mockResolvedValue([official, registered]);
+    const view = await render(<ShowcaseHomeScreen />);
+
+    await waitFor(() => expect(view.getByTestId('showcase-server-srv-1')).toBeTruthy());
+    expect(view.queryByTestId('showcase-server-srv-0')).toBeNull();
+    expect(view.getByText('other_servers_title')).toBeTruthy();
+  });
+
+  it('shows no title for other servers when the default server is the only one', async () => {
+    mockGetAllServers.mockResolvedValue([official]);
+    const view = await render(<ShowcaseHomeScreen />);
+
+    await waitFor(() => expect(view.getByText('Keres')).toBeTruthy());
+    expect(view.queryByText('other_servers_title')).toBeNull();
+  });
+
+  it('titles the default server as this server on the hosted client, and opens its origin', async () => {
+    mockFlavor.hosted = true;
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<ShowcaseHomeScreen />);
+
+    expect(view.getByText('default_server_title_hosted')).toBeTruthy();
+    expect(view.queryByText('default_server_title')).toBeNull();
+    expect(view.getByText('https://hosted.example')).toBeTruthy();
+
+    await waitFor(() => expect(mockGetAllServers).toHaveBeenCalled());
+    await fireEvent.press(view.getByTestId('showcase-default-server'));
+    expect(mockNavigate).toHaveBeenCalledWith('ShowcaseBrowse', {
+      guestOrigin: 'https://hosted.example',
+    });
   });
 
   it('opens what is pasted from the clipboard at once', async () => {

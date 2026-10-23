@@ -3690,6 +3690,7 @@
   "welcome_get_app": "Get the mobile or desktop app",
   "welcome_go_to_step": "Go to step {{step}}",
   "welcome_name_explain": "This is not an account or a login. It is only how Keres will address you in everything that works offline.",
+  "welcome_name_explain_account": "This is only how Keres will address you on this device. The next step is your account on this server, which asks everyone to have one.",
   "welcome_name_title": "What should we call you?",
   "welcome_needs_intro": "To continue, you still need to:",
   "welcome_needs_name": "type your name",

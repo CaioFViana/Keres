@@ -98,6 +98,9 @@ const ColdInstallScreen = () => {
   const [privacyVisible, setPrivacyVisible] = useState(false);
   const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<number | null>(null);
   const [acceptedPrivacyVersion, setAcceptedPrivacyVersion] = useState<number | null>(null);
+  // Whether the server that serves this client asks for an account once the welcome is done. Learned as
+  // the welcome opens, so the last step can say so; an unreachable server, or any other build, asks nothing.
+  const [accountRequired, setAccountRequired] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +114,17 @@ const ColdInstallScreen = () => {
       .then((record) => {
         if (!cancelled) setAcceptedPrivacyVersion(record?.version ?? null);
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHostedByApi()) return;
+    let cancelled = false;
+    void fetchAccountRequirement(hostedApiOrigin()).then((required) => {
+      if (!cancelled) setAccountRequired(required);
+    });
     return () => {
       cancelled = true;
     };
@@ -248,8 +262,10 @@ const ColdInstallScreen = () => {
 
     // The server that serves the hosted client may ask for an account before anything else. Only that
     // build asks (the apps never learn what a server wants at install), and an unreachable server asks nothing.
-    const accountRequired = isHostedByApi() && (await fetchAccountRequirement(hostedApiOrigin()));
-    navigation.replace(accountRequired ? 'RequiredAccount' : 'StorySelection');
+    // Asked again here when the welcome did not learn it: the answer may have changed while it was open.
+    const required =
+      accountRequired || (isHostedByApi() && (await fetchAccountRequirement(hostedApiOrigin())));
+    navigation.replace(required ? 'RequiredAccount' : 'StorySelection');
   };
 
   const handleLanguageChange = (itemValue: string | null) => {
@@ -293,7 +309,7 @@ const ColdInstallScreen = () => {
   );
   const action = onLastPage ? (
     <Button onPress={handleProceed} disabled={isProceedDisabled} style={styles.primaryAction}>
-      {t('proceed')}
+      {accountRequired ? t('welcome_next') : t('proceed')}
     </Button>
   ) : (
     <Button onPress={() => setPage(page + 1)} style={styles.primaryAction} testID="welcome-next">
@@ -303,10 +319,13 @@ const ColdInstallScreen = () => {
   const progress = (
     <WelcomeProgress
       current={page}
-      total={WELCOME_PAGES.length}
+      // The account is one more step after these, on its own screen: counted, not reachable from here.
+      total={WELCOME_PAGES.length + (accountRequired ? 1 : 0)}
       scrollX={scrollX}
       pageWidth={pageWidth}
-      onSelect={setPage}
+      onSelect={(step) => {
+        if (step <= lastPage) setPage(step);
+      }}
     />
   );
 
@@ -397,6 +416,7 @@ const ColdInstallScreen = () => {
               pageWidth={pageWidth}
               active={index === page}
               eyebrow={index === 0 ? t('welcome') : undefined}
+              accountRequired={accountRequired}
             >
               {index === lastPage && (
                 <>

@@ -610,13 +610,17 @@ describe('ColdInstallScreen', () => {
 
   describe('account requirement after the profile is made', () => {
     /** Fills the welcome in and proceeds, leaving the screen to the navigator's next step. */
-    const provisionProfile = async (view: Awaited<ReturnType<typeof render>>) => {
+    const provisionProfile = async (
+      view: Awaited<ReturnType<typeof render>>,
+      // What the last step's button says: "next" when an account follows, "proceed" when nothing does.
+      forward = 'proceed',
+    ) => {
       await view.findByText('welcome');
       await fireEvent.press(view.getByTestId('language-en'));
       await goToNameStep(view);
       await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
       await acceptLegal(view);
-      await fireEvent.press(view.getByText('enabled:proceed'));
+      await fireEvent.press(view.getByText(`enabled:${forward}`));
       await waitFor(() => expect(mockReplace).toHaveBeenCalled());
     };
 
@@ -633,11 +637,63 @@ describe('ColdInstallScreen', () => {
       mockHosted.current = true;
       mockFetchAccountRequirement.mockResolvedValue(true);
       const view = await render(<ColdInstallScreen />);
-      await provisionProfile(view);
+      await provisionProfile(view, 'welcome_next');
 
       expect(mockFetchAccountRequirement).toHaveBeenCalledWith('https://host.example');
       expect(mockReplace).toHaveBeenCalledWith('RequiredAccount');
       expect(mockReplace).not.toHaveBeenCalledWith('StorySelection');
+    });
+
+    it('counts the account as one more step and says it is coming, once the server asks for one', async () => {
+      mockHosted.current = true;
+      mockFetchAccountRequirement.mockResolvedValue(true);
+      const view = await render(<ColdInstallScreen />);
+      await view.findByText('welcome');
+      await waitFor(() =>
+        expect(view.getByTestId('welcome-progress').props.accessibilityValue.max).toBe(4),
+      );
+
+      await goToNameStep(view);
+      expect(stepOf(view)).toBe(3);
+      // Not "this is not an account": the next screen is one.
+      expect(view.getByText('welcome_name_explain_account')).toBeTruthy();
+      expect(view.queryByText('welcome_name_explain')).toBeNull();
+      expect(view.getByText('disabled:welcome_next')).toBeTruthy();
+    });
+
+    it('does not take the account step for a place the dots can send you to', async () => {
+      mockHosted.current = true;
+      mockFetchAccountRequirement.mockResolvedValue(true);
+      const view = await render(<ColdInstallScreen />);
+      await view.findByText('welcome');
+      await waitFor(() =>
+        expect(view.getByTestId('welcome-progress').props.accessibilityValue.max).toBe(4),
+      );
+
+      await fireEvent.press(view.getByTestId('welcome-dot-3'));
+
+      expect(stepOf(view)).toBe(1);
+    });
+
+    it('keeps three steps and the old wording where nothing follows the name', async () => {
+      mockHosted.current = true;
+      mockFetchAccountRequirement.mockResolvedValue(false);
+      const view = await render(<ColdInstallScreen />);
+      await view.findByText('welcome');
+      await goToNameStep(view);
+
+      expect(view.getByTestId('welcome-progress').props.accessibilityValue.max).toBe(3);
+      expect(view.getByText('welcome_name_explain')).toBeTruthy();
+      expect(view.getByText('disabled:proceed')).toBeTruthy();
+    });
+
+    it('asks again at the end when the welcome had not learned that the server asks', async () => {
+      mockHosted.current = true;
+      mockFetchAccountRequirement.mockResolvedValueOnce(false).mockResolvedValue(true);
+      const view = await render(<ColdInstallScreen />);
+      await provisionProfile(view);
+
+      expect(mockReplace).toHaveBeenCalledWith('RequiredAccount');
     });
 
     it('goes to story selection when the hosted server does not ask for an account', async () => {

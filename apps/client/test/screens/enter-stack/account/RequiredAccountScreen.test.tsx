@@ -106,6 +106,18 @@ describe('RequiredAccountScreen', () => {
     expect(mockUseDocumentTitle).toHaveBeenCalledWith('required_account_title');
   });
 
+  it('is the last of the four welcome steps, and its dots go nowhere', async () => {
+    const view = await render(<RequiredAccountScreen />);
+
+    expect(view.getByTestId('welcome-progress').props.accessibilityValue).toEqual({
+      min: 1,
+      max: 4,
+      now: 4,
+    });
+    await fireEvent.press(view.getByTestId('welcome-dot-0'));
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
   it('opens the age check of the new account when the account needs verification', async () => {
     const view = await render(<RequiredAccountScreen />);
 

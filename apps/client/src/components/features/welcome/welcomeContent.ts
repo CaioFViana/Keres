@@ -42,7 +42,11 @@ export const WELCOME_TITLE_KEYS: Record<WelcomePageId, string> = {
  * Every build says plainly that what is created lives on this device - and the browser ones, that
  * it is kept per site address.
  */
-export function welcomeRows(page: WelcomePageId, flavor: ClientFlavor): WelcomeRow[] {
+export function welcomeRows(
+  page: WelcomePageId,
+  flavor: ClientFlavor,
+  accountRequired = false,
+): WelcomeRow[] {
   if (page === 'what') {
     return [
       { icon: 'git-branch-outline', textKey: 'welcome_what_plan' },
@@ -50,7 +54,14 @@ export function welcomeRows(page: WelcomePageId, flavor: ClientFlavor): WelcomeR
     ];
   }
   if (page === 'name') {
-    return [{ icon: 'person-circle-outline', textKey: 'welcome_name_explain' }];
+    // Where the server asks for an account, the name is not the last thing the welcome asks for: the
+    // step that follows is said here, so a line that calls this "not an account" does not lead into one.
+    return [
+      {
+        icon: 'person-circle-outline',
+        textKey: accountRequired ? 'welcome_name_explain_account' : 'welcome_name_explain',
+      },
+    ];
   }
   if (isOfficialApp(flavor)) {
     return [

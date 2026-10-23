@@ -12,6 +12,9 @@ interface ListSearchFieldProps {
   onSubmitEditing: () => void;
   /** Empties the field. The list commits the empty search at once instead of waiting for a pause. */
   onClear: () => void;
+  accessibilityLabel?: string;
+  testID?: string;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
 /** The list's search box: a search icon on the left, and a button to empty it once there is text. */
@@ -21,6 +24,9 @@ const ListSearchField: React.FC<ListSearchFieldProps> = ({
   onChangeText,
   onSubmitEditing,
   onClear,
+  accessibilityLabel,
+  testID,
+  autoCapitalize,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -34,6 +40,9 @@ const ListSearchField: React.FC<ListSearchFieldProps> = ({
         onSubmitEditing={onSubmitEditing}
         returnKeyType="search"
         autoCorrect={false}
+        autoCapitalize={autoCapitalize}
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
         style={styles.input}
       />
       <View pointerEvents="none" style={styles.leading}>

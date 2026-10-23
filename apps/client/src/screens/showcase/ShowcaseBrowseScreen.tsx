@@ -6,14 +6,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ShowcaseAuthorRow from '@/src/components/features/showcase/ShowcaseAuthorRow';
 import ShowcasePackRow from '@/src/components/features/showcase/ShowcasePackRow';
-import ShowcaseFiltersBar from '@/src/components/features/showcase/ShowcaseFiltersBar';
+import ShowcaseSearchBar from '@/src/components/features/showcase/ShowcaseSearchBar';
 import ShowcaseGuestBanner from '@/src/components/features/showcase/ShowcaseGuestBanner';
 import ShowcaseStoryRow from '@/src/components/features/showcase/ShowcaseStoryRow';
 import ShowcaseTabs from '@/src/components/features/showcase/ShowcaseTabs';
@@ -162,20 +161,13 @@ const ShowcaseBrowseScreen = () => {
         value={tab}
         onChange={setTab}
       />
-      <TextInput
-        style={styles.search}
-        value={filters.q}
-        onChangeText={(q) => setFilters((current) => ({ ...current, q }))}
+      <ShowcaseSearchBar
+        withFilters={tab === 'stories'}
         placeholder={t(`showcase_search_${tab}`)}
-        accessibilityLabel={t('showcase_search')}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="search"
-        testID="showcase-search"
+        filters={filters}
+        onChange={setFilters}
+        facets={facets}
       />
-      {tab === 'stories' ? (
-        <ShowcaseFiltersBar filters={filters} onChange={setFilters} facets={facets} />
-      ) : null}
       {list.total !== null && !list.loading && !list.failed ? (
         <Text style={styles.count} testID="showcase-count">
           {countText}
@@ -286,7 +278,6 @@ const createStyles = (colors: ThemeColors) =>
     ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
     header: { marginBottom: 14, gap: 10 },
-    search: { marginTop: 4 },
     count: { fontSize: 13, color: colors.textSecondary },
     footer: { alignItems: 'center', marginTop: 6 },
     state: { marginTop: 24, alignItems: 'center', gap: 12 },

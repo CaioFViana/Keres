@@ -119,7 +119,7 @@ describe('ServerVerificationScreen', () => {
         return { remove: mockRemove };
       },
     );
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

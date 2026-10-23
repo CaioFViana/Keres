@@ -64,7 +64,6 @@
   ],
   "patchedDependencies": {
     "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch",
-    "expo-sqlite@57.0.3": "patches/expo-sqlite@57.0.3.patch",
     "react-native-enriched-html@1.1.1": "patches/react-native-enriched-html@1.1.1.patch"
   },
   "devDependencies": {

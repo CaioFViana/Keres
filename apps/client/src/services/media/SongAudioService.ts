@@ -74,7 +74,7 @@ function nativeStore(): SongAudioStore {
       folder.create({ intermediates: true, idempotent: true });
       const file = new File(folder, `${key}.wav`);
       file.create({ overwrite: true });
-      file.write(bytes);
+      await file.write(bytes);
       return file.uri;
     },
     async prune(maxBytes) {

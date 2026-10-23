@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  type HostInstance,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type ViewInstance,
+} from 'react-native';
 import type { TextRange } from '@keres/shared';
 import { useOccurrenceFlash } from '@/src/hooks/nav/useOccurrenceLanding';
 import { useMentions } from '@/src/mentions/MentionContext';
@@ -68,8 +75,8 @@ const DetailField: React.FC<DetailFieldProps> = ({
   const { matcher, openMention } = useMentions();
   const hasCommentRanges = !!commentRanges && commentRanges.length > 0;
   const { targeted, target, flashRanges, requestScroll } = useOccurrenceFlash(fieldKey, value);
-  const containerRef = useRef<View | null>(null);
-  const spanRef = useRef<Text | null>(null);
+  const containerRef = useRef<ViewInstance | null>(null);
+  const spanRef = useRef<HostInstance | null>(null);
   // The landing scroll follows data, not just navigation: an entity swap under the
   // same screen re-lays-out after the refetch, and the stale measurement's
   // continuation dies on the controller's generation. No state set here.

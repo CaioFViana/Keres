@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { act, fireEvent, render } from '@testing-library/react-native';
 import ConversationListItem from '@/src/components/features/messages/ConversationListItem';

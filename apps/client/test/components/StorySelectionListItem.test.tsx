@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { fireEvent, render } from '@testing-library/react-native';
 import type { Story } from '@keres/shared/entities/story/Story';

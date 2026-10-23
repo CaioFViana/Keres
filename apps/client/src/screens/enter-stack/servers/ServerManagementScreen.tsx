@@ -130,7 +130,7 @@ const ServerManagementScreen = () => {
             <Button onPress={addServer} variant="secondary" testID="add-server-by-url">
               {t('add_server_by_url')}
             </Button>
-          ) : null
+          ) : undefined
         }
       />
     </View>

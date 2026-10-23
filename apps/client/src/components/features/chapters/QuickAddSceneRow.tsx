@@ -1,6 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useRef, useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useTheme } from '@/src/theme';
 
 interface Props {
@@ -23,7 +29,7 @@ const QuickAddSceneRow: React.FC<Props> = ({
   const { colors } = useTheme();
   const [value, setValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const inputRef = useRef<TextInput | null>(null);
+  const inputRef = useRef<TextInputInstance | null>(null);
   const styles = useMemo(
     () =>
       StyleSheet.create({

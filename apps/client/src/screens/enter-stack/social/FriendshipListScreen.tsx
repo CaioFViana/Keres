@@ -295,7 +295,7 @@ const FriendshipListScreen = () => {
               ]}
               fallbackText={t('no_friendships_found')}
             />
-          ) : null
+          ) : undefined
         }
       />
     </View>

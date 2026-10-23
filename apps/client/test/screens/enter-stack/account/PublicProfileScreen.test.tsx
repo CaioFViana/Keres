@@ -150,7 +150,7 @@ describe('PublicProfileScreen', () => {
     mockGetOwnProfile.mockResolvedValue({ username: 'ana maria' });
     mockUpdatePublicProfile.mockResolvedValue(undefined);
     mockIsShowcaseEnabled.mockResolvedValue(true);
-    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

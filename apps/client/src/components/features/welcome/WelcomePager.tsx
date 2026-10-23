@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import type { ScrollView } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -23,7 +23,7 @@ interface UseWelcomePagerOptions {
  * pages on the way to the third would otherwise turn a request for the third into the second.
  */
 export function useWelcomePager({ page, pageWidth, onPageChange }: UseWelcomePagerOptions) {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   /** The horizontal offset, kept on the UI thread so the swipe drives animations without a render per frame. */
   const scrollX = useSharedValue(0);
   /** The page a scroll started by code is heading to, or -1 when there is none. */

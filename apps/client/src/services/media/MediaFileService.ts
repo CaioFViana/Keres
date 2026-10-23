@@ -606,7 +606,7 @@ export const mediaFileService = {
     const destination = new File(directory, `${hash}.${extensionForMimeType(mimeType)}`);
     if (!destination.exists) {
       destination.create();
-      destination.write(bytes);
+      await destination.write(bytes);
     }
     return { localPath: destination.uri, hash, sizeBytes: bytes.length };
   },
@@ -631,7 +631,7 @@ export const mediaFileService = {
       destination.delete();
     }
     destination.create();
-    destination.write(bytes);
+    await destination.write(bytes);
 
     return destination.uri;
   },

@@ -416,7 +416,7 @@ describe('ColdInstallScreen', () => {
 
   it('points the browser builds at the latest official app, off to the side', async () => {
     mockFlavor.current = 'serverless-web';
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     const view = await render(<ColdInstallScreen />);
 
     await fireEvent.press(view.getByTestId('welcome-official-app-link'));

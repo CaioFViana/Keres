@@ -1,6 +1,7 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
+import { setJsdomUrl } from '@/test/helpers/jsdomLocation';
 import {
   readShowcaseRequest,
   resetShowcaseRequestCacheForTests,
@@ -8,22 +9,16 @@ import {
 } from '@/src/services/showcase/showcaseRequest';
 
 describe('showcaseRequest branches', () => {
-  const originalLocation = window.location;
+  const originalUrl = window.location.href;
 
   afterEach(() => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: originalLocation,
-    });
+    setJsdomUrl(originalUrl);
     resetShowcaseRequestCacheForTests();
   });
 
   function setSearch(search: string) {
     resetShowcaseRequestCacheForTests();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...originalLocation, search },
-    });
+    setJsdomUrl(`${originalUrl.split('?')[0]}${search}`);
   }
 
   it('returns null when the URL carries no showcase parameter', () => {
@@ -56,10 +51,7 @@ describe('showcaseRequest branches', () => {
   it('memoizes the parse until the cache is reset', () => {
     setSearch('?showcase=first-story');
     const first = readShowcaseRequest();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...originalLocation, search: '?showcase=second-story' },
-    });
+    setJsdomUrl(`${originalUrl.split('?')[0]}?showcase=second-story`);
     expect(readShowcaseRequest()).toBe(first);
     resetShowcaseRequestCacheForTests();
     expect(readShowcaseRequest()).toMatchObject({ story: 'second-story' });
@@ -67,22 +59,16 @@ describe('showcaseRequest branches', () => {
 });
 
 describe('showcaseInitialRoute fallbacks', () => {
-  const originalLocation = window.location;
+  const originalUrl = window.location.href;
 
   afterEach(() => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: originalLocation,
-    });
+    setJsdomUrl(originalUrl);
     resetShowcaseRequestCacheForTests();
   });
 
   function setSearch(search: string) {
     resetShowcaseRequestCacheForTests();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...originalLocation, search },
-    });
+    setJsdomUrl(`${originalUrl.split('?')[0]}${search}`);
   }
 
   it('keeps the default when there is no showcase request', () => {

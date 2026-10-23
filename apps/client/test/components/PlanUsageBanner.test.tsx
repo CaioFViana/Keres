@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { act, render } from '@testing-library/react-native';
 import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';

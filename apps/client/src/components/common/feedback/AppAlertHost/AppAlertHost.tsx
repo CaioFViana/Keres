@@ -39,7 +39,9 @@ const AppAlertHost: React.FC = () => {
       visible
       transparent
       animationType="fade"
-      onRequestClose={() => current.cancelable && dismiss()}
+      onRequestClose={() => {
+        if (current.cancelable) dismiss();
+      }}
     >
       <TouchableOpacity
         style={styles.backdrop}

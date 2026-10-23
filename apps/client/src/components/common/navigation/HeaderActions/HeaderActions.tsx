@@ -2,7 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewInstance,
+} from 'react-native';
 import {
   headerAnchorId,
   registerGuideAnchor,
@@ -126,7 +134,7 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
   const [open, setOpen] = useState(false);
   useModalNavigationBar(open);
   // Every action hides behind the one burger, so a tour pointing at one points at the burger.
-  const burgerRef = useRef<View>(null);
+  const burgerRef = useRef<ViewInstance>(null);
   const icons = actions.map((action) => action.icon).join('|');
   useEffect(() => {
     const ids = icons.split('|').map(headerAnchorId);

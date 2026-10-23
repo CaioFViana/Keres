@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { fireEvent, render } from '@testing-library/react-native';
 import ServerActionRow from '@/src/components/features/servers/ServerActionRow';

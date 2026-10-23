@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
-import type { ScrollView } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import React from 'react';
 import {
   OccurrenceLandingContext,
@@ -35,7 +35,7 @@ describe('useOccurrenceLandingController', () => {
     result.current.scrollRef.current = {
       ...measured([[0, 0, 400, 800]]),
       scrollTo,
-    } as unknown as ScrollView;
+    } as unknown as ScrollViewInstance;
     result.current.handleScroll({ nativeEvent: { contentOffset: { y: 100 } } });
 
     result.current.access.requestScroll(measured([[0, 900, 100, 20]]));
@@ -53,7 +53,7 @@ describe('useOccurrenceLandingController', () => {
     result.current.scrollRef.current = {
       ...measured([[0, 0, 400, 800]]),
       scrollTo,
-    } as unknown as ScrollView;
+    } as unknown as ScrollViewInstance;
 
     result.current.access.requestScroll(measured([[0, 200, 100, 20]]));
     jest.advanceTimersByTime(20);
@@ -67,7 +67,7 @@ describe('useOccurrenceLandingController', () => {
     result.current.scrollRef.current = {
       ...measured([[0, 0, 400, 800]]),
       scrollTo,
-    } as unknown as ScrollView;
+    } as unknown as ScrollViewInstance;
 
     result.current.access.requestScroll(
       measured([
@@ -88,7 +88,7 @@ describe('useOccurrenceLandingController', () => {
     result.current.scrollRef.current = {
       ...measured([[0, 0, 400, 800]]),
       scrollTo,
-    } as unknown as ScrollView;
+    } as unknown as ScrollViewInstance;
 
     // The stale host measures zeros first (schedules the 120ms retry), then would
     // report a segment above the viewport: without the generation guard, the late

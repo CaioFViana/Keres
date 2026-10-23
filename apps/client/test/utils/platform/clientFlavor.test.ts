@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+/** @jest-environment ./test/helpers/jsdomEnvironment.js */
 import { Platform } from 'react-native';
 import {
   getClientFlavor,

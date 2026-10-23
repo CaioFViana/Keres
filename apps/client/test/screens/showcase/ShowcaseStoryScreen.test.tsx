@@ -178,7 +178,7 @@ describe('ShowcaseStoryScreen', () => {
     mockDownloadManuscript.mockResolvedValue(new Uint8Array([37, 80]));
     mockDeliverManuscript.mockResolvedValue({ delivered: true, fileName: 'casa.pdf' });
     mockDeliver.mockResolvedValue({ delivered: true, fileName: 'Casa.zip' });
-    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

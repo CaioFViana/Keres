@@ -1,6 +1,6 @@
 import { render, type RenderResult } from '@testing-library/react-native';
 import { createRef } from 'react';
-import { Animated, PanResponder, StyleSheet, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, View, type ViewInstance } from 'react-native';
 import GraphCanvasFrame, {
   graphCanvasPlaneStyle,
   suppressNativeDragOnContainer,
@@ -12,7 +12,7 @@ jest.mock('@/src/theme', () => ({
 
 type Root = RenderResult['container'];
 
-function renderFrame(containerRef = createRef<View>(), label?: string) {
+function renderFrame(containerRef = createRef<ViewInstance>(), label?: string) {
   return render(
     <GraphCanvasFrame
       label={label}
@@ -52,7 +52,7 @@ describe('GraphCanvasFrame', () => {
   });
 
   it('names the canvas as a region for a screen reader when it has a label', async () => {
-    const view = await renderFrame(createRef<View>(), 'Character relations');
+    const view = await renderFrame(createRef<ViewInstance>(), 'Character relations');
 
     const region = view.getByLabelText('Character relations');
     expect(region.props.role).toBe('region');

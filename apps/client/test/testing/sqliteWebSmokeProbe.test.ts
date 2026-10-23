@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';

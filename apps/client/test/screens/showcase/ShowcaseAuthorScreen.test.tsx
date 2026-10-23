@@ -107,7 +107,7 @@ describe('ShowcaseAuthorScreen', () => {
     mockRoute.params = { serverId: 'srv-1', username: 'ana' };
     mockGetServerById.mockResolvedValue(server);
     mockGetAuthor.mockResolvedValue(page());
-    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

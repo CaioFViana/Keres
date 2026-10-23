@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -130,7 +130,7 @@ function SceneEditorContent({
 
   // Write/Read share one scroll container and restore the offset on switch, so the
   // passage stays exactly where it was instead of jumping back to the top.
-  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollRef = useRef<ScrollViewInstance | null>(null);
   const handleToolbarAction = useCallback(
     (kind: Parameters<typeof applyFormat>[0]) => {
       applyFormat(kind);

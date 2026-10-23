@@ -92,7 +92,7 @@ function ReorderModal<T>({
         style={layout.fill}
         data={reorderedItems}
         keyExtractor={getId}
-        ListEmptyComponent={emptyListComponent}
+        ListEmptyComponent={emptyListComponent ?? undefined}
         renderItem={({ item, index }) => {
           const label = getLabel(item);
           return (

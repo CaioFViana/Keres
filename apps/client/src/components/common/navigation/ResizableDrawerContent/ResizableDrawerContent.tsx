@@ -1,7 +1,7 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import React, { useEffect, useRef, useState } from 'react';
-import type { ScrollView } from 'react-native';
+import type { ScrollViewInstance, ViewInstance } from 'react-native';
 import { Platform, StyleSheet, View } from 'react-native';
 import type { GuideDrawerId } from '@/src/guides/types';
 import {
@@ -59,8 +59,8 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
 }) => {
   const currentWidthRef = useRef(drawerWidth);
   const dragStartWidthRef = useRef(drawerWidth);
-  const scrollRef = useRef<ScrollView | null>(null);
-  const containerRef = useRef<View | null>(null);
+  const scrollRef = useRef<ScrollViewInstance | null>(null);
+  const containerRef = useRef<ViewInstance | null>(null);
   const scrollOffsetRef = useRef(0);
 
   useEffect(() => {
@@ -116,7 +116,8 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     <View ref={containerRef} style={styles.container}>
       <DrawerContentScrollView
         {...drawerProps}
-        ref={scrollRef}
+        // The drawer's own typings still name the old class type for this ref.
+        ref={scrollRef as unknown as React.ComponentProps<typeof DrawerContentScrollView>['ref']}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         scrollEventThrottle={16}

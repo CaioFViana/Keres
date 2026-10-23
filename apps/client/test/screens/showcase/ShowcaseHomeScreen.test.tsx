@@ -93,7 +93,7 @@ describe('ShowcaseHomeScreen', () => {
     mockGetConfig.mockResolvedValue({ showcaseEnabled: true });
     (Clipboard.getStringAsync as jest.Mock).mockResolvedValue('');
     mockFlavor.hosted = false;
-    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import type { View } from 'react-native';
+import type { ViewInstance } from 'react-native';
 import { Animated, Platform } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
@@ -79,7 +79,7 @@ export function useCanvasViewport(
     boundsRef.current = bounds;
   }, [onTapOption, onAutoPanOption, bounds]);
 
-  const containerRef = useRef<View>(null);
+  const containerRef = useRef<ViewInstance>(null);
   const viewport = useRef({ width: 0, height: 0 });
   /**
    * Layout-size mirror for the rotation composition only: the animated plane needs the

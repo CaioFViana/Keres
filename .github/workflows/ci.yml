@@ -15,7 +15,7 @@ concurrency:
 env:
   # Same version pinned in release.yml, for the same reason: always install with the lockfile
   # format bun.lock was generated with.
-  BUN_VERSION: '1.2.19'
+  BUN_VERSION: '1.4.4'
 
 jobs:
   # One job per package instead of a single sequential chain: every package reports its own

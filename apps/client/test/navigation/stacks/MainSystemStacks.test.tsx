@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { render } from '@testing-library/react-native';
 import React from 'react';
@@ -25,6 +25,7 @@ import CalendarsStackNavigator from '@/src/navigation/stacks/CalendarsStack';
 import StatsStackNavigator from '@/src/navigation/stacks/StatsStack';
 import StorySettingsStackNavigator from '@/src/navigation/stacks/StorySettingsStack';
 import { resetShowcaseRequestCacheForTests } from '@/src/services/showcase/showcaseRequest';
+import { setJsdomUrl } from '@/test/helpers/jsdomLocation';
 
 const mockNavigatorProps: Record<string, any>[] = [];
 const mockScreens: Record<string, any>[] = [];
@@ -547,17 +548,14 @@ it.each(stacks.map((stack) => [stack.label, stack] as const))(
 );
 
 it('opens the showcase screen when the capture targets this stack', async () => {
-  const originalLocation = window.location;
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: { ...originalLocation, search: '?showcase=story&stack=PlotsStack&screen=PlotMatrix' },
-  });
+  const originalUrl = window.location.href;
+  setJsdomUrl(`${originalUrl.split('?')[0]}?showcase=story&stack=PlotsStack&screen=PlotMatrix`);
   resetShowcaseRequestCacheForTests();
   try {
     await render(<PlotsStackNavigator />);
     expect(mockNavigatorProps[0]).toMatchObject({ initialRouteName: 'PlotMatrix' });
   } finally {
-    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    setJsdomUrl(originalUrl);
     resetShowcaseRequestCacheForTests();
   }
 });

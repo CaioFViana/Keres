@@ -20,6 +20,45 @@ if (typeof globalThis.TextEncoder === 'undefined') {
   });
 }
 
+// Jest 30.4+ reads every enumerable global when it resets modules during teardown. React Native and Expo install
+// globals (`DOMRect`, `fetch`, `structuredClone`, ...) as lazy getters that `require()` on first access, and a
+// `require()` after the test has finished throws. jest-expo guards its own environment against this, but the
+// suites on `@jest-environment node` run the stock one - so the lazy globals are made non-enumerable (still
+// readable, just not swept) once the setup is in and again after the suite, since modules install more as they load.
+function hideLazyGlobalsFromTeardown() {
+  for (const key of Object.keys(globalThis)) {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, key);
+    if (descriptor?.configurable && typeof descriptor.get === 'function') {
+      Object.defineProperty(globalThis, key, { ...descriptor, enumerable: false });
+    }
+  }
+}
+hideLazyGlobalsFromTeardown();
+afterAll(hideLazyGlobalsFromTeardown);
+
+// jest-expo mocks `react-native/asset-registry`, but expo-asset 58 reads the registry through React Native's public
+// `AssetRegistry` export, which is backed by the private module the mock does not cover. The asset transformer
+// turns every font and image into the id `1`, so without this the icon fonts fail to load with "Module 1 is missing
+// from the asset registry" and the icons never render. Same entry the jest-expo mock returns.
+jest.mock('react-native/src/private/assets/AssetRegistry', () => ({
+  AssetRegistry: {
+    registerAsset: jest.fn(() => 1),
+    getAssetByID: jest.fn(() => ({
+      fileSystemLocation: '/full/path/to/directory',
+      httpServerLocation: '/assets/full/path/to/directory',
+      scales: [1],
+      fileHashes: ['md5'],
+      name: 'name',
+      exists: true,
+      type: 'type',
+      hash: 'md5',
+      uri: 'uri',
+      width: 1,
+      height: 1,
+    })),
+  },
+}));
+
 // Reanimated 4.2's Jest entry imports the real `react-native-worklets` index, which
 // instantiates its native module at load and throws in Jest. The worklets package ships its
 // own mock - register it so the reanimated mock below can load.
@@ -200,15 +239,22 @@ jest.mock('@shopify/react-native-skia', () => {
       SVG: {
         MakeFromString: (text: string) => (text.includes('<svg') ? { __mockSvg: text } : null),
       },
+      // Skia 2.14 paths are immutable: the fill type is set on a builder, which hands back the finished path.
       Path: {
-        MakeFromSVGString: (d: string) => ({
-          d,
-          fillType: 0,
-          setFillType(this: { fillType: number }, type: number) {
-            this.fillType = type;
-            return this;
-          },
-        }),
+        MakeFromSVGString: (d: string) => ({ d, fillType: 0 }),
+      },
+      PathBuilder: {
+        MakeFromPath: (path: { d: string }) => {
+          const built = { d: path.d, fillType: 0 };
+          const builder = {
+            setFillType: (type: number) => {
+              built.fillType = type;
+              return builder;
+            },
+            detach: () => built,
+          };
+          return builder;
+        },
       },
       Paint: () => {
         const paint: Record<string, unknown> = {};

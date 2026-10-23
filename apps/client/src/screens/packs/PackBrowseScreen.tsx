@@ -170,7 +170,7 @@ const PackBrowseScreen = () => {
           </>
         }
         ListEmptyComponent={
-          loading ? null : (
+          loading ? undefined : (
             <Text style={styles.emptyText}>
               {server ? t('packs_browse_empty') : t('packs_browse_choose_server')}
             </Text>

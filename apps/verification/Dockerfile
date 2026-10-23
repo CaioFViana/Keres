@@ -4,7 +4,7 @@
 # documents of people sent to it, encrypted, until a reviewer decides, and speaks only the KERES-AGE-V1 protocol to a
 # Keres server on one side and to its reviewers' browsers on the other. Self-hosted "keres servers" bundles never
 # contain it.
-FROM oven/bun:1-slim AS deps
+FROM oven/bun:1.4.4-slim AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
@@ -14,7 +14,7 @@ COPY patches patches
 # (same reason as apps/payments/Dockerfile).
 RUN bun install --production --linker=hoisted
 
-FROM oven/bun:1-slim AS runtime
+FROM oven/bun:1.4.4-slim AS runtime
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY --from=deps /app/node_modules ./node_modules

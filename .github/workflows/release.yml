@@ -22,7 +22,7 @@ env:
   # pinned here to the exact version bun.lock was generated with, so every job installs from
   # the same lockfile format/resolution behavior instead of whatever "latest" happens to be
   # the day a release ships.
-  BUN_VERSION: '1.2.19'
+  BUN_VERSION: '1.4.4'
 
 jobs:
   # Turns the pushed tag (e.g. "v1.2.3") into the plain version string every other job needs

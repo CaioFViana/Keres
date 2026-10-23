@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
-import type { FlatList, Text, View } from 'react-native';
+import type { FlatList, HostInstance, ViewInstance } from 'react-native';
 import type { ManuscriptSection } from '@keres/shared';
 import { useManuscriptSearch } from '@/src/screens/narrative-elements/scenes/useManuscriptSearch';
 
@@ -46,7 +46,7 @@ describe('useManuscriptSearch fine scroll', () => {
       current: { scrollToOffset },
     } as unknown as React.RefObject<FlatList<ManuscriptSection> | null>;
     const { result } = await renderHook(() => useManuscriptSearch(sections, listRef, jest.fn()));
-    result.current.viewportRef.current = measured([[0, 0, 400, 800]]) as unknown as View;
+    result.current.viewportRef.current = measured([[0, 0, 400, 800]]) as unknown as ViewInstance;
 
     // The stale host measures zeros first (schedules the 120ms retry), then reports
     // a segment above the viewport: without the generation guard, the late retry
@@ -54,11 +54,11 @@ describe('useManuscriptSearch fine scroll', () => {
     const stale = measured([
       [0, 0, 100, 0],
       [0, -500, 100, 100],
-    ]) as unknown as Text;
+    ]) as unknown as HostInstance;
     result.current.scrollActiveIntoView(stale);
     jest.advanceTimersByTime(20);
 
-    const fresh = measured([[0, 900, 100, 20]]) as unknown as Text;
+    const fresh = measured([[0, 900, 100, 20]]) as unknown as HostInstance;
     result.current.scrollActiveIntoView(fresh);
     jest.advanceTimersByTime(20);
 

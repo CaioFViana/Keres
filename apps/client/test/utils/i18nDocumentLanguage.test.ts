@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { Platform } from 'react-native';
 import i18n, { syncDocumentLanguage } from '@/src/utils/format/i18n';

@@ -530,8 +530,8 @@ describe('MarkdownPreview', () => {
       children: unknown[];
     };
     const style = StyleSheet.flatten(blank.props.style);
-    expect(style.height).toBe(manuscriptTextMetrics.lineHeight);
-    expect(style.marginBottom).toBeUndefined();
+    expect(style?.height).toBe(manuscriptTextMetrics.lineHeight);
+    expect(style?.marginBottom).toBeUndefined();
     expect(blank.children).toHaveLength(0);
     expect(view.getByText('Above.')).toBeTruthy();
     expect(view.getByText('Below.')).toBeTruthy();

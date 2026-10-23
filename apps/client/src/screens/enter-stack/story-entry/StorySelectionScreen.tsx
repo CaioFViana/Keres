@@ -1,5 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+import SyncAccountBanner from '@/src/components/features/servers/SyncAccountBanner';
 import FirstStoryStart from '@/src/components/features/story/FirstStoryStart';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
@@ -14,7 +15,7 @@ import { BackHandler, FlatList, Platform, StyleSheet, Text, View } from 'react-n
 import { useDrizzle } from '@/src/db';
 import type { StorySelectionDrawerParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
-import { useSyncAccountPrompt } from '@/src/hooks/guides/useSyncAccountPrompt';
+import { useSyncAccountNotice } from '@/src/hooks/guides/useSyncAccountNotice';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
@@ -156,7 +157,12 @@ const StorySelectionScreen = () => {
       .getParent<DrawerNavigationProp<StorySelectionDrawerParamList>>()
       ?.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
   }, [navigation]);
-  useSyncAccountPrompt(serverCount, openServerManagement);
+  const { visible: syncNoticeVisible, dismiss: dismissSyncNotice } =
+    useSyncAccountNotice(serverCount);
+  const handleSyncNoticeAction = useCallback(() => {
+    dismissSyncNotice();
+    openServerManagement();
+  }, [dismissSyncNotice, openServerManagement]);
 
   const handleCreateNewStory = useCallback(() => {
     navigation.navigate('StoryForm', {});
@@ -264,6 +270,12 @@ const StorySelectionScreen = () => {
               {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 
               <Text style={styles.title}>{t('your_stories')}</Text>
+              {syncNoticeVisible && (
+                <SyncAccountBanner
+                  onCreateAccount={handleSyncNoticeAction}
+                  onLater={dismissSyncNotice}
+                />
+              )}
               {showTrailCta && (
                 <FirstStoryStart
                   onBlank={handleStartBlank}

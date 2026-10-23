@@ -23,6 +23,8 @@ import {
  *       one slice of that run, so the workflow can spread it over parallel jobs: `static` is what
  *       belongs to no package (translations, formatting, release versions, the repository's own
  *       scripts); a package name is that package's typecheck, lint and unit suites.
+ *   bun run release:check --ci --only <package> --scripts typecheck,lint
+ *       only those of the package's scripts, for the one package slow enough to be worth two jobs.
  *
  * The two modes differ in what makes sense where: on a machine formatting is applied and the
  * repository has to end up clean; in CI formatting is only checked (an automatic fix there
@@ -46,6 +48,22 @@ if (only && only !== 'static' && !PACKAGES.some((pkg) => pkg.name === only)) {
   console.error(
     `Unknown slice "${only}": use "static" or a package (${PACKAGES.map((pkg) => pkg.name).join(', ')}).`,
   );
+  process.exit(1);
+}
+
+const PACKAGE_SCRIPTS = ['typecheck', 'lint', 'test:coverage'];
+const scriptsIndex = process.argv.indexOf('--scripts');
+const scriptsArgument = scriptsIndex === -1 ? undefined : process.argv[scriptsIndex + 1];
+const scripts = scriptsArgument ? scriptsArgument.split(',') : PACKAGE_SCRIPTS;
+if (scriptsIndex !== -1 && (!only || only === 'static')) {
+  console.error(
+    '--scripts goes with a package: bun scripts/release-check.ts --ci --only <package>.',
+  );
+  process.exit(1);
+}
+const unknownScript = scripts.find((script) => !PACKAGE_SCRIPTS.includes(script));
+if (unknownScript) {
+  console.error(`Unknown script "${unknownScript}": use ${PACKAGE_SCRIPTS.join(', ')}.`);
   process.exit(1);
 }
 
@@ -176,7 +194,7 @@ const staticSlice: Step[] = [
 
 /** One package's share of the CI run: the same scripts the full run goes through, filtered. */
 const packageSlice = (name: string): Step[] =>
-  ['typecheck', 'lint', 'test:coverage'].map((script) => ({
+  scripts.map((script) => ({
     title: `${name}: ${script}`,
     execute: () => runFile('scripts/run-all.ts', [script, '--only', name]),
   }));

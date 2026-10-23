@@ -65,15 +65,31 @@ jobs:
       # A red client must not hide a red api: every package reports its own result.
       fail-fast: false
       matrix:
-        name: [shared, client, api, payments, verification, web, desktop, site]
-    name: verify (${{ matrix.name }})
+        include:
+          - name: shared
+          - name: api
+          - name: payments
+          - name: verification
+          - name: web
+          - name: desktop
+          - name: site
+          # The client is the slow one - its suites and its type-aware lint each take minutes - and
+          # nothing in its typecheck or lint needs its tests: two jobs, so the check takes as long as
+          # the slower of the two instead of their sum.
+          - name: client
+            label: client typecheck and lint
+            scripts: typecheck,lint
+          - name: client
+            label: client tests
+            scripts: test:coverage
+    name: verify (${{ matrix.label || matrix.name }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun run release:check --ci --only ${{ matrix.name }}
+      - run: bun run release:check --ci --only ${{ matrix.name }}${{ matrix.scripts && format(' --scripts {0}', matrix.scripts) || '' }}
 
   # One name for the builds to wait on, whatever the number of slices above.
   verify:

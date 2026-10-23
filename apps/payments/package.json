@@ -1,6 +1,6 @@
 {
   "name": "@keres/payments",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "private": true,
   "license": "MPL-2.0",
   "description": "Official Keres payment microservice: speaks the connector contract to a Keres server, PayPal and Google Pay (via Stripe Checkout) to people on the web, Google Play Billing on mobile.",

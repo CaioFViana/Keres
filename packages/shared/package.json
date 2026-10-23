@@ -1,6 +1,6 @@
 {
   "name": "@keres/shared",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "main": "index.ts",
   "types": "index.ts",
   "license": "MPL-2.0",

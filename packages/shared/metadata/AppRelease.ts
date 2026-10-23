@@ -7,7 +7,7 @@
  */
 export const APP_RELEASE = {
   name: 'Pandora',
-  version: '1.10.2',
+  version: '1.10.3',
   /**
    * The release's line, shown verbatim on the credits screen. English, never translated - it is
    * the release's voice, quoted from `docs/extras/fluff_release_names.md`. Update it by hand with every

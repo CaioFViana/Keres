@@ -37,19 +37,54 @@ jobs:
 
   # Validate the complete monorepo once before starting the platform-specific builds - the
   # same gate releases go through (`release:check --ci`), since a dev tag stamps the same
-  # version files.
-  verify:
+  # version files. Cut into the same slices as release.yml, running side by side (one for what
+  # belongs to no package, one per package, the client's typecheck and lint apart from its
+  # tests), so the check takes as long as the slowest slice. `verify` below is the gate the
+  # builds wait on. The integration suites stay out on purpose: they have their own job in ci.yml.
+  verify-static:
+    name: verify (static)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun install --frozen-lockfile
-      # Translations, typecheck, lint, formatting, version alignment, and the unit suites with
-      # coverage. The integration suites stay out on purpose, same as in release.yml: they
-      # have their own job in ci.yml.
-      - run: bun run release:check --ci
+      - run: bun run release:check --ci --only static
+
+  verify-package:
+    strategy:
+      # A red client must not hide a red api: every package reports its own result.
+      fail-fast: false
+      matrix:
+        include:
+          - name: shared
+          - name: api
+          - name: payments
+          - name: verification
+          - name: web
+          - name: desktop
+          - name: site
+          - name: client
+            label: client typecheck and lint
+            scripts: typecheck,lint
+          - name: client
+            label: client tests
+            scripts: test:coverage
+    name: verify (${{ matrix.label || matrix.name }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run release:check --ci --only ${{ matrix.name }}${{ matrix.scripts && format(' --scripts {0}', matrix.scripts) || '' }}
+
+  # One name for the builds to wait on, whatever the number of slices above.
+  verify:
+    needs: [verify-static, verify-package]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Every verification slice passed."
 
   # ---- Server: compile the API's Docker image (no push) ----
   docker:
@@ -208,13 +243,9 @@ jobs:
         with:
           packages: ''
       - run: bun install --frozen-lockfile
-      # @shopify/react-native-skia keeps its native binaries in sibling packages and copies
-      # them into its own `libs/` in a postinstall script - which Bun skips (this repo has
-      # no `trustedDependencies`). Without this copy the Gradle build fails with "Skia
-      # prebuilt binaries not found". Local copy only, no network; the same command the
-      # Gradle error message suggests.
-      - name: Install Skia prebuilt binaries
-        run: bunx install-skia
+      # No Skia step: since 2.14 react-native-skia's Gradle build resolves the prebuilt binaries
+      # (the react-native-skia-android package) straight from node_modules, and `install-skia`
+      # is no longer a binary the package ships - `bunx install-skia` fails.
       - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       # `android/` is gitignored (generated, not source) - this recreates it fresh from
       # apps/client/app.json on every build.

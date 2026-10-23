@@ -67,7 +67,10 @@ module.exports = defineConfig([
        * array method) drops its rejection the same way. JSX handlers (`onPress={async () => ...}`) are the
        * ordinary shape in React Native and stay allowed.
        */
-      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
       /**
        * `any` switches the checker off for everything it touches. Use `unknown` and narrow, or the real type;
        * where a library's own generics leave no honest type, suppress the line and say why.

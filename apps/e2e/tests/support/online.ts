@@ -42,8 +42,7 @@ export async function createAccount(page: Page, username: string) {
   await page.getByRole('button', { name: 'Create Account', exact: true }).last().click();
   await acceptServerDocument(page, 'terms');
   await acceptServerDocument(page, 'privacy');
-  await page.getByText('Server registered successfully!').waitFor();
-  await page.getByText('OK', { exact: true }).click();
+  // The recovery codes page is the confirmation; no dialog sits over its button.
   await page.getByRole('button', { name: "I've saved them, continue" }).click();
 }
 
@@ -52,8 +51,8 @@ export async function signIn(page: Page, username: string) {
   await openRegisterServer(page);
   await page.getByPlaceholder('Enter your username').fill(username);
   await page.getByPlaceholder('Enter your password').fill(PASSWORD);
-  await page.getByRole('button', { name: 'Register Server' }).click();
-  await page.getByText('Server registered successfully!').waitFor();
+  await page.getByRole('button', { name: 'Log In', exact: true }).last().click();
+  await page.getByText('Signed in!').waitFor();
 }
 
 /** Closes the alert a step ends with. */

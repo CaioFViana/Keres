@@ -285,34 +285,34 @@ describe('ServerRegistrationScreen', () => {
 
   it('blocks saving with empty required fields', async () => {
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
-    await fireEvent.press(view.getByText('register_server'));
+    await view.findByText('log_in');
+    await fireEvent.press(view.getByText('log_in'));
     expect(mockAlert).toHaveBeenCalledWith('error', 'all_fields_required_except_password_for_edit');
     expect(mockAuthenticate).not.toHaveBeenCalled();
   });
 
   it('requires a password for new registrations', async () => {
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-address'));
     await fireEvent.press(view.getByTestId('set-username'));
-    await fireEvent.press(view.getByText('register_server'));
+    await fireEvent.press(view.getByText('log_in'));
     expect(mockAlert).toHaveBeenCalledWith('error', 'password_required_for_registration');
   });
 
   it('rejects an already registered server url', async () => {
     mockServerService.getServerByUrl.mockResolvedValue({ id: 'srv-dup' });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fillLogin(view);
-    await fireEvent.press(view.getByText('register_server'));
+    await fireEvent.press(view.getByText('log_in'));
     expect(mockAlert).toHaveBeenCalledWith('error', 'server_url_already_registered');
     expect(mockAuthenticate).not.toHaveBeenCalled();
   });
 
   it('validates password length and confirmation in register mode', async () => {
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-register'));
     await fireEvent.press(view.getByTestId('set-address'));
     await fireEvent.press(view.getByTestId('set-username'));
@@ -330,10 +330,10 @@ describe('ServerRegistrationScreen', () => {
 
   it('registers a new server on successful login', async () => {
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-name'));
-    await fireEvent.press(view.getByText('register_server'));
+    await fireEvent.press(view.getByText('log_in'));
     await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
     expect(mockServerService.createServer).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -346,7 +346,7 @@ describe('ServerRegistrationScreen', () => {
     );
     expect(mockUpdateTokens).toHaveBeenCalledWith('srv-new', 'at', 'rt');
     expect(mockSetActiveServer).toHaveBeenCalledWith(expect.objectContaining({ id: 'srv-new' }));
-    expect(mockAlert).toHaveBeenCalledWith('success', 'server_registered_successfully');
+    expect(mockAlert).toHaveBeenCalledWith('success', 'account_signed_in_successfully');
     expect(mockGoBack).toHaveBeenCalled();
   });
 
@@ -358,7 +358,7 @@ describe('ServerRegistrationScreen', () => {
       text: 'Rules\nBe kind.',
     });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-register'));
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-password'));
@@ -416,7 +416,7 @@ describe('ServerRegistrationScreen', () => {
       text: 'Privacy\nWe keep little.',
     });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-register'));
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-password'));
@@ -446,9 +446,24 @@ describe('ServerRegistrationScreen', () => {
     );
   });
 
+  it('says the account was created, not that a server was registered, after a registration', async () => {
+    const view = await render(<ServerRegistrationScreen />);
+    await view.findByText('log_in');
+    await fireEvent.press(view.getByTestId('set-mode-register'));
+    await fillLogin(view);
+    await fireEvent.press(view.getByTestId('set-password'));
+    await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByTestId('server-register-adult-switch'));
+    await fireEvent.press(view.getByText('create_account'));
+
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith('success', 'account_created_successfully'),
+    );
+  });
+
   it('requires confirming 18+ before creating an account', async () => {
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-register'));
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-password'));
@@ -468,7 +483,7 @@ describe('ServerRegistrationScreen', () => {
   it('registers without terms when the server predates the terms route', async () => {
     mockFetchServerTerms.mockResolvedValue(null);
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-register'));
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-password'));
@@ -486,9 +501,9 @@ describe('ServerRegistrationScreen', () => {
   it('shows the auth failure message without saving', async () => {
     mockAuthenticate.mockResolvedValue({ ok: false, reason: 'bad-credentials' });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fillLogin(view);
-    await fireEvent.press(view.getByText('register_server'));
+    await fireEvent.press(view.getByText('log_in'));
     await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'auth-failed-message'));
     expect(mockServerService.createServer).not.toHaveBeenCalled();
     expect(mockGoBack).not.toHaveBeenCalled();
@@ -497,11 +512,13 @@ describe('ServerRegistrationScreen', () => {
   it('shows recovery codes after registration and continues back', async () => {
     mockAuthenticate.mockResolvedValue({ ...authOk, recoveryCodes: ['c1', 'c2'] });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fillLogin(view);
-    await fireEvent.press(view.getByText('register_server'));
+    await fireEvent.press(view.getByText('log_in'));
     await view.findByTestId('recovery-panel');
     expect(view.getByTestId('recovery-panel').props.children).toBe('c1,c2');
+    // The codes page is the confirmation: a dialog over it would hide the button that goes on.
+    expect(mockAlert).not.toHaveBeenCalledWith('success', expect.anything());
     expect(mockGoBack).not.toHaveBeenCalled();
     await fireEvent.press(view.getByTestId('recovery-continue'));
     expect(mockGoBack).toHaveBeenCalled();
@@ -559,7 +576,7 @@ describe('ServerRegistrationScreen', () => {
       result: { userId: 'user-on-server', tag: 'alice', accessToken: 'at', refreshToken: 'rt' },
     });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-recover'));
     await view.findByText('reset_password_button');
     await fireEvent.press(view.getByTestId('set-address'));
@@ -577,7 +594,7 @@ describe('ServerRegistrationScreen', () => {
   it('reports an invalid recovery code', async () => {
     mockRedeem.mockResolvedValue({ success: false, reason: 'invalid_code' });
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fireEvent.press(view.getByTestId('set-mode-recover'));
     await view.findByText('reset_password_button');
     await fireEvent.press(view.getByTestId('set-address'));
@@ -596,9 +613,9 @@ describe('ServerRegistrationScreen', () => {
     ) as { ServerUrlAlreadyRegisteredError: new () => Error };
     mockServerService.createServer.mockRejectedValue(new ServerUrlAlreadyRegisteredError());
     const view = await render(<ServerRegistrationScreen />);
-    await view.findByText('register_server');
+    await view.findByText('log_in');
     await fillLogin(view);
-    await fireEvent.press(view.getByText('register_server'));
+    await fireEvent.press(view.getByText('log_in'));
     await waitFor(() =>
       expect(mockAlert).toHaveBeenCalledWith('error', 'server_url_already_registered'),
     );
@@ -624,7 +641,7 @@ describe('ServerRegistrationScreen', () => {
     it('blocks the registration when the server requires verification and cannot run it', async () => {
       mockFetchAgeInfo.mockResolvedValue({ mode: 'required', available: false });
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillRegistration(view);
       await fireEvent.press(view.getByText('create_account'));
 
@@ -639,7 +656,7 @@ describe('ServerRegistrationScreen', () => {
     it('says where the documents go on a server that verifies, beside the 18+ confirmation', async () => {
       mockFetchAgeInfo.mockResolvedValue({ mode: 'required', available: true });
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillRegistration(view);
 
       expect(await view.findByText('age_verification_required_notice')).toBeTruthy();
@@ -649,7 +666,7 @@ describe('ServerRegistrationScreen', () => {
     it('says a manual server has no automated check, without stopping the registration', async () => {
       mockFetchAgeInfo.mockResolvedValue({ mode: 'manual', available: false });
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillRegistration(view);
 
       expect(await view.findByText('age_verification_manual_notice')).toBeTruthy();
@@ -661,7 +678,7 @@ describe('ServerRegistrationScreen', () => {
     it('does not stop the registration when the age check cannot be read', async () => {
       mockFetchAgeInfo.mockResolvedValue(null);
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillRegistration(view);
       await fireEvent.press(view.getByText('create_account'));
 
@@ -674,7 +691,7 @@ describe('ServerRegistrationScreen', () => {
       mockI18n.i18n.language = 'pt-BR';
       try {
         const view = await render(<ServerRegistrationScreen />);
-        await view.findByText('register_server');
+        await view.findByText('log_in');
         await fillRegistration(view);
         await fireEvent.press(view.getByText('create_account'));
 
@@ -694,7 +711,7 @@ describe('ServerRegistrationScreen', () => {
         verification: pendingVerification,
       });
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillRegistration(view);
       await fireEvent.press(view.getByText('create_account'));
 
@@ -711,7 +728,7 @@ describe('ServerRegistrationScreen', () => {
     it('keeps the old flow for a registration answer without verification', async () => {
       mockAuthenticate.mockResolvedValue({ ...authOk, recoveryCodes: ['c1'] });
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillRegistration(view);
       await fireEvent.press(view.getByText('create_account'));
 
@@ -727,9 +744,9 @@ describe('ServerRegistrationScreen', () => {
       async (status) => {
         mockFetchVerificationStatus.mockResolvedValue({ status });
         const view = await render(<ServerRegistrationScreen />);
-        await view.findByText('register_server');
+        await view.findByText('log_in');
         await fillLogin(view);
-        await fireEvent.press(view.getByText('register_server'));
+        await fireEvent.press(view.getByText('log_in'));
 
         await waitFor(() =>
           expect(mockReplace).toHaveBeenCalledWith('ServerVerification', { serverId: 'srv-new' }),
@@ -745,9 +762,9 @@ describe('ServerRegistrationScreen', () => {
     it('keeps a login of an account that needs no verification as it was', async () => {
       mockFetchVerificationStatus.mockResolvedValue({ status: 'not_required' });
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillLogin(view);
-      await fireEvent.press(view.getByText('register_server'));
+      await fireEvent.press(view.getByText('log_in'));
 
       await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
       expect(mockReplace).not.toHaveBeenCalled();
@@ -757,9 +774,9 @@ describe('ServerRegistrationScreen', () => {
     it('keeps a login going when the server has no verification route to ask', async () => {
       mockFetchVerificationStatus.mockRejectedValue(new Error('not found'));
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       await fillLogin(view);
-      await fireEvent.press(view.getByText('register_server'));
+      await fireEvent.press(view.getByText('log_in'));
 
       await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
       expect(mockReplace).not.toHaveBeenCalled();
@@ -779,14 +796,14 @@ describe('ServerRegistrationScreen', () => {
 
     it('locks the address of a new server to the official server, and saves to it', async () => {
       const view = await render(<ServerRegistrationScreen />);
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       expect(regFields(view).address).toBe('https://keres.me');
       // The note on whose account this is replaces the generic "enter the server's details" line.
       expect(view.getByText('official_server_registration_description')).toBeTruthy();
       expect(view.queryByText('register_new_server_description')).toBeNull();
 
       await fillLogin(view);
-      await fireEvent.press(view.getByText('register_server'));
+      await fireEvent.press(view.getByText('log_in'));
 
       await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
       expect(mockAuthenticate).toHaveBeenCalledWith(
@@ -815,7 +832,7 @@ describe('ServerRegistrationScreen', () => {
       mockRoute.params = { address: 'https://keres.me/' };
       const view = await render(<ServerRegistrationScreen />);
 
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       expect(view.queryByText('community_server_blocked')).toBeNull();
       expect(regFields(view).address).toBe('https://keres.me');
     });
@@ -826,12 +843,12 @@ describe('ServerRegistrationScreen', () => {
       mockRoute.params = { address: 'https://other.example' };
       const view = await render(<ServerRegistrationScreen />);
 
-      await view.findByText('register_server');
+      await view.findByText('log_in');
       expect(view.queryByText('community_server_blocked')).toBeNull();
       expect(regFields(view).address).toBe('https://host.example');
 
       await fillLogin(view);
-      await fireEvent.press(view.getByText('register_server'));
+      await fireEvent.press(view.getByText('log_in'));
       await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
       expect(mockAuthenticate).toHaveBeenCalledWith(
         expect.objectContaining({ address: 'https://host.example' }),

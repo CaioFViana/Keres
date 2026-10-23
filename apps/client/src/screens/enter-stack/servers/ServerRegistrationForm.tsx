@@ -300,11 +300,6 @@ const ServerRegistrationForm = ({
                 }
               : {}),
           });
-      AppAlert.alert(
-        t('success'),
-        serverId ? t('server_updated_successfully') : t('server_registered_successfully'),
-      );
-
       if (savedServer) {
         if (auth.tokensChanged) {
           await authTokenManager.updateTokens(savedServer.id, auth.accessToken, auth.refreshToken);
@@ -327,8 +322,18 @@ const ServerRegistrationForm = ({
       }
       if (savedServer && verifyFirst) setVerificationServerId(savedServer.id);
       if (auth.recoveryCodes) {
+        // No notice over the codes: the page that shows them is the confirmation, and a dialog on top of
+        // it would hide the button that goes on.
         setRecoveryCodesToShow(auth.recoveryCodes);
       } else {
+        AppAlert.alert(
+          t('success'),
+          serverId
+            ? t('server_updated_successfully')
+            : isRegistering
+              ? t('account_created_successfully')
+              : t('account_signed_in_successfully'),
+        );
         onCompleted({
           serverId: savedServer?.id ?? null,
           needsVerification: !!savedServer && verifyFirst,
@@ -568,7 +573,7 @@ const ServerRegistrationForm = ({
             ) : mode === 'register' ? (
               t('create_account')
             ) : (
-              t('register_server')
+              t('log_in')
             )}
           </Button>
         )

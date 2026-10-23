@@ -152,9 +152,9 @@ describe('registration settings', () => {
     await flush();
     const checkboxes = () => Array.from(view.container.querySelectorAll('input[type="checkbox"]'));
 
-    expect(checkboxes()).toHaveLength(3); // registration ×2 and the adults-only switch; other tabs stay hidden
+    expect(checkboxes()).toHaveLength(4); // registration ×2, the account-required and adults-only switches; other tabs stay hidden
     await click(checkboxes()[0]); // auto-manage on
-    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(2);
+    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(3);
 
     await submit(view.container.querySelector('form')!);
     await flush();

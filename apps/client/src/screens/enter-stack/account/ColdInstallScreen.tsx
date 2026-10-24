@@ -42,6 +42,8 @@ import { migrate } from '@/src/db/migrate';
 import { setAuthDb } from '@/src/services/auth/AuthTokenManager';
 import { setEditorDraftDb } from '@/src/services/drafts/EditorDraftService';
 import { createClientSettings } from '@/src/services/account/ClientSettingsService';
+import { fetchAccountRequirement } from '@/src/services/api/AccountRequirementApiService';
+import { hostedApiOrigin } from '@/src/services/auth/browserCookieSession';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useThemeStore } from '@/src/state/ui/themeStore';
@@ -49,13 +51,15 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { getClientFlavor } from '@/src/utils/platform/clientFlavor';
+import { getClientFlavor, isHostedByApi } from '@/src/utils/platform/clientFlavor';
 import { useDocumentTitle } from '@/src/utils/nav/documentTitle';
 import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
 import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type RootStackParamList = {
   ColdInstall: undefined;
+  RequiredAccount: undefined;
   StorySelection: undefined;
   MainSystem: undefined;
 };
@@ -94,6 +98,9 @@ const ColdInstallScreen = () => {
   const [privacyVisible, setPrivacyVisible] = useState(false);
   const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<number | null>(null);
   const [acceptedPrivacyVersion, setAcceptedPrivacyVersion] = useState<number | null>(null);
+  // Whether the server that serves this client asks for an account once the welcome is done. Learned as
+  // the welcome opens, so the last step can say so; an unreachable server, or any other build, asks nothing.
+  const [accountRequired, setAccountRequired] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +114,17 @@ const ColdInstallScreen = () => {
       .then((record) => {
         if (!cancelled) setAcceptedPrivacyVersion(record?.version ?? null);
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHostedByApi()) return;
+    let cancelled = false;
+    void fetchAccountRequirement(hostedApiOrigin()).then((required) => {
+      if (!cancelled) setAccountRequired(required);
+    });
     return () => {
       cancelled = true;
     };
@@ -145,6 +163,8 @@ const ColdInstallScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
 
   const backPressTimer = useRef<number | null>(null);
+  // The profile is created once: the server question at the end waits on the network, and a second tap meanwhile must not start over.
+  const proceeding = useRef(false);
   const flavor = getClientFlavor();
   // From a tablet up the picture sits beside the text instead of over it, and the welcome gets the
   // room for that: one design for a phone held upright is not what a desktop window should show.
@@ -201,10 +221,19 @@ const ColdInstallScreen = () => {
       setUsernameError(null);
     }
 
-    if (!isValid) {
+    if (!isValid || proceeding.current) {
       return;
     }
+    proceeding.current = true;
+    try {
+      await createProfile();
+    } catch (error) {
+      proceeding.current = false;
+      throw error;
+    }
+  };
 
+  const createProfile = async () => {
     // Run database migrations first
     await migrate(db);
 
@@ -231,14 +260,19 @@ const ColdInstallScreen = () => {
     await initializeUserSettings(drizzleDb);
     await initializeThemeSettings(drizzleDb);
 
-    navigation.replace('StorySelection');
+    // The server that serves the hosted client may ask for an account before anything else. Only that
+    // build asks (the apps never learn what a server wants at install), and an unreachable server asks nothing.
+    // Asked again here when the welcome did not learn it: the answer may have changed while it was open.
+    const required =
+      accountRequired || (isHostedByApi() && (await fetchAccountRequirement(hostedApiOrigin())));
+    navigation.replace(required ? 'RequiredAccount' : 'StorySelection');
   };
 
   const handleLanguageChange = (itemValue: string | null) => {
     // Choosing nothing is not an option here: the language already shown stays.
     if (!itemValue) return;
     setSelectedLanguage(itemValue);
-    i18n.changeLanguage(itemValue);
+    fireAndLog(i18n.changeLanguage(itemValue), 'changeLanguage');
     // No need to call setStoreLanguage here, as it will be set during handleProceed
   };
 
@@ -275,7 +309,7 @@ const ColdInstallScreen = () => {
   );
   const action = onLastPage ? (
     <Button onPress={handleProceed} disabled={isProceedDisabled} style={styles.primaryAction}>
-      {t('proceed')}
+      {accountRequired ? t('welcome_next') : t('proceed')}
     </Button>
   ) : (
     <Button onPress={() => setPage(page + 1)} style={styles.primaryAction} testID="welcome-next">
@@ -285,10 +319,13 @@ const ColdInstallScreen = () => {
   const progress = (
     <WelcomeProgress
       current={page}
-      total={WELCOME_PAGES.length}
+      // The account is one more step after these, on its own screen: counted, not reachable from here.
+      total={WELCOME_PAGES.length + (accountRequired ? 1 : 0)}
       scrollX={scrollX}
       pageWidth={pageWidth}
-      onSelect={setPage}
+      onSelect={(step) => {
+        if (step <= lastPage) setPage(step);
+      }}
     />
   );
 
@@ -379,6 +416,7 @@ const ColdInstallScreen = () => {
               pageWidth={pageWidth}
               active={index === page}
               eyebrow={index === 0 ? t('welcome') : undefined}
+              accountRequired={accountRequired}
             >
               {index === lastPage && (
                 <>

@@ -72,11 +72,23 @@ describe('welcome content', () => {
     expect(welcomeHeroIcon('where', 'serverless-web')).toBe('cloud-offline-outline');
   });
 
+  it('says that an account follows the name, in every build, when the server asks for one', () => {
+    for (const flavor of FLAVORS) {
+      expect(welcomeRows('name', flavor, true).map((row) => row.textKey)).toEqual([
+        'welcome_name_explain_account',
+      ]);
+      expect(welcomeRows('name', flavor).map((row) => row.textKey)).toEqual([
+        'welcome_name_explain',
+      ]);
+    }
+  });
+
   it('has every string it uses, in both languages', () => {
     const keys = new Set<string>(Object.values(WELCOME_TITLE_KEYS));
     for (const flavor of FLAVORS)
       for (const page of WELCOME_PAGES)
-        for (const row of welcomeRows(page, flavor)) keys.add(row.textKey);
+        for (const required of [false, true])
+          for (const row of welcomeRows(page, flavor, required)) keys.add(row.textKey);
     for (const locale of [en, pt] as Record<string, string>[]) {
       for (const key of keys) expect(locale[key]).toBeTruthy();
     }

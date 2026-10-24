@@ -5,7 +5,7 @@
   "ignoreIssues": {
     "apps/client/test/helpers/detailTabsMock.tsx": ["exports"]
   },
-  "ignoreUnresolved": ["test/syncFuzz/server.ts"],
+  "ignoreUnresolved": ["test/syncFuzz/server.ts", "./test/helpers/jsdomEnvironment.js"],
   "workspaces": {
     ".": {
       "entry": ["scripts/**/*.ts"],
@@ -30,6 +30,7 @@
         "src/db/migrations/index.ts",
         "scripts/*.ts",
         "plugins/*.js",
+        "test/helpers/jsdomEnvironment.js",
         "test/**/*.test.{ts,tsx}"
       ],
       "project": [

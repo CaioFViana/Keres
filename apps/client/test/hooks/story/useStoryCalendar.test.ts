@@ -10,17 +10,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/StoryCalendarService',
   __esModule: true,
   createStoryCalendarService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    __esModule: true,
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const definition = {
   secondsPerMinute: 60,
   minutesPerHour: 60,

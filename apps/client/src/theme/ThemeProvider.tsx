@@ -5,6 +5,7 @@ import { useThemeStore } from '@/src/state/ui/themeStore';
 import { setEntityAppearanceScheme, setGraphEntityPaletteScheme, themes } from '@keres/shared';
 import { ThemeContext } from './ThemeContext';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   const toggleTheme = useCallback(() => {
     if (drizzleClient) {
-      toggleDarkMode(drizzleClient);
+      fireAndLog(toggleDarkMode(drizzleClient), 'toggleDarkMode');
     } else {
       logger.warn('Drizzle client not available for theme toggling.');
     }

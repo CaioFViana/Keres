@@ -29,6 +29,7 @@ const mockSetSuggestLiteraryDevices = jest.fn();
 const mockSetExportFormat = jest.fn();
 const mockSetShowTutorials = jest.fn();
 const mockSetWarnPaymentDue = jest.fn();
+const mockSetAllowCommunityServers = jest.fn();
 const mockResetSeenTutorials = jest.fn();
 const mockResetSettings = jest.fn();
 const mockUserSettings = {
@@ -41,6 +42,7 @@ const mockUserSettings = {
   exportFormat: 'svg',
   showTutorials: true,
   warnPaymentDue: true,
+  allowCommunityServers: false,
   setUsername: (...args: unknown[]) => mockSetUsername(...args),
   setLanguage: (...args: unknown[]) => mockSetLanguage(...args),
   setUse24HourTime: (...args: unknown[]) => mockSetUse24HourTime(...args),
@@ -50,6 +52,7 @@ const mockUserSettings = {
   setExportFormat: (...args: unknown[]) => mockSetExportFormat(...args),
   setShowTutorials: (...args: unknown[]) => mockSetShowTutorials(...args),
   setWarnPaymentDue: (...args: unknown[]) => mockSetWarnPaymentDue(...args),
+  setAllowCommunityServers: (...args: unknown[]) => mockSetAllowCommunityServers(...args),
   resetSeenTutorials: (...args: unknown[]) => mockResetSeenTutorials(...args),
   resetSettings: (...args: unknown[]) => mockResetSettings(...args),
 };
@@ -130,9 +133,11 @@ jest.mock('@/src/db', () => ({
 }));
 
 let mockServerless = false;
+let mockHosted = false;
 jest.mock('@/src/utils/platform/clientFlavor', () => ({
   ...jest.requireActual('@/src/utils/platform/clientFlavor'),
   isServerless: () => mockServerless,
+  isHostedByApi: () => mockHosted,
 }));
 
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -238,6 +243,8 @@ describe('AppSettingsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockServerless = false;
+    mockHosted = false;
+    mockUserSettings.allowCommunityServers = false;
     jest.spyOn(console, 'log').mockImplementation((() => undefined) as never);
     mockSelectAll.mockResolvedValue([{ id: 'srv-1' }]);
     mockResetDatabase.mockResolvedValue(undefined);
@@ -373,7 +380,7 @@ describe('AppSettingsScreen', () => {
     const view = await render(<SettingsScreen />);
     await view.findByText('dark_mode');
     const switches = view.getAllByRole('switch');
-    expect(switches).toHaveLength(7);
+    expect(switches).toHaveLength(8);
     await act(async () => {
       useMusicToolsStore.setState({ enabled: false });
     });
@@ -391,6 +398,52 @@ describe('AppSettingsScreen', () => {
     expect(mockSetShowTutorials).toHaveBeenCalledWith(mockDrizzle, false);
     await fireEvent.press(switches[6]);
     expect(mockSetWarnPaymentDue).toHaveBeenCalledWith(mockDrizzle, false);
+    await fireEvent.press(switches[7]);
+    expect(mockSetAllowCommunityServers).toHaveBeenCalledWith(mockDrizzle, true);
+  });
+
+  it('offers the community servers switch, off at first, with what it means', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByText('allow_community_servers');
+
+    expect(view.getByText('allow_community_servers_off')).toBeTruthy();
+    expect(view.queryByText('allow_community_servers_on')).toBeNull();
+    expect(
+      view.getByTestId('allow-community-servers-switch').props.accessibilityState.checked,
+    ).toBe(false);
+  });
+
+  it('says what is on when the community servers switch is on', async () => {
+    mockUserSettings.allowCommunityServers = true;
+    try {
+      const view = await render(<SettingsScreen />);
+      await view.findByText('allow_community_servers');
+
+      expect(view.getByText('allow_community_servers_on')).toBeTruthy();
+      expect(
+        view.getByTestId('allow-community-servers-switch').props.accessibilityState.checked,
+      ).toBe(true);
+    } finally {
+      mockUserSettings.allowCommunityServers = false;
+    }
+  });
+
+  it('leaves the community servers switch out of a serverless build', async () => {
+    mockServerless = true;
+    const view = await render(<SettingsScreen />);
+    await view.findByText('show_tutorials');
+
+    expect(view.queryByText('allow_community_servers')).toBeNull();
+    expect(view.queryByTestId('allow-community-servers-switch')).toBeNull();
+  });
+
+  it('leaves the community servers switch out of the hosted web client, which has one server', async () => {
+    mockHosted = true;
+    const view = await render(<SettingsScreen />);
+    await view.findByText('show_tutorials');
+
+    expect(view.queryByText('allow_community_servers')).toBeNull();
+    expect(view.queryByTestId('allow-community-servers-switch')).toBeNull();
   });
 
   it('says what the payment reminder does, on and off', async () => {

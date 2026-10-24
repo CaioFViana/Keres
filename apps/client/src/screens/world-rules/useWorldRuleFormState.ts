@@ -6,6 +6,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { fieldsDiffer, pickFields, useFormFields } from '@/src/hooks/forms/useFormFields';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { WorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
@@ -45,6 +46,8 @@ const CREATE_PRISTINE: WorldRuleFormDraftFields = {
   extraNotes: null,
 };
 
+const FIELD_KEYS = Object.keys(CREATE_PRISTINE) as (keyof WorldRuleFormDraftFields)[];
+
 function isWorldRuleFormDraftFields(value: unknown): value is WorldRuleFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -73,16 +76,7 @@ export function useWorldRuleFormState({
   const [currentWorldRuleId, setCurrentWorldRuleId] = useState<string | undefined>(
     initialWorldRuleId,
   );
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState<string | null>(null);
-  const [section, setSection] = useState<WorldPieceSection>('rule');
-  const [type, setType] = useState<string | null>(null);
-  const [category, setCategory] = useState<string | null>(null);
-  const [behavior, setBehavior] = useState<string | null>(null);
-  const [usability, setUsability] = useState<string | null>(null);
-  const [danger, setDanger] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
+  const { fields, setters, setAll } = useFormFields(CREATE_PRISTINE);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -107,28 +101,10 @@ export function useWorldRuleFormState({
         if (initialWorldRuleId) {
           const fetchedWorldRule = await worldRuleServiceRef.current.getById(initialWorldRuleId);
           if (fetchedWorldRule) {
-            setTitle(fetchedWorldRule.title);
-            setDescription(fetchedWorldRule.description);
-            setSection(fetchedWorldRule.section as WorldPieceSection);
-            setType(fetchedWorldRule.type);
-            setCategory(fetchedWorldRule.category);
-            setBehavior(fetchedWorldRule.behavior);
-            setUsability(fetchedWorldRule.usability);
-            setDanger(fetchedWorldRule.danger);
-            setIsFavorite(fetchedWorldRule.isFavorite);
-            setExtraNotes(fetchedWorldRule.extraNotes);
-            setLoadedPristine({
-              title: fetchedWorldRule.title,
-              description: fetchedWorldRule.description,
-              section: fetchedWorldRule.section as WorldPieceSection,
-              type: fetchedWorldRule.type,
-              category: fetchedWorldRule.category,
-              behavior: fetchedWorldRule.behavior,
-              usability: fetchedWorldRule.usability,
-              danger: fetchedWorldRule.danger,
-              isFavorite: fetchedWorldRule.isFavorite,
-              extraNotes: fetchedWorldRule.extraNotes,
-            });
+            const picked = pickFields(fetchedWorldRule, FIELD_KEYS);
+            const row = { ...picked, section: picked.section as WorldPieceSection };
+            setAll(row);
+            setLoadedPristine(row);
             setLoadedUpdatedAt(fetchedWorldRule.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
@@ -155,7 +131,7 @@ export function useWorldRuleFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialWorldRuleId, worldRuleServiceRef, storyId]);
+  }, [drizzleDb, initialWorldRuleId, worldRuleServiceRef, setAll, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -164,22 +140,16 @@ export function useWorldRuleFormState({
     }
   }, [isEditing, customFields]);
 
-  const restoreDraftFields = useCallback((fields: WorldRuleFormDraftFields) => {
-    if (!isWorldRuleFormDraftFields(fields)) {
-      logger.error('Corrupt world rule form draft ignored.');
-      return;
-    }
-    setTitle(fields.title);
-    setDescription(fields.description);
-    setSection(fields.section);
-    setType(fields.type);
-    setCategory(fields.category);
-    setBehavior(fields.behavior);
-    setUsability(fields.usability);
-    setDanger(fields.danger);
-    setIsFavorite(fields.isFavorite);
-    setExtraNotes(fields.extraNotes);
-  }, []);
+  const restoreDraftFields = useCallback(
+    (restored: WorldRuleFormDraftFields) => {
+      if (!isWorldRuleFormDraftFields(restored)) {
+        logger.error('Corrupt world rule form draft ignored.');
+        return;
+      }
+      setAll({ ...CREATE_PRISTINE, ...restored });
+    },
+    [setAll],
+  );
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -189,37 +159,14 @@ export function useWorldRuleFormState({
       entityType: 'WorldRule',
       entityId: initialWorldRuleId,
       enabled: !!storyId && !loading,
-      snapshot: {
-        title,
-        description,
-        section,
-        type,
-        category,
-        behavior,
-        usability,
-        danger,
-        isFavorite,
-        extraNotes,
-      },
+      snapshot: fields,
       pristine: loadedPristine ?? CREATE_PRISTINE,
       baseUpdatedAt: initialWorldRuleId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
-  const isDirty =
-    JSON.stringify({
-      title,
-      description,
-      section,
-      type,
-      category,
-      behavior,
-      usability,
-      danger,
-      isFavorite,
-      extraNotes,
-    }) !== JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -228,42 +175,15 @@ export function useWorldRuleFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? CREATE_PRISTINE;
-    setTitle(target.title);
-    setDescription(target.description);
-    setSection(target.section);
-    setType(target.type);
-    setCategory(target.category);
-    setBehavior(target.behavior);
-    setUsability(target.usability);
-    setDanger(target.danger);
-    setIsFavorite(target.isFavorite);
-    setExtraNotes(target.extraNotes);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, deleteStoredDraft]);
+  }, [loadedPristine, deleteStoredDraft, setAll]);
 
   return {
     currentWorldRuleId,
     retainPersistedWorldRuleId,
-    title,
-    setTitle,
-    description,
-    setDescription,
-    section,
-    setSection,
-    type,
-    setType,
-    category,
-    setCategory,
-    behavior,
-    setBehavior,
-    usability,
-    setUsability,
-    danger,
-    setDanger,
-    isFavorite,
-    setIsFavorite,
-    extraNotes,
-    setExtraNotes,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

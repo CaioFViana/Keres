@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { ScrollView } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import { computeScrollAdjustment } from '@/src/utils/ui/scrollIntoView';
 
@@ -47,7 +47,7 @@ const asMeasurable = (node: unknown): Measurable | null =>
  * with a comfort margin.
  */
 export function useOccurrenceLandingController(target: OccurrenceTarget | null) {
-  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollRef = useRef<ScrollViewInstance | null>(null);
   const offsetRef = useRef(0);
   // Every request runs under a generation: a newer request (fresh data after an
   // entity swap) invalidates whatever the previous layout still had in flight.

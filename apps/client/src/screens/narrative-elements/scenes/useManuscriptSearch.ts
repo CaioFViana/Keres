@@ -6,7 +6,7 @@ import {
   sectionIndexForMatch,
 } from '@keres/shared';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { FlatList, Text, View } from 'react-native';
+import type { FlatList, HostInstance, ViewInstance } from 'react-native';
 import { computeScrollAdjustment } from '@/src/utils/ui/scrollIntoView';
 
 // Comfort zone kept clear above and below the current search hit when it scrolls into view.
@@ -90,7 +90,7 @@ export function useManuscriptSearch(
 
   // The list viewport doubles as the scroll-into-view frame; the caller merges this ref
   // with whatever else anchors the list view (the guide tour owns that prop today).
-  const viewportRef = useRef<View | null>(null);
+  const viewportRef = useRef<ViewInstance | null>(null);
   const scrollOffsetRef = useRef(0);
   // Every fine scroll runs under a generation: a newer attach (a fresh navigation) or
   // a detach invalidates whatever the previous hit still had in flight
@@ -110,10 +110,10 @@ export function useManuscriptSearch(
   const scrollActiveIntoView = useCallback(
     (node: unknown) => {
       const generation = (scrollGenerationRef.current += 1);
-      if (!node || typeof (node as Text).measureInWindow !== 'function') return;
+      if (!node || typeof (node as HostInstance).measureInWindow !== 'function') return;
       const measure = (retries: number) => {
         if (generation !== scrollGenerationRef.current) return;
-        (node as Text).measureInWindow((_segX, segY, _segWidth, segHeight) => {
+        (node as HostInstance).measureInWindow((_segX, segY, _segWidth, segHeight) => {
           if (generation !== scrollGenerationRef.current) return;
           const viewport = viewportRef.current;
           if (!viewport || typeof viewport.measureInWindow !== 'function') return;

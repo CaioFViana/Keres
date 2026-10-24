@@ -1,9 +1,11 @@
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+import SyncAccountBanner from '@/src/components/features/servers/SyncAccountBanner';
 import FirstStoryStart from '@/src/components/features/story/FirstStoryStart';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { Story } from '@keres/shared/entities/story/Story';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,7 +13,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
+import type { StorySelectionDrawerParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useSyncAccountNotice } from '@/src/hooks/guides/useSyncAccountNotice';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
@@ -27,6 +31,9 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -58,6 +65,8 @@ const StorySelectionScreen = () => {
 
   const { showNotification } = useNotificationStore();
   const [serverNamesById, setServerNamesById] = useState<Record<string, string>>({});
+  // `null` until the servers have been read: the account notice must not mistake "not read yet" for "none".
+  const [serverCount, setServerCount] = useState<number | null>(null);
 
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
@@ -75,8 +84,11 @@ const StorySelectionScreen = () => {
 
   const fetchServerNames = useCallback(async () => {
     const servers = await serverService.getAllServers();
-    setServerNamesById(Object.fromEntries(servers.map((server) => [server.id, server.name])));
-  }, [serverService]);
+    setServerNamesById(
+      Object.fromEntries(servers.map((server) => [server.id, serverDisplayName(server, t)])),
+    );
+    setServerCount(servers.length);
+  }, [serverService, t]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -123,13 +135,16 @@ const StorySelectionScreen = () => {
 
   useEffect(() => {
     if (isFocused) {
-      fetchStoriesData();
-      fetchSummary();
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchServerNames` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-      fetchServerNames();
+      fireAndLog(fetchStoriesData(), 'fetchStoriesData');
+      fireAndLog(fetchSummary(), 'fetchSummary');
       setTheme('default');
     }
-  }, [isFocused, setTheme, fetchStoriesData, fetchSummary, fetchServerNames]);
+  }, [isFocused, setTheme, fetchStoriesData, fetchSummary]);
+
+  const refreshServerNames = useCallback(async () => {
+    if (isFocused) await fetchServerNames();
+  }, [isFocused, fetchServerNames]);
+  useEntityInitialLoad(refreshServerNames);
 
   const handleSelectStory = useCallback(
     (story: Story) => {
@@ -139,6 +154,18 @@ const StorySelectionScreen = () => {
     },
     [navigation, setSelectedStory, setTheme],
   );
+
+  const openServerManagement = useCallback(() => {
+    navigation
+      .getParent<DrawerNavigationProp<StorySelectionDrawerParamList>>()
+      ?.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
+  }, [navigation]);
+  const { visible: syncNoticeVisible, dismiss: dismissSyncNotice } =
+    useSyncAccountNotice(serverCount);
+  const handleSyncNoticeAction = useCallback(() => {
+    dismissSyncNotice();
+    openServerManagement();
+  }, [dismissSyncNotice, openServerManagement]);
 
   const handleCreateNewStory = useCallback(() => {
     navigation.navigate('StoryForm', {});
@@ -246,6 +273,12 @@ const StorySelectionScreen = () => {
               {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 
               <Text style={styles.title}>{t('your_stories')}</Text>
+              {syncNoticeVisible && (
+                <SyncAccountBanner
+                  onCreateAccount={handleSyncNoticeAction}
+                  onLater={dismissSyncNotice}
+                />
+              )}
               {showTrailCta && (
                 <FirstStoryStart
                   onBlank={handleStartBlank}

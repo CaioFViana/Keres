@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { fieldsDiffer, pickFields, useFormFields } from '@/src/hooks/forms/useFormFields';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
@@ -40,6 +41,8 @@ const CREATE_PRISTINE: LocationFormDraftFields = {
   extraNotes: null,
 };
 
+const FIELD_KEYS = Object.keys(CREATE_PRISTINE) as (keyof LocationFormDraftFields)[];
+
 function isLocationFormDraftFields(value: unknown): value is LocationFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -67,14 +70,7 @@ export function useLocationFormState({
   customFields,
 }: UseLocationFormStateOptions) {
   const [currentLocationId, setCurrentLocationId] = useState<string | undefined>(initialLocationId);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState<string | null>(null);
-  const [intExt, setIntExt] = useState<LocationIntExt | null>(null);
-  const [climate, setClimate] = useState<string | null>(null);
-  const [culture, setCulture] = useState<string | null>(null);
-  const [politics, setPolitics] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
+  const { fields, setters, setAll } = useFormFields(CREATE_PRISTINE);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -99,24 +95,10 @@ export function useLocationFormState({
         if (initialLocationId) {
           const fetchedLocation = await locationServiceRef.current.getById(initialLocationId);
           if (fetchedLocation) {
-            setName(fetchedLocation.name);
-            setDescription(fetchedLocation.description);
-            setIntExt(fetchedLocation.intExt ?? null);
-            setClimate(fetchedLocation.climate);
-            setCulture(fetchedLocation.culture);
-            setPolitics(fetchedLocation.politics);
-            setIsFavorite(fetchedLocation.isFavorite);
-            setExtraNotes(fetchedLocation.extraNotes);
-            setLoadedPristine({
-              name: fetchedLocation.name,
-              description: fetchedLocation.description,
-              intExt: fetchedLocation.intExt ?? null,
-              climate: fetchedLocation.climate,
-              culture: fetchedLocation.culture,
-              politics: fetchedLocation.politics,
-              isFavorite: fetchedLocation.isFavorite,
-              extraNotes: fetchedLocation.extraNotes,
-            });
+            const picked = pickFields(fetchedLocation, FIELD_KEYS);
+            const row = { ...picked, intExt: picked.intExt ?? null };
+            setAll(row);
+            setLoadedPristine(row);
             setLoadedUpdatedAt(fetchedLocation.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
@@ -143,7 +125,7 @@ export function useLocationFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialLocationId, locationServiceRef, storyId]);
+  }, [drizzleDb, initialLocationId, locationServiceRef, setAll, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -152,20 +134,16 @@ export function useLocationFormState({
     }
   }, [isEditing, customFields]);
 
-  const restoreDraftFields = useCallback((fields: LocationFormDraftFields) => {
-    if (!isLocationFormDraftFields(fields)) {
-      logger.error('Corrupt location form draft ignored.');
-      return;
-    }
-    setName(fields.name);
-    setDescription(fields.description);
-    setIntExt(fields.intExt ?? null);
-    setClimate(fields.climate);
-    setCulture(fields.culture);
-    setPolitics(fields.politics);
-    setIsFavorite(fields.isFavorite);
-    setExtraNotes(fields.extraNotes);
-  }, []);
+  const restoreDraftFields = useCallback(
+    (restored: LocationFormDraftFields) => {
+      if (!isLocationFormDraftFields(restored)) {
+        logger.error('Corrupt location form draft ignored.');
+        return;
+      }
+      setAll({ ...CREATE_PRISTINE, ...restored });
+    },
+    [setAll],
+  );
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -175,24 +153,14 @@ export function useLocationFormState({
       entityType: 'Location',
       entityId: initialLocationId,
       enabled: !!storyId && !loading,
-      snapshot: { name, description, intExt, climate, culture, politics, isFavorite, extraNotes },
+      snapshot: fields,
       pristine: loadedPristine ?? CREATE_PRISTINE,
       baseUpdatedAt: initialLocationId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
-  const isDirty =
-    JSON.stringify({
-      name,
-      description,
-      intExt,
-      climate,
-      culture,
-      politics,
-      isFavorite,
-      extraNotes,
-    }) !== JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -201,36 +169,15 @@ export function useLocationFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? CREATE_PRISTINE;
-    setName(target.name);
-    setDescription(target.description);
-    setIntExt(target.intExt);
-    setClimate(target.climate);
-    setCulture(target.culture);
-    setPolitics(target.politics);
-    setIsFavorite(target.isFavorite);
-    setExtraNotes(target.extraNotes);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, deleteStoredDraft]);
+  }, [loadedPristine, deleteStoredDraft, setAll]);
 
   return {
     currentLocationId,
     retainPersistedLocationId,
-    name,
-    setName,
-    description,
-    setDescription,
-    intExt,
-    setIntExt,
-    climate,
-    setClimate,
-    culture,
-    setCulture,
-    politics,
-    setPolitics,
-    isFavorite,
-    setIsFavorite,
-    extraNotes,
-    setExtraNotes,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

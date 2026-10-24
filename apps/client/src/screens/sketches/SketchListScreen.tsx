@@ -1,7 +1,7 @@
 import { emptySketchContent, generateSketchLocalId, SKETCH_PAGE_PRESETS } from '@keres/shared';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
@@ -10,6 +10,7 @@ import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import SketchCreateModal from '@/src/components/features/sketches/SketchCreateModal';
 import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 import { useDrizzle } from '@/src/db';
+import { useStoryList } from '@/src/hooks/lists/useStoryEntities';
 import type { SketchSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
@@ -25,10 +26,11 @@ import type { ThemeColors } from '@/src/theme';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
+
+const SKETCH_EVENTS = ['sketch_changed'] as const;
 
 type Navigation = NativeStackNavigationProp<SketchStackParamList, 'SketchList'>;
 
@@ -43,38 +45,22 @@ const SketchListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const confirmDelete = useConfirmDelete();
-  const [sketches, setSketches] = useState<SketchSelect[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
   const [editingSketch, setEditingSketch] = useState<SketchSelect | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const reload = useCallback(async () => {
-    if (!storyId) {
-      setSketches([]);
-      return;
-    }
-    try {
-      setSketches(await createSketchService(db).getSketchesForStory(storyId));
-      setError(null);
-    } catch (loadError) {
-      logger.debug('SketchListScreen: failed to load sketches.', loadError);
-      setError(t('sketch_load_failed'));
-    }
-  }, [db, storyId, t]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const onChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    entityEventEmitter.on('sketch_changed', onChange);
-    return () => entityEventEmitter.off('sketch_changed', onChange);
-  }, [reload, storyId]);
+  const listService = useMemo(() => createSketchService(db), [db]);
+  const {
+    items: sketches,
+    failed,
+    reload,
+  } = useStoryList({
+    storyId,
+    load: listService.getSketchesForStory,
+    events: SKETCH_EVENTS,
+    label: 'sketches',
+  });
+  const error = failed ? t('sketch_load_failed') : null;
 
   useScreenHeader({
     target: 'parent',

@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
@@ -13,6 +13,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal';
 import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import { useDrizzle } from '@/src/db';
+import { useStoryList } from '@/src/hooks/lists/useStoryEntities';
 import type { BoardSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
@@ -30,10 +31,11 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
+
+const BOARD_EVENTS = ['board_changed'] as const;
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'BoardsStack'>,
@@ -52,38 +54,22 @@ const BoardListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const confirmDelete = useConfirmDelete();
-  const [boards, setBoards] = useState<BoardSelect[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
   const [editingBoard, setEditingBoard] = useState<BoardSelect | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const reload = useCallback(async () => {
-    if (!storyId) {
-      setBoards([]);
-      return;
-    }
-    try {
-      setBoards(await createBoardService(db).getBoardsForStory(storyId));
-      setError(null);
-    } catch (loadError) {
-      logger.debug('BoardListScreen: failed to load boards.', loadError);
-      setError(t('board_load_failed'));
-    }
-  }, [db, storyId, t]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const onChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    entityEventEmitter.on('board_changed', onChange);
-    return () => entityEventEmitter.off('board_changed', onChange);
-  }, [reload, storyId]);
+  const listService = useMemo(() => createBoardService(db), [db]);
+  const {
+    items: boards,
+    failed,
+    reload,
+  } = useStoryList({
+    storyId,
+    load: listService.getBoardsForStory,
+    events: BOARD_EVENTS,
+    label: 'boards',
+  });
+  const error = failed ? t('board_load_failed') : null;
 
   useScreenHeader({
     target: 'parent',

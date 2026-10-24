@@ -3,8 +3,9 @@ import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/C
 import type { StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AppDrizzleClient } from '@/src/db';
+import type { AppDrizzleClient, ChapterSelect } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { fieldsDiffer, useFormFields } from '@/src/hooks/forms/useFormFields';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { ChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
@@ -37,6 +38,17 @@ const CREATE_PRISTINE: ChapterFormDraftFields = {
   arcId: null,
 };
 
+function chapterToFields(chapter: ChapterSelect): ChapterFormDraftFields {
+  return {
+    name: chapter.name,
+    summary: chapter.summary,
+    isFavorite: chapter.isFavorite,
+    isEvent: chapter.type === 'event',
+    extraNotes: chapter.extraNotes,
+    arcId: chapter.arcId ?? null,
+  };
+}
+
 function isChapterFormDraftFields(value: unknown): value is ChapterFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -60,13 +72,14 @@ export function useChapterFormState({
   customFields,
 }: UseChapterFormStateOptions) {
   const [currentChapterId, setCurrentChapterId] = useState<string | undefined>(initialChapterId);
-  const [name, setName] = useState('');
-  const [summary, setSummary] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  // Only chosen at creation; changing it afterwards is a conversion - see `ChapterDetailScreen`.
-  const [isEvent, setIsEvent] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [arcId, setArcId] = useState<string | null>(activeArcId ?? null);
+  // An active-arc prefill is the starting point, not a change: reset keeps it and no draft is
+  // written until the user actually types.
+  const createPristine = useMemo(
+    () => ({ ...CREATE_PRISTINE, arcId: activeArcId ?? null }),
+    [activeArcId],
+  );
+  // `isEvent` is only chosen at creation; changing it afterwards is a conversion - see `ChapterDetailScreen`.
+  const { fields, setters, setAll } = useFormFields(createPristine);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -91,20 +104,9 @@ export function useChapterFormState({
         if (initialChapterId) {
           const fetchedChapter = await chapterServiceRef.current.getById(initialChapterId);
           if (fetchedChapter) {
-            setName(fetchedChapter.name);
-            setSummary(fetchedChapter.summary);
-            setIsFavorite(fetchedChapter.isFavorite);
-            setExtraNotes(fetchedChapter.extraNotes);
-            setIsEvent(fetchedChapter.type === 'event');
-            setArcId(fetchedChapter.arcId ?? null);
-            setLoadedPristine({
-              name: fetchedChapter.name,
-              summary: fetchedChapter.summary,
-              isFavorite: fetchedChapter.isFavorite,
-              isEvent: fetchedChapter.type === 'event',
-              extraNotes: fetchedChapter.extraNotes,
-              arcId: fetchedChapter.arcId ?? null,
-            });
+            const row = chapterToFields(fetchedChapter);
+            setAll(row);
+            setLoadedPristine(row);
             setLoadedUpdatedAt(fetchedChapter.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
@@ -127,7 +129,7 @@ export function useChapterFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialChapterId, chapterServiceRef, storyId]);
+  }, [drizzleDb, initialChapterId, chapterServiceRef, setAll, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -136,25 +138,16 @@ export function useChapterFormState({
     }
   }, [isEditing, customFields]);
 
-  // An active-arc prefill is the starting point, not a change: reset keeps it and no draft is
-  // written until the user actually types.
-  const createPristine = useMemo(
-    () => ({ ...CREATE_PRISTINE, arcId: activeArcId ?? null }),
-    [activeArcId],
+  const restoreDraftFields = useCallback(
+    (restored: ChapterFormDraftFields) => {
+      if (!isChapterFormDraftFields(restored)) {
+        logger.error('Corrupt chapter form draft ignored.');
+        return;
+      }
+      setAll(restored);
+    },
+    [setAll],
   );
-
-  const restoreDraftFields = useCallback((fields: ChapterFormDraftFields) => {
-    if (!isChapterFormDraftFields(fields)) {
-      logger.error('Corrupt chapter form draft ignored.');
-      return;
-    }
-    setName(fields.name);
-    setSummary(fields.summary);
-    setIsFavorite(fields.isFavorite);
-    setIsEvent(fields.isEvent);
-    setExtraNotes(fields.extraNotes);
-    setArcId(fields.arcId);
-  }, []);
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -164,16 +157,14 @@ export function useChapterFormState({
       entityType: 'Chapter',
       entityId: initialChapterId,
       enabled: !!storyId && !loading,
-      snapshot: { name, summary, isFavorite, isEvent, extraNotes, arcId },
+      snapshot: fields,
       pristine: loadedPristine ?? createPristine,
       baseUpdatedAt: initialChapterId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? createPristine;
-  const isDirty =
-    JSON.stringify({ name, summary, isFavorite, isEvent, extraNotes, arcId }) !==
-    JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -182,30 +173,15 @@ export function useChapterFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? createPristine;
-    setName(target.name);
-    setSummary(target.summary);
-    setIsFavorite(target.isFavorite);
-    setIsEvent(target.isEvent);
-    setExtraNotes(target.extraNotes);
-    setArcId(target.arcId);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, createPristine, deleteStoredDraft]);
+  }, [loadedPristine, createPristine, deleteStoredDraft, setAll]);
 
   return {
     currentChapterId,
     retainPersistedChapterId,
-    name,
-    setName,
-    summary,
-    setSummary,
-    isFavorite,
-    setIsFavorite,
-    isEvent,
-    setIsEvent,
-    extraNotes,
-    setExtraNotes,
-    arcId,
-    setArcId,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

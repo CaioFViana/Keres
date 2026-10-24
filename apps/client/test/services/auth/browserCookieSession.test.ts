@@ -1,7 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { Platform } from 'react-native';
+import { setJsdomUrl } from '@/test/helpers/jsdomLocation';
 import {
   canRefreshSessionWithCookie,
   hostedApiOrigin,
@@ -18,7 +19,10 @@ function setHostedMeta(present: boolean) {
   document.head.innerHTML = present ? '<meta name="keres-hosted" content="1" />' : '';
 }
 
+const originalUrl = window.location.href;
+
 afterEach(() => {
+  setJsdomUrl(originalUrl);
   setPlatform(originalOS);
   delete (window as { keresAuth?: unknown }).keresAuth;
   document.head.innerHTML = '';
@@ -40,10 +44,7 @@ describe('usesHttpOnlyCookieSession', () => {
 
   it('is true only when the API marked the HTML as co-hosted', () => {
     setPlatform('web');
-    Object.defineProperty(window, 'location', {
-      value: { pathname: '/', origin: 'http://localhost:3000' },
-      configurable: true,
-    });
+    setJsdomUrl('http://localhost:3000/');
     setHostedMeta(true);
     expect(usesHttpOnlyCookieSession()).toBe(true);
     expect(hostedApiOrigin()).toBe('http://localhost:3000');
@@ -53,10 +54,7 @@ describe('usesHttpOnlyCookieSession', () => {
 
   it('is false on expo start --web, which has no hosted meta tag', () => {
     setPlatform('web');
-    Object.defineProperty(window, 'location', {
-      value: { pathname: '/', origin: 'http://localhost:8081' },
-      configurable: true,
-    });
+    setJsdomUrl('http://localhost:8081/');
     setHostedMeta(false);
     expect(usesHttpOnlyCookieSession()).toBe(false);
   });

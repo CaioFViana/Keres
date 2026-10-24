@@ -5,6 +5,7 @@ import { createCommentService } from '@/src/services/storymanagement/notes-tags-
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /** Paginated story-wide comment list. Search stays with the caller. */
 export function useStoryComments(storyId: string, pageSize = 20) {
@@ -45,7 +46,7 @@ export function useStoryComments(storyId: string, pageSize = 20) {
     const handleChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) {
         setPage(0);
-        fetchComments(0);
+        fireAndLog(fetchComments(0), 'fetchComments');
       }
     };
     entityEventEmitter.on('comment_changed', handleChange);
@@ -58,7 +59,7 @@ export function useStoryComments(storyId: string, pageSize = 20) {
     if (!loading && comments.length < total) {
       const nextPage = page + 1;
       setPage(nextPage);
-      fetchComments(nextPage);
+      fireAndLog(fetchComments(nextPage), 'fetchComments');
     }
   }, [comments.length, fetchComments, loading, page, total]);
 

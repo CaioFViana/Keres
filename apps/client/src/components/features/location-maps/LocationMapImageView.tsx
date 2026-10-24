@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
 import { useTheme } from '@/src/theme';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 const DRAG_THRESHOLD = 5;
 
@@ -58,99 +59,47 @@ const LocationMapImageView: React.FC<Props> = ({
   const { colors } = useTheme();
   const origin = useRef({ x: image.x, y: image.y });
   const dragging = useRef(false);
-  const imageId = useRef(image.id);
-  const position = useRef({ x: image.x, y: image.y });
-  const scaleRef = useRef(scale);
-  const lockedRef = useRef(locked);
-  const layoutEditingRef = useRef(layoutEditing);
-  const overlayEditingRef = useRef(overlayEditing);
-  const selectedRef = useRef(selected);
-  const handlers = useRef({
-    onSelect,
-    onMove,
-    onResize,
-    onDragStart,
-    onDragEnd,
-    onBringToFront,
-    onSendToBack,
-    onToggleLock,
-    onRemove,
+  const pan = usePanResponder({
+    onStartShouldSetPanResponderCapture: () => false,
+    onStartShouldSetPanResponder: () => {
+      if (overlayEditing) return false;
+      if (layoutEditing && selected) return false;
+      if (!locked) onDragStart(image.id);
+      return true;
+    },
+    onMoveShouldSetPanResponderCapture: () =>
+      !overlayEditing && dragging.current && !(layoutEditing && selected),
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !overlayEditing &&
+      !(layoutEditing && selected) &&
+      !locked &&
+      Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
+    onPanResponderTerminationRequest: () => locked,
+    onPanResponderGrant: (event) => {
+      dragging.current = false;
+      origin.current = { x: image.x, y: image.y };
+      if (!locked) onDragStart(image.id);
+      capturePointer(event);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      if (locked) return;
+      if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
+      dragging.current = true;
+      const zoom = Math.max(scale, 0.01);
+      onMove(image.id, origin.current.x + gesture.dx / zoom, origin.current.y + gesture.dy / zoom);
+    },
+    onPanResponderRelease: (event) => {
+      releasePointer(event);
+      if (!locked) onDragEnd(image.id);
+      if (!dragging.current) onSelect(image.id);
+      dragging.current = false;
+    },
+    onPanResponderTerminate: (event) => {
+      releasePointer(event);
+      if (!locked) onDragEnd(image.id);
+      dragging.current = false;
+    },
   });
-  useEffect(() => {
-    // Latest-ref sync for the responders below: every reader runs on gestures, after effects
-    // have flushed. No dependency array - the sync unconditionally followed every render.
-    imageId.current = image.id;
-    position.current = { x: image.x, y: image.y };
-    scaleRef.current = scale;
-    lockedRef.current = locked;
-    layoutEditingRef.current = layoutEditing;
-    overlayEditingRef.current = overlayEditing;
-    selectedRef.current = selected;
-    handlers.current = {
-      onSelect,
-      onMove,
-      onResize,
-      onDragStart,
-      onDragEnd,
-      onBringToFront,
-      onSendToBack,
-      onToggleLock,
-      onRemove,
-    };
-  });
-
-  const pan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture: () => false,
-        onStartShouldSetPanResponder: () => {
-          if (overlayEditingRef.current) return false;
-          if (layoutEditingRef.current && selectedRef.current) return false;
-          if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
-          return true;
-        },
-        onMoveShouldSetPanResponderCapture: () =>
-          !overlayEditingRef.current &&
-          dragging.current &&
-          !(layoutEditingRef.current && selectedRef.current),
-        onMoveShouldSetPanResponder: (_event, gesture) =>
-          !overlayEditingRef.current &&
-          !(layoutEditingRef.current && selectedRef.current) &&
-          !lockedRef.current &&
-          Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
-        onPanResponderTerminationRequest: () => lockedRef.current,
-        onPanResponderGrant: (event) => {
-          dragging.current = false;
-          origin.current = { x: position.current.x, y: position.current.y };
-          if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
-          capturePointer(event);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          if (lockedRef.current) return;
-          if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
-          dragging.current = true;
-          const zoom = Math.max(scaleRef.current, 0.01);
-          handlers.current.onMove(
-            imageId.current,
-            origin.current.x + gesture.dx / zoom,
-            origin.current.y + gesture.dy / zoom,
-          );
-        },
-        onPanResponderRelease: (event) => {
-          releasePointer(event);
-          if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
-          if (!dragging.current) handlers.current.onSelect(imageId.current);
-          dragging.current = false;
-        },
-        onPanResponderTerminate: (event) => {
-          releasePointer(event);
-          if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
-          dragging.current = false;
-        },
-      }),
-    [],
-  );
 
   useEffect(() => {
     // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
@@ -158,35 +107,22 @@ const LocationMapImageView: React.FC<Props> = ({
     if (!dragging.current) origin.current = { x: image.x, y: image.y };
   }, [image.x, image.y]);
 
-  const sizeRef = useRef({ width: image.width, height: image.height });
-  useEffect(() => {
-    sizeRef.current = { width: image.width, height: image.height };
-  }, [image.width, image.height]);
   const resizeOrigin = useRef({ width: image.width, height: image.height });
-  const resizePan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => layoutEditing,
-        onMoveShouldSetPanResponder: () => layoutEditing,
-        onPanResponderGrant: () => {
-          resizeOrigin.current = sizeRef.current;
-          handlers.current.onDragStart(imageId.current);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          const zoom = Math.max(scaleRef.current, 0.01);
-          const width = Math.max(80, resizeOrigin.current.width + gesture.dx / zoom);
-          handlers.current.onResize(
-            imageId.current,
-            width,
-            resizeOrigin.current.height * (width / resizeOrigin.current.width),
-          );
-        },
-        onPanResponderRelease: () => handlers.current.onDragEnd(imageId.current),
-        onPanResponderTerminate: () => handlers.current.onDragEnd(imageId.current),
-      }),
-    [layoutEditing],
-  );
+  const resizePan = usePanResponder({
+    onStartShouldSetPanResponder: () => layoutEditing,
+    onMoveShouldSetPanResponder: () => layoutEditing,
+    onPanResponderGrant: () => {
+      resizeOrigin.current = { width: image.width, height: image.height };
+      onDragStart(image.id);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const zoom = Math.max(scale, 0.01);
+      const width = Math.max(80, resizeOrigin.current.width + gesture.dx / zoom);
+      onResize(image.id, width, resizeOrigin.current.height * (width / resizeOrigin.current.width));
+    },
+    onPanResponderRelease: () => onDragEnd(image.id),
+    onPanResponderTerminate: () => onDragEnd(image.id),
+  });
 
   const styles = useMemo(
     () =>
@@ -251,21 +187,21 @@ const LocationMapImageView: React.FC<Props> = ({
         <>
           <TouchableOpacity
             style={[styles.actionButton, { right: 84 }]}
-            onPress={() => handlers.current.onSendToBack(imageId.current)}
+            onPress={() => onSendToBack(image.id)}
             accessibilityLabel="Send map image to back"
           >
             <Ionicons name="layers-outline" size={16} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { right: 48 }]}
-            onPress={() => handlers.current.onBringToFront(imageId.current)}
+            onPress={() => onBringToFront(image.id)}
             accessibilityLabel="Bring map image to front"
           >
             <Ionicons name="layers" size={16} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { right: 12 }]}
-            onPress={() => handlers.current.onToggleLock(imageId.current)}
+            onPress={() => onToggleLock(image.id)}
             accessibilityLabel="Toggle map image lock"
           >
             <Ionicons
@@ -276,7 +212,7 @@ const LocationMapImageView: React.FC<Props> = ({
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { left: 12 }]}
-            onPress={() => handlers.current.onRemove(imageId.current)}
+            onPress={() => onRemove(image.id)}
             accessibilityLabel="Remove map image"
           >
             <Ionicons name="trash-outline" size={16} color={colors.error} />

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import { EntityService } from '@/src/services/entity-solvers/EntityService';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface UseEntityNameResult {
   entityName: string | undefined;
@@ -48,7 +49,7 @@ export function useEntityName(
       }
     }
 
-    fetchEntityName();
+    fireAndLog(fetchEntityName(), 'fetchEntityName');
 
     return () => {
       isMounted = false;

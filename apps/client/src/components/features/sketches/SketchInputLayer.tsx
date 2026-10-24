@@ -8,10 +8,11 @@ import {
   type SketchPoint,
   type SpatialRect,
 } from '@keres/shared';
-import React, { useEffect, useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import type { SketchTool } from '@/src/state/drafts/sketchToolStore';
 import type { SketchPreview } from './SketchPreviewView';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 export interface SketchBrushStyle {
   brush: SketchBrushId;
@@ -80,197 +81,191 @@ const SketchInputLayer: React.FC<SketchInputLayerProps> = (props) => {
   const mode = useRef<Mode>({ kind: 'idle' });
   const moved = useRef(false);
 
-  const responder = useMemo(() => {
-    const worldAt = (screenX: number, screenY: number) =>
-      live.current.screenToWorld({ x: screenX, y: screenY });
-    const currentWorld = (gesture: { dx: number; dy: number }) =>
-      worldAt(startScreen.current.x + gesture.dx, startScreen.current.y + gesture.dy);
-    const spacing = () =>
-      Math.max(MIN_POINT_SPACING_WORLD, POINT_SPACING_SCREEN / (live.current.scale || 1));
-    const eraserRadius = () => live.current.eraserSize / 2;
+  const worldAt = (screenX: number, screenY: number) =>
+    live.current.screenToWorld({ x: screenX, y: screenY });
+  const currentWorld = (gesture: { dx: number; dy: number }) =>
+    worldAt(startScreen.current.x + gesture.dx, startScreen.current.y + gesture.dy);
+  const spacing = () =>
+    Math.max(MIN_POINT_SPACING_WORLD, POINT_SPACING_SCREEN / (live.current.scale || 1));
+  const eraserRadius = () => live.current.eraserSize / 2;
 
-    const finishEraser = () => {
-      live.current.onPreview(null);
-      live.current.onEraseEnd();
-    };
+  const finishEraser = () => {
+    live.current.onPreview(null);
+    live.current.onEraseEnd();
+  };
 
-    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (event) => {
-        const props = live.current;
-        startScreen.current = { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY };
-        moved.current = false;
-        const start = worldAt(startScreen.current.x, startScreen.current.y);
-        switch (props.tool) {
-          case 'brush': {
-            mode.current = { kind: 'stroke', points: [start.x, start.y] };
-            props.onPreview({
-              kind: 'stroke',
-              stroke: { kind: 'stroke', ...props.brushStyle, points: [start.x, start.y] },
-            });
-            break;
-          }
-          case 'line':
-          case 'rect':
-          case 'ellipse':
-            mode.current = { kind: 'shape', start };
-            break;
-          case 'eraser': {
-            mode.current = { kind: 'erase', path: [start.x, start.y] };
-            props.onErase([start.x, start.y], eraserRadius());
-            props.onPreview({ kind: 'eraser', x: start.x, y: start.y, radius: eraserRadius() });
-            break;
-          }
-          case 'select': {
-            const bounds = props.selectionBounds;
-            const radius = HANDLE_SCREEN / (props.scale || 1);
-            const handle = bounds
-              ? hitSelectionHandle(bounds, start, radius, KNOB_SCREEN / (props.scale || 1))
-              : null;
-            mode.current = handle
-              ? { kind: 'handle', handle, start }
-              : { kind: 'lasso', points: [start.x, start.y] };
-            break;
-          }
-          default:
-            mode.current = { kind: 'tap' };
+  const responder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (event) => {
+      const props = live.current;
+      startScreen.current = { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY };
+      moved.current = false;
+      const start = worldAt(startScreen.current.x, startScreen.current.y);
+      switch (props.tool) {
+        case 'brush': {
+          mode.current = { kind: 'stroke', points: [start.x, start.y] };
+          props.onPreview({
+            kind: 'stroke',
+            stroke: { kind: 'stroke', ...props.brushStyle, points: [start.x, start.y] },
+          });
+          break;
         }
-      },
-      onPanResponderMove: (_, gesture) => {
-        const props = live.current;
-        const current = mode.current;
-        if (!moved.current && Math.hypot(gesture.dx, gesture.dy) < TAP_SLOP) return;
-        moved.current = true;
-        const world = currentWorld(gesture);
-        switch (current.kind) {
-          case 'stroke': {
-            const { points } = current;
-            const lastX = points[points.length - 2];
-            const lastY = points[points.length - 1];
-            if (Math.hypot(world.x - lastX, world.y - lastY) < spacing()) return;
-            points.push(world.x, world.y);
-            props.onPreview({
+        case 'line':
+        case 'rect':
+        case 'ellipse':
+          mode.current = { kind: 'shape', start };
+          break;
+        case 'eraser': {
+          mode.current = { kind: 'erase', path: [start.x, start.y] };
+          props.onErase([start.x, start.y], eraserRadius());
+          props.onPreview({ kind: 'eraser', x: start.x, y: start.y, radius: eraserRadius() });
+          break;
+        }
+        case 'select': {
+          const bounds = props.selectionBounds;
+          const radius = HANDLE_SCREEN / (props.scale || 1);
+          const handle = bounds
+            ? hitSelectionHandle(bounds, start, radius, KNOB_SCREEN / (props.scale || 1))
+            : null;
+          mode.current = handle
+            ? { kind: 'handle', handle, start }
+            : { kind: 'lasso', points: [start.x, start.y] };
+          break;
+        }
+        default:
+          mode.current = { kind: 'tap' };
+      }
+    },
+    onPanResponderMove: (_, gesture) => {
+      const props = live.current;
+      const current = mode.current;
+      if (!moved.current && Math.hypot(gesture.dx, gesture.dy) < TAP_SLOP) return;
+      moved.current = true;
+      const world = currentWorld(gesture);
+      switch (current.kind) {
+        case 'stroke': {
+          const { points } = current;
+          const lastX = points[points.length - 2];
+          const lastY = points[points.length - 1];
+          if (Math.hypot(world.x - lastX, world.y - lastY) < spacing()) return;
+          points.push(world.x, world.y);
+          props.onPreview({
+            kind: 'stroke',
+            stroke: { kind: 'stroke', ...props.brushStyle, points: [...points] },
+          });
+          break;
+        }
+        case 'shape': {
+          if (props.tool !== 'line' && props.tool !== 'rect' && props.tool !== 'ellipse') return;
+          props.onPreview({
+            kind: 'stroke',
+            stroke: {
               kind: 'stroke',
-              stroke: { kind: 'stroke', ...props.brushStyle, points: [...points] },
-            });
-            break;
-          }
-          case 'shape': {
-            if (props.tool !== 'line' && props.tool !== 'rect' && props.tool !== 'ellipse') return;
-            props.onPreview({
-              kind: 'stroke',
-              stroke: {
-                kind: 'stroke',
-                ...props.brushStyle,
-                points: sketchShapePoints(props.tool, current.start, world),
-              },
-            });
-            break;
-          }
-          case 'erase': {
-            const path = current.path;
-            const lastX = path[path.length - 2];
-            const lastY = path[path.length - 1];
-            if (Math.hypot(world.x - lastX, world.y - lastY) < spacing()) {
-              props.onPreview({ kind: 'eraser', x: world.x, y: world.y, radius: eraserRadius() });
-              return;
-            }
-            props.onErase([lastX, lastY, world.x, world.y], eraserRadius());
-            path.push(world.x, world.y);
+              ...props.brushStyle,
+              points: sketchShapePoints(props.tool, current.start, world),
+            },
+          });
+          break;
+        }
+        case 'erase': {
+          const path = current.path;
+          const lastX = path[path.length - 2];
+          const lastY = path[path.length - 1];
+          if (Math.hypot(world.x - lastX, world.y - lastY) < spacing()) {
             props.onPreview({ kind: 'eraser', x: world.x, y: world.y, radius: eraserRadius() });
-            break;
+            return;
           }
-          case 'lasso': {
-            const { points } = current;
-            const lastX = points[points.length - 2];
-            const lastY = points[points.length - 1];
-            if (Math.hypot(world.x - lastX, world.y - lastY) < spacing() * 2) return;
-            points.push(world.x, world.y);
-            props.onPreview({ kind: 'lasso', points: [...points] });
-            break;
-          }
-          case 'handle': {
-            const bounds = props.selectionBounds;
-            if (!bounds) return;
-            props.onTransformPreview(
+          props.onErase([lastX, lastY, world.x, world.y], eraserRadius());
+          path.push(world.x, world.y);
+          props.onPreview({ kind: 'eraser', x: world.x, y: world.y, radius: eraserRadius() });
+          break;
+        }
+        case 'lasso': {
+          const { points } = current;
+          const lastX = points[points.length - 2];
+          const lastY = points[points.length - 1];
+          if (Math.hypot(world.x - lastX, world.y - lastY) < spacing() * 2) return;
+          points.push(world.x, world.y);
+          props.onPreview({ kind: 'lasso', points: [...points] });
+          break;
+        }
+        case 'handle': {
+          const bounds = props.selectionBounds;
+          if (!bounds) return;
+          props.onTransformPreview(
+            selectionDragMatrix(current.handle, bounds, current.start, world),
+          );
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    onPanResponderRelease: (_, gesture) => {
+      const props = live.current;
+      const current = mode.current;
+      mode.current = { kind: 'idle' };
+      const world = currentWorld(gesture);
+      const wasTap = !moved.current;
+      props.onPreview(null);
+      switch (current.kind) {
+        case 'stroke': {
+          // A tap is a dot: the brush's own size at that spot.
+          props.onStrokeCommit(
+            wasTap ? [current.points[0], current.points[1]] : [...current.points, world.x, world.y],
+          );
+          break;
+        }
+        case 'shape': {
+          if (wasTap) break;
+          if (props.tool !== 'line' && props.tool !== 'rect' && props.tool !== 'ellipse') break;
+          props.onStrokeCommit(sketchShapePoints(props.tool, current.start, world));
+          break;
+        }
+        case 'erase': {
+          // A tap erases a disc where it landed (the grant already did); the end cuts the fills.
+          finishEraser();
+          break;
+        }
+        case 'lasso': {
+          if (wasTap) props.onSelectTap(world, SELECT_HIT_SCREEN / (props.scale || 1));
+          else props.onLassoCommit(current.points);
+          break;
+        }
+        case 'handle': {
+          const bounds = props.selectionBounds;
+          props.onTransformPreview(null);
+          if (wasTap) {
+            // A tap on the body with no drag selects whatever is under it instead.
+            props.onSelectTap(world, SELECT_HIT_SCREEN / (props.scale || 1));
+          } else if (bounds) {
+            props.onTransformCommit(
               selectionDragMatrix(current.handle, bounds, current.start, world),
             );
-            break;
           }
-          default:
-            break;
+          break;
         }
-      },
-      onPanResponderRelease: (_, gesture) => {
-        const props = live.current;
-        const current = mode.current;
-        mode.current = { kind: 'idle' };
-        const world = currentWorld(gesture);
-        const wasTap = !moved.current;
-        props.onPreview(null);
-        switch (current.kind) {
-          case 'stroke': {
-            // A tap is a dot: the brush's own size at that spot.
-            props.onStrokeCommit(
-              wasTap
-                ? [current.points[0], current.points[1]]
-                : [...current.points, world.x, world.y],
-            );
-            break;
-          }
-          case 'shape': {
-            if (wasTap) break;
-            if (props.tool !== 'line' && props.tool !== 'rect' && props.tool !== 'ellipse') break;
-            props.onStrokeCommit(sketchShapePoints(props.tool, current.start, world));
-            break;
-          }
-          case 'erase': {
-            // A tap erases a disc where it landed (the grant already did); the end cuts the fills.
-            finishEraser();
-            break;
-          }
-          case 'lasso': {
-            if (wasTap) props.onSelectTap(world, SELECT_HIT_SCREEN / (props.scale || 1));
-            else props.onLassoCommit(current.points);
-            break;
-          }
-          case 'handle': {
-            const bounds = props.selectionBounds;
-            props.onTransformPreview(null);
-            if (wasTap) {
-              // A tap on the body with no drag selects whatever is under it instead.
-              props.onSelectTap(world, SELECT_HIT_SCREEN / (props.scale || 1));
-            } else if (bounds) {
-              props.onTransformCommit(
-                selectionDragMatrix(current.handle, bounds, current.start, world),
-              );
-            }
-            break;
-          }
-          case 'tap': {
-            if (props.tool === 'fill') props.onFillTap(world);
-            else if (props.tool === 'eyedropper') props.onPick(world);
-            break;
-          }
-          default:
-            break;
+        case 'tap': {
+          if (props.tool === 'fill') props.onFillTap(world);
+          else if (props.tool === 'eyedropper') props.onPick(world);
+          break;
         }
-      },
-      onPanResponderTerminate: () => {
-        const props = live.current;
-        const current = mode.current;
-        mode.current = { kind: 'idle' };
-        props.onPreview(null);
-        props.onTransformPreview(null);
-        // A second finger means the user is navigating: an erase already applied stays (it was
-        // committed stroke by stroke), but an unfinished stroke, shape or lasso is dropped.
-        if (current.kind === 'erase') props.onEraseEnd();
-      },
-    });
-    // Created once; see the `live` ref above.
-  }, []);
+        default:
+          break;
+      }
+    },
+    onPanResponderTerminate: () => {
+      const props = live.current;
+      const current = mode.current;
+      mode.current = { kind: 'idle' };
+      props.onPreview(null);
+      props.onTransformPreview(null);
+      // A second finger means the user is navigating: an erase already applied stays (it was
+      // committed stroke by stroke), but an unfinished stroke, shape or lasso is dropped.
+      if (current.kind === 'erase') props.onEraseEnd();
+    },
+  });
 
   return (
     <View

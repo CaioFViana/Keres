@@ -26,7 +26,7 @@ const SAVE_DELETE_FORMS: FormFooterCheck[] = [
     remove: /onPress=\{onDelete\}/,
   },
   ...[
-    'screens/enter-stack/servers/ServerRegistrationScreen.tsx',
+    'screens/enter-stack/servers/ServerRegistrationForm.tsx',
     'screens/enter-stack/story-entry/StoryFormScreen.tsx',
     'screens/gallery/GalleryDetailContent.tsx',
     'screens/item-journeys/ItemJourneyFormScreen.tsx',

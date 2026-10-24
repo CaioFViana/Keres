@@ -1,5 +1,5 @@
 import React from 'react';
-import type { KeyboardEvent, StyleProp, ViewStyle } from 'react-native';
+import type { KeyboardEvent, ScrollViewInstance, StyleProp, ViewStyle } from 'react-native';
 import {
   Dimensions,
   Keyboard,
@@ -43,7 +43,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   // Inside a ResponsiveModal the surface itself is already lifted clear of the keyboard.
   const keyboardHandledAbove = React.useContext(KeyboardHandledContext);
   const requestedBottomPadding = StyleSheet.flatten(contentContainerStyle)?.paddingBottom;
-  const scrollRef = React.useRef<ScrollView>(null);
+  const scrollRef = React.useRef<ScrollViewInstance>(null);
   const scrollOffset = React.useRef(0);
   const keyboardTop = React.useRef<number | null>(null);
   const focusScrollTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);

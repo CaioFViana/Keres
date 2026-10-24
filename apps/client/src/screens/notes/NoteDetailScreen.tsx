@@ -13,38 +13,24 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
-import type { NoteRelation } from '@keres/shared/entities/narrative/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '@/src/db';
-import type { TagSelect } from '@/src/db/schema';
-import type { NoteSelect } from '@/src/db/schemas/notes';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { EntityService } from '@/src/services/entity-solvers/EntityService'; // Import EntityService
-import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
-import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
-import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
-import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
 import { useTheme } from '@/src/theme';
 
 import type { NotesScreenNavigationProp } from './NoteListScreen';
-import { logger } from '@/src/utils/logging/logger';
+import { useNoteDetailRelations } from './useNoteDetailRelations';
+import { useNoteDetailServices } from './useNoteDetailServices';
 
 // Define the parameter list for this screen
 export type NoteDetailScreenParamList = {
@@ -61,217 +47,35 @@ const NoteDetailScreen = () => {
   const route = useRoute<NoteDetailScreenRouteProp>();
   const { noteId, occurrence } = route.params;
 
-  const drizzleDb = useDrizzle();
-  const noteServiceRef = useRef<ReturnType<typeof createNoteService> | null>(null);
-  const noteRelationServiceRef = useRef<ReturnType<typeof createNoteRelationService> | null>(null); // Added this line
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation();
-  const { selectedStory } = useStoryStore();
 
-  // Initialize services only once when drizzleDb is available
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!noteServiceRef.current) {
-        noteServiceRef.current = createNoteService(drizzleDb);
-      }
-      if (!tagServiceRef.current) {
-        tagServiceRef.current = createTagService(drizzleDb);
-      }
-      if (!tagRelationServiceRef.current) {
-        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
-      }
-      if (!noteRelationServiceRef.current) {
-        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
-
-  const [note, setNote] = useState<NoteSelect | null>(null);
+  const services = useNoteDetailServices();
+  const {
+    record: note,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: noteId,
+    load: services.noteService.getById,
+    event: 'note_changed',
+    label: 'note details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(note?.storyId);
   const comments = useEntityComments(note?.storyId, 'Note', noteId);
-  const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
-  const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
-  const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
-    character: [],
-    worldrule: [],
-    location: [],
-    scene: [],
-    chapter: [],
-    choice: [],
-    item: [],
-    itemjourney: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
-
-  const fetchNote = useCallback(async () => {
-    if (!noteServiceRef.current) {
-      logger.warn('Note service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedNote = await noteServiceRef.current.getById(noteId);
-      if (fetchedNote && !fetchedNote.isDeleted) {
-        setNote(fetchedNote);
-        setHeaderTitle(fetchedNote.title || t('note_details_title'));
-      } else if (fetchedNote && fetchedNote.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(t('note_not_found'));
-        setHeaderTitle(t('note_not_found'));
-      }
-    } catch (err) {
-      logger.error('Failed to fetch note details:', err);
-      setError(t('failed_to_load_note'));
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [noteId, setNote, setLoading, setError, setHeaderTitle, navigation, t]);
-
-  const fetchTagsForNote = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !note?.storyId || !noteId) {
-      setNoteTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(
-        note.storyId,
-        noteId,
-        'Note',
-      );
-      setNoteTags(fetchedTags);
-    } catch (err) {
-      logger.error('Failed to fetch tags for note:', err);
-    }
-  }, [note?.storyId, noteId]);
-
-  const fetchNoteRelations = useCallback(async () => {
-    if (!noteRelationServiceRef.current || !note?.storyId || !noteId) {
-      logger.warn('NoteRelationService or story not initialized for fetching relations.');
-      return;
-    }
-    try {
-      const relations = await noteRelationServiceRef.current.getRelationsForNote(
-        note.storyId,
-        noteId,
-      );
-      setAllNoteRelations(relations);
-    } catch (err) {
-      logger.error('Failed to fetch note relations:', err);
-    }
-  }, [note?.storyId, noteId]);
-
-  const processNoteRelations = useCallback(async () => {
-    if (!drizzleDb || !note?.storyId) return;
-
-    const newGroupedEntities: Record<string, RelatedEntityItem[]> = {
-      chapter: [],
-      character: [],
-      choice: [],
-      item: [],
-      itemjourney: [],
-      location: [],
-      note: [],
-      operationlog: [],
-      scene: [],
-      story: [],
-      suggestion: [],
-      tag: [],
-      user: [],
-      worldrule: [],
-      characterrelation: [],
-      noterelation: [],
-      tagrelation: [],
-      characterscene: [],
-    };
-
-    for (const relation of allNoteRelations) {
-      const entityName = await EntityService.getEntityIdentifier(
-        drizzleDb,
-        relation.relationType,
-        relation.relationId,
-        note.storyId,
-        t,
-      );
-      if (entityName) {
-        newGroupedEntities[relation.relationType.toLowerCase()].push({
-          id: relation.relationId,
-          name: entityName,
-        });
-      }
-    }
-    setGroupedEntities(newGroupedEntities);
-  }, [allNoteRelations, drizzleDb, note?.storyId, t]);
-
-  const handleNoteChange = useCallback(
-    async (_changedStoryId: string, changedNoteId: string) => {
-      if (changedNoteId === noteId) {
-        if (noteServiceRef.current) {
-          const updatedNote = await noteServiceRef.current.getById(noteId);
-          if (!updatedNote || updatedNote.isDeleted) {
-            navigation.goBack();
-          } else {
-            setNote(updatedNote);
-            setHeaderTitle(updatedNote.title || t('note_details_title'));
-          }
-        }
-        fetchNoteRelations(); // Refetch relations if the note itself changed
-      }
-    },
-    [noteId, navigation, setNote, setHeaderTitle, t, fetchNoteRelations],
+  const { tags: noteTags, groupedEntities } = useNoteDetailRelations(
+    services,
+    note?.storyId,
+    noteId,
   );
 
-  const handleNoteRelationChange = useCallback(
-    (_changedStoryId: string, _changedRelationId: string) => {
-      // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
-      // However, for simplicity and ensuring data consistency, we'll refetch all relations for this note.
-      // A more optimized approach would involve parsing changedRelationId if it contains noteId.
-      fetchNoteRelations();
-    },
-    [fetchNoteRelations],
-  );
-
-  const handleTagRelationChange = useCallback(
-    (_changedStoryId: string, changedEntityId: string) => {
-      if (changedEntityId === noteId) {
-        fetchTagsForNote();
-      }
-    },
-    [noteId, fetchTagsForNote],
-  );
-
-  const loadInitialNoteData = useCallback(() => {
-    if (noteServiceRef.current && selectedStory?.id) {
-      void fetchNote();
-      void fetchNoteRelations();
-    }
-  }, [fetchNote, fetchNoteRelations, selectedStory?.id]);
-
-  useEntityInitialLoad(loadInitialNoteData);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'note_changed', listener: handleNoteChange },
-        { event: 'note_relation_changed', listener: handleNoteRelationChange },
-        { event: 'tag_relation_changed', listener: handleTagRelationChange },
-      ],
-      [handleNoteChange, handleNoteRelationChange, handleTagRelationChange],
-    ),
-  );
-
-  useEffect(() => {
-    if (note) {
-      /* eslint-disable react-hooks/set-state-in-effect -- `fetchTagsForNote` clears synchronously only when its service/data is missing and `processNoteRelations` only reaches setState after `await`; the rule cannot verify across the callback boundary. */
-      fetchTagsForNote();
-      processNoteRelations(); // Process relations after they are fetched
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-  }, [note, fetchTagsForNote, processNoteRelations]);
+  const headerTitle = note
+    ? note.title || t('note_details_title')
+    : failure === 'notFound'
+      ? t('note_not_found')
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   useScreenHeader({
     target: 'parent',
@@ -294,8 +98,14 @@ const NoteDetailScreen = () => {
     return <ScreenLoading padded message={t('loading_note_details')} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? t('note_not_found') : t('failed_to_load_note')}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   if (!note) {

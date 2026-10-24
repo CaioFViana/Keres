@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { TagSelect } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { logger } from '@/src/utils/logging/logger';
+
+const NO_TAGS: TagSelect[] = [];
+const TAG_EVENTS = ['tag_changed'] as const;
 
 /**
  * The story's tags as the options of a list's tag filter. Fetched here rather than by the list hook,
@@ -11,34 +13,18 @@ import { logger } from '@/src/utils/logging/logger';
  */
 export function useStoryTagFilterOptions(storyId: string | undefined) {
   const drizzleDb = useDrizzle();
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagService] = useState(() => createTagService(drizzleDb));
-
-  const fetchTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId);
-      setAllTags(fetchedTags);
-    } catch (error) {
-      logger.error('Failed to fetch tags:', error);
-    }
-  }, [storyId, tagService]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchTags();
-  }, [fetchTags]);
-
-  useEffect(() => {
-    const handleTagChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchTags();
-    };
-    entityEventEmitter.on('tag_changed', handleTagChange);
-    return () => entityEventEmitter.off('tag_changed', handleTagChange);
-  }, [fetchTags, storyId]);
+  const tagService = useMemo(() => createTagService(drizzleDb), [drizzleDb]);
+  const load = useMemo(
+    () => (storyId ? () => tagService.getTagsByStoryId(storyId) : null),
+    [tagService, storyId],
+  );
+  const { data: allTags } = useLoadedResource({
+    load,
+    initial: NO_TAGS,
+    events: TAG_EVENTS,
+    storyId,
+    label: 'tags',
+  });
 
   return useMemo(
     () => allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color })),

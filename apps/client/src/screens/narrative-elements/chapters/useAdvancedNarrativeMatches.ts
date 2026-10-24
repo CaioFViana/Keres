@@ -5,6 +5,7 @@ import { createChapterService } from '@/src/services/storymanagement/scenes-chap
 import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import type { AdvancedNarrativeMatches } from './createChapterListItemRenderer';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: string) =>
   Object.fromEntries(
@@ -99,7 +100,7 @@ export function useAdvancedNarrativeMatches(input: {
         });
       }
     };
-    loadAdvancedMatches();
+    fireAndLog(loadAdvancedMatches(), 'loadAdvancedMatches');
     return () => {
       cancelled = true;
     };

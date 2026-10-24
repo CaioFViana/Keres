@@ -16,7 +16,6 @@ export type SortDirection = 'asc' | 'desc';
  * entity id, date), which the schema-driven form knows and this bag cannot say, so each consumer reads the
  * keys it knows by name.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AdvancedSearchValue = any;
+export type AdvancedSearchValue = unknown;
 
 export type AdvancedSearchCriteria = { [key: string]: AdvancedSearchValue };

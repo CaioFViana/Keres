@@ -18,7 +18,8 @@ export function withOpLogLock<T>(storyId: string, fn: () => Promise<T>): Promise
   const next = previous.catch(swallow).then(fn);
   const tail = next.catch(swallow);
   tails.set(storyId, tail);
-  tail.then(() => {
+  // `tail` never rejects (the chain swallows), and this module imports nothing from the app.
+  void tail.then(() => {
     if (tails.get(storyId) === tail) tails.delete(storyId);
   });
   return next;

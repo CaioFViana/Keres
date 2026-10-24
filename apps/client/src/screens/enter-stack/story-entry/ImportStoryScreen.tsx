@@ -19,6 +19,7 @@ import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { pickStoryExportFile, StoryImportError } from '@/src/utils/io/storyTransfer';
 import { storyImportMessageKey } from '@/src/utils/io/StoryImportError';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * Bringing a story in from a file. Taking one out is done from inside the story (Publish and export), where
@@ -56,7 +57,7 @@ const ImportStoryScreen = () => {
       const { title } = await importStoryFromSource(drizzleDb, userId, picked);
 
       showNotification(t('import_story_success', { title }), 'success');
-      fetchStoryList(createStoryService(drizzleDb)); // Keeps the story selection screen up to date.
+      fireAndLog(fetchStoryList(createStoryService(drizzleDb)), 'fetchStoryList'); // Keeps the story selection screen up to date.
     } catch (importError) {
       if (importError instanceof StoryImportError) {
         logger.debug('ImportStoryScreen: import rejected.', importError.message);

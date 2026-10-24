@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
-import type { KeyboardEvent, View } from 'react-native';
+import type { KeyboardEvent, ViewInstance } from 'react-native';
 import { Keyboard, Platform } from 'react-native';
 
 /**
@@ -27,7 +27,7 @@ const REMEASURE_DELAYS = [0, 120, 320];
  * container's own bounds, so there is no measure-pad-measure loop.
  */
 export function useKeyboardOverlap(active: boolean) {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   const [overlap, setOverlap] = useState(0);
   const keyboardTop = useRef<number | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);

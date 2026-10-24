@@ -5,7 +5,7 @@ import {
   splitTextByRanges,
 } from '@keres/shared';
 import React, { useMemo } from 'react';
-import { Text, type TextProps } from 'react-native';
+import { type HostInstance, Text, type TextProps } from 'react-native';
 import { useTheme } from '@/src/theme';
 
 interface MarkedTextProps extends Omit<TextProps, 'children'> {
@@ -18,7 +18,7 @@ interface MarkedTextProps extends Omit<TextProps, 'children'> {
    */
   activeRanges?: TextRange[];
   /** Attached to the active span's host, so the manuscript can scroll it into view. */
-  activeRef?: React.Ref<Text>;
+  activeRef?: React.Ref<HostInstance>;
   /** Comment-excerpt spans: same fill as `ranges`, tappable via `onCommentPress`. */
   commentRanges?: TextRange[];
   /** Fired when a comment-marked span is tapped (opens that field's thread). */

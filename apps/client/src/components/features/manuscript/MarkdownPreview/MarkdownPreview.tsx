@@ -7,7 +7,7 @@ import {
 } from '@keres/shared';
 import { useMemo } from 'react';
 import type React from 'react';
-import { StyleSheet, Text, View, type TextStyle } from 'react-native';
+import { type HostInstance, StyleSheet, Text, type TextStyle, View } from 'react-native';
 import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 import { useTheme } from '@/src/theme';
 import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
@@ -34,7 +34,7 @@ function InlineText({
   commentRanges: TextRange[];
   onCommentPress?: () => void;
   activeRangeIndex: number | null;
-  activeTextRef?: React.Ref<Text>;
+  activeTextRef?: React.Ref<HostInstance>;
 }) {
   return (
     <MarkedText
@@ -91,7 +91,7 @@ export function MarkdownPreview({
    */
   activeMatchIndex?: number | null;
   /** Attached to the current hit's host, so the manuscript can scroll it into view. */
-  activeTextRef?: React.Ref<Text>;
+  activeTextRef?: React.Ref<HostInstance>;
 }) {
   const { colors } = useTheme();
   const doc = useMemo(() => parseMarkdownToDocument(text), [text]);

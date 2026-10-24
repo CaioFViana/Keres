@@ -32,6 +32,7 @@ import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/comm
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
 import { httpStatusOf } from '@/src/utils/errors/errorInfo';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
@@ -77,27 +78,30 @@ const ChangePasswordScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedServer = await createServerService(drizzleDb).getServerById(serverId);
-        if (!cancelled) {
-          if (!fetchedServer) {
-            setError(t('server_not_found'));
-          } else {
-            setServer(fetchedServer);
+    fireAndLog(
+      (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const fetchedServer = await createServerService(drizzleDb).getServerById(serverId);
+          if (!cancelled) {
+            if (!fetchedServer) {
+              setError(t('server_not_found'));
+            } else {
+              setServer(fetchedServer);
+            }
           }
+        } catch (err) {
+          if (!cancelled) {
+            logger.error('Failed to load server:', err);
+            setError(t('server_not_found'));
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
         }
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Failed to load server:', err);
-          setError(t('server_not_found'));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+      })(),
+      'ChangePasswordScreen',
+    );
     return () => {
       cancelled = true;
     };

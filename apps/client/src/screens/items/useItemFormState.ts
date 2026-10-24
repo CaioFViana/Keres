@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { fieldsDiffer, pickFields, useFormFields } from '@/src/hooks/forms/useFormFields';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
@@ -38,6 +39,8 @@ const CREATE_PRISTINE: ItemFormDraftFields = {
   characterOwnerId: null,
 };
 
+const FIELD_KEYS = Object.keys(CREATE_PRISTINE) as (keyof ItemFormDraftFields)[];
+
 function isItemFormDraftFields(value: unknown): value is ItemFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -61,13 +64,7 @@ export function useItemFormState({
   customFields,
 }: UseItemFormStateOptions) {
   const [currentItemId, setCurrentItemId] = useState<string | undefined>(initialItemId);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
-  const [description, setDescription] = useState<string | null>(null);
-  const [initialState, setInitialState] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [characterOwnerId, setCharacterOwnerId] = useState<string | null>(null);
+  const { fields, setters, setAll } = useFormFields(CREATE_PRISTINE);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -92,22 +89,9 @@ export function useItemFormState({
         if (initialItemId) {
           const fetchedItem = await itemServiceRef.current.getById(initialItemId);
           if (fetchedItem) {
-            setName(fetchedItem.name);
-            setCategory(fetchedItem.category);
-            setDescription(fetchedItem.description);
-            setInitialState(fetchedItem.initialState);
-            setIsFavorite(fetchedItem.isFavorite);
-            setExtraNotes(fetchedItem.extraNotes);
-            setCharacterOwnerId(fetchedItem.characterOwnerId);
-            setLoadedPristine({
-              name: fetchedItem.name,
-              category: fetchedItem.category,
-              description: fetchedItem.description,
-              initialState: fetchedItem.initialState,
-              isFavorite: fetchedItem.isFavorite,
-              extraNotes: fetchedItem.extraNotes,
-              characterOwnerId: fetchedItem.characterOwnerId,
-            });
+            const row = pickFields(fetchedItem, FIELD_KEYS);
+            setAll(row);
+            setLoadedPristine(row);
             setLoadedUpdatedAt(fetchedItem.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
@@ -130,7 +114,7 @@ export function useItemFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialItemId, itemServiceRef, storyId]);
+  }, [drizzleDb, initialItemId, itemServiceRef, setAll, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -139,19 +123,16 @@ export function useItemFormState({
     }
   }, [isEditing, customFields]);
 
-  const restoreDraftFields = useCallback((fields: ItemFormDraftFields) => {
-    if (!isItemFormDraftFields(fields)) {
-      logger.error('Corrupt item form draft ignored.');
-      return;
-    }
-    setName(fields.name);
-    setCategory(fields.category);
-    setDescription(fields.description);
-    setInitialState(fields.initialState);
-    setIsFavorite(fields.isFavorite);
-    setExtraNotes(fields.extraNotes);
-    setCharacterOwnerId(fields.characterOwnerId);
-  }, []);
+  const restoreDraftFields = useCallback(
+    (restored: ItemFormDraftFields) => {
+      if (!isItemFormDraftFields(restored)) {
+        logger.error('Corrupt item form draft ignored.');
+        return;
+      }
+      setAll({ ...CREATE_PRISTINE, ...restored });
+    },
+    [setAll],
+  );
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -161,31 +142,14 @@ export function useItemFormState({
       entityType: 'Item',
       entityId: initialItemId,
       enabled: !!storyId && !loading,
-      snapshot: {
-        name,
-        category,
-        description,
-        initialState,
-        isFavorite,
-        extraNotes,
-        characterOwnerId,
-      },
+      snapshot: fields,
       pristine: loadedPristine ?? CREATE_PRISTINE,
       baseUpdatedAt: initialItemId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
-  const isDirty =
-    JSON.stringify({
-      name,
-      category,
-      description,
-      initialState,
-      isFavorite,
-      extraNotes,
-      characterOwnerId,
-    }) !== JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -194,33 +158,15 @@ export function useItemFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? CREATE_PRISTINE;
-    setName(target.name);
-    setCategory(target.category);
-    setDescription(target.description);
-    setInitialState(target.initialState);
-    setIsFavorite(target.isFavorite);
-    setExtraNotes(target.extraNotes);
-    setCharacterOwnerId(target.characterOwnerId);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, deleteStoredDraft]);
+  }, [loadedPristine, deleteStoredDraft, setAll]);
 
   return {
     currentItemId,
     retainPersistedItemId,
-    name,
-    setName,
-    category,
-    setCategory,
-    description,
-    setDescription,
-    initialState,
-    setInitialState,
-    isFavorite,
-    setIsFavorite,
-    extraNotes,
-    setExtraNotes,
-    characterOwnerId,
-    setCharacterOwnerId,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

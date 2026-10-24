@@ -34,6 +34,7 @@ import i18n from './utils/format/i18n';
 import { keepPageOutOfBackForwardCache } from './utils/ui/pageLifecycle';
 import { isServerless } from './utils/platform/clientFlavor';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
@@ -43,7 +44,9 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   // The native window's background shows for an instant during stack and Modal transitions. Keeping it
   // in sync with the palette avoids revealing the default white outside the React tree.
   useEffect(() => {
-    SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+    SystemUI.setBackgroundColorAsync(colors.background).catch((error) =>
+      logger.debug('Setting the system background failed.', error),
+    );
   }, [colors.background]);
 
   return (
@@ -142,7 +145,7 @@ const DatabaseInitializer = () => {
 
         const settings = await initializeUserSettings(initializedDrizzle);
         if (settings?.language) {
-          i18n.changeLanguage(settings.language);
+          fireAndLog(i18n.changeLanguage(settings.language), 'changeLanguage');
           logger.debug(`DatabaseInitializer: Language set to ${settings.language}`);
         }
         setUserSettingsLoaded(true);
@@ -153,7 +156,7 @@ const DatabaseInitializer = () => {
     };
 
     if (db) {
-      initialize();
+      fireAndLog(initialize(), 'initialize');
     } else {
       logger.debug('DatabaseInitializer: db context is null, waiting...');
     }

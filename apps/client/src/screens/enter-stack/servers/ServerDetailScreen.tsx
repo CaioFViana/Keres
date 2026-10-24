@@ -25,12 +25,15 @@ import StoryUsageCard from '@/src/components/features/servers/StoryUsageCard';
 import { useDrizzle } from '@/src/db';
 import { useAccountPlan } from '@/src/screens/enter-stack/servers/useAccountPlan';
 import { useServerStoryUsage } from '@/src/screens/enter-stack/servers/useServerStoryUsage';
-import { useAccountVerificationNotice } from '@/src/screens/enter-stack/servers/useAccountVerificationNotice';
+import {
+  accountAgeStatusKey,
+  useAccountVerificationNotice,
+} from '@/src/screens/enter-stack/servers/useAccountVerificationNotice';
 import { useAgeVerificationInfo } from '@/src/screens/enter-stack/servers/useAgeVerificationInfo';
 import { formatDateTime } from '@/src/utils/format/formatDateTime';
 import { usePaymentOverview } from '@/src/screens/enter-stack/servers/usePaymentOverview';
 import { useServerDeletion } from '@/src/screens/enter-stack/servers/useServerDeletion';
-import { useLiveLegalText } from '@/src/screens/enter-stack/servers/useLiveLegalText';
+import { useLiveServerLegalTexts } from '@/src/screens/enter-stack/servers/useLiveLegalText';
 import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerStatuses';
 import { useStableServer } from '@/src/screens/enter-stack/servers/useStableServer';
 import { useServerTagEditor } from '@/src/screens/enter-stack/servers/useServerTagEditor';
@@ -58,6 +61,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { adminConversationKey } from '@/src/utils/entity/conversationKey';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type ServerDetailRouteProp = RouteProp<ServerManagementStackParamList, 'ServerDetail'>;
 type ServerDetailNavigationProp = NativeStackNavigationProp<
@@ -68,6 +72,7 @@ type ServerDetailNavigationProp = NativeStackNavigationProp<
 interface OwnProfile {
   avatarColor: string | null;
   avatarIcon: string | null;
+  isAdultVerified?: boolean;
 }
 
 /**
@@ -90,23 +95,16 @@ const ServerDetailScreen = () => {
   const [privacyVisible, setPrivacyVisible] = useState(false);
   // The saved texts keep the language of the day they were saved: while one is open, the same version is read again
   // in the language the app has now.
-  const liveTerms = useLiveLegalText(
-    'tos',
-    server?.url,
-    server?.tosVersion,
-    i18n.language,
-    termsVisible,
-  );
-  const livePrivacy = useLiveLegalText(
-    'privacy',
-    server?.url,
-    server?.privacyVersion,
-    i18n.language,
-    privacyVisible,
-  );
+  const { liveTerms, livePrivacy } = useLiveServerLegalTexts(server, i18n.language, {
+    terms: termsVisible,
+    privacy: privacyVisible,
+  });
   const [profile, setProfile] = useState<OwnProfile | null>(null);
 
-  useScreenHeader({ target: 'parent', title: server?.name ?? t('server_detail_title') });
+  useScreenHeader({
+    target: 'parent',
+    title: server ? serverDisplayName(server, t) : t('server_detail_title'),
+  });
 
   const tagEditor = useServerTagEditor(server, serverService, updateTag);
   const deleteServer = useServerDeletion(serverService, () => navigation.goBack());
@@ -284,6 +282,7 @@ const ServerDetailScreen = () => {
   // screen comes back to the front, because the approval may have happened on the verification screen.
   const focused = useIsFocused();
   const verificationNotice = useAccountVerificationNotice(stableServer, online && focused);
+  const ageStatus = accountAgeStatusKey(profile?.isAdultVerified, verificationNotice);
   // The person's own stories here and how full each is, read again whenever the screen comes back to the front.
   const { stories: storyUsage } = useServerStoryUsage(serverId, focused);
 
@@ -335,7 +334,7 @@ const ServerDetailScreen = () => {
           seed={server.idUser}
           size={80}
         />
-        <Text style={styles.name}>{server.name}</Text>
+        <Text style={styles.name}>{serverDisplayName(server, t)}</Text>
         <Text style={styles.url} selectable>
           {server.url}
         </Text>
@@ -391,6 +390,7 @@ const ServerDetailScreen = () => {
             </TouchableOpacity>
           )}
         </View>
+        {ageStatus ? field(t('server_age_status_field'), t(ageStatus)) : null}
         {server.apiVersion ? field(t('server_api_version_field'), server.apiVersion) : null}
         {field(
           t('last_sync'),
@@ -441,7 +441,7 @@ const ServerDetailScreen = () => {
         description={t('server_action_messages_hint')}
         onPress={openMessages}
         badge={hasUnseenAdminMessage}
-        badgeLabel={t('messages_unseen_admin_on', { server: server.name })}
+        badgeLabel={t('messages_unseen_admin_on', { server: serverDisplayName(server, t) })}
         testID="server-action-messages"
       />
       {payments ? (
@@ -516,6 +516,13 @@ const ServerDetailScreen = () => {
         />
       ) : null}
       <ServerActionRow
+        icon="create-outline"
+        title={t('server_action_connection')}
+        description={t('server_action_connection_hint')}
+        onPress={() => navigation.navigate('ServerRegistration', { serverId })}
+        testID="server-action-connection"
+      />
+      <ServerActionRow
         icon="download-outline"
         title={t('server_action_export_data')}
         description={t('server_action_export_data_hint')}
@@ -532,13 +539,6 @@ const ServerDetailScreen = () => {
           setDeleteVisible(true);
         }}
         testID="server-action-delete-account"
-      />
-      <ServerActionRow
-        icon="create-outline"
-        title={t('server_action_connection')}
-        description={t('server_action_connection_hint')}
-        onPress={() => navigation.navigate('ServerRegistration', { serverId })}
-        testID="server-action-connection"
       />
       <ServerActionRow
         icon="trash-outline"
@@ -610,7 +610,7 @@ const ServerDetailScreen = () => {
       ) : null}
       <DeleteAccountModal
         visible={deleteVisible}
-        serverName={server.name}
+        serverName={serverDisplayName(server, t)}
         eraseDays={ACCOUNT_DELETION_GRACE_DAYS}
         working={deleteWorking}
         error={deleteError}

@@ -34,7 +34,8 @@ export const serverFieldClassifications: Record<string, EntityPropertyClassifica
     // The sale currency is an admin-panel concern; the client never prices anything.
     // So is the adults-only gate: the client only obeys the server's refusal.
     // And how the public landing page shows the plans (sale or information only).
-    invisible: ['id', 'currency', 'allowNsfw', 'tiersDisplay'],
+    // The onboarding gate is read from the public config, not from a screen of settings.
+    invisible: ['id', 'currency', 'allowNsfw', 'tiersDisplay', 'requireAccountOnboarding'],
   },
   // What the admin panel reads: the settings plus the server's age-verification mode (an operator concern).
   RegistrationSettingsView: {

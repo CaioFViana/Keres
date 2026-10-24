@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { resolveEffectiveTheme } from '@/src/utils/search/storyArcFilter';
+
+const NO_ARCS: StoryArcSelect[] = [];
+const ARC_EVENTS = ['story_arc_changed'] as const;
 
 /** Loads the story's Arcs and keeps the active-Arc selection and effective theme in sync. */
 export function useStoryArcs() {
@@ -15,35 +18,27 @@ export function useStoryArcs() {
   const setActiveArcId = useStoryStore((state) => state.setActiveArcId);
   const setEffectiveArc = useStoryStore((state) => state.setEffectiveArc);
   const { setTheme } = useTheme();
-  const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
-  // Loading is not the same as empty: every mount starts with no arcs, and only
-  // the user (or a genuinely deleted arc) may clear the selection — never the load.
-  const [loaded, setLoaded] = useState(false);
-
-  const reload = useCallback(async () => {
-    if (!story?.id) {
-      setArcs([]);
-      setLoaded(true);
-      return;
-    }
-    setArcs(await createStoryArcService(db).getArcsForStory(story.id));
-    setLoaded(true);
-  }, [db, story?.id]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const handler = (storyId: string) => {
-      if (storyId === story?.id) void reload();
-    };
-    entityEventEmitter.on('story_arc_changed', handler);
-    return () => {
-      entityEventEmitter.off('story_arc_changed', handler);
-    };
-  }, [reload, story?.id]);
+  const storyId = story?.id;
+  const arcService = useMemo(() => createStoryArcService(db), [db]);
+  const load = useMemo(
+    () => (storyId ? () => arcService.getArcsForStory(storyId) : null),
+    [arcService, storyId],
+  );
+  const {
+    data: arcs,
+    loading,
+    failed,
+    reload,
+  } = useLoadedResource({
+    load,
+    initial: NO_ARCS,
+    events: ARC_EVENTS,
+    storyId,
+    label: 'story arcs',
+  });
+  // Loading is not the same as empty (and neither is a failed read): every mount starts with no
+  // arcs, and only the user (or a genuinely deleted arc) may clear the selection - never the load.
+  const loaded = !loading && !failed;
 
   useEffect(() => {
     if (loaded && activeArcId && !arcs.some((arc) => arc.id === activeArcId)) {

@@ -20,16 +20,6 @@ jest.mock('@/src/services/entity-solvers/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: jest.fn() },
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const getValuesForEntity = jest.fn();
 const fields = [
   { id: 'text', type: AttributeType.TEXT },

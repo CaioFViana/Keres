@@ -76,6 +76,11 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     ),
   };
 });
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => ({
+  __esModule: true,
+  default: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
+    visible ? children : null,
+}));
 const mockDb = {};
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
 jest.mock('@/src/services/servers/ServerService', () => ({
@@ -219,7 +224,7 @@ describe('ShowcaseBrowseScreen', () => {
       await waitFor(() => expect(view.getByText('Tabletop Starter')).toBeTruthy());
       expect(view.getByText('Comic Kit')).toBeTruthy();
       expect(mockListPacks).toHaveBeenCalledWith({ kind: 'server', server });
-      expect(view.queryByTestId('showcase-filters')).toBeNull();
+      expect(view.queryByTestId('list-filters-button')).toBeNull();
       expect(view.queryByTestId('showcase-more')).toBeNull();
 
       await fireEvent.press(view.getByTestId('showcase-pack-K2'));
@@ -289,6 +294,10 @@ describe('ShowcaseBrowseScreen', () => {
     await waitFor(() => expect(view.getByText('Story S1')).toBeTruthy());
     await waitFor(() => expect(mockGetFacets).toHaveBeenCalled());
 
+    // The filters wait behind the Filters button, as the app's lists keep theirs.
+    expect(view.queryByTestId('pill-showcase_filter_genre')).toBeNull();
+    expect(view.queryByTestId('list-filters-count')).toBeNull();
+    await fireEvent.press(view.getByTestId('list-filters-button'));
     await fireEvent.press(view.getByTestId('pill-showcase_filter_genre'));
     await waitFor(() =>
       expect(mockListStories).toHaveBeenLastCalledWith(
@@ -296,6 +305,7 @@ describe('ShowcaseBrowseScreen', () => {
         expect.objectContaining({ genre: 'Fantasy' }),
       ),
     );
+    expect(view.getByTestId('list-filters-count')).toHaveTextContent('1');
 
     await fireEvent.press(view.getByTestId('showcase-filters-clear'));
     await waitFor(() =>
@@ -305,11 +315,24 @@ describe('ShowcaseBrowseScreen', () => {
       ),
     );
     expect(view.queryByTestId('showcase-filters-clear')).toBeNull();
+    expect(view.queryByTestId('list-filters-count')).toBeNull();
+
+    // Done closes the dialog on the result.
+    await fireEvent.press(view.getByTestId('showcase-filters-done'));
+    expect(view.queryByTestId('pill-showcase_filter_genre')).toBeNull();
+  });
+
+  it('keeps the order when the filters are cleared, and shows the order without opening them', async () => {
+    const view = await render(<ShowcaseBrowseScreen />);
+    await waitFor(() => expect(view.getByText('Story S1')).toBeTruthy());
+
+    expect(view.getByTestId('pill-showcase_filter_sort')).toBeTruthy();
   });
 
   it('shows how many each facet has, and keeps a chosen value the server no longer offers', async () => {
     const view = await render(<ShowcaseBrowseScreen />);
     await waitFor(() => expect(view.getByText('Story S1')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('list-filters-button'));
     await waitFor(() =>
       expect(view.getByTestId('pill-showcase_filter_genre').props.accessibilityHint).toBe(
         'Fantasy (2)',

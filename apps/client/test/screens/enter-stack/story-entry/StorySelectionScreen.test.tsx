@@ -98,6 +98,12 @@ jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
+const mockDismissSyncNotice = jest.fn();
+const mockUseSyncAccountNotice = jest.fn();
+jest.mock('@/src/hooks/guides/useSyncAccountNotice', () => ({
+  useSyncAccountNotice: (...args: unknown[]) => mockUseSyncAccountNotice(...args),
+}));
+
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
@@ -240,11 +246,76 @@ describe('StorySelectionScreen', () => {
     mockGetCatalogCounts.mockResolvedValue({ characterCount: 3 });
     mockGetContentCounts.mockResolvedValue({ sceneCount: 7 });
     mockUpdateFavorite.mockResolvedValue(undefined);
+    mockUseSyncAccountNotice.mockReturnValue({ visible: false, dismiss: mockDismissSyncNotice });
   });
 
   afterEach(async () => {
     await cleanup();
     jest.restoreAllMocks();
+  });
+
+  it('hands the account notice the server count only once the servers are read', async () => {
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<StorySelectionScreen />);
+    await view.findByTestId('story-story-1');
+
+    // Before the read the count is unknown, not zero: the notice must wait.
+    expect(mockUseSyncAccountNotice.mock.calls[0][0]).toBeNull();
+    await waitFor(() => expect(mockUseSyncAccountNotice).toHaveBeenLastCalledWith(0));
+  });
+
+  it('counts the servers this device knows when handing them to the account notice', async () => {
+    mockGetAllServers.mockResolvedValue([
+      { id: 'srv-1', name: 'Main' },
+      { id: 'srv-2', name: 'Other' },
+    ]);
+    const view = await render(<StorySelectionScreen />);
+    await view.findByTestId('story-story-1');
+
+    await waitFor(() => expect(mockUseSyncAccountNotice).toHaveBeenLastCalledWith(2));
+  });
+
+  describe('account notice bar', () => {
+    const renderWithNotice = async () => {
+      mockUseSyncAccountNotice.mockReturnValue({ visible: true, dismiss: mockDismissSyncNotice });
+      const view = await render(<StorySelectionScreen />);
+      await view.findByTestId('story-story-1');
+      return view;
+    };
+
+    it('shows under the title while the notice is visible', async () => {
+      const view = await renderWithNotice();
+
+      expect(view.getByTestId('sync-account-banner')).toBeTruthy();
+      expect(view.getByText('sync_prompt_title')).toBeTruthy();
+    });
+
+    it('is absent while the notice is not visible', async () => {
+      const view = await render(<StorySelectionScreen />);
+      await view.findByTestId('story-story-1');
+
+      expect(view.queryByTestId('sync-account-banner')).toBeNull();
+    });
+
+    it('goes to server management from the action, after recording the answer', async () => {
+      const view = await renderWithNotice();
+
+      await fireEvent.press(view.getByTestId('sync-account-banner-action'));
+
+      expect(mockDismissSyncNotice).toHaveBeenCalledTimes(1);
+      expect(mockParentNavigate).toHaveBeenCalledWith('ServerManagementDrawer', {
+        screen: 'ServerManagement',
+      });
+    });
+
+    it('is answered "not now" by recording the answer alone, without navigating', async () => {
+      const view = await renderWithNotice();
+
+      await fireEvent.press(view.getByTestId('sync-account-banner-later'));
+
+      expect(mockDismissSyncNotice).toHaveBeenCalledTimes(1);
+      expect(mockParentNavigate).not.toHaveBeenCalled();
+    });
   });
 
   it('loads stories, summary and server names on focus', async () => {

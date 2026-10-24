@@ -32,7 +32,7 @@ export function useItemFormAssociations({
     if (drizzleDb && storyId) {
       setCharacterDbAndStoryId(drizzleDb, storyId);
       initializeCharacterService();
-      fetchCharacters();
+      void fetchCharacters();
     }
   }, [drizzleDb, storyId, setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters]);
 

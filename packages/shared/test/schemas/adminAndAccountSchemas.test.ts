@@ -96,12 +96,40 @@ describe('administrative and account contracts', () => {
         maxUsers: null,
         autoManage: false,
         allowNsfw: false,
+        requireAccountOnboarding: false,
         defaultTierId: null,
         currency: 'BRL',
         tiersDisplay: 'sale',
         updatedAt: '2025-01-01',
       }).updatedAt,
     ).toBeInstanceOf(Date);
+    const registrationRow = {
+      id: 'singleton',
+      isRegistrationOpen: true,
+      maxUsers: null,
+      autoManage: false,
+      allowNsfw: false,
+      requireAccountOnboarding: false,
+      defaultTierId: null,
+      currency: 'BRL',
+      tiersDisplay: 'sale',
+      updatedAt: '2025-01-01',
+    };
+    // The full row must carry the onboarding flag; the partial update takes it as a boolean only.
+    const rowWithoutOnboarding = Object.fromEntries(
+      Object.entries(registrationRow).filter(([key]) => key !== 'requireAccountOnboarding'),
+    );
+    expect(RegistrationSettingsSchema.safeParse(rowWithoutOnboarding).success).toBe(false);
+    expect(
+      RegistrationSettingsSchema.safeParse({ ...registrationRow, requireAccountOnboarding: 'yes' })
+        .success,
+    ).toBe(false);
+    expect(UpdateRegistrationSettingsSchema.parse({ requireAccountOnboarding: true })).toEqual({
+      requireAccountOnboarding: true,
+    });
+    expect(
+      UpdateRegistrationSettingsSchema.safeParse({ requireAccountOnboarding: 'yes' }).success,
+    ).toBe(false);
     expect(TierCreateInputSchema.parse({ name: 'Free' })).toEqual({
       name: 'Free',
       isDefault: false,

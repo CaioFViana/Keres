@@ -9,6 +9,7 @@ import type {
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useCommentSurface } from './useCommentSurface';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * An entity's comments, fetched once per screen (not per field) and grouped by
@@ -58,7 +59,7 @@ export function useEntityComments(
         changedStoryId === storyId &&
         (!changedEntityType || (changedEntityType === entityType && changedEntityId === entityId))
       ) {
-        refresh();
+        fireAndLog(refresh(), 'refresh');
       }
     };
     entityEventEmitter.on('comment_changed', handleChange);

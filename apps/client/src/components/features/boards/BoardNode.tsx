@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { BoardNodeType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
 import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
@@ -18,6 +18,7 @@ import {
   type BoardGalleryMedia,
 } from '@/src/utils/board/boardLayout';
 import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 const DRAG_THRESHOLD = 5;
 
@@ -80,125 +81,66 @@ const BoardNodeView: React.FC<Props> = ({
 }) => {
   const { colors } = useTheme();
   /**
-   * The responder is created once. Recreating it on every parent render (each `onMove`) drops the
-   * mouse on the web as soon as the pin leaves the original hit box.
+   * The responder is created once (`usePanResponder` hands each gesture to the latest handlers). Recreating
+   * it on every parent render (each `onMove`) drops the mouse on the web as soon as the pin leaves the
+   * original hit box.
    */
   const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
-  const nodeRef = useRef(node);
-  const nodeId = useRef(node.id);
-  const position = useRef({ x: node.x, y: node.y });
-  const scaleRef = useRef(scale);
-  const layoutEditingRef = useRef(layoutEditing);
-  const connectionModeRef = useRef(connectionMode);
-  const overlayEditingRef = useRef(overlayEditing);
-  const selectedRef = useRef(selected);
-  const handlers = useRef({
-    onSelect,
-    onMove,
-    onResize,
-    onDragStart,
-    onDragEnd,
-    onOpenDetails,
-    onBringToFront,
-    onSendToBack,
-    onConnectionStart,
-    onConnectionMove,
-    onConnectionEnd,
-    onConnectionCancel,
+  const pan = usePanResponder({
+    onStartShouldSetPanResponderCapture: () => false,
+    // A selected card in layout mode exposes real controls inside itself. Let those controls
+    // own the gesture; otherwise the parent responder steals a resize after a rerender.
+    onStartShouldSetPanResponder: () => {
+      if (overlayEditing) return false;
+      if (connectionMode) return true;
+      if (layoutEditing && selected) return false;
+      onDragStart(node.id);
+      return true;
+    },
+    onMoveShouldSetPanResponderCapture: () =>
+      !overlayEditing && (dragging.current || connectionMode) && !(layoutEditing && selected),
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !overlayEditing &&
+      (connectionMode || !(layoutEditing && selected)) &&
+      Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: (event) => {
+      dragging.current = false;
+      origin.current = { x: node.x, y: node.y };
+      if (connectionMode) onConnectionStart(node);
+      else onDragStart(node.id);
+      capturePointer(event);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const zoom = Math.max(scale, 0.01);
+      if (connectionMode) {
+        onConnectionMove(node.id, gesture.dx / zoom, gesture.dy / zoom);
+        return;
+      }
+      if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
+      dragging.current = true;
+      onMove(node.id, origin.current.x + gesture.dx / zoom, origin.current.y + gesture.dy / zoom);
+    },
+    onPanResponderRelease: (event, gesture) => {
+      releasePointer(event);
+      if (connectionMode) {
+        const zoom = Math.max(scale, 0.01);
+        onConnectionEnd(node.id, gesture.dx / zoom, gesture.dy / zoom);
+        dragging.current = false;
+        return;
+      }
+      onDragEnd(node.id);
+      if (!dragging.current) onSelect(node);
+      dragging.current = false;
+    },
+    onPanResponderTerminate: (event) => {
+      releasePointer(event);
+      if (connectionMode) onConnectionCancel();
+      else onDragEnd(node.id);
+      dragging.current = false;
+    },
   });
-  useEffect(() => {
-    // Latest-ref sync for the responders below: every reader runs on gestures, after effects
-    // have flushed. No dependency array - the sync unconditionally followed every render.
-    nodeRef.current = node;
-    nodeId.current = node.id;
-    position.current = { x: node.x, y: node.y };
-    scaleRef.current = scale;
-    layoutEditingRef.current = layoutEditing;
-    connectionModeRef.current = connectionMode;
-    overlayEditingRef.current = overlayEditing;
-    selectedRef.current = selected;
-    handlers.current = {
-      onSelect,
-      onMove,
-      onResize,
-      onDragStart,
-      onDragEnd,
-      onOpenDetails,
-      onBringToFront,
-      onSendToBack,
-      onConnectionStart,
-      onConnectionMove,
-      onConnectionEnd,
-      onConnectionCancel,
-    };
-  });
-
-  const pan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture: () => false,
-        // A selected card in layout mode exposes real controls inside itself. Let those controls
-        // own the gesture; otherwise the parent responder steals a resize after a rerender.
-        onStartShouldSetPanResponder: () => {
-          if (overlayEditingRef.current) return false;
-          if (connectionModeRef.current) return true;
-          if (layoutEditingRef.current && selectedRef.current) return false;
-          handlers.current.onDragStart(nodeId.current);
-          return true;
-        },
-        onMoveShouldSetPanResponderCapture: () =>
-          !overlayEditingRef.current &&
-          (dragging.current || connectionModeRef.current) &&
-          !(layoutEditingRef.current && selectedRef.current),
-        onMoveShouldSetPanResponder: (_event, gesture) =>
-          !overlayEditingRef.current &&
-          (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
-          Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: (event) => {
-          dragging.current = false;
-          origin.current = { x: position.current.x, y: position.current.y };
-          if (connectionModeRef.current) handlers.current.onConnectionStart(nodeRef.current);
-          else handlers.current.onDragStart(nodeId.current);
-          capturePointer(event);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          const zoom = Math.max(scaleRef.current, 0.01);
-          if (connectionModeRef.current) {
-            handlers.current.onConnectionMove(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
-            return;
-          }
-          if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
-          dragging.current = true;
-          handlers.current.onMove(
-            nodeId.current,
-            origin.current.x + gesture.dx / zoom,
-            origin.current.y + gesture.dy / zoom,
-          );
-        },
-        onPanResponderRelease: (event, gesture) => {
-          releasePointer(event);
-          if (connectionModeRef.current) {
-            const zoom = Math.max(scaleRef.current, 0.01);
-            handlers.current.onConnectionEnd(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
-            dragging.current = false;
-            return;
-          }
-          handlers.current.onDragEnd(nodeId.current);
-          if (!dragging.current) handlers.current.onSelect(nodeRef.current);
-          dragging.current = false;
-        },
-        onPanResponderTerminate: (event) => {
-          releasePointer(event);
-          if (connectionModeRef.current) handlers.current.onConnectionCancel();
-          else handlers.current.onDragEnd(nodeId.current);
-          dragging.current = false;
-        },
-      }),
-    [],
-  );
 
   useEffect(() => {
     // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
@@ -220,37 +162,28 @@ const BoardNodeView: React.FC<Props> = ({
     (node.displayMode === 'note' || node.displayMode === 'summary-and-note') &&
     !!node.cardNote;
   const detailLines = Math.max(2, Math.floor((size.height - (hasGalleryImage ? 180 : 66)) / 18));
-  const sizeRef = useRef(size);
-  useEffect(() => {
-    sizeRef.current = size;
-  }, [size]);
   const resizeOrigin = useRef(size);
-  const resizePan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => layoutEditing,
-        onMoveShouldSetPanResponder: () => layoutEditing,
-        // Once the handle has the finger nothing takes it back - not the canvas, not the card around it:
-        // on native the default hands the gesture over to whoever asks, and the resize ended after a frame.
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: () => {
-          resizeOrigin.current = sizeRef.current;
-          handlers.current.onDragStart(nodeId.current);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          const zoom = Math.max(scaleRef.current, 0.01);
-          handlers.current.onResize(
-            nodeId.current,
-            resizeOrigin.current.width + gesture.dx / zoom,
-            resizeOrigin.current.height + gesture.dy / zoom,
-          );
-        },
-        onPanResponderRelease: () => handlers.current.onDragEnd(nodeId.current),
-        onPanResponderTerminate: () => handlers.current.onDragEnd(nodeId.current),
-      }),
-    [layoutEditing],
-  );
+  const resizePan = usePanResponder({
+    onStartShouldSetPanResponder: () => layoutEditing,
+    onMoveShouldSetPanResponder: () => layoutEditing,
+    // Once the handle has the finger nothing takes it back - not the canvas, not the card around it:
+    // on native the default hands the gesture over to whoever asks, and the resize ended after a frame.
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: () => {
+      resizeOrigin.current = size;
+      onDragStart(node.id);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const zoom = Math.max(scale, 0.01);
+      onResize(
+        node.id,
+        resizeOrigin.current.width + gesture.dx / zoom,
+        resizeOrigin.current.height + gesture.dy / zoom,
+      );
+    },
+    onPanResponderRelease: () => onDragEnd(node.id),
+    onPanResponderTerminate: () => onDragEnd(node.id),
+  });
 
   const styles = useMemo(
     () =>
@@ -372,7 +305,7 @@ const BoardNodeView: React.FC<Props> = ({
         <>
           <TouchableOpacity
             style={styles.layerBackButton}
-            onPress={() => handlers.current.onSendToBack(nodeId.current)}
+            onPress={() => onSendToBack(node.id)}
             accessibilityRole="button"
             accessibilityLabel="Send board card to back"
           >
@@ -380,7 +313,7 @@ const BoardNodeView: React.FC<Props> = ({
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.layerFrontButton}
-            onPress={() => handlers.current.onBringToFront(nodeId.current)}
+            onPress={() => onBringToFront(node.id)}
             accessibilityRole="button"
             accessibilityLabel="Bring board card to front"
           >
@@ -388,7 +321,7 @@ const BoardNodeView: React.FC<Props> = ({
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.detailsButton}
-            onPress={() => handlers.current.onOpenDetails(nodeRef.current)}
+            onPress={() => onOpenDetails(node)}
             accessibilityRole="button"
             accessibilityLabel="Open board card details"
           >

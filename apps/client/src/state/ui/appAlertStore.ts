@@ -1,14 +1,23 @@
 import { create } from 'zustand';
+import { logger } from '@/src/utils/logging/logger';
 
 export interface AppAlertButton {
   text?: string;
-  onPress?: (value?: string) => void;
+  onPress?: (value?: string) => void | Promise<void>;
   style?: 'default' | 'cancel' | 'destructive';
 }
 
 export interface AppAlertOptions {
   cancelable?: boolean;
   onDismiss?: () => void;
+}
+
+/** Presses a button: an `async` handler is not waited for, but a rejection is logged, not lost. */
+export function pressAlertButton(button: AppAlertButton, value?: string): void {
+  const result = button.onPress?.(value);
+  if (result instanceof Promise) {
+    result.catch((error) => logger.error('An alert button failed:', error));
+  }
 }
 
 interface AppAlertContent {

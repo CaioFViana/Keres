@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type {
   CharacterSelect,
@@ -7,63 +7,47 @@ import type {
   ItemJourneySelect,
   SceneSelect,
 } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
 import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { logger } from '@/src/utils/logging/logger';
+
+const NOTHING_LOADED: {
+  journeys: ItemJourneySelect[];
+  scenes: SceneSelect[];
+  chapters: ChapterSelect[];
+  choices: ChoiceSelect[];
+  characters: CharacterSelect[];
+} = { journeys: [], scenes: [], chapters: [], choices: [], characters: [] };
+const JOURNEY_EVENTS = ['item_journey_changed'] as const;
 
 export function useItemJourneyTimelineData(storyId: string, itemId: string) {
   const drizzleDb = useDrizzle();
-  const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
-  const [scenes, setScenes] = useState<SceneSelect[]>([]);
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
-  const [choices, setChoices] = useState<ChoiceSelect[]>([]);
-  const [characters, setCharacters] = useState<CharacterSelect[]>([]);
-  const [loading, setLoading] = useState(true);
-  const loadedRef = useRef(false);
+  const load = useMemo(
+    () =>
+      storyId
+        ? async () => {
+            const [journeys, scenes, chapters, choices, characters] = await Promise.all([
+              createItemJourneyService(drizzleDb).getItemJourneysByItemId(storyId, itemId),
+              createSceneService(drizzleDb).getAllByStoryId(storyId),
+              createChapterService(drizzleDb).getAllByStoryId(storyId),
+              createChoiceService(drizzleDb).getAllByStoryId(storyId),
+              createCharacterService(drizzleDb).getAllByStoryId(storyId),
+            ]);
+            return { journeys, scenes, chapters, choices, characters };
+          }
+        : null,
+    [drizzleDb, itemId, storyId],
+  );
+  const { data, loading } = useLoadedResource({
+    load,
+    initial: NOTHING_LOADED,
+    events: JOURNEY_EVENTS,
+    storyId,
+    label: 'item journey timeline',
+  });
 
-  const load = useCallback(async () => {
-    if (!drizzleDb || !storyId) return;
-    if (!loadedRef.current) setLoading(true);
-    try {
-      const [fetchedJourneys, fetchedScenes, fetchedChapters, fetchedChoices, fetchedCharacters] =
-        await Promise.all([
-          createItemJourneyService(drizzleDb).getItemJourneysByItemId(storyId, itemId),
-          createSceneService(drizzleDb).getAllByStoryId(storyId),
-          createChapterService(drizzleDb).getAllByStoryId(storyId),
-          createChoiceService(drizzleDb).getAllByStoryId(storyId),
-          createCharacterService(drizzleDb).getAllByStoryId(storyId),
-        ]);
-      setJourneys(fetchedJourneys);
-      setScenes(fetchedScenes);
-      setChapters(fetchedChapters);
-      setChoices(fetchedChoices);
-      setCharacters(fetchedCharacters);
-    } catch (err) {
-      logger.error('Failed to load item journey timeline:', err);
-    } finally {
-      loadedRef.current = true;
-      setLoading(false);
-    }
-  }, [drizzleDb, itemId, storyId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    const handleChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void load();
-    };
-    entityEventEmitter.on('item_journey_changed', handleChange);
-    return () => {
-      entityEventEmitter.off('item_journey_changed', handleChange);
-    };
-  }, [load, storyId]);
-
-  return { journeys, scenes, chapters, choices, characters, loading };
+  return { ...data, loading };
 }

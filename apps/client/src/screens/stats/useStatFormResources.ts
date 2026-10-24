@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import {
@@ -12,9 +12,8 @@ export function useStatFormResources(storyId?: string) {
   const statServiceRef = useRef<StatService | null>(null);
   const data = useStoryStats(storyId);
 
-  useEffect(() => {
-    statServiceRef.current ??= createStatService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  statServiceRef.current ??= createStatService(drizzleDb);
 
   return {
     drizzleDb,

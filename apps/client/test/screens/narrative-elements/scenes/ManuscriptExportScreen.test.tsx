@@ -42,6 +42,9 @@ let mockManuscriptData: {
   loading: false,
 };
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ navigate: jest.fn(), goBack: mockGoBack }),
@@ -75,7 +78,7 @@ jest.mock('@/src/state/story/storyStore', () => ({
   },
 }));
 
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: async () => mockLocations }),

@@ -7,6 +7,7 @@ import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type UseStorySchemaFieldFormStateOptions = {
   initialFieldId?: string;
@@ -92,44 +93,47 @@ export function useStorySchemaFieldFormState({
     if (!initialFieldId) {
       return;
     }
-    (async () => {
-      try {
-        if (!storySchemaFieldServiceRef.current) {
+    fireAndLog(
+      (async () => {
+        try {
+          if (!storySchemaFieldServiceRef.current) {
+            setLoading(false);
+            return;
+          }
+          const field = await storySchemaFieldServiceRef.current.getById(initialFieldId!);
+          if (field) {
+            setName(field.name);
+            setKey(field.key);
+            setKeyManuallyEdited(true);
+            setDescription(field.description);
+            setType(field.type as AttributeType);
+            setTargetEntityType(field.targetEntityType as StorySchemaEntityType | null);
+            setIsRequired(field.isRequired);
+            setDefaultValue(field.defaultValue);
+            setLoadedPristine({
+              name: field.name,
+              key: field.key,
+              keyManuallyEdited: true,
+              description: field.description,
+              type: field.type as AttributeType,
+              targetEntityType: field.targetEntityType as StorySchemaEntityType | null,
+              isRequired: field.isRequired,
+              defaultValue: field.defaultValue,
+            });
+            setLoadedUpdatedAt(field.updatedAt?.toISOString?.() ?? null);
+          } else {
+            AppAlert.alert(t('error'), t('attribute_not_found'));
+            onFieldMissing();
+          }
+        } catch (err) {
+          logger.error('Failed to load attribute field:', err);
+          AppAlert.alert(t('error'), t('failed_to_load_attribute'));
+        } finally {
           setLoading(false);
-          return;
         }
-        const field = await storySchemaFieldServiceRef.current.getById(initialFieldId!);
-        if (field) {
-          setName(field.name);
-          setKey(field.key);
-          setKeyManuallyEdited(true);
-          setDescription(field.description);
-          setType(field.type as AttributeType);
-          setTargetEntityType(field.targetEntityType as StorySchemaEntityType | null);
-          setIsRequired(field.isRequired);
-          setDefaultValue(field.defaultValue);
-          setLoadedPristine({
-            name: field.name,
-            key: field.key,
-            keyManuallyEdited: true,
-            description: field.description,
-            type: field.type as AttributeType,
-            targetEntityType: field.targetEntityType as StorySchemaEntityType | null,
-            isRequired: field.isRequired,
-            defaultValue: field.defaultValue,
-          });
-          setLoadedUpdatedAt(field.updatedAt?.toISOString?.() ?? null);
-        } else {
-          AppAlert.alert(t('error'), t('attribute_not_found'));
-          onFieldMissing();
-        }
-      } catch (err) {
-        logger.error('Failed to load attribute field:', err);
-        AppAlert.alert(t('error'), t('failed_to_load_attribute'));
-      } finally {
-        setLoading(false);
-      }
-    })();
+      })(),
+      'useStorySchemaFieldFormState',
+    );
   }, [initialFieldId, storySchemaFieldServiceRef, onFieldMissing, t]);
 
   const handleNameChange = (text: string) => {

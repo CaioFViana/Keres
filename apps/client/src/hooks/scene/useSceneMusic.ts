@@ -1,12 +1,11 @@
 import { sectionLabels } from '@keres/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SceneMusicSelect } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createSceneMusicService } from '@/src/services/storymanagement/media-music/SceneMusicService';
 import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { logger } from '@/src/utils/logging/logger';
 
 /** What a piece of music points at: a song of the story, an audio file or a link of the Gallery. */
 export type SceneMusicTargetKind = 'song' | 'audio' | 'link';
@@ -75,47 +74,37 @@ export async function sceneMusicViewOf(
   };
 }
 
+const NO_VIEWS: SceneMusicView[] = [];
+const MUSIC_EVENTS = ['scene_music_changed', 'gallery_changed', 'song_changed'] as const;
+const MUSIC_COUNT_EVENTS = ['scene_music_changed'] as const;
+
 /**
  * A scene's music, in order, each with what it points at. Reloads when the music, the songs or the
  * Gallery change, so music whose file was deleted on another device turns into "removed".
  */
 export function useSceneMusic(sceneId: string | undefined, storyId: string | undefined) {
   const db = useDrizzle();
-  const [views, setViews] = useState<SceneMusicView[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const reload = useCallback(async () => {
-    if (!sceneId) {
-      setViews([]);
-      setLoading(false);
-      return;
-    }
-    try {
-      const rows = await createSceneMusicService(db).getMusicForScene(sceneId);
-      setViews(await Promise.all(rows.map((row) => sceneMusicViewOf(db, row))));
-    } catch (error) {
-      logger.debug('useSceneMusic: failed to load the music.', error);
-      setViews([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [db, sceneId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no scene is given; everything else waits for `await`.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const onChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    const events = ['scene_music_changed', 'gallery_changed', 'song_changed'] as const;
-    for (const event of events) entityEventEmitter.on(event, onChange);
-    return () => {
-      for (const event of events) entityEventEmitter.off(event, onChange);
-    };
-  }, [reload, storyId]);
+  const load = useMemo(
+    () =>
+      sceneId
+        ? async () => {
+            const rows = await createSceneMusicService(db).getMusicForScene(sceneId);
+            return Promise.all(rows.map((row) => sceneMusicViewOf(db, row)));
+          }
+        : null,
+    [db, sceneId],
+  );
+  const {
+    data: views,
+    loading,
+    reload,
+  } = useLoadedResource({
+    load,
+    initial: NO_VIEWS,
+    events: MUSIC_EVENTS,
+    storyId,
+    label: 'the music',
+  });
 
   return { views, loading, reload };
 }
@@ -126,33 +115,18 @@ export function useSceneMusic(sceneId: string | undefined, storyId: string | und
  */
 export function useSceneMusicCount(sceneId: string | undefined, storyId: string | undefined) {
   const db = useDrizzle();
-  const [count, setCount] = useState(0);
-
-  const reload = useCallback(async () => {
-    if (!sceneId) {
-      setCount(0);
-      return;
-    }
-    try {
-      setCount((await createSceneMusicService(db).getMusicForScene(sceneId)).length);
-    } catch (error) {
-      logger.debug('useSceneMusicCount: failed to count the music.', error);
-      setCount(0);
-    }
-  }, [db, sceneId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no scene is given; everything else waits for `await`.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const onChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    entityEventEmitter.on('scene_music_changed', onChange);
-    return () => entityEventEmitter.off('scene_music_changed', onChange);
-  }, [reload, storyId]);
-
-  return count;
+  const load = useMemo(
+    () =>
+      sceneId
+        ? async () => (await createSceneMusicService(db).getMusicForScene(sceneId)).length
+        : null,
+    [db, sceneId],
+  );
+  return useLoadedResource({
+    load,
+    initial: 0,
+    events: MUSIC_COUNT_EVENTS,
+    storyId,
+    label: 'the music count',
+  }).data;
 }

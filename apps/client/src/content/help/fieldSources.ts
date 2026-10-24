@@ -189,6 +189,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'showContextualHelp',
       'showTutorials',
       'warnPaymentDue',
+      'allowCommunityServers',
       'seenTutorials',
       'suggestLiteraryDevices',
       'exportFormat',

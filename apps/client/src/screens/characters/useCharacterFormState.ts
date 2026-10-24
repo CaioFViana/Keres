@@ -2,6 +2,7 @@ import type { CustomAttributeValues } from '@/src/components/common/forms/Custom
 import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { fieldsDiffer, pickFields, useFormFields } from '@/src/hooks/forms/useFormFields';
 import type { AppDrizzleClient } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
@@ -52,6 +53,8 @@ const CREATE_PRISTINE: CharacterFormDraftFields = {
   extraNotes: null,
 };
 
+const FIELD_KEYS = Object.keys(CREATE_PRISTINE) as (keyof CharacterFormDraftFields)[];
+
 function isCharacterFormDraftFields(value: unknown): value is CharacterFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
@@ -84,20 +87,7 @@ export function useCharacterFormState({
   const [currentCharacterId, setCurrentCharacterId] = useState<string | undefined>(
     initialCharacterId,
   );
-  const [name, setName] = useState('');
-  const [title, setTitle] = useState<string | null>(null);
-  const [description, setDescription] = useState<string | null>(null);
-  const [gender, setGender] = useState<string | null>(null);
-  const [race, setRace] = useState<string | null>(null);
-  const [subrace, setSubrace] = useState<string | null>(null);
-  const [personality, setPersonality] = useState<string | null>(null);
-  const [motivation, setMotivation] = useState<string | null>(null);
-  const [qualities, setQualities] = useState<string | null>(null);
-  const [weaknesses, setWeaknesses] = useState<string | null>(null);
-  const [biography, setBiography] = useState<string | null>(null);
-  const [plannedTimeline, setPlannedTimeline] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
+  const { fields, setters, setAll } = useFormFields(CREATE_PRISTINE);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
   // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
@@ -122,36 +112,9 @@ export function useCharacterFormState({
         if (initialCharacterId) {
           const fetchedCharacter = await characterServiceRef.current.getById(initialCharacterId);
           if (fetchedCharacter) {
-            setName(fetchedCharacter.name);
-            setTitle(fetchedCharacter.title);
-            setDescription(fetchedCharacter.description);
-            setGender(fetchedCharacter.gender);
-            setRace(fetchedCharacter.race);
-            setSubrace(fetchedCharacter.subrace);
-            setPersonality(fetchedCharacter.personality);
-            setMotivation(fetchedCharacter.motivation);
-            setQualities(fetchedCharacter.qualities);
-            setWeaknesses(fetchedCharacter.weaknesses);
-            setBiography(fetchedCharacter.biography);
-            setPlannedTimeline(fetchedCharacter.plannedTimeline);
-            setIsFavorite(fetchedCharacter.isFavorite);
-            setExtraNotes(fetchedCharacter.extraNotes);
-            setLoadedPristine({
-              name: fetchedCharacter.name,
-              title: fetchedCharacter.title,
-              description: fetchedCharacter.description,
-              gender: fetchedCharacter.gender,
-              race: fetchedCharacter.race,
-              subrace: fetchedCharacter.subrace,
-              personality: fetchedCharacter.personality,
-              motivation: fetchedCharacter.motivation,
-              qualities: fetchedCharacter.qualities,
-              weaknesses: fetchedCharacter.weaknesses,
-              biography: fetchedCharacter.biography,
-              plannedTimeline: fetchedCharacter.plannedTimeline,
-              isFavorite: fetchedCharacter.isFavorite,
-              extraNotes: fetchedCharacter.extraNotes,
-            });
+            const row = pickFields(fetchedCharacter, FIELD_KEYS);
+            setAll(row);
+            setLoadedPristine(row);
             setLoadedUpdatedAt(fetchedCharacter.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
@@ -178,7 +141,7 @@ export function useCharacterFormState({
       }
     };
     void load();
-  }, [drizzleDb, initialCharacterId, characterServiceRef, storyId]);
+  }, [drizzleDb, initialCharacterId, characterServiceRef, setAll, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -187,26 +150,16 @@ export function useCharacterFormState({
     }
   }, [isEditing, customFields]);
 
-  const restoreDraftFields = useCallback((fields: CharacterFormDraftFields) => {
-    if (!isCharacterFormDraftFields(fields)) {
-      logger.error('Corrupt character form draft ignored.');
-      return;
-    }
-    setName(fields.name);
-    setTitle(fields.title);
-    setDescription(fields.description);
-    setGender(fields.gender);
-    setRace(fields.race);
-    setSubrace(fields.subrace);
-    setPersonality(fields.personality);
-    setMotivation(fields.motivation);
-    setQualities(fields.qualities);
-    setWeaknesses(fields.weaknesses);
-    setBiography(fields.biography);
-    setPlannedTimeline(fields.plannedTimeline);
-    setIsFavorite(fields.isFavorite);
-    setExtraNotes(fields.extraNotes);
-  }, []);
+  const restoreDraftFields = useCallback(
+    (restored: CharacterFormDraftFields) => {
+      if (!isCharacterFormDraftFields(restored)) {
+        logger.error('Corrupt character form draft ignored.');
+        return;
+      }
+      setAll(restored);
+    },
+    [setAll],
+  );
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
@@ -216,45 +169,14 @@ export function useCharacterFormState({
       entityType: 'Character',
       entityId: initialCharacterId,
       enabled: !!storyId && !loading,
-      snapshot: {
-        name,
-        title,
-        description,
-        gender,
-        race,
-        subrace,
-        personality,
-        motivation,
-        qualities,
-        weaknesses,
-        biography,
-        plannedTimeline,
-        isFavorite,
-        extraNotes,
-      },
+      snapshot: fields,
       pristine: loadedPristine ?? CREATE_PRISTINE,
       baseUpdatedAt: initialCharacterId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
     });
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
-  const isDirty =
-    JSON.stringify({
-      name,
-      title,
-      description,
-      gender,
-      race,
-      subrace,
-      personality,
-      motivation,
-      qualities,
-      weaknesses,
-      biography,
-      plannedTimeline,
-      isFavorite,
-      extraNotes,
-    }) !== JSON.stringify(pristineFields);
+  const isDirty = fieldsDiffer(fields, pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -263,54 +185,15 @@ export function useCharacterFormState({
    */
   const resetForm = useCallback(async () => {
     const target = loadedPristine ?? CREATE_PRISTINE;
-    setName(target.name);
-    setTitle(target.title);
-    setDescription(target.description);
-    setGender(target.gender);
-    setRace(target.race);
-    setSubrace(target.subrace);
-    setPersonality(target.personality);
-    setMotivation(target.motivation);
-    setQualities(target.qualities);
-    setWeaknesses(target.weaknesses);
-    setBiography(target.biography);
-    setPlannedTimeline(target.plannedTimeline);
-    setIsFavorite(target.isFavorite);
-    setExtraNotes(target.extraNotes);
+    setAll(target);
     await deleteStoredDraft();
-  }, [loadedPristine, deleteStoredDraft]);
+  }, [loadedPristine, deleteStoredDraft, setAll]);
 
   return {
     currentCharacterId,
     retainPersistedCharacterId,
-    name,
-    setName,
-    title,
-    setTitle,
-    description,
-    setDescription,
-    gender,
-    setGender,
-    race,
-    setRace,
-    subrace,
-    setSubrace,
-    personality,
-    setPersonality,
-    motivation,
-    setMotivation,
-    qualities,
-    setQualities,
-    weaknesses,
-    setWeaknesses,
-    biography,
-    setBiography,
-    plannedTimeline,
-    setPlannedTimeline,
-    isFavorite,
-    setIsFavorite,
-    extraNotes,
-    setExtraNotes,
+    ...fields,
+    ...setters,
     customValues,
     setCustomValues,
     loading,

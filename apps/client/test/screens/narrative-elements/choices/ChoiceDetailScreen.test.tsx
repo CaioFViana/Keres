@@ -1,5 +1,4 @@
 import {
-  act,
   cleanup,
   fireEvent,
   render,
@@ -8,6 +7,7 @@ import {
 } from '@testing-library/react-native';
 
 import ChoiceDetailScreen from '@/src/screens/narrative-elements/choices/ChoiceDetailScreen';
+import { emitEntityEvent } from '@/test/helpers/entityEvents';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mockNavigate = jest.fn();
@@ -35,7 +35,6 @@ let mockHeaderArgs: {
   title: string;
   actions: { id: string; label: string; onPress: () => void; visible: boolean }[];
 } | null = null;
-let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
 
 jest.mock('@react-navigation/native', () => {
   const route = { params: { choiceId: 'choice-1' } };
@@ -61,23 +60,6 @@ jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
     mockHeaderArgs = args as never;
   },
 }));
-
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const react = jest.requireActual('react') as typeof import('react');
-  return {
-    __esModule: true,
-    useEntityInitialLoad: (callback: () => void) => {
-      react.useEffect(() => {
-        callback();
-      }, [callback]);
-    },
-    useEntityEventSubscriptions: (
-      subs: { event: string; listener: (...args: never[]) => unknown }[],
-    ) => {
-      mockSubscriptions = subs;
-    },
-  };
-});
 
 jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
@@ -387,7 +369,6 @@ beforeEach(() => {
   mockSelectedStory = { id: 'story-1', type: 'branching' };
   mockCanEdit = true;
   mockHeaderArgs = null;
-  mockSubscriptions = [];
   mockServicesLoaded();
 });
 
@@ -577,15 +558,8 @@ describe('ChoiceDetailScreen', () => {
   it('refreshes the choice on change events', async () => {
     const view = await render(<ChoiceDetailScreen />);
     await view.findByTestId('detail-title');
-    const choiceChanged = mockSubscriptions.find((sub) => sub.event === 'choice_changed');
-    expect(choiceChanged).toBeTruthy();
     mockGetChoiceById.mockResolvedValue(makeChoice({ text: 'Go right' }));
-    await act(async () => {
-      await (choiceChanged?.listener as (storyId: string, choiceId: string) => Promise<void>)(
-        'story-1',
-        'choice-1',
-      );
-    });
+    await emitEntityEvent('choice_changed', 'story-1', 'choice-1');
     await waitFor(() => expect(view.getByTestId('detail-title').props.children).toBe('Go right'));
     await waitFor(() => expect(mockHeaderArgs?.title).toBe('Go right'));
   });
@@ -594,27 +568,15 @@ describe('ChoiceDetailScreen', () => {
     const view = await render(<ChoiceDetailScreen />);
     await view.findByTestId('detail-title');
     const calls = mockGetChoiceById.mock.calls.length;
-    const choiceChanged = mockSubscriptions.find((sub) => sub.event === 'choice_changed');
-    await act(async () => {
-      await (choiceChanged?.listener as (storyId: string, choiceId: string) => Promise<void>)(
-        'story-1',
-        'choice-9',
-      );
-    });
+    await emitEntityEvent('choice_changed', 'story-1', 'choice-9');
     expect(mockGetChoiceById.mock.calls.length).toBe(calls);
   });
 
   it('navigates back when a change event reports deletion', async () => {
     const view = await render(<ChoiceDetailScreen />);
     await view.findByTestId('detail-title');
-    const choiceChanged = mockSubscriptions.find((sub) => sub.event === 'choice_changed');
     mockGetChoiceById.mockResolvedValue(null);
-    await act(async () => {
-      await (choiceChanged?.listener as (storyId: string, choiceId: string) => Promise<void>)(
-        'story-1',
-        'choice-1',
-      );
-    });
+    await emitEntityEvent('choice_changed', 'story-1', 'choice-1');
     await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
   });
 });

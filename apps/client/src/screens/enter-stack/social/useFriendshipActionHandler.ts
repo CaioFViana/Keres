@@ -4,6 +4,7 @@ import type { ServerSelect } from '@/src/db/schema';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export interface FriendshipActionOptions {
   /**
@@ -21,7 +22,7 @@ export interface FriendshipActionOptions {
  */
 export function useFriendshipActionHandler(
   getServerForFriendship: (serverId: string) => ServerSelect | undefined,
-  onSuccess: () => void,
+  onSuccess: () => void | Promise<void>,
 ) {
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
@@ -46,7 +47,7 @@ export function useFriendshipActionHandler(
             }
             await action(friendshipId, currentUsersServerId);
             showNotification(successMessage, 'success');
-            onSuccess();
+            fireAndLog(onSuccess(), 'onSuccess');
           } catch (error) {
             logger.error(`Error during friendship action (ID: ${friendshipId}):`, error);
             showNotification(errorMessage, 'error');

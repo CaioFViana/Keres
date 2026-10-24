@@ -4,7 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -30,7 +30,7 @@ import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import type {
   ItemStackParamList,
   MainSystemDrawerParamList,
@@ -46,10 +46,29 @@ import { createItemJourneyService } from '@/src/services/storymanagement/entitie
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { orderItemJourneysByNarrative } from '@/src/utils/entity/itemJourneyOrder';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+
+const JOURNEY_EVENTS = [
+  'item_journey_changed',
+  'scene_changed',
+  'chapter_changed',
+  'choice_changed',
+] as const;
+const CHARACTER_EVENTS = ['character_changed'] as const;
+const TAG_EVENTS = ['tag_changed', 'tag_relation_changed'] as const;
+const NO_JOURNEY_DATA: {
+  journeys: ItemJourneySelect[];
+  scenes: SceneSelect[];
+  chapters: ChapterSelect[];
+  choices: ChoiceSelect[];
+} = { journeys: [], scenes: [], chapters: [], choices: [] };
+const NO_CHARACTER_NAMES = new Map<string, string>();
+const NO_TAG_DATA: { allTags: TagSelect[]; tagsByItemId: Map<string, TagSelect[]> } = {
+  allTags: [],
+  tagsByItemId: new Map(),
+};
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -74,99 +93,88 @@ const ItemListScreen = () => {
     });
 
   const { canEdit } = useStoryRole(storyId);
-  const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
-  const [scenes, setScenes] = useState<SceneSelect[]>([]);
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
-  const [choices, setChoices] = useState<ChoiceSelect[]>([]);
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagsByItemId, setTagsByItemId] = useState<Map<string, TagSelect[]>>(new Map());
-  const [characterNamesById, setCharacterNamesById] = useState<Map<string, string>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
-  const loadJourneys = useCallback(async () => {
-    if (!drizzleDb || !storyId) return;
-    const [loadedJourneys, loadedScenes, loadedChapters, loadedChoices] = await Promise.all([
-      createItemJourneyService(drizzleDb).getAllByStoryId(storyId),
-      createSceneService(drizzleDb).getAllByStoryId(storyId),
-      createChapterService(drizzleDb).getAllByStoryId(storyId),
-      createChoiceService(drizzleDb).getAllByStoryId(storyId),
-    ]);
-    setJourneys(loadedJourneys);
-    setScenes(loadedScenes);
-    setChapters(loadedChapters);
-    setChoices(loadedChoices.filter((choice) => !choice.isDeleted));
-  }, [drizzleDb, storyId]);
+  const loadJourneys = useMemo(
+    () =>
+      storyId
+        ? async () => {
+            const [journeys, scenes, chapters, loadedChoices] = await Promise.all([
+              createItemJourneyService(drizzleDb).getAllByStoryId(storyId),
+              createSceneService(drizzleDb).getAllByStoryId(storyId),
+              createChapterService(drizzleDb).getAllByStoryId(storyId),
+              createChoiceService(drizzleDb).getAllByStoryId(storyId),
+            ]);
+            return {
+              journeys,
+              scenes,
+              chapters,
+              choices: loadedChoices.filter((choice) => !choice.isDeleted),
+            };
+          }
+        : null,
+    [drizzleDb, storyId],
+  );
+  const {
+    data: { journeys, scenes, chapters, choices },
+  } = useLoadedResource({
+    load: loadJourneys,
+    initial: NO_JOURNEY_DATA,
+    events: JOURNEY_EVENTS,
+    storyId,
+    label: 'item journeys',
+  });
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadJourneys` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-    loadJourneys();
-  }, [loadJourneys]);
+  const loadCharacterNames = useMemo(
+    () =>
+      storyId
+        ? async () => {
+            const characters = await createCharacterService(drizzleDb).getAllByStoryId(storyId);
+            return new Map(characters.map((character) => [character.id, character.name]));
+          }
+        : null,
+    [drizzleDb, storyId],
+  );
+  const { data: characterNamesById } = useLoadedResource({
+    load: loadCharacterNames,
+    initial: NO_CHARACTER_NAMES,
+    events: CHARACTER_EVENTS,
+    storyId,
+    label: 'character names',
+  });
 
-  const loadCharacterNames = useCallback(async () => {
-    if (!drizzleDb || !storyId) {
-      setCharacterNamesById(new Map());
-      return;
-    }
-    const characters = await createCharacterService(drizzleDb).getAllByStoryId(storyId);
-    setCharacterNamesById(new Map(characters.map((character) => [character.id, character.name])));
-  }, [drizzleDb, storyId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadCharacterNames` clears synchronously only when db/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    loadCharacterNames();
-  }, [loadCharacterNames]);
-  useEffect(() => {
-    const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadJourneys();
-    };
-    entityEventEmitter.on('item_journey_changed', refresh);
-    entityEventEmitter.on('scene_changed', refresh);
-    entityEventEmitter.on('chapter_changed', refresh);
-    entityEventEmitter.on('choice_changed', refresh);
-    return () => {
-      entityEventEmitter.off('item_journey_changed', refresh);
-      entityEventEmitter.off('scene_changed', refresh);
-      entityEventEmitter.off('chapter_changed', refresh);
-      entityEventEmitter.off('choice_changed', refresh);
-    };
-  }, [loadJourneys, storyId]);
-
-  useEffect(() => {
-    const refreshCharacterNames = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadCharacterNames();
-    };
-    entityEventEmitter.on('character_changed', refreshCharacterNames);
-    return () => entityEventEmitter.off('character_changed', refreshCharacterNames);
-  }, [loadCharacterNames, storyId]);
-
-  const loadTags = useCallback(async () => {
-    if (!drizzleDb || !storyId) {
-      setAllTags([]);
-      setTagsByItemId(new Map());
-      return;
-    }
-    const tagService = createTagService(drizzleDb);
-    const relationService = createTagRelationService(drizzleDb);
-    const [loadedTags, itemTags] = await Promise.all([
-      tagService.getTagsByStoryId(storyId),
-      Promise.all(
-        (items as ItemSelect[]).map((item) =>
-          relationService.getTagsForEntity(storyId, item.id, 'Item'),
-        ),
-      ),
-    ]);
-    setAllTags(loadedTags);
-    setTagsByItemId(
-      new Map((items as ItemSelect[]).map((item, index) => [item.id, itemTags[index]])),
-    );
-  }, [drizzleDb, items, storyId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadTags` clears synchronously only when db/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    loadTags();
-  }, [loadTags]);
-
-  useTagChangeReload(storyId, loadTags);
+  // The tags are read for the items on screen, so the read follows `items` without blanking the tags.
+  const loadTags = useMemo(
+    () =>
+      storyId
+        ? async (itemsToTag: unknown) => {
+            const tagged = itemsToTag as ItemSelect[];
+            const tagService = createTagService(drizzleDb);
+            const relationService = createTagRelationService(drizzleDb);
+            const [allTags, itemTags] = await Promise.all([
+              tagService.getTagsByStoryId(storyId),
+              Promise.all(
+                tagged.map((item) => relationService.getTagsForEntity(storyId, item.id, 'Item')),
+              ),
+            ]);
+            return {
+              allTags,
+              tagsByItemId: new Map(tagged.map((item, index) => [item.id, itemTags[index]])),
+            };
+          }
+        : null,
+    [drizzleDb, storyId],
+  );
+  const {
+    data: { allTags, tagsByItemId },
+  } = useLoadedResource({
+    load: loadTags,
+    initial: NO_TAG_DATA,
+    events: TAG_EVENTS,
+    storyId,
+    refreshKey: items,
+    label: 'item tags',
+  });
 
   const foundItems = useMemo(
     () =>

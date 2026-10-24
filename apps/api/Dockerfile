@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- deps: resolve the workspace packages the API actually needs ----
-FROM oven/bun:latest AS deps
+FROM oven/bun:1.4.4 AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
@@ -36,7 +36,7 @@ RUN cd apps/web && bun run build
 # nativo cujo `install` dispara node-gyp e exige Python/g++ que esta imagem não tem (e que
 # não vamos instalar só para um pacote que `expo export` nunca carrega). `--production`
 # omite esse grafo de teste; o runtime da API só recebe o `dist/` estático daqui.
-FROM oven/bun:latest AS client-web-build
+FROM oven/bun:1.4.4 AS client-web-build
 WORKDIR /app
 # BuildKit paraleliza estágios independentes. Sem esta barreira, `deps` (bun install da
 # API) e este estágio (bun install do grafo Expo) correm juntos e o WSL2 esgota a RAM
@@ -66,7 +66,7 @@ RUN bun scripts/generate-indexes.ts \
 # Só site. Como o web-build (e ao contrário do client acima), precisa das devDependencies
 # (o `vite build` é o próprio toolchain) - por isso o install aqui é completo, não `--production`.
 # O PNG do ícone entra pelo mesmo motivo do web-build: favicon e wordmark são gerados dele.
-FROM oven/bun:latest AS site-landing-build
+FROM oven/bun:1.4.4 AS site-landing-build
 WORKDIR /app
 # A mesma barreira de serialização do estágio do client: deps → admin → client → site.
 COPY --from=client-web-build /app/apps/client/dist-hosted/index.html /tmp/.client-built
@@ -89,7 +89,7 @@ RUN bun run build:landing
 # actually bloating the runtime image: the old single `deps` install pulled in Vite's entire
 # dependency tree plus every dialect driver `drizzle-kit` optionally depends on, none of which
 # the server process ever touches.
-FROM oven/bun:latest AS prod-deps
+FROM oven/bun:1.4.4 AS prod-deps
 WORKDIR /app
 # bun.lock deliberately NOT copied here: `bun install --production` refuses to proceed if the
 # resolved graph would differ at all from a lockfile it can see (even without --frozen-lockfile
@@ -108,7 +108,7 @@ COPY patches patches
 RUN bun install --production --linker=hoisted
 
 # ---- runtime: the API, with the built admin panel copied alongside it ----
-FROM oven/bun:1-slim AS runtime
+FROM oven/bun:1.4.4-slim AS runtime
 WORKDIR /app
 
 COPY package.json bun.lock ./

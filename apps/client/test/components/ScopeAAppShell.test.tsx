@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { render } from '@testing-library/react-native';
 import { Platform } from 'react-native';

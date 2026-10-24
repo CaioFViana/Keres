@@ -20,6 +20,7 @@ export const RegistrationSettingsSchema = z.object({
   /** When true, `isRegistrationOpen` is recomputed on every signup from `maxUsers`. */
   autoManage: z.boolean(),
   allowNsfw: z.boolean(),
+  requireAccountOnboarding: z.boolean(),
   defaultTierId: UlidSchema.nullable(),
   currency: CurrencySchema,
   /** `info` lists the plans with no prices and nothing for sale. */
@@ -32,6 +33,7 @@ export const UpdateRegistrationSettingsSchema = z.object({
   maxUsers: z.number().int().positive().nullable().optional(),
   autoManage: z.boolean().optional(),
   allowNsfw: z.boolean().optional(),
+  requireAccountOnboarding: z.boolean().optional(),
   defaultTierId: UlidSchema.nullable().optional(),
   currency: CurrencySchema.optional(),
   tiersDisplay: TiersDisplaySchema.optional(),

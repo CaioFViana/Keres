@@ -569,6 +569,8 @@
     "registration": "Cadastro",
     "autoManage": "Abrir/fechar automaticamente conforme o máximo de usuários",
     "registrationOpen": "Cadastro aberto",
+    "requireAccountOnboarding": "Exigir conta no primeiro uso do client web",
+    "requireAccountOnboardingHint": "O client web hospedado leva quem chega pela primeira vez a entrar ou criar uma conta antes das histórias. Apps e outras versões não são afetados.",
     "allowNsfw": "Permitir conteúdo adulto (+18)",
     "allowNsfwHint": "Adultos verificados podem marcar e publicar histórias +18. Desligado mantém o servidor livre de conteúdo maduro.",
     "allowNsfwVerifiedOnly": "Histórias para adultos ficam abertas apenas a contas verificadas.",

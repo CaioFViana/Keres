@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 interface StoryCollaborationSectionProps {
   storyId: string;
@@ -77,7 +78,8 @@ export default function StoryCollaborationSection({
             <View style={styles.serverStatusBody}>
               <Text style={styles.serverStatusLabel}>{t('server')}</Text>
               <Text style={styles.serverStatusName} numberOfLines={1}>
-                {collaboration.linkedServer?.name ?? collaboration.serverId}
+                {(collaboration.linkedServer && serverDisplayName(collaboration.linkedServer, t)) ||
+                  collaboration.serverId}
               </Text>
             </View>
           </View>

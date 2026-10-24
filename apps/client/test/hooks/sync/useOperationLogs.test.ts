@@ -29,11 +29,6 @@ jest.mock('@/src/services/sync/OperationLogService', () => ({
   __esModule: true,
   createOperationLogService: jest.fn(() => mockService),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return { useEntityInitialLoad: (load: () => void) => React.useEffect(load, [load]) };
-});
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockService.getRecentOperationLogs.mockResolvedValue([

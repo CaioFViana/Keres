@@ -4,6 +4,7 @@ import {
   loadBoardEntitySummary,
   type BoardEntitySummary,
 } from '@/src/services/storymanagement/entities/boardEntitySummary';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * The selected map point plus its live entity summary. Extracted from the map screen so
@@ -31,10 +32,13 @@ export function useLocationMapNodeSummary(
   useEffect(() => {
     let cancelled = false;
     if (!selectedNode) return;
-    (async () => {
-      const summary = await loadBoardEntitySummary(db, 'Location', selectedNode.locationId);
-      if (!cancelled) setSelectedNodeSummary(summary);
-    })();
+    fireAndLog(
+      (async () => {
+        const summary = await loadBoardEntitySummary(db, 'Location', selectedNode.locationId);
+        if (!cancelled) setSelectedNodeSummary(summary);
+      })(),
+      'useLocationMapNodeSummary',
+    );
     return () => {
       cancelled = true;
     };

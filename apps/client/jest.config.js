@@ -3,6 +3,9 @@ const expoPreset = require('jest-expo/jest-preset');
 
 module.exports = {
   preset: 'jest-expo',
+  // Reanimated 4.7 initialises its native CSS bridge on import, which a Jest run has no module for; its resolver picks
+  // the web implementations of Reanimated and Worklets instead (and, unlike the preset's, still honours package exports).
+  resolver: require.resolve('react-native-reanimated/jest/resolver'),
   // The enriched-html lib ships ESM-only; allow babel-jest to transform it so
   // the web integration test can mount the real implementation. Everything
   // else keeps the preset's ignore list untouched.

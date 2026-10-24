@@ -23,6 +23,8 @@ import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
 import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { deleteStoryChildRows } from '@/src/services/storymanagement/story-lifecycle/storyLocalPurge';
 import { logger } from '@/src/utils/logging/logger';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
+import i18n from '@/src/utils/format/i18n';
 
 export interface OwnedServerStory {
   id: string;
@@ -65,6 +67,9 @@ export interface ServerService {
   deleteServer(serverId: string): Promise<void>;
   refreshServerToken(server: ServerSelect): Promise<ServerSelect>; // Added
 }
+
+/** The name a notice calls a server by: the official one from the translation, in the language now. */
+const nameOf = (server: ServerSelect) => serverDisplayName(server, (key) => i18n.t(key));
 
 export const createServerService = (db: AppDrizzleClient): ServerService => {
   const { showNotification } = useNotificationStore.getState();
@@ -236,14 +241,14 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
             logger.debug(`Server ${server.name} is unreachable; deferring token refresh.`);
             return server;
           }
-          const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
+          const message = i18n.t('server_token_refresh_failed', { server: nameOf(server) });
           logger.debug(message);
           showNotification(message, 'error');
           return server; // Return original server if refresh failed
         }
 
         logger.debug(`Successfully refreshed tokens for server ${server.name}.`);
-        showNotification(`Tokens for ${server.name} refreshed successfully.`, 'success');
+        showNotification(i18n.t('server_tokens_refreshed', { server: nameOf(server) }), 'success');
         return server;
       } catch (error) {
         if (isOfflineError(error)) {
@@ -251,7 +256,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
           logger.debug(`Server ${server.name} is unreachable, token refresh deferred.`);
           return server;
         }
-        const message = `Failed to refresh token for server ${server.name}. Please re-authenticate.`;
+        const message = i18n.t('server_token_refresh_error', { server: nameOf(server) });
         logger.debug(message, (error as Error)?.message || error);
         showNotification(message, 'error');
         return server; // Return original server on any refresh error

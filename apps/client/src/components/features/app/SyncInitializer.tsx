@@ -28,6 +28,8 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 interface SyncInitializerProps {
   children: React.ReactNode;
@@ -187,7 +189,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
                 storyPreview.role,
               );
               logger.debug(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
-              fetchStoryList(storyService); // Refresh the story list after import
+              fireAndLog(fetchStoryList(storyService), 'fetchStoryList'); // Refresh the story list after import
             } catch (downloadError) {
               if (isOfflineError(downloadError)) {
                 logger.debug(
@@ -227,7 +229,10 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           `Error during sync with server ${server.name} at ${server.url}:`,
           (error as Error)?.message || error,
         );
-        showNotification(t('failed_to_sync_with_server') + `: ${server.name}`, 'error');
+        showNotification(
+          t('failed_to_sync_with_server') + `: ${serverDisplayName(server, t)}`,
+          'error',
+        );
       }
     }
 

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useTheme } from '@/src/theme';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 const DRAG_THRESHOLD = 5;
 const DESTINATION_HOLD_DURATION = 550;
@@ -66,53 +67,6 @@ const LocationMapNodeView: React.FC<Props> = ({
   const pressedAt = useRef(0);
   const destinationHoldHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showDestinationHoldHint, setShowDestinationHoldHint] = useState(false);
-  const nodeId = useRef(node.id);
-  const destinationMapId = useRef(node.destinationMapId);
-  const position = useRef({ x: node.x, y: node.y });
-  const scaleRef = useRef(scale);
-  const layoutEditingRef = useRef(layoutEditing);
-  const connectionModeRef = useRef(connectionMode);
-  const overlayEditingRef = useRef(overlayEditing);
-  const selectedRef = useRef(selected);
-  const handlers = useRef({
-    onSelect,
-    onMove,
-    onDragStart,
-    onDragEnd,
-    onBringToFront,
-    onSendToBack,
-    onOpenDestination,
-    onConnectionStart,
-    onConnectionMove,
-    onConnectionEnd,
-    onConnectionCancel,
-  });
-  useEffect(() => {
-    // Latest-ref sync for the responder below: every reader runs on gestures, after effects
-    // have flushed. No dependency array - the sync unconditionally followed every render.
-    nodeId.current = node.id;
-    destinationMapId.current = node.destinationMapId;
-    position.current = { x: node.x, y: node.y };
-    scaleRef.current = scale;
-    layoutEditingRef.current = layoutEditing;
-    connectionModeRef.current = connectionMode;
-    overlayEditingRef.current = overlayEditing;
-    selectedRef.current = selected;
-    handlers.current = {
-      onSelect,
-      onMove,
-      onDragStart,
-      onDragEnd,
-      onBringToFront,
-      onSendToBack,
-      onOpenDestination,
-      onConnectionStart,
-      onConnectionMove,
-      onConnectionEnd,
-      onConnectionCancel,
-    };
-  });
-
   const clearDestinationHoldHint = () => {
     if (destinationHoldHintTimer.current !== null) {
       clearTimeout(destinationHoldHintTimer.current);
@@ -128,98 +82,75 @@ const LocationMapNodeView: React.FC<Props> = ({
     [],
   );
 
-  const pan = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture: () => false,
-        onStartShouldSetPanResponder: () => {
-          if (overlayEditingRef.current) return false;
-          if (connectionModeRef.current) return true;
-          if (layoutEditingRef.current && selectedRef.current) return false;
-          handlers.current.onDragStart(nodeId.current);
-          return true;
-        },
-        onMoveShouldSetPanResponderCapture: () =>
-          !overlayEditingRef.current &&
-          (dragging.current || connectionModeRef.current) &&
-          !(layoutEditingRef.current && selectedRef.current),
-        onMoveShouldSetPanResponder: (_event, gesture) =>
-          !overlayEditingRef.current &&
-          (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
-          Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: (event) => {
-          dragging.current = false;
-          // eslint-disable-next-line react-hooks/purity -- runs only when the gesture grants; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
-          pressedAt.current = Date.now();
-          origin.current = { x: position.current.x, y: position.current.y };
-          if (connectionModeRef.current) handlers.current.onConnectionStart?.(nodeId.current);
-          else handlers.current.onDragStart(nodeId.current);
-          if (!connectionModeRef.current && destinationMapId.current) {
-            destinationHoldHintTimer.current = setTimeout(() => {
-              destinationHoldHintTimer.current = null;
-              setShowDestinationHoldHint(true);
-            }, DESTINATION_HOLD_HINT_DELAY);
-          }
-          capturePointer(event);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          const zoom = Math.max(scaleRef.current, 0.01);
-          if (connectionModeRef.current) {
-            handlers.current.onConnectionMove?.(
-              nodeId.current,
-              gesture.dx / zoom,
-              gesture.dy / zoom,
-            );
-            return;
-          }
-          if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
-          clearDestinationHoldHint();
-          dragging.current = true;
-          handlers.current.onMove(
-            nodeId.current,
-            origin.current.x + gesture.dx / zoom,
-            origin.current.y + gesture.dy / zoom,
-          );
-        },
-        onPanResponderRelease: (event, gesture) => {
-          releasePointer(event);
-          if (connectionModeRef.current) {
-            const zoom = Math.max(scaleRef.current, 0.01);
-            handlers.current.onConnectionEnd?.(
-              nodeId.current,
-              gesture.dx / zoom,
-              gesture.dy / zoom,
-            );
-            dragging.current = false;
-            return;
-          }
-          handlers.current.onDragEnd(nodeId.current);
-          clearDestinationHoldHint();
-          if (!dragging.current) {
-            // A regular tap always opens the point sheet. Holding a linked point is the deliberate
-            // action that changes maps, which prevents an accidental map switch while editing.
-            if (
-              destinationMapId.current &&
-              // eslint-disable-next-line react-hooks/purity -- runs only when the gesture releases; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
-              Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION
-            )
-              handlers.current.onOpenDestination?.(nodeId.current);
-            else handlers.current.onSelect(nodeId.current);
-          }
-          dragging.current = false;
-        },
-        onPanResponderTerminate: (event) => {
-          releasePointer(event);
-          if (connectionModeRef.current) handlers.current.onConnectionCancel?.();
-          else handlers.current.onDragEnd(nodeId.current);
-          clearDestinationHoldHint();
-          dragging.current = false;
-        },
-      }),
-    [],
-  );
+  const pan = usePanResponder({
+    onStartShouldSetPanResponderCapture: () => false,
+    onStartShouldSetPanResponder: () => {
+      if (overlayEditing) return false;
+      if (connectionMode) return true;
+      if (layoutEditing && selected) return false;
+      onDragStart(node.id);
+      return true;
+    },
+    onMoveShouldSetPanResponderCapture: () =>
+      !overlayEditing && (dragging.current || connectionMode) && !(layoutEditing && selected),
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !overlayEditing &&
+      (connectionMode || !(layoutEditing && selected)) &&
+      Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: (event) => {
+      dragging.current = false;
+
+      pressedAt.current = Date.now();
+      origin.current = { x: node.x, y: node.y };
+      if (connectionMode) onConnectionStart?.(node.id);
+      else onDragStart(node.id);
+      if (!connectionMode && node.destinationMapId) {
+        destinationHoldHintTimer.current = setTimeout(() => {
+          destinationHoldHintTimer.current = null;
+          setShowDestinationHoldHint(true);
+        }, DESTINATION_HOLD_HINT_DELAY);
+      }
+      capturePointer(event);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const zoom = Math.max(scale, 0.01);
+      if (connectionMode) {
+        onConnectionMove?.(node.id, gesture.dx / zoom, gesture.dy / zoom);
+        return;
+      }
+      if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
+      clearDestinationHoldHint();
+      dragging.current = true;
+      onMove(node.id, origin.current.x + gesture.dx / zoom, origin.current.y + gesture.dy / zoom);
+    },
+    onPanResponderRelease: (event, gesture) => {
+      releasePointer(event);
+      if (connectionMode) {
+        const zoom = Math.max(scale, 0.01);
+        onConnectionEnd?.(node.id, gesture.dx / zoom, gesture.dy / zoom);
+        dragging.current = false;
+        return;
+      }
+      onDragEnd(node.id);
+      clearDestinationHoldHint();
+      if (!dragging.current) {
+        // A regular tap always opens the point sheet. Holding a linked point is the deliberate
+        // action that changes maps, which prevents an accidental map switch while editing.
+        if (node.destinationMapId && Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION)
+          onOpenDestination?.(node.id);
+        else onSelect(node.id);
+      }
+      dragging.current = false;
+    },
+    onPanResponderTerminate: (event) => {
+      releasePointer(event);
+      if (connectionMode) onConnectionCancel?.();
+      else onDragEnd(node.id);
+      clearDestinationHoldHint();
+      dragging.current = false;
+    },
+  });
 
   useEffect(() => {
     // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
@@ -340,14 +271,14 @@ const LocationMapNodeView: React.FC<Props> = ({
         <>
           <TouchableOpacity
             style={[styles.layerButton, { left: -12 }]}
-            onPress={() => handlers.current.onSendToBack(nodeId.current)}
+            onPress={() => onSendToBack(node.id)}
             accessibilityLabel="Send location point to back"
           >
             <Ionicons name="layers-outline" size={15} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.layerButton, { right: -12 }]}
-            onPress={() => handlers.current.onBringToFront(nodeId.current)}
+            onPress={() => onBringToFront(node.id)}
             accessibilityLabel="Bring location point to front"
           >
             <Ionicons name="layers" size={15} color={colors.primary} />

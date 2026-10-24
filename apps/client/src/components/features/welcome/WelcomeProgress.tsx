@@ -15,8 +15,8 @@ interface WelcomeProgressProps {
   total: number;
   scrollX: SharedValue<number>;
   pageWidth: number;
-  /** A dot taken as a button: asks for the page it stands for. */
-  onSelect: (page: number) => void;
+  /** A dot taken as a button: asks for the page it stands for. Without it the dots only show where you are. */
+  onSelect?: (page: number) => void;
 }
 
 /** One dot per step: the current one stretches into a pill as the swipe reaches it. */
@@ -25,7 +25,7 @@ const Dot: React.FC<{
   selected: boolean;
   scrollX: SharedValue<number>;
   pageWidth: number;
-  onSelect: (page: number) => void;
+  onSelect?: (page: number) => void;
 }> = ({ index, selected, scrollX, pageWidth, onSelect }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -34,6 +34,15 @@ const Dot: React.FC<{
     const near = interpolate(at, [index - 1, index, index + 1], [0, 1, 0], Extrapolation.CLAMP);
     return { width: 8 + 18 * near, opacity: 0.35 + 0.65 * near };
   });
+  if (!onSelect) {
+    return (
+      <View style={{ paddingHorizontal: 4, paddingVertical: 6 }} testID={`welcome-dot-${index}`}>
+        <Animated.View
+          style={[{ height: 8, borderRadius: 4, backgroundColor: colors.primary }, style]}
+        />
+      </View>
+    );
+  }
   return (
     // The dot is small; what takes the tap is the padding around it.
     <TouchableOpacity

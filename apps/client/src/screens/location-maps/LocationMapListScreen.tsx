@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
@@ -13,6 +13,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import LocationMapCreateModal from '@/src/components/features/location-maps/LocationMapCreateModal';
 import { useDrizzle } from '@/src/db';
+import { useStoryList } from '@/src/hooks/lists/useStoryEntities';
 import type { LocationMapSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
@@ -29,9 +30,10 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
+
+const MAP_EVENTS = ['location_map_changed'] as const;
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -52,38 +54,22 @@ const LocationMapListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const confirmDelete = useConfirmDelete();
-  const [maps, setMaps] = useState<LocationMapSelect[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
   const [editingMap, setEditingMap] = useState<LocationMapSelect | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const reload = useCallback(async () => {
-    if (!storyId) {
-      setMaps([]);
-      return;
-    }
-    try {
-      setMaps(await createLocationMapService(db).getMapsForStory(storyId));
-      setError(null);
-    } catch (loadError) {
-      logger.debug('LocationMapListScreen: failed to load maps.', loadError);
-      setError(t('location_map_load_failed'));
-    }
-  }, [db, storyId, t]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    const onChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    entityEventEmitter.on('location_map_changed', onChange);
-    return () => entityEventEmitter.off('location_map_changed', onChange);
-  }, [reload, storyId]);
+  const listService = useMemo(() => createLocationMapService(db), [db]);
+  const {
+    items: maps,
+    failed,
+    reload,
+  } = useStoryList({
+    storyId,
+    load: listService.getMapsForStory,
+    events: MAP_EVENTS,
+    label: 'maps',
+  });
+  const error = failed ? t('location_map_load_failed') : null;
 
   useScreenHeader({
     target: 'parent',

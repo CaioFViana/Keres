@@ -1,6 +1,8 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import { useLocationRelationActions } from './useLocationRelationActions';
+import { useLocationDetailServices } from './useLocationDetailServices';
+import { useLocationStoryLists } from './useLocationStoryLists';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
@@ -17,7 +19,7 @@ import DetailField from '@/src/components/common/display/DetailField/DetailField
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
+import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
@@ -27,42 +29,21 @@ import ScenePresenceList, {
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
-import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene'; // Import CharacterScene
-import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '@/src/db';
-import type { LocationRelationSelect, LocationSelect, SceneSelect } from '@/src/db/schema'; // Explicitly import SceneSelect
-import type { CharacterSelect } from '@/src/db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
-import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Import CharacterSceneService
-import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
-import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService'; // Import CharacterService
-import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
-import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
-import { createItemService } from '@/src/services/storymanagement/entities/ItemService'; // Import ItemService
-import type { LocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
-import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
-import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService'; // Import createSceneService
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
-import { logger } from '@/src/utils/logging/logger';
 
 export type LocationDetailScreenParamList = {
   LocationDetail: { locationId: string; occurrence?: OccurrenceTarget };
@@ -73,7 +54,7 @@ type LocationDetailScreenRouteProp = RouteProp<LocationStackParamList, 'Location
 const LocationDetailsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
 
-  const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
+  const navigation = useNavigation<LocationsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<LocationDetailScreenRouteProp>();
   const { locationId, occurrence } = route.params;
@@ -83,28 +64,21 @@ const LocationDetailsScreen = () => {
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
 
-  const drizzleDb = useDrizzle();
+  const { locationService, relationService } = useLocationDetailServices();
 
-  const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
-  const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
-  const characterServiceRef = useRef<CharacterService | null>(null); // Ref for CharacterService
-  const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
-  const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
-  const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null); // Ref for ItemJourneyService
-
-  const [location, setLocation] = useState<LocationSelect | null>(null);
+  const {
+    record: location,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: locationId,
+    load: locationService.getById,
+    event: 'location_changed',
+    label: 'location details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(location?.storyId);
   const comments = useEntityComments(location?.storyId, 'Location', locationId);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
-  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
-  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for all scenes in story
-  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
-  const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in story
-  const [allItemJourneys, setAllItemJourneys] = useState<ItemJourney[]>([]); // State for all item journeys in story
-  const [allLocations, setAllLocations] = useState<LocationSelect[]>([]); // State for all locations in story
-  const [allLocationRelations, setAllLocationRelations] = useState<LocationRelationSelect[]>([]); // State for all Location relations in story
 
   const {
     selectedTags: locationTags,
@@ -115,28 +89,24 @@ const LocationDetailsScreen = () => {
   } = useEntityRelations({ entityType: 'Location', entityId: locationId });
   const appearingArcs = useAppearsInArcs(location?.storyId ?? '', 'location', locationId);
 
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!locationServiceRef.current) {
-        locationServiceRef.current = createLocationService(drizzleDb);
-      }
-      if (!locationRelationServiceRef.current) {
-        locationRelationServiceRef.current = createLocationRelationService(drizzleDb);
-      }
-      if (!characterServiceRef.current) {
-        characterServiceRef.current = createCharacterService(drizzleDb);
-      }
-      if (!characterSceneServiceRef.current) {
-        characterSceneServiceRef.current = createCharacterSceneService(drizzleDb);
-      }
-      if (!itemServiceRef.current) {
-        itemServiceRef.current = createItemService(drizzleDb);
-      }
-      if (!itemJourneyServiceRef.current) {
-        itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
+  const {
+    characters: allCharacters,
+    scenes: allScenes,
+    characterScenes: characterSceneRelations,
+    items: allItems,
+    itemJourneys: allItemJourneys,
+    locations: allLocations,
+    locationRelations: allLocationRelations,
+  } = useLocationStoryLists(selectedStory?.id, location !== null);
+
+  const errorMessage = failure === 'notFound' ? copy.notFound : copy.failedToLoad;
+  const headerTitle = location
+    ? location.name || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   useScreenHeader({
     target: 'parent',
@@ -154,275 +124,25 @@ const LocationDetailsScreen = () => {
     ],
   });
 
-  const fetchLocationDetails = useCallback(async () => {
-    if (!locationServiceRef.current || !locationId) {
-      setError(copy.failedToLoad);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const fetchedLocation = await locationServiceRef.current.getById(locationId);
-      if (fetchedLocation && !fetchedLocation.isDeleted) {
-        setLocation(fetchedLocation);
-        setHeaderTitle(fetchedLocation.name || copy.detailsTitle);
-      } else if (fetchedLocation && fetchedLocation.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch location details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, copy, t]);
-
-  const fetchAllCharactersInStory = useCallback(async () => {
-    if (!characterServiceRef.current || !selectedStory?.id) {
-      setAllCharacters([]);
-      return;
-    }
-    try {
-      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all characters:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllScenesInStory = useCallback(async () => {
-    if (!drizzleDb || !selectedStory?.id) {
-      setAllScenes([]);
-      return;
-    }
-    try {
-      // Assuming createSceneService exists and is imported
-      const sceneService = createSceneService(drizzleDb); // Need to import createSceneService
-      const fetchedScenes = await sceneService.getScenesByStoryId(selectedStory.id);
-      setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all scenes:', err);
-    }
-  }, [selectedStory?.id, drizzleDb]);
-
-  const fetchAllCharacterSceneRelations = useCallback(async () => {
-    if (!characterSceneServiceRef.current || !selectedStory?.id) {
-      setCharacterSceneRelations([]);
-      return;
-    }
-    try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsByStoryId(
-        selectedStory.id,
-      );
-      setCharacterSceneRelations(fetchedRelations.filter((cs: CharacterScene) => !cs.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all character scene relations:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllItemsInStory = useCallback(async () => {
-    if (!itemServiceRef.current || !selectedStory?.id) {
-      setAllItems([]);
-      return;
-    }
-    try {
-      const fetchedItems = await itemServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllItems(fetchedItems.filter((i) => !i.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all items:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllItemJourneysInStory = useCallback(async () => {
-    if (!itemJourneyServiceRef.current || !selectedStory?.id) {
-      setAllItemJourneys([]);
-      return;
-    }
-    try {
-      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(
-        selectedStory.id,
-      );
-      setAllItemJourneys(fetchedItemJourneys.filter((ij) => !ij.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all item journeys:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllLocationsInStory = useCallback(async () => {
-    if (!locationServiceRef.current || !selectedStory?.id) {
-      setAllLocations([]);
-      return;
-    }
-    try {
-      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
-    } catch (err) {
-      logger.error('Failed to fetch all locations:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllLocationRelationsInStory = useCallback(async () => {
-    if (!locationRelationServiceRef.current || !selectedStory?.id) {
-      setAllLocationRelations([]);
-      return;
-    }
-    try {
-      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(
-        selectedStory.id,
-      );
-      setAllLocationRelations(fetchedRelations);
-    } catch (err) {
-      logger.error('Failed to fetch all location relations:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const handleLocationChange = useCallback(
-    async (changedStoryId: string, changedLocationId: string) => {
-      if (changedLocationId === locationId) {
-        if (locationServiceRef.current) {
-          const updatedLocation = await locationServiceRef.current.getById(locationId);
-          if (!updatedLocation || updatedLocation.isDeleted) {
-            navigation.goBack();
-          } else {
-            setLocation(updatedLocation);
-          }
-        }
-      }
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllLocationsInStory();
-      }
-    },
-    [locationId, navigation, setLocation, selectedStory?.id, fetchAllLocationsInStory],
-  );
-
-  const handleLocationRelationChange = useCallback(
-    (changedStoryId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllLocationRelationsInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllLocationRelationsInStory],
-  );
-
-  const handleCharacterChange = useCallback(
-    (changedStoryId: string, _changedCharacterId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllCharactersInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllCharactersInStory],
-  );
-
-  const handleCharacterSceneChange = useCallback(
-    (changedStoryId: string, _changedCharacterSceneId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllCharacterSceneRelations();
-      }
-    },
-    [selectedStory?.id, fetchAllCharacterSceneRelations],
-  );
-
-  const handleSceneChange = useCallback(
-    (changedStoryId: string, _changedSceneId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllScenesInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllScenesInStory],
-  );
-
-  const handleItemChange = useCallback(
-    (changedStoryId: string, _changedItemId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllItemsInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllItemsInStory],
-  );
-
-  const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, _changedItemJourneyId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllItemJourneysInStory();
-      }
-    },
-    [selectedStory?.id, fetchAllItemJourneysInStory],
-  );
-
   const { handleSetParent, handleAddChild, handleAddConnection, handleRemoveLocationRelation } =
     useLocationRelationActions({
-      relationServiceRef: locationRelationServiceRef,
+      relationService,
       storyId: selectedStory?.id,
       userId,
       locationId,
       t,
     });
 
-  useEntityInitialLoad(fetchLocationDetails);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'location_changed', listener: handleLocationChange },
-        { event: 'character_changed', listener: handleCharacterChange },
-        { event: 'character_scene_changed', listener: handleCharacterSceneChange },
-        { event: 'scene_changed', listener: handleSceneChange },
-        { event: 'item_changed', listener: handleItemChange },
-        { event: 'item_journey_changed', listener: handleItemJourneyChange },
-        { event: 'location_relation_changed', listener: handleLocationRelationChange },
-      ],
-      [
-        handleLocationChange,
-        handleCharacterChange,
-        handleCharacterSceneChange,
-        handleSceneChange,
-        handleItemChange,
-        handleItemJourneyChange,
-        handleLocationRelationChange,
-      ],
-    ),
-  );
-
-  useEffect(() => {
-    if (location) {
-      /* eslint-disable react-hooks/set-state-in-effect -- each fetch clears synchronously only when its service/data is missing and otherwise sets after `await`; the rule cannot verify across the callback boundary. */
-      fetchAllCharactersInStory(); // Fetch all characters
-      fetchAllScenesInStory(); // Fetch all scenes
-      fetchAllCharacterSceneRelations(); // Fetch all character scene relations
-      fetchAllItemsInStory(); // Fetch all items
-      fetchAllItemJourneysInStory(); // Fetch all item journeys
-      fetchAllLocationsInStory(); // Fetch all locations
-      fetchAllLocationRelationsInStory(); // Fetch all Location relations
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-  }, [
-    location,
-    fetchAllCharactersInStory,
-    fetchAllScenesInStory,
-    fetchAllCharacterSceneRelations,
-    fetchAllItemsInStory,
-    fetchAllItemJourneysInStory,
-    fetchAllLocationsInStory,
-    fetchAllLocationRelationsInStory,
-  ]);
-
   const locationCharacterEntries = useMemo(() => {
     const scenesById = new Map(
       allScenes
-        .filter((scene) => scene.locationId === locationId && !scene.isDeleted)
+        .filter((scene) => scene.locationId === locationId)
         .map((scene) => [scene.id, scene]),
     );
     const pairs = characterSceneRelations.flatMap((relation) => {
       const scene = scenesById.get(relation.sceneId);
       const character = allCharacters.find((candidate) => candidate.id === relation.characterId);
-      return scene && character && !relation.isDeleted && !character.isDeleted
-        ? [{ item: character, scene }]
-        : [];
+      return scene && character ? [{ item: character, scene }] : [];
     });
     return groupScenePresenceEntries(pairs);
   }, [allCharacters, allScenes, characterSceneRelations, locationId]);
@@ -434,8 +154,8 @@ const LocationDetailsScreen = () => {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return <ScreenError padded message={errorMessage} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!location) {

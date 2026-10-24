@@ -3,6 +3,7 @@ import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, RouteSelect, RouteStepSelect } from '@/src/db/schema';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export interface CharacterTrajectoryData {
   chapters: ChapterSelect[];
@@ -26,26 +27,29 @@ export function useCharacterTrajectoryData(
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const loadedChapters = await createChapterService(db).getAllByStoryId(storyId);
-      let loadedRoutes: RouteSelect[] = [];
-      const loadedSteps: Record<string, RouteStepSelect[]> = {};
-      if (storyType === 'branching') {
-        const routeService = createRouteService(db);
-        loadedRoutes = (await routeService.getAllByStoryId(storyId)).filter(
-          (route) => !route.isDeleted,
-        );
-        for (const route of loadedRoutes) {
-          loadedSteps[route.id] = (await routeService.getSteps(route.id)).filter(
-            (step) => !step.isDeleted,
+    fireAndLog(
+      (async () => {
+        const loadedChapters = await createChapterService(db).getAllByStoryId(storyId);
+        let loadedRoutes: RouteSelect[] = [];
+        const loadedSteps: Record<string, RouteStepSelect[]> = {};
+        if (storyType === 'branching') {
+          const routeService = createRouteService(db);
+          loadedRoutes = (await routeService.getAllByStoryId(storyId)).filter(
+            (route) => !route.isDeleted,
           );
+          for (const route of loadedRoutes) {
+            loadedSteps[route.id] = (await routeService.getSteps(route.id)).filter(
+              (step) => !step.isDeleted,
+            );
+          }
         }
-      }
-      if (cancelled) return;
-      setChapters(loadedChapters.filter((chapter) => !chapter.isDeleted));
-      setRoutes(loadedRoutes);
-      setStepsByRoute(loadedSteps);
-    })();
+        if (cancelled) return;
+        setChapters(loadedChapters.filter((chapter) => !chapter.isDeleted));
+        setRoutes(loadedRoutes);
+        setStepsByRoute(loadedSteps);
+      })(),
+      'useCharacterTrajectoryData',
+    );
     return () => {
       cancelled = true;
     };

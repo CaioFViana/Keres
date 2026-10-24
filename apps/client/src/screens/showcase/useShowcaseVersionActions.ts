@@ -23,6 +23,7 @@ import {
   exportFileLanguage,
 } from '@/src/utils/io/storyTransfer';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 export type ShowcaseVersionAction = 'read' | 'download' | 'manuscript' | 'import';
 
@@ -194,7 +195,7 @@ export function useShowcaseVersionActions({ source, story, unlockToken }: Option
                     fileNameOf(version),
                   );
                   showNotification(t('import_story_success', { title }), 'success');
-                  fetchStories(createStoryService(db)); // Keeps the story selection screen up to date.
+                  fireAndLog(fetchStories(createStoryService(db)), 'fetchStories'); // Keeps the story selection screen up to date.
                 },
                 'showcase_import_failed',
               );

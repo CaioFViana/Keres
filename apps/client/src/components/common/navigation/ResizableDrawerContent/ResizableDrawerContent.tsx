@@ -1,8 +1,8 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { ScrollView } from 'react-native';
-import { PanResponder, Platform, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import type { ScrollViewInstance, ViewInstance } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import type { GuideDrawerId } from '@/src/guides/types';
 import {
   registerGuideDrawer,
@@ -12,6 +12,7 @@ import type { ThemeColors } from '@/src/theme';
 import { AnchoredDrawerItemList } from './AnchoredDrawerItemList';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { webOnlyStyle } from '@/src/theme/webStyle';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 export const DRAWER_MIN_WIDTH = 280;
 export const DRAWER_DEFAULT_WIDTH = 280;
@@ -58,8 +59,8 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
 }) => {
   const currentWidthRef = useRef(drawerWidth);
   const dragStartWidthRef = useRef(drawerWidth);
-  const scrollRef = useRef<ScrollView | null>(null);
-  const containerRef = useRef<View | null>(null);
+  const scrollRef = useRef<ScrollViewInstance | null>(null);
+  const containerRef = useRef<ViewInstance | null>(null);
   const scrollOffsetRef = useRef(0);
 
   useEffect(() => {
@@ -94,25 +95,20 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     };
   }, [drawerId, drawerProps.navigation]);
 
-  const panResponder = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => resizable,
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          resizable && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-        onPanResponderGrant: () => {
-          dragStartWidthRef.current = currentWidthRef.current;
-        },
-        onPanResponderMove: (_, gestureState) => {
-          onDrawerWidthChange(
-            clamp(dragStartWidthRef.current + gestureState.dx, DRAWER_MIN_WIDTH, maximumWidth),
-          );
-        },
-        onPanResponderTerminationRequest: () => false,
-      }),
-    [maximumWidth, onDrawerWidthChange, resizable],
-  );
+  const panResponder = usePanResponder({
+    onStartShouldSetPanResponder: () => resizable,
+    onMoveShouldSetPanResponder: (_, gestureState) =>
+      resizable && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+    onPanResponderGrant: () => {
+      dragStartWidthRef.current = currentWidthRef.current;
+    },
+    onPanResponderMove: (_, gestureState) => {
+      onDrawerWidthChange(
+        clamp(dragStartWidthRef.current + gestureState.dx, DRAWER_MIN_WIDTH, maximumWidth),
+      );
+    },
+    onPanResponderTerminationRequest: () => false,
+  });
 
   const styles = useThemedStyles(createStyles, [resizable]);
 
@@ -120,7 +116,8 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     <View ref={containerRef} style={styles.container}>
       <DrawerContentScrollView
         {...drawerProps}
-        ref={scrollRef}
+        // The drawer's own typings still name the old class type for this ref.
+        ref={scrollRef as unknown as React.ComponentProps<typeof DrawerContentScrollView>['ref']}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         scrollEventThrottle={16}

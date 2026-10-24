@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import LocationDetailsScreen from '@/src/screens/locations/LocationDetailsScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -528,5 +529,82 @@ describe('LocationDetailsScreen', () => {
     mockGetLocationById.mockResolvedValue(makeLocation({ isDeleted: true }));
     await render(<LocationDetailsScreen />);
     await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+  });
+
+  const lastHeaderTitle = () =>
+    (
+      mockUseScreenHeader.mock.calls[mockUseScreenHeader.mock.calls.length - 1][0] as {
+        title: string;
+      }
+    ).title;
+
+  it('follows a rename in the header and in the title when the location changes', async () => {
+    const view = await render(<LocationDetailsScreen />);
+    await waitFor(() => expect(view.queryByTestId('detail-title')).not.toBeNull());
+    expect(lastHeaderTitle()).toBe('Keep');
+
+    mockGetLocationById.mockResolvedValue(makeLocation({ name: 'Citadel' }));
+    await act(async () => {
+      entityEventEmitter.emit('location_changed', 'story-1', 'loc-1');
+    });
+    await waitFor(() => expect(view.getByTestId('detail-title').props.children).toBe('Citadel'));
+    expect(lastHeaderTitle()).toBe('Citadel');
+  });
+
+  it('ignores changes to other locations', async () => {
+    const view = await render(<LocationDetailsScreen />);
+    await waitFor(() => expect(view.queryByTestId('detail-title')).not.toBeNull());
+    mockGetLocationById.mockClear();
+
+    await act(async () => {
+      entityEventEmitter.emit('location_changed', 'story-1', 'loc-2');
+    });
+    expect(mockGetLocationById).not.toHaveBeenCalled();
+  });
+
+  it('goes back when the open location is deleted elsewhere', async () => {
+    const view = await render(<LocationDetailsScreen />);
+    await waitFor(() => expect(view.queryByTestId('detail-title')).not.toBeNull());
+
+    mockGetLocationById.mockResolvedValue(undefined);
+    await act(async () => {
+      entityEventEmitter.emit('location_changed', 'story-1', 'loc-1');
+    });
+    await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+  });
+
+  it('survives a failed refresh instead of leaving an unhandled rejection', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+    try {
+      const view = await render(<LocationDetailsScreen />);
+      await waitFor(() => expect(view.queryByTestId('detail-title')).not.toBeNull());
+
+      mockGetLocationById.mockRejectedValue(new Error('db down'));
+      await act(async () => {
+        entityEventEmitter.emit('location_changed', 'story-1', 'loc-1');
+      });
+      await waitFor(() => expect(mockGetLocationById).toHaveBeenCalledTimes(2));
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(view.getByTestId('detail-title').props.children).toBe('Keep');
+    } finally {
+      process.off('unhandledRejection', unhandled);
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('reloads the story lists when their entities change', async () => {
+    const view = await render(<LocationDetailsScreen />);
+    await waitFor(() => expect(jsonOf(view, 'item-manager')).toMatchObject({ items: 0 }));
+
+    mockGetAllItemsByStoryId.mockResolvedValue([{ id: 'item-1' }]);
+    await act(async () => {
+      entityEventEmitter.emit('item_changed', 'story-1', 'item-1');
+    });
+    await waitFor(() => expect(jsonOf(view, 'item-manager')).toMatchObject({ items: 1 }));
+    expect(mockGetAllLocationsByStoryId).toHaveBeenCalledTimes(1);
   });
 });

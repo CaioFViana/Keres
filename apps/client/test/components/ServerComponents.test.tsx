@@ -1,7 +1,14 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
 import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRecoveryCodesPanel';
 import ServerRegistrationFields from '@/src/components/features/servers/ServerRegistrationFields';
+
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = require('react-native');
+  return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
+});
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,
@@ -242,5 +249,71 @@ describe('ServerRegistrationFields', () => {
       screen.getByTestId('input-new_password_placeholder').props.onChangeText('n3w');
     });
     expect(props.onPasswordChange).toHaveBeenCalledWith('n3w');
+  });
+
+  it('keeps the address and the name editable when the address is not locked', async () => {
+    const screen = await render(
+      <ServerRegistrationFields {...fieldsProps()} addressLocked={false} />,
+    );
+
+    expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(true);
+    expect(screen.getByText('server_name_optional')).toBeTruthy();
+  });
+
+  it('hides the address and the name when only the official server is available', async () => {
+    const screen = await render(<ServerRegistrationFields {...fieldsProps()} addressLocked />);
+
+    expect(screen.queryByText('server_address')).toBeNull();
+    expect(screen.queryByTestId('input-server_address_placeholder')).toBeNull();
+    expect(screen.queryByText('server_name_optional')).toBeNull();
+    expect(screen.queryByTestId('input-server_name_placeholder')).toBeNull();
+    expect(screen.getByText('username')).toBeTruthy();
+  });
+
+  it('keeps the address of a saved server visible and read-only when editing without community servers', async () => {
+    const screen = await render(
+      <ServerRegistrationFields {...fieldsProps()} serverId="srv-1" addressLocked />,
+    );
+
+    expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(false);
+    expect(screen.getByText('server_name_optional')).toBeTruthy();
+  });
+
+  it('keeps the hosted same-origin notice and read-only address on a hosted app', async () => {
+    const screen = await render(
+      <ServerRegistrationFields {...fieldsProps()} hostedSameOrigin addressLocked />,
+    );
+
+    expect(screen.getByText('hosted_web_same_origin_notice')).toBeTruthy();
+    expect(screen.getByTestId('input-server_address_placeholder').props.editable).toBe(false);
+  });
+});
+
+describe('ServerListItem: the badge of the default server', () => {
+  const itemProps = () => ({
+    name: 'Keres',
+    url: 'https://keres.me',
+    userName: 'ana',
+    tag: 'ana',
+    lastSync: null,
+    status: 'idle' as const,
+    apiVersion: null,
+    onPress: jest.fn(),
+  });
+
+  it('has no badge and keeps the plain border when none is given', async () => {
+    const screen = await render(<ServerListItem {...itemProps()} />);
+
+    expect(screen.queryByTestId('server-badge')).toBeNull();
+    expect(StyleSheet.flatten(screen.getByLabelText('Keres').props.style).borderColor).toBe('#ddd');
+  });
+
+  it('shows the badge beside the name, with the accent border', async () => {
+    const screen = await render(<ServerListItem {...itemProps()} badge="default_server_badge" />);
+
+    expect(screen.getByTestId('server-badge')).toBeTruthy();
+    expect(screen.getByText('default_server_badge')).toBeTruthy();
+    expect(screen.getByText('Keres')).toBeTruthy();
+    expect(StyleSheet.flatten(screen.getByLabelText('Keres').props.style).borderColor).toBe('#00f');
   });
 });

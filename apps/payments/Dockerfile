@@ -3,7 +3,7 @@
 # The official Keres payment microservice. Ships alone: no API, no admin panel, no client -
 # it only speaks the connector contract to a Keres server on one side and PayPal / Stripe /
 # Google Play on the other. Self-hosted "keres servers" bundles never contain it.
-FROM oven/bun:1-slim AS deps
+FROM oven/bun:1.4.4-slim AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
@@ -13,7 +13,7 @@ COPY patches patches
 # partial workspace always fails (same reason as apps/api/Dockerfile).
 RUN bun install --production --linker=hoisted
 
-FROM oven/bun:1-slim AS runtime
+FROM oven/bun:1.4.4-slim AS runtime
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY --from=deps /app/node_modules ./node_modules

@@ -57,3 +57,6 @@ apps/verification/.env.*
 !apps/verification/.env.example
 .env.local
 apps/*/.env.local
+
+# TypeScript incremental build state
+*.tsbuildinfo

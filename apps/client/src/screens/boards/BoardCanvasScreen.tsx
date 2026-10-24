@@ -51,6 +51,8 @@ import { buildBoardMapFileName, deliverMapExport } from '@/src/utils/io/storyTra
 import { buildStandaloneBoardSvg } from '@/src/utils/io/storyMapSvgExport';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -135,8 +137,15 @@ const BoardCanvasScreen = () => {
   });
   useScreenTour('BoardCanvas', canEdit);
 
-  const load = useCallback(async () => {
+  // Opening something else (another board, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ boardId, db });
+  if (opened.boardId !== boardId || opened.db !== db) {
+    setOpened({ boardId, db });
     setLoading(true);
+  }
+
+  const load = useCallback(async () => {
     try {
       const row = await createBoardService(db).getById(boardId);
       if (!row || row.isDeleted) {
@@ -177,10 +186,7 @@ const BoardCanvasScreen = () => {
     }
   }, [boardId, db, showNotification, storyId, t]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    void load();
-  }, [load]);
+  useEntityInitialLoad(load);
 
   const [prevStoryId, setPrevStoryId] = useState(storyId);
   const styles = useThemedStyles(createStyles);
@@ -196,20 +202,23 @@ const BoardCanvasScreen = () => {
       return;
     }
     let cancelled = false;
-    (async () => {
-      const rows = await createGalleryService(db).getGalleriesByStoryId(storyId);
-      if (cancelled) return;
-      const next: Record<string, BoardGalleryMedia> = {};
-      for (const row of rows) {
-        next[row.id] = {
-          mediaType: row.mediaType,
-          mimeType: row.mimeType,
-          localPath: row.localPath,
-          thumbnailPath: row.thumbnailPath ?? null,
-        };
-      }
-      setGalleryMediaById(next);
-    })();
+    fireAndLog(
+      (async () => {
+        const rows = await createGalleryService(db).getGalleriesByStoryId(storyId);
+        if (cancelled) return;
+        const next: Record<string, BoardGalleryMedia> = {};
+        for (const row of rows) {
+          next[row.id] = {
+            mediaType: row.mediaType,
+            mimeType: row.mimeType,
+            localPath: row.localPath,
+            thumbnailPath: row.thumbnailPath ?? null,
+          };
+        }
+        setGalleryMediaById(next);
+      })(),
+      'BoardCanvasScreen',
+    );
     return () => {
       cancelled = true;
     };
@@ -226,14 +235,17 @@ const BoardCanvasScreen = () => {
   useEffect(() => {
     let cancelled = false;
     if (!selected || selected.kind !== 'entity') return;
-    (async () => {
-      const summary = await loadBoardEntitySummary(
-        db,
-        selected.entityType as BoardPinEntity,
-        selected.entityId,
-      );
-      if (!cancelled) setSelectedSummary(summary);
-    })();
+    fireAndLog(
+      (async () => {
+        const summary = await loadBoardEntitySummary(
+          db,
+          selected.entityType as BoardPinEntity,
+          selected.entityId,
+        );
+        if (!cancelled) setSelectedSummary(summary);
+      })(),
+      'BoardCanvasScreen',
+    );
     return () => {
       cancelled = true;
     };
@@ -244,14 +256,17 @@ const BoardCanvasScreen = () => {
     const entityNodes = content.nodes.filter(
       (node): node is Extract<BoardNodeType, { kind: 'entity' }> => node.kind === 'entity',
     );
-    void Promise.all(
-      entityNodes.map(
-        async (node) =>
-          [node.id, await loadBoardEntitySummary(db, node.entityType, node.entityId)] as const,
-      ),
-    ).then((entries) => {
-      if (!cancelled) setSummariesByNode(Object.fromEntries(entries));
-    });
+    fireAndLog(
+      Promise.all(
+        entityNodes.map(
+          async (node) =>
+            [node.id, await loadBoardEntitySummary(db, node.entityType, node.entityId)] as const,
+        ),
+      ).then((entries) => {
+        if (!cancelled) setSummariesByNode(Object.fromEntries(entries));
+      }),
+      'BoardCanvasScreen',
+    );
     return () => {
       cancelled = true;
     };

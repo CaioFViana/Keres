@@ -135,7 +135,7 @@ describe('ShowcasePackScreen', () => {
     mockGetPack.mockResolvedValue(pack());
     mockListPacks.mockResolvedValue([]);
     mockImportRemotePack.mockResolvedValue(undefined);
-    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

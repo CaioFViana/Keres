@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { canvasOverlayBounds, type CanvasOverlayType, type SpatialPoint } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 interface OverlaySelectionViewProps {
   overlay: CanvasOverlayType;
@@ -77,34 +78,29 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
     callbacks.current = { onDragStart, onDragEnd, onCommitMove };
   });
 
-  const moveResponder = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-          moveTotal.current = { x: 0, y: 0 };
-          setMoveOffset({ x: 0, y: 0 });
-          callbacks.current.onDragStart();
-        },
-        onPanResponderMove: (_, gesture) => {
-          const offset = { x: gesture.dx / scale, y: gesture.dy / scale };
-          moveTotal.current = offset;
-          setMoveOffset(offset);
-        },
-        onPanResponderRelease: () => {
-          callbacks.current.onCommitMove(overlay.id, moveTotal.current.x, moveTotal.current.y);
-          setMoveOffset({ x: 0, y: 0 });
-          callbacks.current.onDragEnd();
-        },
-        onPanResponderTerminate: () => {
-          setMoveOffset({ x: 0, y: 0 });
-          callbacks.current.onDragEnd();
-        },
-      }),
-    [overlay.id, scale],
-  );
+  const moveResponder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      moveTotal.current = { x: 0, y: 0 };
+      setMoveOffset({ x: 0, y: 0 });
+      callbacks.current.onDragStart();
+    },
+    onPanResponderMove: (_, gesture) => {
+      const offset = { x: gesture.dx / scale, y: gesture.dy / scale };
+      moveTotal.current = offset;
+      setMoveOffset(offset);
+    },
+    onPanResponderRelease: () => {
+      callbacks.current.onCommitMove(overlay.id, moveTotal.current.x, moveTotal.current.y);
+      setMoveOffset({ x: 0, y: 0 });
+      callbacks.current.onDragEnd();
+    },
+    onPanResponderTerminate: () => {
+      setMoveOffset({ x: 0, y: 0 });
+      callbacks.current.onDragEnd();
+    },
+  });
 
   const vertices = overlay.kind === 'line' || overlay.kind === 'polygon' ? overlay.points : null;
   const rect =
@@ -375,34 +371,29 @@ function DragHandle({
     // have flushed. No dependency array - the sync unconditionally followed every render.
     callbacks.current = { onDragStart, onDragEnd, onCommit };
   });
-  const responder = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-          total.current = { x: 0, y: 0 };
-          setOffset({ x: 0, y: 0 });
-          callbacks.current.onDragStart();
-        },
-        onPanResponderMove: (_, gesture) => {
-          const next = { x: gesture.dx / scale, y: gesture.dy / scale };
-          total.current = next;
-          setOffset(next);
-        },
-        onPanResponderRelease: () => {
-          callbacks.current.onCommit(total.current.x, total.current.y);
-          setOffset({ x: 0, y: 0 });
-          callbacks.current.onDragEnd();
-        },
-        onPanResponderTerminate: () => {
-          setOffset({ x: 0, y: 0 });
-          callbacks.current.onDragEnd();
-        },
-      }),
-    [scale],
-  );
+  const responder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      total.current = { x: 0, y: 0 };
+      setOffset({ x: 0, y: 0 });
+      callbacks.current.onDragStart();
+    },
+    onPanResponderMove: (_, gesture) => {
+      const next = { x: gesture.dx / scale, y: gesture.dy / scale };
+      total.current = next;
+      setOffset(next);
+    },
+    onPanResponderRelease: () => {
+      callbacks.current.onCommit(total.current.x, total.current.y);
+      setOffset({ x: 0, y: 0 });
+      callbacks.current.onDragEnd();
+    },
+    onPanResponderTerminate: () => {
+      setOffset({ x: 0, y: 0 });
+      callbacks.current.onDragEnd();
+    },
+  });
   return (
     <View
       testID={testID}

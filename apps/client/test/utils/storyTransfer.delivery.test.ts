@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+/** @jest-environment ./test/helpers/jsdomEnvironment.js */
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';

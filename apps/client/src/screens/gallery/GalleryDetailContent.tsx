@@ -4,7 +4,7 @@ import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { galleryHasFile, type MediaType } from '@keres/shared';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 import { Image } from 'expo-image';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -42,6 +42,7 @@ import { typography } from '@/src/theme/tokens';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { openGalleryExternally } from '@/src/services/media/openGalleryExternally';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '—';
@@ -111,6 +112,14 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   // the previous render", React error #310).
   const resolvedUri = useResolvedMediaUri(media?.localPath);
 
+  // Opening something else (another gallery, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ galleryId, galleryService });
+  if (opened.galleryId !== galleryId || opened.galleryService !== galleryService) {
+    setOpened({ galleryId, galleryService });
+    setLoading(true);
+  }
+
   const load = useCallback(async () => {
     if (!storyId) {
       setError(t('no_story_selected'));
@@ -118,7 +127,6 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       return;
     }
 
-    setLoading(true);
     try {
       const found = await galleryService.getById(galleryId);
       if (!found) {
@@ -146,10 +154,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
     }
   }, [storyId, galleryId, galleryService, relationService, t]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets error/loading synchronously only when no story is selected (and loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
-    load();
-  }, [load]);
+  useEntityInitialLoad(load);
 
   const handleSave = useCallback(async () => {
     if (!media || !storyId || !userId) {

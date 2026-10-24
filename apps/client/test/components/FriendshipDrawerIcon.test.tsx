@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { act, render } from '@testing-library/react-native';
 import FriendshipDrawerIcon from '@/src/components/features/messages/FriendshipDrawerIcon';

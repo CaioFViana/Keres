@@ -35,24 +35,23 @@ export function useSceneFormResources(storyId?: string) {
     initializeService: initItem,
   } = useItemStore();
 
-  useEffect(() => {
-    sceneServiceRef.current ??= createSceneService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  sceneServiceRef.current ??= createSceneService(drizzleDb);
 
   useEffect(() => {
     if (!storyId) return;
     setChapterDb(drizzleDb, storyId);
     initChapter();
-    fetchChapters();
+    void fetchChapters();
     setLocationDb(drizzleDb, storyId);
     initLocation();
-    fetchLocations();
+    void fetchLocations();
     setCharacterDb(drizzleDb, storyId);
     initCharacter();
-    fetchCharacters();
+    void fetchCharacters();
     setItemDb(drizzleDb, storyId);
     initItem();
-    fetchItems();
+    void fetchItems();
   }, [
     drizzleDb,
     storyId,

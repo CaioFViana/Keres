@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import {
   createTagService,
@@ -10,9 +10,8 @@ export function useTagFormResources() {
   const drizzleDb = useDrizzle();
   const tagServiceRef = useRef<TagService | null>(null);
 
-  useEffect(() => {
-    tagServiceRef.current ??= createTagService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  tagServiceRef.current ??= createTagService(drizzleDb);
 
   return {
     drizzleDb,

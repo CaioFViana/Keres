@@ -6,6 +6,7 @@ import { friendships, servers } from '@/src/db/schema';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const remoteUserNameCache = new Map<string, Promise<string | undefined>>();
 
@@ -123,7 +124,7 @@ export const useUserDisplayName = (logUserId: string, storyId: string | undefine
       setDisplayName(t('user_not_found'));
     };
 
-    resolveUserName();
+    fireAndLog(resolveUserName(), 'resolveUserName');
   }, [logUserId, storyId, localUserId, currentUsername, activeServer, drizzle, t]);
 
   return displayName;

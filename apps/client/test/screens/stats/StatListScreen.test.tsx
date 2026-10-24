@@ -15,6 +15,9 @@ let mockCanEdit = true;
 let mockUserId: string | null = 'user-1';
 const mockUseScreenTour = jest.fn();
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
@@ -142,7 +145,7 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler:
 jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
-jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockStableDb }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));

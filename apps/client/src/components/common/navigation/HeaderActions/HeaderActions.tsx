@@ -1,7 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewInstance,
+} from 'react-native';
 import {
   headerAnchorId,
   registerGuideAnchor,
@@ -26,7 +35,7 @@ export interface HeaderAction {
   id: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
   visible?: boolean;
   disabled?: boolean;
   busy?: boolean;
@@ -91,7 +100,7 @@ export default function HeaderActions({ actions }: { actions: readonly HeaderAct
               busy: !!action.busy,
             }}
             disabled={action.disabled || action.busy}
-            onPress={action.onPress}
+            onPress={() => fireAndLog(action.onPress(), 'A header action')}
             style={({ pressed }) => [
               styles.action,
               { opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1 },
@@ -125,7 +134,7 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
   const [open, setOpen] = useState(false);
   useModalNavigationBar(open);
   // Every action hides behind the one burger, so a tour pointing at one points at the burger.
-  const burgerRef = useRef<View>(null);
+  const burgerRef = useRef<ViewInstance>(null);
   const icons = actions.map((action) => action.icon).join('|');
   useEffect(() => {
     const ids = icons.split('|').map(headerAnchorId);
@@ -185,7 +194,7 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
                   disabled={locked}
                   onPress={() => {
                     setOpen(false);
-                    action.onPress();
+                    fireAndLog(action.onPress(), 'A header action');
                   }}
                   style={({ pressed }) => [
                     styles.menuItem,

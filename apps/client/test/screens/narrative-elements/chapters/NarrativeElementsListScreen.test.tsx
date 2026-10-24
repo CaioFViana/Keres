@@ -56,6 +56,7 @@ let mockActiveArcId: string | null = null;
 let mockEffectiveMedium: string | null = null;
 let mockCanEdit = true;
 let mockStoredScenes: { id: string; isFavorite: boolean }[] = [];
+let mockStoredChapters: { id: string; isFavorite: boolean }[] = [];
 let mockLoading = false;
 let mockError: string | null = null;
 let mockStoryId: string | undefined = 'story-1';
@@ -151,7 +152,7 @@ jest.mock('@/src/state/story/sceneStore', () => ({
 jest.mock('@/src/state/story/chapterStore', () => ({
   __esModule: true,
   useChapterStore: (selector: (state: object) => unknown) =>
-    selector({ reorderChapters: mockReorderChapters }),
+    selector({ reorderChapters: mockReorderChapters, chapters: mockStoredChapters }),
 }));
 
 jest.mock('@/src/db', () => {
@@ -580,6 +581,7 @@ beforeEach(() => {
   mockEffectiveMedium = null;
   mockCanEdit = true;
   mockStoredScenes = [];
+  mockStoredChapters = [];
   mockLoading = false;
   mockError = null;
   mockStoryId = 'story-1';
@@ -744,6 +746,13 @@ describe('NarrativeElementsListScreen', () => {
     const unfavorited = await render(<NarrativeElementsListScreen />);
     await unfavorited.findByTestId(`rowname-ch-1`);
     expect(rowNames(unfavorited)).toEqual(['Arrival']);
+  });
+
+  it('shows a chapter starred in the chapter store, which the outline rows do not carry', async () => {
+    mockStoredChapters = [{ id: 'ch-1', isFavorite: true }];
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId('rowname-ch-1');
+    expect(view.getByTestId('rowfav-ch-1').props.children).toBe('fav:true');
   });
 
   it('merges stored scene favorites into the outline', async () => {

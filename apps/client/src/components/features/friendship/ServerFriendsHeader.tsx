@@ -7,6 +7,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 interface ServerFriendsHeaderProps {
   server: ServerSelect;
@@ -43,7 +44,7 @@ const ServerFriendsHeader: React.FC<ServerFriendsHeaderProps> = ({ server, onAdd
           style={[styles.name, { color: colors.onPrimaryContainer }]}
           numberOfLines={1}
         >
-          {server.name}
+          {serverDisplayName(server, t)}
         </Text>
         {server.tag ? (
           <View style={styles.tagLine}>

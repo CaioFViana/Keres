@@ -24,33 +24,28 @@ import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '@/src/db';
-import type { CharacterSelect, ItemSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityInitialLoad,
-  useEntityEventSubscriptions,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
+import { useStoryEntities } from '@/src/hooks/lists/useStoryEntities';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
-import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
-import { logger } from '@/src/utils/logging/logger';
+import { useItemDetailServices } from './useItemDetailServices';
 
 export type ItemDetailScreenParamList = {
   ItemDetail: { itemId: string; occurrence?: OccurrenceTarget };
 };
+
+const CHARACTER_EVENTS = ['character_changed'] as const;
 
 type ItemDetailScreenRouteProp = RouteProp<ItemDetailScreenParamList, 'ItemDetail'>;
 
@@ -72,19 +67,18 @@ const ItemDetailScreen = () => {
   });
   const { selectedStory } = useStoryStore();
 
-  const drizzleDb = useDrizzle();
-  const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
-  const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!itemServiceRef.current) itemServiceRef.current = createItemService(drizzleDb);
-      if (!characterServiceRef.current)
-        characterServiceRef.current = createCharacterService(drizzleDb);
-    }
-  }, [drizzleDb]);
-
-  const [item, setItem] = useState<ItemSelect | null>(null);
+  const { itemService, characterService } = useItemDetailServices();
+  const {
+    record: item,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: itemId,
+    load: itemService.getById,
+    event: 'item_changed',
+    label: 'item details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(item?.storyId);
   const comments = useEntityComments(item?.storyId, 'Item', itemId);
 
@@ -96,74 +90,21 @@ const ItemDetailScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Item', entityId: itemId });
   const appearingArcs = useAppearsInArcs(item?.storyId ?? '', 'item', itemId);
-  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
+  const allCharacters = useStoryEntities({
+    storyId: selectedStory?.id,
+    enabled: item !== null,
+    load: characterService.getAllByStoryId,
+    events: CHARACTER_EVENTS,
+    label: 'all characters',
+  });
 
-  const fetchItem = useCallback(async () => {
-    if (!itemServiceRef.current) {
-      logger.warn('Item service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedItem = await itemServiceRef.current.getById(itemId);
-      if (fetchedItem && !fetchedItem.isDeleted) {
-        setItem(fetchedItem);
-        setHeaderTitle(fetchedItem.name || copy.detailsTitle);
-      } else if (fetchedItem && fetchedItem.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch item details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [itemId, navigation, copy, t]);
-
-  const fetchAllCharacters = useCallback(async () => {
-    if (!characterServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllCharacters(fetchedCharacters);
-    } catch (err) {
-      logger.error('Failed to fetch all characters:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const handleItemChange = useCallback(
-    async (_changedStoryId: string, changedItemId: string) => {
-      if (changedItemId === itemId && itemServiceRef.current) {
-        const updatedItem = await itemServiceRef.current.getById(itemId);
-        if (!updatedItem || updatedItem.isDeleted) {
-          navigation.goBack();
-        } else {
-          setItem(updatedItem);
-          setHeaderTitle(updatedItem.name || copy.detailsTitle);
-        }
-      }
-    },
-    [itemId, navigation, copy],
-  );
-
-  useEntityInitialLoad(fetchItem);
-
-  // Event subscriptions never initiate an item load.
-  useEntityEventSubscriptions(
-    useMemo(() => [{ event: 'item_changed', listener: handleItemChange }], [handleItemChange]),
-  );
-
-  useEffect(() => {
-    if (item) {
-      fetchAllCharacters();
-    }
-  }, [item, fetchAllCharacters]);
+  const headerTitle = item
+    ? item.name || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   useScreenHeader({
     target: 'parent',
@@ -192,8 +133,14 @@ const ItemDetailScreen = () => {
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? copy.notFound : copy.failedToLoad}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
   if (!item) {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;

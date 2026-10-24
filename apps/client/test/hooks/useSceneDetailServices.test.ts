@@ -69,6 +69,7 @@ describe('useSceneDetailServices', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useDrizzle as jest.Mock).mockReturnValue(db);
     (useCharacterStore as unknown as jest.Mock).mockReturnValue({
       characters,
       fetchCharacters,
@@ -80,34 +81,19 @@ describe('useSceneDetailServices', () => {
     });
   });
 
-  it('does not initialize services or the character store before a database is ready', async () => {
-    (useDrizzle as jest.Mock).mockReturnValue(null);
-
-    await renderHook(() => useSceneDetailServices('story-1'));
-
-    serviceFactories.forEach((factory) => expect(factory).not.toHaveBeenCalled());
-    expect(setDbAndStoryId).not.toHaveBeenCalled();
-    expect(initializeService).not.toHaveBeenCalled();
-    expect(fetchCharacters).not.toHaveBeenCalled();
-  });
-
-  it('creates all services and loads the story-scoped character cache', async () => {
-    (useDrizzle as jest.Mock).mockReturnValue(db);
-
+  it('has every service ready on the first render and loads the story-scoped character cache', async () => {
     const { result } = await renderHook(() => useSceneDetailServices('story-1'));
 
     serviceFactories.forEach((factory) => expect(factory).toHaveBeenCalledWith(db));
     expect(result.current.characters).toBe(characters);
-    expect(result.current.sceneServiceRef.current).toEqual({ name: 'service-0' });
-    expect(result.current.effectServiceRef.current).toEqual({ name: 'service-7' });
+    expect(result.current.sceneService).toEqual({ name: 'service-0' });
+    expect(result.current.effectService).toEqual({ name: 'service-7' });
     expect(setDbAndStoryId).toHaveBeenCalledWith(db, 'story-1');
     expect(initializeService).toHaveBeenCalledTimes(1);
     expect(fetchCharacters).toHaveBeenCalledTimes(1);
   });
 
   it('creates services without touching the character cache when no story is selected', async () => {
-    (useDrizzle as jest.Mock).mockReturnValue(db);
-
     await renderHook(() => useSceneDetailServices());
 
     serviceFactories.forEach((factory) => expect(factory).toHaveBeenCalledWith(db));
@@ -117,32 +103,18 @@ describe('useSceneDetailServices', () => {
   });
 
   it('reuses services while refreshing characters for a different story', async () => {
-    (useDrizzle as jest.Mock).mockReturnValue(db);
-
     const view = await renderHook<ReturnType<typeof useSceneDetailServices>, { storyId: string }>(
       ({ storyId }) => useSceneDetailServices(storyId),
       { initialProps: { storyId: 'story-1' } },
     );
+    const firstServices = view.result.current.sceneService;
     await view.rerender({ storyId: 'story-2' });
 
     serviceFactories.forEach((factory) => expect(factory).toHaveBeenCalledTimes(1));
+    expect(view.result.current.sceneService).toBe(firstServices);
     expect(setDbAndStoryId).toHaveBeenNthCalledWith(1, db, 'story-1');
     expect(setDbAndStoryId).toHaveBeenNthCalledWith(2, db, 'story-2');
     expect(initializeService).toHaveBeenCalledTimes(2);
     expect(fetchCharacters).toHaveBeenCalledTimes(2);
-  });
-
-  it('initializes services and the cache after the database becomes available', async () => {
-    let currentDb: typeof db | null = null;
-    (useDrizzle as jest.Mock).mockImplementation(() => currentDb);
-    const view = await renderHook(() => useSceneDetailServices('story-1'));
-
-    currentDb = db;
-    await view.rerender(undefined);
-
-    serviceFactories.forEach((factory) => expect(factory).toHaveBeenCalledWith(db));
-    expect(setDbAndStoryId).toHaveBeenCalledWith(db, 'story-1');
-    expect(initializeService).toHaveBeenCalledTimes(1);
-    expect(fetchCharacters).toHaveBeenCalledTimes(1);
   });
 });

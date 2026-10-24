@@ -788,6 +788,60 @@ describe('registration settings', () => {
     expect(invalid.status).toBe(400);
   });
 
+  it('keeps the account onboarding gate off until an admin turns it on', async () => {
+    const { status, data } = await request('GET', '/admin/api/registration-settings', {
+      token: admin.token,
+    });
+
+    expect(status).toBe(200);
+    expect(data.requireAccountOnboarding).toBe(false);
+  });
+
+  it('persists the account onboarding gate across reads', async () => {
+    const put = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { requireAccountOnboarding: true },
+    });
+    expect(put.status).toBe(200);
+    expect(put.data.requireAccountOnboarding).toBe(true);
+
+    const { data } = await request('GET', '/admin/api/registration-settings', {
+      token: admin.token,
+    });
+    expect(data.requireAccountOnboarding).toBe(true);
+  });
+
+  it('leaves the account onboarding gate as it was when an update does not name it', async () => {
+    await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { requireAccountOnboarding: true },
+    });
+
+    await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { isRegistrationOpen: true },
+    });
+
+    const { data } = await request('GET', '/admin/api/registration-settings', {
+      token: admin.token,
+    });
+    expect(data.requireAccountOnboarding).toBe(true);
+  });
+
+  it('answers a validation error (422) for a non-boolean account onboarding gate, and does not change it', async () => {
+    const { status } = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { requireAccountOnboarding: 'yes' },
+    });
+    // Schema validation answers 422 in this app (see the other VALIDATION cases in this suite).
+    expect(status).toBe(422);
+
+    const { data } = await request('GET', '/admin/api/registration-settings', {
+      token: admin.token,
+    });
+    expect(data.requireAccountOnboarding).toBe(false);
+  });
+
   describe('the age-verification mode the admin page reads', () => {
     afterEach(() => {
       leaveRequiredMode();

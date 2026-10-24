@@ -10,6 +10,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface UseOperationLogsOptions {
   storyId: string;
@@ -107,7 +108,7 @@ export function useOperationLogs({
     const handleOperationLogUpdated = (updatedStoryId: string) => {
       if (updatedStoryId === storyId) {
         setPage(1);
-        fetchLogs(1);
+        fireAndLog(fetchLogs(1), 'fetchLogs');
       }
     };
     entityEventEmitter.on('operation_log_updated', handleOperationLogUpdated);
@@ -175,18 +176,16 @@ export function useOperationLogs({
     }
   }
 
-  useEffect(() => {
-    if (shouldRefetch) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchLogs` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-      fetchLogs(1);
-    }
+  const refetchFirstPage = useCallback(() => {
+    if (shouldRefetch) void fetchLogs(1);
   }, [fetchLogs, shouldRefetch]);
+  useEntityInitialLoad(refetchFirstPage);
 
   const loadMore = useCallback(() => {
     if (paginated && !loading && logs.length < totalLogs) {
       const nextPage = page + 1;
       setPage(nextPage);
-      fetchLogs(nextPage);
+      fireAndLog(fetchLogs(nextPage), 'fetchLogs');
     }
   }, [fetchLogs, loading, logs.length, page, paginated, totalLogs]);
 

@@ -104,7 +104,7 @@ const FriendshipListScreen = () => {
 
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
-      fetchFriendshipsAndServers();
+      void fetchFriendshipsAndServers();
     });
     entityEventEmitter.on('friendship_changed', fetchFriendshipsAndServers);
 
@@ -295,7 +295,7 @@ const FriendshipListScreen = () => {
               ]}
               fallbackText={t('no_friendships_found')}
             />
-          ) : null
+          ) : undefined
         }
       />
     </View>

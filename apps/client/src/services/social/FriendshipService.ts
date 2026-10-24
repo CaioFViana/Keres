@@ -15,6 +15,8 @@ import { isOfflineError } from '@/src/services/api/apiClient';
 import { friendshipApiService } from '@/src/services/api/FriendshipApiService'; // Import the API service
 import { userApiService } from '@/src/services/api/UserApiService';
 import { logger } from '@/src/utils/logging/logger';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
+import i18n from '@/src/utils/format/i18n';
 
 // Initial reconciliation and WebSocket connection/reconnection can request the same
 // server refresh at almost the same time. Expo SQLite must not run those write
@@ -91,6 +93,12 @@ export class FriendshipService {
         otherUserAvatarColor: profile?.avatarColor ?? null,
         otherUserAvatarIcon: profile?.avatarIcon ?? null,
         otherUserBio: profile?.bio ?? null,
+        // The official server has no name of its own: it is named from the translation, in the language now.
+        serverName: friendship.serverUrl
+          ? serverDisplayName({ name: friendship.serverName, url: friendship.serverUrl }, (key) =>
+              i18n.t(key),
+            )
+          : friendship.serverName,
       };
     });
     return result;

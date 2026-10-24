@@ -29,16 +29,6 @@ jest.mock('@/src/services/storymanagement/relations/StatRelationService', () => 
   __esModule: true,
   createStatRelationService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 beforeEach(() => {
   jest.clearAllMocks();
   (createCharacterService as jest.Mock).mockReturnValue({

@@ -24,6 +24,8 @@ import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useStoryInvitations } from './useStoryInvitations';
 import { logger } from '@/src/utils/logging/logger';
 import { httpStatusOf } from '@/src/utils/errors/errorInfo';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 /**
  * Server linkage and collaboration state for one story's settings screen.
@@ -59,28 +61,31 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
   useEffect(() => {
     if (!storyId) return;
     let cancelled = false;
-    (async () => {
-      try {
-        const servers = await serverService().getAllServers();
-        if (cancelled) return;
-        setAvailableServers(servers);
-        const currentServerId = selectedStory?.serverId ?? null;
-        if (!currentServerId) {
+    fireAndLog(
+      (async () => {
+        try {
+          const servers = await serverService().getAllServers();
+          if (cancelled) return;
+          setAvailableServers(servers);
+          const currentServerId = selectedStory?.serverId ?? null;
+          if (!currentServerId) {
+            setServerId(null);
+            return;
+          }
+          const found = servers.find((server) => server.id === currentServerId);
+          if (found) {
+            setServerId(currentServerId);
+            return;
+          }
+          if (userId) await storyService().updateStory(userId, storyId, { serverId: null });
           setServerId(null);
-          return;
+          AppAlert.alert(t('warning'), t('server_not_found_for_story'));
+        } catch (err) {
+          if (!cancelled) logger.error('Failed to load servers for story settings:', err);
         }
-        const found = servers.find((server) => server.id === currentServerId);
-        if (found) {
-          setServerId(currentServerId);
-          return;
-        }
-        if (userId) await storyService().updateStory(userId, storyId, { serverId: null });
-        setServerId(null);
-        AppAlert.alert(t('warning'), t('server_not_found_for_story'));
-      } catch (err) {
-        if (!cancelled) logger.error('Failed to load servers for story settings:', err);
-      }
-    })();
+      })(),
+      'useStoryServerCollaboration',
+    );
     return () => {
       cancelled = true;
     };
@@ -134,29 +139,32 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       return;
     }
     let cancelled = false;
-    (async () => {
-      try {
-        const fetchedCollaborators = await storyPermissionApi.getCollaborators(
-          linkedServer,
-          storyId,
-        );
-        if (!cancelled) {
-          setIsOwnerOnServer(true);
-          setCollaborators(fetchedCollaborators);
+    fireAndLog(
+      (async () => {
+        try {
+          const fetchedCollaborators = await storyPermissionApi.getCollaborators(
+            linkedServer,
+            storyId,
+          );
+          if (!cancelled) {
+            setIsOwnerOnServer(true);
+            setCollaborators(fetchedCollaborators);
+          }
+        } catch (err) {
+          if (cancelled) return;
+          // A 403 is not an error here - it is how the server reports that the
+          // current user is linked to the story but is not its owner.
+          if (httpStatusOf(err) === 403) {
+            setIsOwnerOnServer(false);
+          } else {
+            logger.error('Failed to check story ownership/collaborators on server:', err);
+            setIsOwnerOnServer(null);
+          }
+          setCollaborators(null);
         }
-      } catch (err) {
-        if (cancelled) return;
-        // A 403 is not an error here - it is how the server reports that the
-        // current user is linked to the story but is not its owner.
-        if (httpStatusOf(err) === 403) {
-          setIsOwnerOnServer(false);
-        } else {
-          logger.error('Failed to check story ownership/collaborators on server:', err);
-          setIsOwnerOnServer(null);
-        }
-        setCollaborators(null);
-      }
-    })();
+      })(),
+      'useStoryServerCollaboration',
+    );
     return () => {
       cancelled = true;
     };
@@ -186,25 +194,28 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       return;
     }
     let cancelled = false;
-    (async () => {
-      try {
-        const allFriendships = await friendshipService().getAllFriendships();
-        const collaboratorIds = new Set([
-          ...(collaborators ?? []).map((c) => c.userId),
-          ...pendingInvitations.map((invitation) => invitation.inviteeId),
-        ]);
-        const friends = allFriendships
-          .filter((f) => f.serverId === linkedServer.id && f.status === FriendStatus.FRIEND)
-          .map((f) => ({ id: f.otherUserId, username: f.friendUsername }))
-          .filter((f) => !collaboratorIds.has(f.id));
-        if (!cancelled) setAddableFriends(friends);
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Failed to load friends for collaborator picker:', err);
-          setAddableFriends([]);
+    fireAndLog(
+      (async () => {
+        try {
+          const allFriendships = await friendshipService().getAllFriendships();
+          const collaboratorIds = new Set([
+            ...(collaborators ?? []).map((c) => c.userId),
+            ...pendingInvitations.map((invitation) => invitation.inviteeId),
+          ]);
+          const friends = allFriendships
+            .filter((f) => f.serverId === linkedServer.id && f.status === FriendStatus.FRIEND)
+            .map((f) => ({ id: f.otherUserId, username: f.friendUsername }))
+            .filter((f) => !collaboratorIds.has(f.id));
+          if (!cancelled) setAddableFriends(friends);
+        } catch (err) {
+          if (!cancelled) {
+            logger.error('Failed to load friends for collaborator picker:', err);
+            setAddableFriends([]);
+          }
         }
-      }
-    })();
+      })(),
+      'useStoryServerCollaboration',
+    );
     return () => {
       cancelled = true;
     };
@@ -492,7 +503,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     handleUnlinkFromServer,
     handleLeaveStory,
     uploadServerOptions: availableServers.map((server) => ({
-      label: server.name,
+      label: serverDisplayName(server, t),
       value: server.id,
     })),
     addableFriendOptions: addableFriends.map((friend) => ({

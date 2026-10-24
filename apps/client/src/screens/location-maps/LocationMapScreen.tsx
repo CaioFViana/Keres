@@ -54,6 +54,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { removeLocationMapPoint } from '@/src/utils/location-map/locationMapContent';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -114,8 +115,15 @@ const LocationMapScreen = () => {
     onBack: () => navigation.goBack(),
   });
   useScreenTour('LocationMap', canEdit);
-  const load = useCallback(async () => {
+  // Opening something else (another map, another database) is "loading" from this render on,
+  // not from a state change made inside the load itself.
+  const [opened, setOpened] = useState({ mapId, db });
+  if (opened.mapId !== mapId || opened.db !== db) {
+    setOpened({ mapId, db });
     setLoading(true);
+  }
+
+  const load = useCallback(async () => {
     try {
       const [row, loadedLocations, loadedGalleries, loadedRelations, loadedMaps] =
         await Promise.all([
@@ -168,10 +176,7 @@ const LocationMapScreen = () => {
       setLoading(false);
     }
   }, [db, mapId, showNotification, storyId, t]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
-    void load();
-  }, [load]);
+  useEntityInitialLoad(load);
   useEffect(() => {
     if (!storyId || !map || map.id !== mapId) return;
     useLocationMapDraftStore.getState().remember({

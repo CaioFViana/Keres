@@ -20,6 +20,8 @@ export interface ClientSettings {
   exportFormat: MapExportFormat;
   /** When on, the app reminds the user that a paid period is about to end (on servers that sell plans). */
   warnPaymentDue: boolean;
+  /** When on, servers other than the official one may be added by address. */
+  allowCommunityServers: boolean;
   /** When on, first-open guided tours may appear on this device. */
   showTutorials: boolean;
   /** Raw JSON `{version, seen[]}` with the tour ids already completed or skipped. */

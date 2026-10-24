@@ -1,6 +1,6 @@
 {
   "name": "@keres/site",
-  "version": "1.10.2",
+  "version": "1.10.4",
   "private": true,
   "type": "module",
   "license": "MPL-2.0",
@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "i18next": "^26.4.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "react-i18next": "^17.0.12"
   },
   "devDependencies": {

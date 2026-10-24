@@ -8,6 +8,9 @@ let mockStory: { id: string } | null = { id: 'story-1' };
 let mockUserId: string | null = 'user-1';
 const mockUseScreenTour = jest.fn();
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ navigate: jest.fn() }),
@@ -58,7 +61,7 @@ jest.mock('@/src/components/features/list-items/GlobalSearchResultItem', () => (
     );
   },
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,

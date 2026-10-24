@@ -8,6 +8,9 @@ const mockUpdateArc = jest.fn();
 const mockUpdateStory = jest.fn();
 let mockActiveArc: { id: string; title: string; vocabulary: null } | null = null;
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@/src/components/common', () => ({
   __esModule: true,
   Button: ({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) => {
@@ -30,7 +33,7 @@ jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () 
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,

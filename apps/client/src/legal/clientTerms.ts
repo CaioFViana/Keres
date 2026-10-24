@@ -1,3 +1,5 @@
+import { KERES_OFFICIAL_HOST } from '@keres/shared';
+
 /**
  * The app's own terms of service, shown at first install and readable any time from Settings.
  *
@@ -66,7 +68,7 @@ const en: ClientTermsSection[] = [
   {
     heading: '9. Privacy and contact',
     paragraphs: [
-      'How your data is handled is in the privacy policy, readable in App Settings. Questions about privacy or these terms: use the contact form on keres.me. These terms follow Brazilian law.',
+      `How your data is handled is in the privacy policy, readable in App Settings. Questions about privacy or these terms: use the contact form on ${KERES_OFFICIAL_HOST}. These terms follow Brazilian law.`,
     ],
   },
 ];
@@ -123,7 +125,7 @@ const pt: ClientTermsSection[] = [
   {
     heading: '9. Privacidade e contato',
     paragraphs: [
-      'Como seus dados são tratados está na política de privacidade, legível nos Ajustes do aplicativo. Dúvidas sobre privacidade ou estes termos: use o formulário de contato em keres.me. Estes termos seguem a lei brasileira.',
+      `Como seus dados são tratados está na política de privacidade, legível nos Ajustes do aplicativo. Dúvidas sobre privacidade ou estes termos: use o formulário de contato em ${KERES_OFFICIAL_HOST}. Estes termos seguem a lei brasileira.`,
     ],
   },
 ];

@@ -7,6 +7,7 @@ import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { conversationKey } from '@/src/utils/entity/conversationKey';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import i18n from '@/src/utils/format/i18n';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 import { isOfflineError } from '@/src/services/api/apiClient';
 import { createFriendshipService } from './FriendshipService';
 import { messageApi, type MessagePeerRef } from '@/src/services/api/MessageApiService';
@@ -121,7 +122,7 @@ export class MessageService {
     for (const server of servers) {
       contacts.push({
         serverId: server.id,
-        serverName: server.name,
+        serverName: serverDisplayName(server, (key) => i18n.t(key)),
         kind: 'admin',
         userId: null,
         name: '',

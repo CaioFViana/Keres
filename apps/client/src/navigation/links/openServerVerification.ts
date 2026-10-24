@@ -14,9 +14,9 @@ export type VerificationNavigation = Pick<
  */
 export function openServerVerification(navigation: VerificationNavigation, serverId: string): void {
   const current = navigation.getCurrentRoute();
-  // The registration screen takes the person to the check itself, after showing the recovery codes (they are shown only
+  // The registration screen (and the first-use account gate) takes the person to the check itself, after showing the recovery codes (they are shown only
   // once): a refused call that races it must not skip that panel.
-  if (current?.name === 'ServerRegistration') return;
+  if (current?.name === 'ServerRegistration' || current?.name === 'RequiredAccount') return;
   if (
     current?.name === 'ServerVerification' &&
     (current.params as { serverId?: string } | undefined)?.serverId === serverId

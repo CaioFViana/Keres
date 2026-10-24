@@ -71,6 +71,7 @@ describe('admin route schemas accept every field their Zod counterpart does', ()
           isRegistrationOpen: true,
           maxUsers: 100,
           autoManage: false,
+          requireAccountOnboarding: true,
           defaultTierId: 'tier-1',
         }),
       }),

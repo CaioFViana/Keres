@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, type ViewInstance } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { ResumeScene } from '@/src/hooks/scene/useResumeScene';
@@ -26,7 +26,7 @@ interface StoryWritingSectionProps {
   /** Absent where the story cannot be published: a reader, or a build with no server. */
   onPublishManuscript?: () => void;
   /** Where the tour points; the section is one block. */
-  anchorRef?: React.Ref<View>;
+  anchorRef?: React.Ref<ViewInstance>;
   now?: Date;
 }
 

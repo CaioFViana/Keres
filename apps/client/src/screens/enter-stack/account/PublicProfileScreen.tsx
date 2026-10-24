@@ -38,6 +38,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { cleanLinkDrafts, type LinkDraft, type LinkProblem } from '@/src/utils/format/profileLinks';
 import { buildAuthorPublicUrl } from '@/src/utils/format/showcaseUrls';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 type PublicProfileRouteProp = RouteProp<ServerManagementStackParamList, 'PublicProfile'>;
 type PublicProfileNavigationProp = NativeStackNavigationProp<
@@ -78,38 +79,41 @@ const PublicProfileScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedServer = await createServerService(drizzleDb).getServerById(serverId);
-        if (!fetchedServer) {
-          if (!cancelled) setError(t('server_not_found'));
-          return;
-        }
-        if (cancelled) return;
-        setServer(fetchedServer);
+    fireAndLog(
+      (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const fetchedServer = await createServerService(drizzleDb).getServerById(serverId);
+          if (!fetchedServer) {
+            if (!cancelled) setError(t('server_not_found'));
+            return;
+          }
+          if (cancelled) return;
+          setServer(fetchedServer);
 
-        const [profile, own, enabled] = await Promise.all([
-          userApiService.getPublicProfile(fetchedServer),
-          userApiService.getOwnProfile(fetchedServer),
-          publicationApiService.isShowcaseEnabled(fetchedServer),
-        ]);
-        if (cancelled) return;
-        setBiography(profile?.biography ?? '');
-        setLinks((profile?.links ?? []).map((link) => ({ ...link })));
-        setTheme(profile?.theme ?? null);
-        setUsername(own?.username ?? null);
-        setShowcaseEnabled(enabled);
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Failed to load the author page texts:', err);
-          setError(isOfflineError(err) ? t('server_unreachable') : t('author_page_load_failed'));
+          const [profile, own, enabled] = await Promise.all([
+            userApiService.getPublicProfile(fetchedServer),
+            userApiService.getOwnProfile(fetchedServer),
+            publicationApiService.isShowcaseEnabled(fetchedServer),
+          ]);
+          if (cancelled) return;
+          setBiography(profile?.biography ?? '');
+          setLinks((profile?.links ?? []).map((link) => ({ ...link })));
+          setTheme(profile?.theme ?? null);
+          setUsername(own?.username ?? null);
+          setShowcaseEnabled(enabled);
+        } catch (err) {
+          if (!cancelled) {
+            logger.error('Failed to load the author page texts:', err);
+            setError(isOfflineError(err) ? t('server_unreachable') : t('author_page_load_failed'));
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+      })(),
+      'PublicProfileScreen',
+    );
     return () => {
       cancelled = true;
     };

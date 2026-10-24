@@ -40,6 +40,8 @@ interface UserSettingsState {
   exportFormat: MapExportFormat;
   showTutorials: boolean;
   warnPaymentDue: boolean;
+  /** Whether servers other than the official one may be added by address. */
+  allowCommunityServers: boolean;
   tutorialProgress: TutorialProgress;
   activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>;
@@ -58,6 +60,7 @@ interface UserSettingsState {
   setExportFormat: (db: AppDrizzleClient, exportFormat: MapExportFormat) => Promise<void>;
   setShowTutorials: (db: AppDrizzleClient, showTutorials: boolean) => Promise<void>;
   setWarnPaymentDue: (db: AppDrizzleClient, warnPaymentDue: boolean) => Promise<void>;
+  setAllowCommunityServers: (db: AppDrizzleClient, allowCommunityServers: boolean) => Promise<void>;
   /** Records a completed or skipped tour; already-seen ids write nothing. */
   markTutorialSeen: (db: AppDrizzleClient, screenId: string) => Promise<void>;
   /** Merges an update into the "first story" trail progress. */
@@ -83,6 +86,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
   exportFormat: 'svg',
   showTutorials: true,
   warnPaymentDue: true,
+  allowCommunityServers: false,
   tutorialProgress: defaultTutorialProgress(),
   activeServer: null,
 
@@ -100,6 +104,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
         exportFormat: settings.exportFormat ?? 'svg',
         showTutorials: settings.showTutorials ?? true,
         warnPaymentDue: settings.warnPaymentDue ?? true,
+        allowCommunityServers: settings.allowCommunityServers ?? false,
         tutorialProgress: parseTutorialProgress(settings.seenTutorials),
       });
     }
@@ -157,6 +162,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
     set({ warnPaymentDue });
   },
 
+  setAllowCommunityServers: async (db: AppDrizzleClient, allowCommunityServers: boolean) => {
+    await updateClientSettings(db, { allowCommunityServers });
+    set({ allowCommunityServers });
+  },
+
   markTutorialSeen: async (db: AppDrizzleClient, screenId: string) => {
     const next = withTutorialSeen(get().tutorialProgress, screenId);
     if (next === get().tutorialProgress) return;
@@ -199,6 +209,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
       exportFormat: 'svg',
       showTutorials: true,
       warnPaymentDue: true,
+      allowCommunityServers: false,
       tutorialProgress: defaultTutorialProgress(),
       activeServer: null,
     });

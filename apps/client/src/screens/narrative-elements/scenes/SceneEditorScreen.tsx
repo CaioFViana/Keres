@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -20,13 +20,10 @@ import {
   useScreenplaySceneContext,
 } from '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
 import type { SceneSelect } from '@/src/db/schema';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { useSceneBodyDraft } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
@@ -34,17 +31,13 @@ import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/drafts/EditorDraftService';
-import {
-  createSceneService,
-  type SceneService,
-} from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
-import { logger } from '@/src/utils/logging/logger';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type SceneEditorNavigation = NativeStackNavigationProp<
@@ -137,7 +130,7 @@ function SceneEditorContent({
 
   // Write/Read share one scroll container and restore the offset on switch, so the
   // passage stays exactly where it was instead of jumping back to the top.
-  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollRef = useRef<ScrollViewInstance | null>(null);
   const handleToolbarAction = useCallback(
     (kind: Parameters<typeof applyFormat>[0]) => {
       applyFormat(kind);
@@ -341,57 +334,34 @@ const SceneEditorScreen = () => {
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
   const drizzleDb = useDrizzle();
-  const sceneServiceRef = useRef<SceneService | null>(null);
+  const sceneService = useMemo(
+    () => (drizzleDb ? createSceneService(drizzleDb) : null),
+    [drizzleDb],
+  );
 
-  useEffect(() => {
-    if (drizzleDb) sceneServiceRef.current ??= createSceneService(drizzleDb);
-  }, [drizzleDb]);
-
-  const [scene, setScene] = useState<SceneSelect | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchScene = useCallback(async () => {
-    if (!sceneServiceRef.current) return;
-    try {
-      setLoading(true);
-      const fetched = await sceneServiceRef.current.getById(sceneId);
-      if (fetched && !fetched.isDeleted) {
-        setScene(fetched);
-      } else if (fetched?.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch scene for the editor:', err);
-      setError(copy.failedToLoad);
-    } finally {
-      setLoading(false);
-    }
-  }, [sceneId, navigation, copy]);
-
+  const readScene = useCallback(
+    async (id: string) => (sceneService ? sceneService.getById(id) : null),
+    [sceneService],
+  );
+  // A deleted scene has no editor to stay on, here or when it is deleted elsewhere while open.
+  const leave = useCallback(() => navigation.goBack(), [navigation]);
   // Live updates while editing (sync or another surface saving this scene): the saved row
   // refreshes underneath, but the editing doc stays - the prose hook never reseeds from the
-  // saved body, so remote saves re-arm dirtiness instead of clobbering in-progress prose. A
-  // deleted scene has no editor to stay on, so it navigates back like the initial load.
-  const handleSceneChange = useCallback(
-    async (_storyId: string, changedSceneId: string) => {
-      if (changedSceneId !== sceneId || !sceneServiceRef.current) return;
-      const updated = await sceneServiceRef.current.getById(sceneId);
-      if (!updated || updated.isDeleted) {
-        navigation.goBack();
-      } else {
-        setScene(updated);
-      }
-    },
-    [sceneId, navigation],
-  );
-
-  useEntityInitialLoad(fetchScene);
-  useEntityEventSubscriptions(
-    useMemo(() => [{ event: 'scene_changed', listener: handleSceneChange }], [handleSceneChange]),
-  );
+  // saved body, so remote saves re-arm dirtiness instead of clobbering in-progress prose.
+  const {
+    record: scene,
+    loading,
+    failure,
+    replace: replaceScene,
+  } = useDetailRecord<SceneSelect>({
+    id: sceneId,
+    load: readScene,
+    event: 'scene_changed',
+    label: 'the scene for the editor',
+    onGone: leave,
+  });
+  const error =
+    failure === 'notFound' ? copy.notFound : failure === 'failed' ? copy.failedToLoad : null;
 
   // Save path for the prose hook: empty prose persists as null (no body yet), and the
   // fresh row replaces local state so the saved body (and dirtiness against it) re-derives.
@@ -399,12 +369,11 @@ const SceneEditorScreen = () => {
   // disturbs the caret.
   const persist = useCallback(
     async (body: string | null) => {
-      if (!sceneServiceRef.current) throw new Error(copy.failedToSave);
+      if (!sceneService) throw new Error(copy.failedToSave);
       if (!userId) throw new Error(t('user_not_identified'));
-      const updated = await sceneServiceRef.current.updateScene(userId, sceneId, { body });
-      setScene(updated);
+      replaceScene(await sceneService.updateScene(userId, sceneId, { body }));
     },
-    [sceneId, userId, copy, t],
+    [sceneService, sceneId, userId, copy, t, replaceScene],
   );
 
   // No header here: the loaded content below owns the title and the mode toggle.

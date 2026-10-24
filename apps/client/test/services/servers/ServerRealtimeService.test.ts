@@ -7,6 +7,7 @@ import { createPublicationService } from '@/src/services/publication/Publication
 import { ServerRealtimeService } from '@/src/services/servers/ServerRealtimeService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { logger } from '@/src/utils/logging/logger';
 
 jest.mock('@/src/services/api/apiClient', () => ({
   createKeresAxiosInstance: jest.fn(),
@@ -614,5 +615,40 @@ describe('subscriptions, failures and reconnects', () => {
       globalThis.fetch = realFetch;
       jest.useRealTimers();
     }
+  });
+});
+
+describe('background tasks', () => {
+  it('logs a task that fails instead of letting the rejection vanish', async () => {
+    const failure = new Error('refresh blew up');
+    const logged = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+
+    (service as any).track(Promise.reject(failure));
+    await flush();
+
+    expect(logged).toHaveBeenCalledWith(
+      'ServerRealtimeService: a background task failed.',
+      failure,
+    );
+    await service.stop();
+  });
+
+  it('reconnects after the retry delay, whatever the probe of the server said', async () => {
+    jest.useFakeTimers();
+    const fetchMock = jest.fn().mockRejectedValue(new Error('offline'));
+    (globalThis as any).fetch = fetchMock;
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+    service.start('story');
+    await jest.advanceTimersByTimeAsync(0);
+    const first = MockWebSocket.instances.length;
+
+    MockWebSocket.instances[0].onclose?.();
+    await jest.advanceTimersByTimeAsync(60_000);
+
+    expect(fetchMock).toHaveBeenCalled();
+    expect(MockWebSocket.instances.length).toBeGreaterThan(first);
+    await service.stop();
+    jest.useRealTimers();
   });
 });

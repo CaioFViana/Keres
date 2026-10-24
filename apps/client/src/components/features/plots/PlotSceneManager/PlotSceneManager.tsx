@@ -15,6 +15,7 @@ import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEnt
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import ScenePlotModal from './ScenePlotModal';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 interface PlotSceneManagerProps {
   relations: PlotScene[];
@@ -92,18 +93,21 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
     const existing = relationId
       ? activeRelations.find((relation) => relation.id === relationId)
       : undefined;
-    onSave({
-      id: relationId ?? createULID(),
-      storyId: currentStoryId,
-      plotId: currentPlotId,
-      sceneId,
-      note,
-      createdAt: existing?.createdAt ?? new Date(),
-      updatedAt: new Date(),
-      version: existing?.version ?? 1,
-      isDeleted: false,
-      deletedAt: null,
-    });
+    fireAndLog(
+      onSave({
+        id: relationId ?? createULID(),
+        storyId: currentStoryId,
+        plotId: currentPlotId,
+        sceneId,
+        note,
+        createdAt: existing?.createdAt ?? new Date(),
+        updatedAt: new Date(),
+        version: existing?.version ?? 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+      'Saving the plot scene',
+    );
     setIsModalVisible(false);
   };
 

@@ -9,16 +9,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () =
   __esModule: true,
   createStoryArcService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const service = {
   listEntityArcIds: jest.fn(),
 };

@@ -32,3 +32,21 @@ it('creates the location services once for the form database', async () => {
     id: 'location-relation-service',
   });
 });
+
+it('has the services in the very first render, not only after the effects ran', async () => {
+  const seenDuringRender: unknown[] = [];
+
+  await renderHook(() => {
+    const resources = useLocationFormResources();
+    seenDuringRender.push(
+      resources.locationServiceRef.current,
+      resources.locationRelationServiceRef.current,
+    );
+    return resources;
+  });
+
+  expect(seenDuringRender.slice(0, 2)).toEqual([
+    { id: 'location-service' },
+    { id: 'location-relation-service' },
+  ]);
+});

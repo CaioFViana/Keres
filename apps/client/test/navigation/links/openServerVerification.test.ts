@@ -43,6 +43,14 @@ describe('openServerVerification', () => {
     expect(navigation.navigate).not.toHaveBeenCalled();
   });
 
+  it('leaves the first-use account gate alone too: its own step takes the person on to the check', () => {
+    const navigation = stubNavigation({ name: 'RequiredAccount', params: undefined });
+
+    openServerVerification(navigation as unknown as VerificationNavigation, 'srv-1');
+
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
   it('opens the age check of the server, through the story selection and its server list', () => {
     const navigation = stubNavigation({ name: 'StorySelectionScreen' });
 

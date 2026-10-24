@@ -4,6 +4,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ShowcaseLinkField from '@/src/components/features/showcase/ShowcaseLinkField';
+import {
+  defaultServerUrl,
+  isDefaultServerUrl,
+  serverDisplayName,
+} from '@/src/utils/auth/defaultServer';
+import { isHostedByApi } from '@/src/utils/platform/clientFlavor';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { ShowcaseStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
@@ -26,6 +32,15 @@ const ShowcaseHomeScreen = () => {
     useNavigation<NativeStackNavigationProp<ShowcaseStackParamList, 'ShowcaseHome'>>();
   const link = useShowcaseLink();
   const styles = useThemedStyles(createStyles);
+  const hosted = isHostedByApi();
+  // The default server first, registered or not: its public site is open to read without an account.
+  const defaultServer = link.servers.find((server) => isDefaultServerUrl(server.url));
+  const otherServers = link.servers.filter((server) => server !== defaultServer);
+  const openDefault = () =>
+    navigation.navigate(
+      'ShowcaseBrowse',
+      defaultServer ? { serverId: defaultServer.id } : { guestOrigin: defaultServerUrl() },
+    );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -44,34 +59,51 @@ const ShowcaseHomeScreen = () => {
       <Text style={styles.note}>{t('showcase_link_note')}</Text>
 
       <Text style={styles.sectionTitle} accessibilityRole="header">
-        {t('showcase_servers_title')}
+        {t(hosted ? 'default_server_title_hosted' : 'default_server_title')}
       </Text>
-      {link.servers.length === 0 ? (
-        <Text style={styles.note} testID="showcase-servers-empty">
-          {t('showcase_servers_empty')}
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPress={openDefault}
+        style={[styles.server, { borderColor: colors.primary, backgroundColor: colors.surface }]}
+        testID="showcase-default-server"
+      >
+        <Ionicons name="storefront-outline" size={22} color={colors.primary} />
+        <View style={styles.serverTexts}>
+          <Text style={[styles.serverName, { color: colors.text }]} numberOfLines={1}>
+            {serverDisplayName(defaultServer ?? { url: defaultServerUrl() }, t)}
+          </Text>
+          <Text style={[styles.serverUrl, { color: colors.textSecondary }]} numberOfLines={2}>
+            {t('showcase_default_server_hint')}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      {otherServers.length > 0 ? (
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          {t('other_servers_title')}
         </Text>
-      ) : (
-        link.servers.map((server) => (
-          <TouchableOpacity
-            key={server.id}
-            accessibilityRole="button"
-            onPress={() => navigation.navigate('ShowcaseBrowse', { serverId: server.id })}
-            style={[styles.server, { borderColor: colors.border, backgroundColor: colors.surface }]}
-            testID={`showcase-server-${server.id}`}
-          >
-            <Ionicons name="storefront-outline" size={22} color={colors.primary} />
-            <View style={styles.serverTexts}>
-              <Text style={[styles.serverName, { color: colors.text }]} numberOfLines={1}>
-                {server.name ?? server.url}
-              </Text>
-              <Text style={[styles.serverUrl, { color: colors.textSecondary }]} numberOfLines={1}>
-                {server.url}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ))
-      )}
+      ) : null}
+      {otherServers.map((server) => (
+        <TouchableOpacity
+          key={server.id}
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('ShowcaseBrowse', { serverId: server.id })}
+          style={[styles.server, { borderColor: colors.border, backgroundColor: colors.surface }]}
+          testID={`showcase-server-${server.id}`}
+        >
+          <Ionicons name="storefront-outline" size={22} color={colors.primary} />
+          <View style={styles.serverTexts}>
+            <Text style={[styles.serverName, { color: colors.text }]} numberOfLines={1}>
+              {serverDisplayName(server, t)}
+            </Text>
+            <Text style={[styles.serverUrl, { color: colors.textSecondary }]} numberOfLines={1}>
+              {server.url}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      ))}
     </ScrollView>
   );
 };

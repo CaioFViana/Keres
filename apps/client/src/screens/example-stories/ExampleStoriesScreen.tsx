@@ -22,6 +22,7 @@ import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * The catalog of example stories packaged with the app.
@@ -115,7 +116,7 @@ const ExampleStoriesScreen = () => {
         );
         if (result.status === 'installed') {
           showNotification(t('example_stories_install_success'), 'success');
-          fetchStoryList(createStoryService(drizzleDb)); // Keeps the story selection screen up to date.
+          fireAndLog(fetchStoryList(createStoryService(drizzleDb)), 'fetchStoryList'); // Keeps the story selection screen up to date.
         } else {
           showNotification(t('example_stories_install_failed'), 'error');
         }

@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import axios from 'axios';
 import { restoreHostedCookieSession } from '@/src/services/auth/HostedCookieSession';

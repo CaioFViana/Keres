@@ -35,6 +35,8 @@ it('covers every application screen with a reader-facing header', () => {
     'MainSystem',
     'ColdInstall',
     'ColdInstallScreen',
+    // The gate a server can put in front of the hosted web client: a sign-in form, with nothing to read about it.
+    'RequiredAccount',
     // The re-acceptance gate that opens when the legal texts change: it shows the texts itself, and no help page covers them.
     'LegalUpdate',
   ]);

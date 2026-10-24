@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import {
   createCharacterRelationService,
@@ -12,10 +12,9 @@ export function useCharacterFormResources() {
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null);
 
-  useEffect(() => {
-    characterServiceRef.current ??= createCharacterService(drizzleDb);
-    characterRelationServiceRef.current ??= createCharacterRelationService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  characterServiceRef.current ??= createCharacterService(drizzleDb);
+  characterRelationServiceRef.current ??= createCharacterRelationService(drizzleDb);
 
   return {
     drizzleDb,

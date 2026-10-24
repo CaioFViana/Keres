@@ -28,21 +28,20 @@ export function useItemJourneyFormResources(storyId?: string) {
     initializeService: initializeCharacterService,
   } = useCharacterStore();
 
-  useEffect(() => {
-    itemJourneyServiceRef.current ??= createItemJourneyService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  itemJourneyServiceRef.current ??= createItemJourneyService(drizzleDb);
 
   useEffect(() => {
     if (!storyId) return;
     setItemDbAndStoryId(drizzleDb, storyId);
     initializeItemService();
-    fetchItems();
+    void fetchItems();
     setSceneDbAndStoryId(drizzleDb, storyId);
     initializeSceneService();
-    fetchScenes();
+    void fetchScenes();
     setCharacterDbAndStoryId(drizzleDb, storyId);
     initializeCharacterService();
-    fetchCharacters();
+    void fetchCharacters();
   }, [
     drizzleDb,
     storyId,

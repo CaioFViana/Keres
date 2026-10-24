@@ -1,0 +1,1 @@
+ALTER TABLE "registration_settings" ADD COLUMN "require_account_onboarding" boolean DEFAULT false NOT NULL;

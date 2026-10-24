@@ -96,7 +96,7 @@ it('returns no options without a story and clears options when loading fails', a
   const failing = await renderHook(() => useBoardPinOptions('story-1'));
   await waitFor(() =>
     expect(console.log).toHaveBeenCalledWith(
-      'useBoardPinOptions: failed to load pin candidates.',
+      'Failed to fetch board pin candidates:',
       expect.any(Error),
     ),
   );

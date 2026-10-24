@@ -4,6 +4,7 @@ import type { ServerSelect } from '@/src/db/schema';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import i18n from '@/src/utils/format/i18n';
 import { evaluatePaymentNotice } from '@/src/utils/billing/paymentPlans';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 const warnedKey = (serverId: string, paidUntil: string, kind: string) =>
   `keres:payment-warned:${serverId}:${paidUntil}:${kind}`;
@@ -13,6 +14,9 @@ const warnedKey = (serverId: string, paidUntil: string, kind: string) =>
  * overdue, if they allowed reminders. Remembered on the device, so it does not come back at every start: a
  * reminder that repeats is the intrusion the setting exists to prevent. Returns whether one was shown.
  */
+const nameOf = (server: { name?: string | null; url?: string }) =>
+  serverDisplayName(server, (key) => i18n.t(key));
+
 export async function warnAboutPayment(
   server: Pick<ServerSelect, 'id' | 'name'>,
   subscription: Subscription | null,
@@ -35,9 +39,9 @@ export async function warnAboutPayment(
   const date = new Date(subscription.paidUntil).toLocaleDateString(i18n.language);
   const message =
     notice.kind === 'due'
-      ? i18n.t('payment_warning_due', { server: server.name, plan: subscription.tierName, date })
+      ? i18n.t('payment_warning_due', { server: nameOf(server), plan: subscription.tierName, date })
       : i18n.t(notice.daysLeft === 1 ? 'payment_warning_soon_one' : 'payment_warning_soon_other', {
-          server: server.name,
+          server: nameOf(server),
           plan: subscription.tierName,
           date,
           count: notice.daysLeft,

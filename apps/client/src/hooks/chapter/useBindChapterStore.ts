@@ -15,7 +15,7 @@ export function useBindChapterStore(storyId: string, fetchWhen: boolean) {
   }, [drizzleDb, initializeService, setDbAndStoryId, storyId]);
 
   useEffect(() => {
-    if (fetchWhen && storyId) fetchChapters();
+    if (fetchWhen && storyId) void fetchChapters();
   }, [fetchChapters, fetchWhen, storyId]);
 
   return { chapters };

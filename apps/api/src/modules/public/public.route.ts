@@ -2,6 +2,7 @@ import { APP_RELEASE, ShowcaseSearchQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { jwtShowcase } from '@/config/jwt';
 import type { JWTPayload } from '@/index';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
 import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { packService } from '@/services/story-packages/PackService';
 import { publicationStorageService } from '@/services/publication/PublicationStorageService';
@@ -73,8 +74,12 @@ export const publicRoutes = new Elysia()
     '/config',
     async () => {
       const settings = await showcaseSettingsService.getOrCreate();
+      const registration = await registrationSettingsService.getOrCreate();
       return {
         showcaseEnabled: settings.isShowcaseEnabled,
+        // The hosted web client sends a new person to sign in or register before anything else.
+        // Absent on older servers: a client that finds no such field asks for nothing.
+        requireAccountOnboarding: registration.requireAccountOnboarding,
         // Whether the root of this server is the landing page: the showcase offers its way back only then.
         landingEnabled: settings.isLandingEnabled,
         // Absent on older servers: a client that finds no such field publishes the legacy way.
@@ -92,6 +97,7 @@ export const publicRoutes = new Elysia()
     {
       response: t.Object({
         showcaseEnabled: t.Boolean(),
+        requireAccountOnboarding: t.Boolean(),
         landingEnabled: t.Boolean(),
         compiledUpload: t.Boolean(),
         serverVersion: t.String(),

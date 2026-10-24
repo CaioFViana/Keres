@@ -100,6 +100,8 @@ const ENTITY_DETAIL_SCREEN =
 /** Shared lifecycle owners that refresh visible data from local entity events. */
 const SHARED_REFRESH_LIFECYCLE_OWNERS = [
   'components/features/app/SyncInitializer.tsx',
+  'hooks/lists/useDetailRecord.ts',
+  'hooks/lists/useLoadedResource.ts',
   'hooks/arcs/useAppearsInArcs.ts',
   'hooks/arcs/useEntityArcIds.ts',
   'hooks/entity/useCustomAttributeValues.ts',
@@ -234,15 +236,22 @@ describe('import boundaries', () => {
   });
 
   it('uses the entity initial-load lifecycle in every protected refresh owner', () => {
+    // A detail screen either runs the lifecycle itself or reads its record through `useDetailRecord`,
+    // which runs it (checked among the shared owners below).
     const missingDetailLifecycle = sourceFiles
       .filter((path) => ENTITY_DETAIL_SCREEN.test(relativeOf(path)))
-      .filter((path) => !readFileSync(path, 'utf8').includes('useEntityInitialLoad('))
+      .filter((path) => {
+        const source = readFileSync(path, 'utf8');
+        return !source.includes('useEntityInitialLoad(') && !source.includes('useDetailRecord(');
+      })
       .map(relativeOf)
       .sort();
 
-    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter(
-      (path) => !readFileSync(join(SOURCE_ROOT, path), 'utf8').includes('useEntityInitialLoad('),
-    ).sort();
+    // A shared hook runs the lifecycle itself, or reads through `useLoadedResource`, which does.
+    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter((path) => {
+      const source = readFileSync(join(SOURCE_ROOT, path), 'utf8');
+      return !source.includes('useEntityInitialLoad(') && !source.includes('useLoadedResource(');
+    }).sort();
 
     expect({ missingDetailLifecycle, missingSharedLifecycle }).toEqual({
       missingDetailLifecycle: [],

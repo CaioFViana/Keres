@@ -29,7 +29,9 @@ export function sketchItemPath(item: SketchItem): SkPath | null {
   let path: SkPath | null = null;
   try {
     path = data ? Skia.Path.MakeFromSVGString(data) : null;
-    if (path && item.kind === 'fill') path.setFillType(FillType.EvenOdd);
+    if (path && item.kind === 'fill') {
+      path = Skia.PathBuilder.MakeFromPath(path).setFillType(FillType.EvenOdd).detach();
+    }
   } catch {
     path = null;
   }

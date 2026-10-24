@@ -73,7 +73,7 @@ it('loads every supported type, excludes the current entity, and groups the resu
   );
 });
 
-it('skips loading with no story and resets empty options after a failed reload', async () => {
+it('skips loading with no story and keeps the options after a failed reload', async () => {
   const missing = await renderHook(() =>
     useSeeAlsoEntityOptions(undefined, 'Character', undefined),
   );
@@ -82,7 +82,9 @@ it('skips loading with no story and resets empty options after a failed reload',
 
   const loaded = await renderHook(() => useSeeAlsoEntityOptions('story-1', 'Character', undefined));
   await waitFor(() => expect(loaded.result.current.loading).toBe(false));
+  const known = loaded.result.current.options;
   (loadEntityOptions as jest.Mock).mockRejectedValueOnce(new Error('offline'));
   await act(async () => loaded.result.current.reload());
-  expect(loaded.result.current.options).toEqual([]);
+  // A reload that fails keeps the options already read instead of emptying the picker.
+  expect(loaded.result.current.options).toEqual(known);
 });

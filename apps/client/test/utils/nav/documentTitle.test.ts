@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
 import { useFocusEffect } from '@react-navigation/native';
 import { renderHook } from '@testing-library/react-native';

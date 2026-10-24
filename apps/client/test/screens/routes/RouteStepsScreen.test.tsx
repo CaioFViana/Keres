@@ -10,6 +10,9 @@ let mockStory: any = null;
 let mockRoutesData: any = null;
 let mockUserId: string | null = 'user-1';
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
   useRoute: () => ({ params: mockRouteParams }),
@@ -84,7 +87,7 @@ jest.mock('@/src/screens/routes/useStoryRoutes', () => ({
 
 jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockStableDb }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));

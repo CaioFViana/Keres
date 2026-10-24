@@ -4,21 +4,14 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import type { Chapter } from '@keres/shared/entities/narrative/Chapter';
-import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
-import type { Choice } from '@keres/shared/entities/narrative/Choice';
 import type { Effect } from '@keres/shared/entities/narrative/Effect';
-import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item';
-import type { Location } from '@keres/shared/entities/narrative/Location';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import type { SceneSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { stripManuscriptMarkers } from '@keres/shared';
-import { readStoredSceneBodyText } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
@@ -30,18 +23,16 @@ import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { sceneFixedDate } from '@/src/utils/scene/sceneFixedDate';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
-import {
-  useEntityEventSubscriptions,
-  useEntityInitialLoad,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NarrativeElementsScreenNavigationProp } from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
 import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';
+import { useSceneDetailLists } from './useSceneDetailLists';
+import { useSceneDraftFlag } from './useSceneDraftFlag';
 import { useSceneDetailServices } from './useSceneDetailServices';
-import { logger } from '@/src/utils/logging/logger';
 
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
 
@@ -74,28 +65,22 @@ const SceneDetailScreen = () => {
   const { selectedStory } = useStoryStore();
   const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
 
+  const services = useSceneDetailServices(selectedStory?.id);
+  const { characters } = services;
   const {
-    characters,
-    sceneServiceRef,
-    chapterServiceRef,
-    choiceServiceRef,
-    characterSceneServiceRef,
-    locationServiceRef,
-    itemServiceRef,
-    itemJourneyServiceRef,
-    effectServiceRef,
-  } = useSceneDetailServices(selectedStory?.id);
-  const [scene, setScene] = useState<SceneSelect | null>(null);
+    record: scene,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: sceneId,
+    load: services.sceneService.getById,
+    event: 'scene_changed',
+    label: 'scene details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(scene?.storyId);
   const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
     useEntityComments(scene?.storyId, 'Scene', sceneId);
-  const [chapter, setChapter] = useState<Chapter | null>(null);
-  const [location, setLocation] = useState<Location | null>(null);
-  const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined);
-  const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined);
-  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]);
-  const [incomingChoicesForScene, setIncomingChoicesForScene] = useState<Choice[]>([]);
-  const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({}); // For choice target/source scene labels
   const {
     selectedTags: sceneTags,
     allNotes,
@@ -103,401 +88,39 @@ const SceneDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Scene', entityId: sceneId });
-  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]);
-  const [allItems, setAllItems] = useState<Item[]>([]);
-  const [itemJourneys, setItemJourneys] = useState<ItemJourney[]>([]);
-  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]);
   const isBranching = selectedStory?.type === 'branching';
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
-  const [hasBodyDraft, setHasBodyDraft] = useState(false);
+  const {
+    chapter,
+    location,
+    previousScene,
+    nextScene,
+    choicesForScene,
+    incomingChoicesForScene,
+    sceneNamesById,
+    characterSceneRelations,
+    allItems,
+    itemJourneys,
+    sceneEffects,
+  } = useSceneDetailLists(services, {
+    storyId: selectedStory?.id,
+    sceneId,
+    chapterId: scene?.chapterId,
+    locationId: scene?.locationId,
+    enabled: scene !== null,
+    isLinear: selectedStory?.type === 'linear',
+    isBranching,
+  });
+  const hasBodyDraft = useSceneDraftFlag(scene?.storyId, sceneId, scene?.body);
 
   const styles = useThemedStyles(createStyles);
 
-  const fetchScene = useCallback(async () => {
-    if (!sceneServiceRef.current) {
-      logger.warn('Scene service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedScene = await sceneServiceRef.current.getById(sceneId);
-      if (fetchedScene && !fetchedScene.isDeleted) {
-        setScene(fetchedScene);
-        setHeaderTitle(fetchedScene.name || copy.detailsTitle);
-      } else if (fetchedScene && fetchedScene.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(copy.notFound);
-        setHeaderTitle(copy.notFound);
-      }
-    } catch (err) {
-      logger.error('Failed to fetch scene details:', err);
-      setError(copy.failedToLoad);
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    sceneServiceRef,
-    sceneId,
-    setScene,
-    setLoading,
-    setError,
-    setHeaderTitle,
-    navigation,
-    copy,
-    t,
-  ]);
-
-  const fetchChapter = useCallback(async () => {
-    if (!chapterServiceRef.current || !scene?.chapterId) {
-      setChapter(null);
-      return;
-    }
-    try {
-      const fetchedChapter = await chapterServiceRef.current.getById(scene.chapterId);
-      setChapter(fetchedChapter || null);
-    } catch (err) {
-      logger.error('Failed to fetch chapter details:', err);
-      setChapter(null);
-    }
-  }, [chapterServiceRef, scene?.chapterId]);
-
-  const fetchLocation = useCallback(async () => {
-    if (!locationServiceRef.current || !scene?.locationId) {
-      setLocation(null);
-      return;
-    }
-    try {
-      const fetchedLocation = await locationServiceRef.current.getById(scene.locationId);
-      setLocation(fetchedLocation || null);
-    } catch (err) {
-      logger.error('Failed to fetch location details:', err);
-      setLocation(null);
-    }
-  }, [locationServiceRef, scene?.locationId]);
-
-  const fetchPreviousNextScenes = useCallback(async () => {
-    if (
-      !sceneServiceRef.current ||
-      !selectedStory?.id ||
-      !sceneId ||
-      !scene?.chapterId ||
-      selectedStory.type !== 'linear'
-    ) {
-      setPreviousScene(undefined);
-      setNextScene(undefined);
-      return;
-    }
-    try {
-      const { previousScene, nextScene } = await sceneServiceRef.current.getPreviousNextScenes(
-        selectedStory.id,
-        sceneId,
-        scene.chapterId,
-      );
-      setPreviousScene(previousScene);
-      setNextScene(nextScene);
-    } catch (err) {
-      logger.error('Failed to fetch previous/next scenes:', err);
-      setPreviousScene(undefined);
-      setNextScene(undefined);
-    }
-  }, [sceneServiceRef, selectedStory?.id, sceneId, scene?.chapterId, selectedStory?.type]);
-
-  const fetchChoicesForScene = useCallback(async () => {
-    if (
-      !choiceServiceRef.current ||
-      !selectedStory?.id ||
-      !sceneId ||
-      selectedStory.type !== 'branching'
-    ) {
-      setChoicesForScene([]);
-      return;
-    }
-    try {
-      // `sceneId` is the criterion the service understands, and it filters by the choices that *leave* this
-      // scene, which is what the navigation buttons below offer. `fromSceneId` did not exist: it fell into
-      // the generic criteria sweep and took the query down.
-      const choices = await choiceServiceRef.current.getChoicesByStoryId(
-        selectedStory.id,
-        undefined,
-        undefined,
-        undefined,
-        { sceneId },
-      );
-      setChoicesForScene(choices);
-    } catch (err) {
-      logger.error('Failed to fetch choices for scene:', err);
-      setChoicesForScene([]);
-    }
-  }, [choiceServiceRef, selectedStory?.id, sceneId, selectedStory?.type]);
-
-  const fetchIncomingChoicesForScene = useCallback(async () => {
-    if (
-      !choiceServiceRef.current ||
-      !selectedStory?.id ||
-      !sceneId ||
-      selectedStory.type !== 'branching'
-    ) {
-      setIncomingChoicesForScene([]);
-      return;
-    }
-    try {
-      const choices = await choiceServiceRef.current.getChoicesByStoryId(
-        selectedStory.id,
-        undefined,
-        undefined,
-        undefined,
-        { nextSceneId: sceneId },
-      );
-      setIncomingChoicesForScene(choices);
-    } catch (err) {
-      logger.error('Failed to fetch incoming choices for scene:', err);
-      setIncomingChoicesForScene([]);
-    }
-  }, [choiceServiceRef, selectedStory?.id, sceneId, selectedStory?.type]);
-
-  const fetchSceneNames = useCallback(async () => {
-    if (!sceneServiceRef.current || !selectedStory?.id || selectedStory.type !== 'branching') {
-      setSceneNamesById({});
-      return;
-    }
-    try {
-      const allScenes = await sceneServiceRef.current.getAllByStoryId(selectedStory.id);
-      setSceneNamesById(Object.fromEntries(allScenes.map((s) => [s.id, s.name])));
-    } catch (err) {
-      logger.error('Failed to fetch scene name lookups:', err);
-    }
-  }, [sceneServiceRef, selectedStory?.id, selectedStory?.type]);
-
-  const fetchCharacterSceneRelations = useCallback(async () => {
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !sceneId) {
-      setCharacterSceneRelations([]);
-      return;
-    }
-    try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForScene(
-        selectedStory.id,
-        sceneId,
-      );
-      setCharacterSceneRelations(fetchedRelations);
-    } catch (err) {
-      logger.error('Failed to fetch character-scene relations:', err);
-    }
-  }, [characterSceneServiceRef, selectedStory?.id, sceneId]);
-
-  const fetchAllItems = useCallback(async () => {
-    if (!itemServiceRef.current || !selectedStory?.id) {
-      setAllItems([]);
-      return;
-    }
-    try {
-      const fetchedItems = await itemServiceRef.current.getItemsByStoryId(selectedStory.id);
-      setAllItems(fetchedItems);
-    } catch (err) {
-      logger.error('Failed to fetch all items:', err);
-    }
-  }, [itemServiceRef, selectedStory?.id]);
-
-  const fetchItemJourneysForScene = useCallback(async () => {
-    if (!itemJourneyServiceRef.current || !selectedStory?.id || !sceneId) {
-      setItemJourneys([]);
-      return;
-    }
-    try {
-      const fetchedJourneys = await itemJourneyServiceRef.current.getItemJourneysBySceneId(
-        selectedStory.id,
-        sceneId,
-      );
-      setItemJourneys(fetchedJourneys);
-    } catch (err) {
-      logger.error('Failed to fetch item journeys for scene:', err);
-    }
-  }, [itemJourneyServiceRef, selectedStory?.id, sceneId]);
-
-  const fetchSceneEffects = useCallback(async () => {
-    if (!effectServiceRef.current || !selectedStory?.id || !sceneId) {
-      setSceneEffects([]);
-      return;
-    }
-    try {
-      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(
-        selectedStory.id,
-        'Scene',
-        sceneId,
-      );
-      setSceneEffects(fetchedEffects);
-    } catch (err) {
-      logger.error('Failed to fetch scene effects:', err);
-    }
-  }, [effectServiceRef, selectedStory?.id, sceneId]);
-
-  const handleEffectChange = useCallback(
-    (changedStoryId: string, changedEntityId: string) => {
-      if (selectedStory?.id === changedStoryId && changedEntityId === sceneId) {
-        fetchSceneEffects();
-      }
-    },
-    [selectedStory?.id, sceneId, fetchSceneEffects],
-  );
-
-  const handleItemChange = useCallback(
-    (changedStoryId: string, _changedItemId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchAllItems();
-      }
-    },
-    [selectedStory?.id, fetchAllItems],
-  );
-
-  const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, _changedItemJourneyId: string) => {
-      if (selectedStory?.id === changedStoryId) {
-        fetchItemJourneysForScene();
-      }
-    },
-    [selectedStory?.id, fetchItemJourneysForScene],
-  );
-
-  const handleSceneChange = useCallback(
-    async (_changedStoryId: string, changedSceneId: string) => {
-      if (changedSceneId === sceneId) {
-        if (sceneServiceRef.current) {
-          const updatedScene = await sceneServiceRef.current.getById(sceneId);
-          if (!updatedScene || updatedScene.isDeleted) {
-            navigation.goBack();
-          } else {
-            setScene(updatedScene);
-            setHeaderTitle(updatedScene.name || copy.detailsTitle);
-          }
-        }
-        fetchChapter();
-        if (selectedStory?.type === 'linear') {
-          fetchPreviousNextScenes();
-        } else if (selectedStory?.type === 'branching') {
-          fetchChoicesForScene();
-          fetchIncomingChoicesForScene();
-        }
-      }
-    },
-    [
-      sceneId,
-      sceneServiceRef,
-      navigation,
-      setScene,
-      setHeaderTitle,
-      copy,
-      fetchChapter,
-      selectedStory?.type,
-      fetchPreviousNextScenes,
-      fetchChoicesForScene,
-      fetchIncomingChoicesForScene,
-    ],
-  );
-
-  const handleCharacterSceneChange = useCallback(
-    (_changedStoryId: string, changedSceneId: string) => {
-      if (changedSceneId === sceneId) {
-        fetchCharacterSceneRelations();
-      }
-    },
-    [sceneId, fetchCharacterSceneRelations],
-  );
-
-  // Fetching a scene and subscribing to its auxiliary changes are deliberately separate effects.
-  // The handlers below legitimately change when related scene state changes; coupling that to the
-  // initial fetch used to fetch and replace `scene` again on every re-subscription.
-  useEntityInitialLoad(fetchScene);
-
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [
-        { event: 'scene_changed', listener: handleSceneChange },
-        {
-          event: 'character_scene_changed',
-          listener: handleCharacterSceneChange,
-        },
-        { event: 'item_changed', listener: handleItemChange },
-        { event: 'item_journey_changed', listener: handleItemJourneyChange },
-        { event: 'effect_changed', listener: handleEffectChange },
-      ],
-      [
-        handleSceneChange,
-        handleCharacterSceneChange,
-        handleItemChange,
-        handleItemJourneyChange,
-        handleEffectChange,
-      ],
-    ),
-  );
-
-  useEffect(() => {
-    if (scene) {
-      fetchChapter();
-      fetchLocation();
-      fetchCharacterSceneRelations();
-      fetchAllItems();
-      fetchItemJourneysForScene();
-      if (isBranching) {
-        fetchSceneEffects();
-      }
-    }
-  }, [
-    scene,
-    fetchChapter,
-    fetchLocation,
-    fetchCharacterSceneRelations,
-    fetchAllItems,
-    fetchItemJourneysForScene,
-    isBranching,
-    fetchSceneEffects,
-  ]);
-
-  useEffect(() => {
-    if (selectedStory?.type === 'linear' && scene && chapter) {
-      fetchPreviousNextScenes();
-    } else if (selectedStory?.type === 'branching' && scene) {
-      fetchChoicesForScene();
-      fetchIncomingChoicesForScene();
-      fetchSceneNames();
-    }
-  }, [
-    selectedStory,
-    selectedStory?.type,
-    scene,
-    chapter,
-    fetchPreviousNextScenes,
-    fetchChoicesForScene,
-    fetchIncomingChoicesForScene,
-    fetchSceneNames,
-  ]);
-
-  // The draft flag refreshes on focus too: leaving the editor without saving emits no
-  // scene event, so data alone would leave a stale indicator behind.
-  // The flag means "a stored draft exists AND differs from the saved body": a draft that
-  // already matches (saved elsewhere, then revisited) reads clean, and corrupt or missing
-  // rows read as no flag rather than failing the screen.
-  const refreshBodyDraftFlag = useCallback(async () => {
-    if (!scene?.storyId) {
-      setHasBodyDraft(false);
-      return;
-    }
-    const draft = await readStoredSceneBodyText(scene.storyId, sceneId);
-    setHasBodyDraft(!!draft && draft !== (scene.body ?? ''));
-  }, [scene?.storyId, scene?.body, sceneId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `refreshBodyDraftFlag` clears synchronously only when no scene is loaded; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    void refreshBodyDraftFlag();
-  }, [refreshBodyDraftFlag]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshBodyDraftFlag();
-    }, [refreshBodyDraftFlag]),
-  );
+  const headerTitle = scene
+    ? scene.name || copy.detailsTitle
+    : failure === 'notFound'
+      ? copy.notFound
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   const openEditor = useCallback(() => {
     navigation.navigate('SceneEditor', { sceneId });
@@ -548,8 +171,14 @@ const SceneDetailScreen = () => {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={failure === 'notFound' ? copy.notFound : copy.failedToLoad}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   if (!scene) {

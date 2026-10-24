@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import type { AppAlertButton } from '@/src/state/ui/appAlertStore';
-import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
+import { pressAlertButton, useAppAlertStore } from '@/src/state/ui/appAlertStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
@@ -22,7 +22,7 @@ const AppAlertHost: React.FC = () => {
       // It closes before triggering the button: the `onPress` itself often opens another alert (a deletion
       // error, for instance), which needs to replace this one, not stack on top of it.
       dismiss();
-      button.onPress?.();
+      pressAlertButton(button);
     },
     [dismiss],
   );
@@ -39,7 +39,9 @@ const AppAlertHost: React.FC = () => {
       visible
       transparent
       animationType="fade"
-      onRequestClose={() => current.cancelable && dismiss()}
+      onRequestClose={() => {
+        if (current.cancelable) dismiss();
+      }}
     >
       <TouchableOpacity
         style={styles.backdrop}

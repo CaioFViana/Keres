@@ -68,6 +68,9 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value, disabled }}
+      // The web build reads the `aria-*` form: without it the role says "switch" and nothing says whether it is on.
+      aria-checked={value}
+      aria-disabled={disabled}
       disabled={disabled}
       testID={testID}
       onPress={() => onValueChange(!value)}

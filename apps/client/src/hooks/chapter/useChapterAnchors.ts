@@ -1,12 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ChapterAnchorSelect } from '@/src/db/schema';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { createChapterAnchorService } from '@/src/services/storymanagement/scenes-chapters/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 
 export type ChapterAnchorRow = ChapterAnchorSelect;
+
+const NOTHING_LOADED: {
+  anchors: ChapterAnchorRow[];
+  scenes: AnchorSceneChoice[];
+  hasContents: boolean;
+} = { anchors: [], scenes: [], hasContents: false };
 
 /** A scene a stretch may be pinned to, named the way the writer will recognise it. */
 export interface AnchorSceneChoice {
@@ -40,22 +47,19 @@ export function useChapterAnchors(
 ) {
   const db = useDrizzle();
   const storyType = useStoryStore((state) => state.selectedStory?.type);
-  const [anchors, setAnchors] = useState<ChapterAnchorRow[]>([]);
-  const [scenes, setScenes] = useState<AnchorSceneChoice[]>([]);
-  const [hasContents, setHasContents] = useState(false);
+  const load = useMemo(
+    () => async () => {
+      const [anchors, loadedScenes, containers] = await Promise.all([
+        createChapterAnchorService(db).getAnchorsForChapter(chapterId),
+        createSceneService(db).getAllByStoryId(storyId),
+        createChapterService(db).getAllByStoryId(storyId, 'chapter'),
+      ]);
+      const hasContents = loadedScenes.some(
+        (scene) => !scene.isDeleted && scene.chapterId === chapterId,
+      );
 
-  const reload = useCallback(async () => {
-    const [loadedAnchors, loadedScenes, containers] = await Promise.all([
-      createChapterAnchorService(db).getAnchorsForChapter(chapterId),
-      createSceneService(db).getAllByStoryId(storyId),
-      createChapterService(db).getAllByStoryId(storyId, 'chapter'),
-    ]);
-    setAnchors(loadedAnchors);
-    setHasContents(loadedScenes.some((scene) => !scene.isDeleted && scene.chapterId === chapterId));
-
-    const byId = new Map(containers.filter((one) => !one.isDeleted).map((one) => [one.id, one]));
-    setScenes(
-      loadedScenes
+      const byId = new Map(containers.filter((one) => !one.isDeleted).map((one) => [one.id, one]));
+      const scenes: AnchorSceneChoice[] = loadedScenes
         .filter(
           (scene): scene is typeof scene & { chapterId: string } =>
             !scene.isDeleted && Boolean(scene.chapterId && byId.has(scene.chapterId)),
@@ -73,14 +77,15 @@ export function useChapterAnchors(
               : (chapter?.name ?? '');
           const sceneLabel = storyType === 'linear' ? `${scene.index}. ${scene.name}` : scene.name;
           return { id: scene.id, label: `${chapterLabel} · ${sceneLabel}` };
-        }),
-    );
-  }, [chapterId, db, storyId, storyType]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-    void reload();
-  }, [reload]);
+        });
+      return { anchors, scenes, hasContents };
+    },
+    [chapterId, db, storyId, storyType],
+  );
+  const {
+    data: { anchors, scenes, hasContents },
+    reload,
+  } = useLoadedResource({ load, initial: NOTHING_LOADED, label: 'chapter anchors' });
 
   const save = useCallback(
     async (input: ChapterAnchorInput, anchorId: string | null) => {

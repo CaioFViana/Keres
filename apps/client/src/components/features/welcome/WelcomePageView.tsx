@@ -39,6 +39,8 @@ interface WelcomePageViewProps {
   active: boolean;
   /** A line above the title, for the first page. */
   eyebrow?: string;
+  /** The server asks for an account right after this welcome: the last page says so. */
+  accountRequired?: boolean;
   /** What goes under the rows, such as the form of the last page. */
   children?: React.ReactNode;
 }
@@ -56,6 +58,7 @@ const WelcomePageView: React.FC<WelcomePageViewProps> = ({
   pageWidth,
   active,
   eyebrow,
+  accountRequired,
   children,
 }) => {
   const { t } = useTranslation();
@@ -95,7 +98,7 @@ const WelcomePageView: React.FC<WelcomePageViewProps> = ({
       >
         {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
         <Text style={styles.title}>{t(WELCOME_TITLE_KEYS[page])}</Text>
-        {welcomeRows(page, flavor).map((row) => (
+        {welcomeRows(page, flavor, accountRequired).map((row) => (
           <View key={row.textKey} style={styles.row}>
             <View style={styles.badge}>
               <Ionicons name={row.icon} size={split ? 24 : 20} color={colors.onPrimaryContainer} />

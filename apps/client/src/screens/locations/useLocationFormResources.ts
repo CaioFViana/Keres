@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import {
   createLocationRelationService,
@@ -12,10 +12,9 @@ export function useLocationFormResources() {
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
   const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
 
-  useEffect(() => {
-    locationServiceRef.current ??= createLocationService(drizzleDb);
-    locationRelationServiceRef.current ??= createLocationRelationService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  locationServiceRef.current ??= createLocationService(drizzleDb);
+  locationRelationServiceRef.current ??= createLocationRelationService(drizzleDb);
 
   return {
     drizzleDb,

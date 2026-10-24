@@ -15,7 +15,7 @@ concurrency:
 env:
   # Same version pinned in release.yml, for the same reason: always install with the lockfile
   # format bun.lock was generated with.
-  BUN_VERSION: '1.2.19'
+  BUN_VERSION: '1.4.4'
 
 jobs:
   # One job per package instead of a single sequential chain: every package reports its own
@@ -45,17 +45,17 @@ jobs:
       # when the package does not declare it.
       - run: bun scripts/run-all.ts typecheck --only ${{ matrix.name }}
       # Lint here is ESLint, in the client and the web app only: Biome's packages are checked once, for
-      # all of them, by the `static` job below. The client's ESLint is the slow one - minutes from
-      # cold - so its cache, and the web app's, are restored first. Both scripts ask ESLint to key the
-      # cache by file content (`--cache-strategy content`): a checkout gives every file a fresh
-      # mtime, which would make the default strategy miss on every run. A stale cache only costs
-      # time, never a wrong result.
-      - if: matrix.name == 'client' || matrix.name == 'web'
+      # all of them, by the `static` job below. The web app's cache is restored first, keyed by file
+      # content (`--cache-strategy content`: a checkout gives every file a fresh mtime, which would make
+      # the default strategy miss on every run). That is safe only because its rules read one file at a
+      # time. The client's are type-aware (`no-floating-promises`): a file's result depends on the types
+      # of the files it imports, which a content-keyed cache does not see, so a cached "clean" outlived
+      # the change that made it wrong - green on a machine, red from a cold checkout. The client lints
+      # with no cache at all.
+      - if: matrix.name == 'web'
         uses: actions/cache@v4
         with:
-          path: |
-            apps/client/.expo/cache/eslint
-            apps/web/node_modules/.cache/eslint
+          path: apps/web/node_modules/.cache/eslint
           key: eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
             eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-

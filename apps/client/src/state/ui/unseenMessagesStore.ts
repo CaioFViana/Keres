@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { logger } from '@/src/utils/logging/logger';
 
 const STORAGE_KEY = '@keres/messages-seen';
 
@@ -118,7 +119,9 @@ export const useUnseenMessagesStore = create<UnseenMessagesState>((set, get) => 
   reset: () => {
     hydration = null;
     set({ unseen: {}, seen: {}, baselined: [] });
-    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    AsyncStorage.removeItem(STORAGE_KEY).catch((error) =>
+      logger.debug('Clearing the unseen messages failed.', error),
+    );
   },
 }));
 

@@ -38,6 +38,22 @@ it('creates settings once and increments their version when updating them', asyn
   expect(await getClientSettings(database.db)).toEqual(expect.objectContaining({ id: created.id }));
 });
 
+it('keeps community servers off until the setting is saved on, and reads it back', async () => {
+  const created = await createClientSettings(database.db, {
+    localUsername: 'Caio',
+    language: 'pt-BR',
+    darkMode: false,
+  });
+  expect(created.allowCommunityServers).toBe(false);
+
+  const updated = await updateClientSettings(database.db, { allowCommunityServers: true });
+
+  expect(updated.allowCommunityServers).toBe(true);
+  expect(await getClientSettings(database.db)).toEqual(
+    expect.objectContaining({ allowCommunityServers: true }),
+  );
+});
+
 it('refuses every operation without a database instead of failing cryptically later', async () => {
   const noDb = undefined as never;
 

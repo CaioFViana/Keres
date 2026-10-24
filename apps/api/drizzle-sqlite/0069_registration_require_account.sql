@@ -1,0 +1,1 @@
+ALTER TABLE `registration_settings` ADD `require_account_onboarding` integer DEFAULT false NOT NULL;

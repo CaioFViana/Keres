@@ -208,7 +208,7 @@ export async function deliverFile(
   // `overwrite` because exporting the same story twice on the same day produces the same
   // name, and failing on that would be a senseless error for the user.
   file.create({ overwrite: true, intermediates: true });
-  file.write(contents);
+  await file.write(contents);
 
   if (!(await Sharing.isAvailableAsync())) {
     return { delivered: false, uri: file.uri, fileName };

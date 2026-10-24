@@ -51,6 +51,7 @@ describe('tiers display mode', () => {
       maxUsers: null,
       autoManage: false,
       allowNsfw: false,
+      requireAccountOnboarding: false,
       defaultTierId: null,
       currency: 'BRL',
       tiersDisplay: 'info',

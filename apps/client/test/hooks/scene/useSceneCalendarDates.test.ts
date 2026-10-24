@@ -28,13 +28,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () =>
   __esModule: true,
   createChapterService: jest.fn(() => mockChapterService),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    useEntityInitialLoad: (load: () => Promise<void>) => React.useEffect(() => void load(), [load]),
-  };
-});
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockSceneService.getAllByStoryId.mockResolvedValue([

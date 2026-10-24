@@ -1,14 +1,14 @@
 import type { ShowcaseStoryDetail } from '@keres/shared';
 import { isProtectedStub } from '@keres/shared';
-import { useCallback, useEffect, useState } from 'react';
-import { isNotFoundError, isOfflineError } from '@/src/services/api/apiClient';
+import { useCallback, useMemo, useState } from 'react';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import {
   showcaseApiService,
   ShowcaseUnlockError,
   type ShowcaseSource,
   type ShowcaseUnlockFailure,
 } from '@/src/services/api/ShowcaseApiService';
-import { logger } from '@/src/utils/logging/logger';
+import { showcaseReadFailure } from './showcaseReadStatus';
 
 export type ShowcaseStoryState =
   | { status: 'loading' }
@@ -38,40 +38,24 @@ export function useShowcaseStory(
   source: ShowcaseSource | null,
   storyId: string,
 ): ShowcaseStoryHandle {
-  const [state, setState] = useState<ShowcaseStoryState>({ status: 'loading' });
+  const [unlocked, setUnlocked] = useState<ShowcaseStoryDetail | null>(null);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockFailure, setUnlockFailure] = useState<ShowcaseUnlockFailure | null>(null);
-  const [reloads, setReloads] = useState(0);
 
-  useEffect(() => {
-    if (!source) return undefined;
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- going back to "loading" belongs to starting the read.
-    setState({ status: 'loading' });
-    showcaseApiService
-      .getStory(source, storyId)
-      .then((result) => {
-        if (cancelled) return;
-        setState(
-          isProtectedStub(result) ? { status: 'locked' } : { status: 'open', story: result },
-        );
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        logger.debug('useShowcaseStory: could not read the story.', error);
-        setState({
-          status: isNotFoundError(error)
-            ? 'not_found'
-            : isOfflineError(error)
-              ? 'unreachable'
-              : 'failed',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [source, storyId, reloads]);
+  const load = useMemo(
+    () => (source ? () => showcaseApiService.getStory(source, storyId) : null),
+    [source, storyId],
+  );
+  const { data, failed, error, retry } = useLoadedResource<Awaited<
+    ReturnType<typeof showcaseApiService.getStory>
+  > | null>({ load, initial: null, label: 'the story', quiet: true });
+
+  const state = useMemo<ShowcaseStoryState>(() => {
+    if (unlocked) return { status: 'open', story: unlocked };
+    if (data) return isProtectedStub(data) ? { status: 'locked' } : { status: 'open', story: data };
+    return failed ? { status: showcaseReadFailure(error) } : { status: 'loading' };
+  }, [unlocked, data, failed, error]);
 
   const unlock = useCallback(
     async (password: string) => {
@@ -86,7 +70,7 @@ export function useShowcaseStory(
           return;
         }
         setUnlockToken(token);
-        setState({ status: 'open', story: result });
+        setUnlocked(result);
       } catch (error) {
         setUnlockFailure(error instanceof ShowcaseUnlockError ? error.reason : 'failed');
       } finally {
@@ -96,7 +80,10 @@ export function useShowcaseStory(
     [source, storyId],
   );
 
-  const reload = useCallback(() => setReloads((count) => count + 1), []);
+  const reload = useCallback(() => {
+    setUnlocked(null);
+    retry();
+  }, [retry]);
 
   return { state, unlockToken, unlocking, unlockFailure, unlock, reload };
 }

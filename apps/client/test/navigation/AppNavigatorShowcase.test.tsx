@@ -60,6 +60,16 @@ jest.mock('@/src/services/showcase/showcaseRequest', () => ({
   __esModule: true,
   readShowcaseRequest: jest.fn(),
 }));
+const mockHosted = { current: false };
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/platform/clientFlavor'),
+  isHostedByApi: () => mockHosted.current,
+}));
+const mockFetchAccountRequirement = jest.fn();
+jest.mock('@/src/services/api/AccountRequirementApiService', () => ({
+  __esModule: true,
+  fetchAccountRequirement: (...args: unknown[]) => mockFetchAccountRequirement(...args),
+}));
 jest.mock('@/src/components/features/app/SyncInitializer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -97,6 +107,8 @@ beforeEach(() => {
   initializeSettings.mockResolvedValue(undefined);
   initializeTheme.mockResolvedValue(undefined);
   mockPrepareShowcase.mockRejectedValue(new Error('the capture window is gone'));
+  mockHosted.current = false;
+  mockFetchAccountRequirement.mockResolvedValue(false);
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -131,6 +143,17 @@ it('falls back to onboarding when showcase preparation fails', async () => {
   const navigator = await renderNavigator();
 
   expect(navigator).toMatchObject({ initialRouteName: 'ColdInstall' });
+});
+
+it('never asks the account gate of the server while a showcase is captured', async () => {
+  mockHosted.current = true;
+  mockFetchAccountRequirement.mockResolvedValue(true);
+  mockPrepareShowcase.mockResolvedValue(true);
+
+  const navigator = await renderNavigator();
+
+  expect(mockFetchAccountRequirement).not.toHaveBeenCalled();
+  expect(navigator).toMatchObject({ initialRouteName: 'MainSystem' });
 });
 
 it('logs showcase preparation failures', async () => {

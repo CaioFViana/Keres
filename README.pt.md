@@ -6,8 +6,8 @@
   <p><a href="https://caiofviana.github.io/Keres/">Landing page</a></p>
   <p><a href="README.md">English</a> · <strong>Português</strong></p>
 
-  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
-  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-57-000020?logo=expo" alt="Expo 57" /></a>
+  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4.4-14151A?logo=bun" alt="Bun 1.4.4" /></a>
+  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-58-000020?logo=expo" alt="Expo 58" /></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 16" /></a>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&amp;logoColor=white" alt="Docker ready" /></a>
 </div>
@@ -49,7 +49,7 @@ O drawer **Ajuda** está disponível tanto no menu principal quanto no menu de u
 
 ### Requisitos
 
-- [Bun 1.2.19](https://bun.sh/) — versão usada no pipeline de release e na geração do lockfile.
+- [Bun 1.4.4](https://bun.sh/) — versão usada no pipeline de release e na geração do lockfile.
 - [Node.js 20 ou superior](https://nodejs.org/) — usado por scripts auxiliares do cliente Expo.
 - [Docker com Compose](https://docs.docker.com/compose/) — necessário para o PostgreSQL local e para os fluxos em contêiner.
 - Para desenvolvimento nativo: Android Studio/JDK 17 no Android; macOS/Xcode no iOS.

@@ -44,6 +44,7 @@ import { useTranslation } from 'react-i18next';
 import { useStoryCalendar } from './useStoryCalendar';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);
@@ -88,45 +89,50 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   useEffect(() => {
     if (!story) return;
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const [loadedChapters, loadedEvents, loadedScenes, loadedAnchors] = await Promise.all([
-          /*
-           * Chapters and events are fetched apart, and the axis is still built from chapters alone.
-           * The two have independent numberings, so interleaving them into one spine would be
-           * meaningless. Events reach the drawing the other way round: as bands placed by their
-           * anchors, above the scenes rather than among them.
-           */
-          createChapterService(db).getAllByStoryId(story.id, 'chapter'),
-          createChapterService(db).getAllByStoryId(story.id, 'event'),
-          createSceneService(db).getAllByStoryId(story.id),
-          createChapterAnchorService(db).getAnchorsForStory(story.id),
-        ]);
-        if (cancelled) return;
-        const liveEvents = loadedEvents.filter((event) => !event.isDeleted);
-        const liveChapters = loadedChapters.filter((chapter) => !chapter.isDeleted);
-        const visibleEvents = liveEvents.filter((event) => chapterBelongsToArc(event, activeArcId));
-        const visibleChapters = liveChapters
-          .filter((chapter) => chapterBelongsToArc(chapter, activeArcId))
-          .sort((a, b) => a.index - b.index);
-        const chaptersById = new Map(
-          [...liveChapters, ...liveEvents].map((chapter) => [chapter.id, chapter]),
-        );
-        setEvents(visibleEvents);
-        setAnchors(loadedAnchors);
-        setChapters(visibleChapters);
-        setScenes(
-          loadedScenes.filter(
-            (scene) =>
-              !scene.isDeleted && sceneBelongsToActiveArc(scene, chaptersById, activeArcId),
-          ),
-        );
-        setChapterIds(visibleChapters.map((chapter) => chapter.id));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+    fireAndLog(
+      (async () => {
+        setLoading(true);
+        try {
+          const [loadedChapters, loadedEvents, loadedScenes, loadedAnchors] = await Promise.all([
+            /*
+             * Chapters and events are fetched apart, and the axis is still built from chapters alone.
+             * The two have independent numberings, so interleaving them into one spine would be
+             * meaningless. Events reach the drawing the other way round: as bands placed by their
+             * anchors, above the scenes rather than among them.
+             */
+            createChapterService(db).getAllByStoryId(story.id, 'chapter'),
+            createChapterService(db).getAllByStoryId(story.id, 'event'),
+            createSceneService(db).getAllByStoryId(story.id),
+            createChapterAnchorService(db).getAnchorsForStory(story.id),
+          ]);
+          if (cancelled) return;
+          const liveEvents = loadedEvents.filter((event) => !event.isDeleted);
+          const liveChapters = loadedChapters.filter((chapter) => !chapter.isDeleted);
+          const visibleEvents = liveEvents.filter((event) =>
+            chapterBelongsToArc(event, activeArcId),
+          );
+          const visibleChapters = liveChapters
+            .filter((chapter) => chapterBelongsToArc(chapter, activeArcId))
+            .sort((a, b) => a.index - b.index);
+          const chaptersById = new Map(
+            [...liveChapters, ...liveEvents].map((chapter) => [chapter.id, chapter]),
+          );
+          setEvents(visibleEvents);
+          setAnchors(loadedAnchors);
+          setChapters(visibleChapters);
+          setScenes(
+            loadedScenes.filter(
+              (scene) =>
+                !scene.isDeleted && sceneBelongsToActiveArc(scene, chaptersById, activeArcId),
+            ),
+          );
+          setChapterIds(visibleChapters.map((chapter) => chapter.id));
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })(),
+      'useStoryTimeline',
+    );
     return () => {
       cancelled = true;
     };

@@ -356,6 +356,25 @@ describe('BoardNode', () => {
     expect(handlers.onSelect).not.toHaveBeenCalled();
   });
 
+  it('keeps answering a gesture with the latest zoom, node and handlers after a rerender', async () => {
+    const first = nodeHandlers();
+    const view = await render(<BoardNode node={noteNode()} {...baseProps} scale={1} {...first} />);
+    const root = responderOf(view);
+
+    const second = nodeHandlers();
+    const moved = { ...noteNode(), x: 500, y: 500 };
+    await view.rerender(<BoardNode node={moved} {...baseProps} scale={4} {...second} />);
+
+    const drag = dragFrom(200, 200);
+    await act(async () => {
+      root.onResponderGrant(drag.grant());
+      root.onResponderMove(drag.moveTo(220, 200));
+    });
+
+    expect(first.onMove).not.toHaveBeenCalled();
+    expect(second.onMove).toHaveBeenCalledWith('node-1', 505, 500);
+  });
+
   it('lets inner controls own the gesture while layout editing', async () => {
     const handlers = nodeHandlers();
     const view = await render(

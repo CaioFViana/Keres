@@ -43,6 +43,7 @@ import type {
 } from '@/src/utils/analysis/storyAnalysisChecks';
 import { StoryAnalysisCancelledError } from '@/src/utils/analysis/storyAnalysisChecks';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 /**
  * The structural analysis report: it is not search, it is finding what the writer would hardly notice
@@ -142,7 +143,7 @@ const StoryAnalysisScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      loadCheapReport();
+      fireAndLog(loadCheapReport(), 'loadCheapReport');
       // It cancels the heavy analysis in progress when leaving the screen - there is no point in carrying on
       // in the background once nobody is watching the progress.
       return () => abortControllerRef.current?.abort();

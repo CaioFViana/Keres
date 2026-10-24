@@ -5,11 +5,14 @@ const mockService = { getInbox: jest.fn(), getContacts: jest.fn() };
 const mockNotify = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/services/social/MessageService', () => ({
   __esModule: true,
   MESSAGES_CHANGED: 'messages_changed',

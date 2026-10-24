@@ -41,3 +41,21 @@ export function useLiveLegalText(
 
   return live?.key === key ? live.document : null;
 }
+
+/** The server's terms and its privacy policy, each read in the language of the day while its modal is open. */
+export function useLiveServerLegalTexts(
+  server: { url: string; tosVersion?: string | null; privacyVersion?: string | null } | undefined,
+  language: string,
+  open: { terms: boolean; privacy: boolean },
+) {
+  return {
+    liveTerms: useLiveLegalText('tos', server?.url, server?.tosVersion, language, open.terms),
+    livePrivacy: useLiveLegalText(
+      'privacy',
+      server?.url,
+      server?.privacyVersion,
+      language,
+      open.privacy,
+    ),
+  };
+}

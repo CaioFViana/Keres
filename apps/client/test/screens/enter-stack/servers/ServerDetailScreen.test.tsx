@@ -232,6 +232,32 @@ describe('ServerDetailScreen', () => {
     expect(mockUseScreenHeader.mock.calls.at(-1)![0].title).toBe('Main');
   });
 
+  it('calls the official server by its translated name, in the header and on the page, not by its address', async () => {
+    mockGetAllServers.mockResolvedValue([
+      { ...server, name: 'https://keres.me', url: 'https://keres.me' },
+    ]);
+
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('official_server_name');
+
+    // The address is still said, once, under it.
+    expect(view.getAllByText('https://keres.me')).toHaveLength(1);
+    expect(mockUseScreenHeader.mock.calls.at(-1)![0].title).toBe('official_server_name');
+  });
+
+  it('puts the actions that take the account or the server away last, the server itself at the very end', async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByTestId('server-action-connection');
+
+    const order = view.getAllByTestId(/^server-action-/).map((node) => node.props.testID as string);
+    expect(order.at(-1)).toBe('server-action-delete');
+    expect(order.at(-2)).toBe('server-action-delete-account');
+    // Connection settings are something to reach, not something to risk: before the data and the deletions.
+    expect(order.indexOf('server-action-connection')).toBeLessThan(
+      order.indexOf('server-action-export-data'),
+    );
+  });
+
   it('says so when the server never synchronised, and when it does not answer', async () => {
     mockGetAllServers.mockResolvedValue([{ ...server, lastSyncDate: null, tag: null }]);
     mockApiGet.mockRejectedValue(new Error('down'));
@@ -1070,6 +1096,41 @@ describe('ServerDetailScreen', () => {
       expect(view.queryByTestId('server-age-verification')).toBeNull();
     });
   });
+  describe('the age standing of the account', () => {
+    it('says the account is a verified adult, in the card with the other facts of the account', async () => {
+      mockGetOwnProfile.mockResolvedValue({ isAdultVerified: true });
+      const view = await render(<ServerDetailScreen />);
+
+      await view.findByText('age_status_verified');
+      expect(view.getByText('server_age_status_field')).toBeTruthy();
+    });
+
+    it('says the account is not verified when the server says so', async () => {
+      mockGetOwnProfile.mockResolvedValue({ isAdultVerified: false });
+      const view = await render(<ServerDetailScreen />);
+
+      await view.findByText('age_status_unverified');
+      expect(view.queryByText('age_status_verified')).toBeNull();
+    });
+
+    it('says where the check stands while it is not done, instead of "not verified"', async () => {
+      mockGetOwnProfile.mockResolvedValue({ isAdultVerified: false });
+      mockFetchVerificationStatus.mockResolvedValue({ status: 'pending' });
+      const view = await render(<ServerDetailScreen />);
+
+      await view.findByText('age_status_pending');
+      expect(view.queryByText('age_status_unverified')).toBeNull();
+    });
+
+    it('claims nothing while the server has not answered', async () => {
+      mockApiGet.mockRejectedValue(new Error('down'));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('server_status_offline');
+
+      expect(view.queryByText('server_age_status_field')).toBeNull();
+    });
+  });
+
   describe('finishing the age verification', () => {
     const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
 

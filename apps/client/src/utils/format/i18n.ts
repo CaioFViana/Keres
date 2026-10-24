@@ -5,27 +5,31 @@ import { initReactI18next } from 'react-i18next';
 
 import en from '@/src/locales/en.json';
 import pt from '@/src/locales/pt.json';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 // `i18next` exports `use` as a named binding too, but importing it directly trips
 // react-hooks/rules-of-hooks (any `use*` identifier is treated as a hook call at module
 // scope, which this genuinely isn't) - so we call it as `i18n.use(...)` instead.
-// eslint-disable-next-line import/no-named-as-default-member
-i18n.use(initReactI18next).init({
-  resources: {
-    en: {
-      translation: en,
+fireAndLog(
+  // eslint-disable-next-line import/no-named-as-default-member
+  i18n.use(initReactI18next).init({
+    resources: {
+      en: {
+        translation: en,
+      },
+      pt: {
+        translation: pt,
+      },
     },
-    pt: {
-      translation: pt,
-    },
-  },
-  lng: 'en',
-  fallbackLng: 'en',
+    lng: 'en',
+    fallbackLng: 'en',
 
-  interpolation: {
-    escapeValue: false, // react already guards against xss
-  },
-});
+    interpolation: {
+      escapeValue: false, // react already guards against xss
+    },
+  }),
+  'Starting the translations',
+);
 
 /**
  * Tells the browser which language the page is written in. Without it the page stays `en` while the interface is

@@ -9,7 +9,7 @@ import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
@@ -23,17 +23,12 @@ import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/Se
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '@/src/db';
-import type { ItemJourneySelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  useEntityInitialLoad,
-  useEntityEventSubscriptions,
-} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useDetailRecord } from '@/src/hooks/lists/useDetailRecord';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useItemStore } from '@/src/state/story/itemStore';
 import { useSceneStore } from '@/src/state/story/sceneStore';
@@ -44,7 +39,7 @@ import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEnt
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { ItemStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { logger } from '@/src/utils/logging/logger';
+import { useItemJourneyDetailServices } from './useItemJourneyDetailServices';
 
 export type ItemJourneyDetailScreenParamList = {
   ItemJourneyDetail: { itemJourneyId: string; occurrence?: OccurrenceTarget };
@@ -80,7 +75,7 @@ const ItemJourneyDetailScreen = () => {
   const { selectedStory } = useStoryStore();
 
   const drizzleDb = useDrizzle();
-  const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
+  const { itemJourneyService } = useItemJourneyDetailServices();
 
   const {
     items,
@@ -102,24 +97,18 @@ const ItemJourneyDetailScreen = () => {
   } = useCharacterStore();
 
   useEffect(() => {
-    if (drizzleDb && !itemJourneyServiceRef.current) {
-      itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
-    }
-  }, [drizzleDb]);
-
-  useEffect(() => {
     if (drizzleDb && selectedStory?.id) {
       setItemDbAndStoryId(drizzleDb, selectedStory.id);
       initializeItemService();
-      fetchItems();
+      void fetchItems();
 
       setSceneDbAndStoryId(drizzleDb, selectedStory.id);
       initializeSceneService();
-      fetchScenes();
+      void fetchScenes();
 
       setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
       initializeCharacterService();
-      fetchCharacters();
+      void fetchCharacters();
     }
   }, [
     drizzleDb,
@@ -135,7 +124,17 @@ const ItemJourneyDetailScreen = () => {
     fetchCharacters,
   ]);
 
-  const [itemJourney, setItemJourney] = useState<ItemJourneySelect | null>(null);
+  const {
+    record: itemJourney,
+    loading,
+    failure,
+  } = useDetailRecord({
+    id: itemJourneyId,
+    load: itemJourneyService.getById,
+    event: 'item_journey_changed',
+    label: 'item journey details',
+    onGone: navigation.goBack,
+  });
   const { canEdit } = useStoryRole(itemJourney?.storyId);
   const comments = useEntityComments(itemJourney?.storyId, 'ItemJourney', itemJourneyId);
 
@@ -146,67 +145,10 @@ const ItemJourneyDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'ItemJourney', entityId: itemJourneyId });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState(t('loading'));
-
-  const fetchItemJourney = useCallback(async () => {
-    if (!itemJourneyServiceRef.current) {
-      logger.warn('Item Journey service not initialized.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const fetchedItemJourney = await itemJourneyServiceRef.current.getById(itemJourneyId);
-      if (fetchedItemJourney && !fetchedItemJourney.isDeleted) {
-        setItemJourney(fetchedItemJourney);
-        // Display item name + new state as title
-        const relatedItem = items.find((item) => item.id === fetchedItemJourney.itemId);
-        setHeaderTitle(`${relatedItem?.name || itemCopy.unknown} - ${fetchedItemJourney.newState}`);
-      } else if (fetchedItemJourney && fetchedItemJourney.isDeleted) {
-        navigation.goBack();
-      } else {
-        setError(t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }));
-        setHeaderTitle(
-          t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }),
-        );
-      }
-    } catch (err) {
-      logger.error('Failed to fetch item journey details:', err);
-      setError(t('vocabulary_failed_to_load_entity', { entity: itemCopy.itemJourney }));
-      setHeaderTitle(t('error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [itemJourneyId, navigation, t, items, itemCopy]);
-
-  const handleItemJourneyChange = useCallback(
-    async (_changedStoryId: string, changedItemJourneyId: string) => {
-      if (changedItemJourneyId === itemJourneyId && itemJourneyServiceRef.current) {
-        const updatedItemJourney = await itemJourneyServiceRef.current.getById(itemJourneyId);
-        if (!updatedItemJourney || updatedItemJourney.isDeleted) {
-          navigation.goBack();
-        } else {
-          setItemJourney(updatedItemJourney);
-          const relatedItem = items.find((item) => item.id === updatedItemJourney.itemId);
-          setHeaderTitle(
-            `${relatedItem?.name || itemCopy.unknown} - ${updatedItemJourney.newState}`,
-          );
-        }
-      }
-    },
-    [itemJourneyId, navigation, items, itemCopy],
-  );
-
-  useEntityInitialLoad(fetchItemJourney);
-
-  // Event subscriptions never initiate an item-journey load.
-  useEntityEventSubscriptions(
-    useMemo(
-      () => [{ event: 'item_journey_changed', listener: handleItemJourneyChange }],
-      [handleItemJourneyChange],
-    ),
-  );
+  const notFoundMessage = t('vocabulary_entity_not_found', {
+    entity: itemCopy.itemJourney,
+    ending: 'a',
+  });
 
   const relatedItem = items.find((item) => item.id === itemJourney?.itemId);
   const relatedScene = scenes.find((scene) => scene.id === itemJourney?.sceneId);
@@ -228,6 +170,15 @@ const ItemJourneyDetailScreen = () => {
     if (!newCharacterOwner) return;
     navigateToDetail('Character', newCharacterOwner.id);
   }, [navigateToDetail, newCharacterOwner]);
+
+  // The title names the item the journey belongs to, so it follows the item list as well.
+  const headerTitle = itemJourney
+    ? `${relatedItem?.name || itemCopy.unknown} - ${itemJourney.newState}`
+    : failure === 'notFound'
+      ? notFoundMessage
+      : failure === 'failed'
+        ? t('error')
+        : t('loading');
 
   useScreenHeader({
     target: 'parent',
@@ -254,8 +205,18 @@ const ItemJourneyDetailScreen = () => {
       />
     );
   }
-  if (error) {
-    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
+  if (failure) {
+    return (
+      <ScreenError
+        padded
+        message={
+          failure === 'notFound'
+            ? notFoundMessage
+            : t('vocabulary_failed_to_load_entity', { entity: itemCopy.itemJourney })
+        }
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
   if (!itemJourney) {
     return (

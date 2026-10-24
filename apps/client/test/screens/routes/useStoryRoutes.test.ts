@@ -39,17 +39,6 @@ jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
-jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  return {
-    __esModule: true,
-    useEntityInitialLoad: (load: () => Promise<void>) =>
-      React.useEffect(() => {
-        void load();
-      }, [load]),
-  };
-});
-
 const route = { id: 'route', storyId: 'story', isDeleted: false } as never;
 const sceneA = { id: 'scene-a', storyId: 'story', isDeleted: false } as never;
 const sceneB = { id: 'scene-b', storyId: 'story', isDeleted: false } as never;

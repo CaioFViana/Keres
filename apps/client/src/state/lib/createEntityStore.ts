@@ -246,7 +246,7 @@ export function createEntityStore<
     /** Applies a change then refetches, the pattern every filter/sort setter follows. */
     const setAndRefetch = (partial: Record<string, unknown>) => {
       setPartial(partial);
-      runFetch();
+      void runFetch();
     };
 
     const toggleFavorite = async (id: string, isFavorite: boolean): Promise<void> => {

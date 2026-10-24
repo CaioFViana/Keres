@@ -5,6 +5,7 @@ import { Text } from 'react-native';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useTheme } from '@/src/theme/ThemeContext';
 import { ThemeProvider } from '@/src/theme/ThemeProvider';
+import { logger } from '@/src/utils/logging/logger';
 
 jest.mock('@/src/state/ui/themeStore', () => ({
   __esModule: true,
@@ -132,4 +133,16 @@ describe('the native color scheme', () => {
     await renderWithTheme();
     expect(set).not.toHaveBeenCalled();
   });
+});
+
+it('logs a dark-mode toggle that fails instead of losing the rejection', async () => {
+  const failure = new Error('could not save');
+  const logged = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+  storeState.toggleDarkMode.mockRejectedValue(failure);
+  const { captured } = await renderWithTheme();
+
+  await act(async () => captured().toggleTheme());
+  await act(async () => {});
+
+  expect(logged).toHaveBeenCalledWith('toggleDarkMode failed:', failure);
 });

@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { repoRoot, run } from './lib/packages';
+import { PACKAGES, repoRoot, run } from './lib/packages';
 import {
   APP_JSON_FILE,
   APP_RELEASE_FILE,
@@ -19,6 +19,12 @@ import {
  *
  *   bun run release:check        on your machine, before creating the tag
  *   bun run release:check --ci   in the release workflow, before any artifact is built
+ *   bun run release:check --ci --only static|<package>
+ *       one slice of that run, so the workflow can spread it over parallel jobs: `static` is what
+ *       belongs to no package (translations, formatting, release versions, the repository's own
+ *       scripts); a package name is that package's typecheck, lint and unit suites.
+ *   bun run release:check --ci --only <package> --scripts typecheck,lint
+ *       only those of the package's scripts, for the one package slow enough to be worth two jobs.
  *
  * The two modes differ in what makes sense where: on a machine formatting is applied and the
  * repository has to end up clean; in CI formatting is only checked (an automatic fix there
@@ -28,6 +34,38 @@ import {
  * their own job, with Postgres and SeaweedFS up.
  */
 const ci = process.argv.includes('--ci');
+const onlyIndex = process.argv.indexOf('--only');
+const only = onlyIndex === -1 ? undefined : process.argv[onlyIndex + 1];
+if (onlyIndex !== -1 && (!only || only.startsWith('--'))) {
+  console.error('Usage: bun scripts/release-check.ts --ci --only <static|package>.');
+  process.exit(1);
+}
+if (only && !ci) {
+  console.error('--only is for the CI run: a local check runs everything.');
+  process.exit(1);
+}
+if (only && only !== 'static' && !PACKAGES.some((pkg) => pkg.name === only)) {
+  console.error(
+    `Unknown slice "${only}": use "static" or a package (${PACKAGES.map((pkg) => pkg.name).join(', ')}).`,
+  );
+  process.exit(1);
+}
+
+const PACKAGE_SCRIPTS = ['typecheck', 'lint', 'test:coverage'];
+const scriptsIndex = process.argv.indexOf('--scripts');
+const scriptsArgument = scriptsIndex === -1 ? undefined : process.argv[scriptsIndex + 1];
+const scripts = scriptsArgument ? scriptsArgument.split(',') : PACKAGE_SCRIPTS;
+if (scriptsIndex !== -1 && (!only || only === 'static')) {
+  console.error(
+    '--scripts goes with a package: bun scripts/release-check.ts --ci --only <package>.',
+  );
+  process.exit(1);
+}
+const unknownScript = scripts.find((script) => !PACKAGE_SCRIPTS.includes(script));
+if (unknownScript) {
+  console.error(`Unknown script "${unknownScript}": use ${PACKAGE_SCRIPTS.join(', ')}.`);
+  process.exit(1);
+}
 
 interface Step {
   title: string;
@@ -109,33 +147,59 @@ function runScript(script: string, args: string[] = []): void {
   if (code !== 0) throw new Error(`"${script}" failed (exit code ${code}).`);
 }
 
+function runFile(file: string, args: string[]): void {
+  const code = run('bun', [file, ...args]);
+  if (code !== 0) throw new Error(`"${file} ${args.join(' ')}" failed (exit code ${code}).`);
+}
+
 /** Checks that the release file exists and is readable before anything expensive runs. */
 function verifyReleaseFileReadable(): void {
   readFileSync(join(repoRoot, APP_RELEASE_FILE), 'utf8');
 }
 
-const steps: Step[] = [
-  { title: 'Translations', execute: () => runScript('locales:audit') },
+const translations: Step = { title: 'Translations', execute: () => runScript('locales:audit') };
+const formatting: Step = {
+  title: ci ? 'Formatting (check only)' : 'Formatting',
+  execute: () => runScript(ci ? 'format:check' : 'format'),
+};
+const releaseVersions: Step = {
+  title: 'Release versions',
+  execute: () => {
+    verifyReleaseFileReadable();
+    verifyReleaseVersions();
+    reportReleaseVersions();
+  },
+};
+
+const everything: Step[] = [
+  translations,
   { title: 'Typecheck', execute: () => runScript('typecheck') },
   { title: 'Lint', execute: () => runScript('lint') },
-  {
-    title: ci ? 'Formatting (check only)' : 'Formatting',
-    execute: () => runScript(ci ? 'format:check' : 'format'),
-  },
-  {
-    title: 'Release versions',
-    execute: () => {
-      verifyReleaseFileReadable();
-      verifyReleaseVersions();
-      reportReleaseVersions();
-    },
-  },
+  formatting,
+  releaseVersions,
   ...(ci ? [] : [{ title: 'Worktree', execute: verifyCleanWorktree }]),
   {
     title: ci ? 'Unit tests and coverage' : 'Test and coverage report',
     execute: () => runScript(ci ? 'test:coverage' : 'test:report'),
   },
 ];
+
+/** What belongs to no package, so it runs once however many packages there are. */
+const staticSlice: Step[] = [
+  translations,
+  formatting,
+  releaseVersions,
+  { title: 'Repository scripts typecheck', execute: () => runScript('typecheck:scripts') },
+];
+
+/** One package's share of the CI run: the same scripts the full run goes through, filtered. */
+const packageSlice = (name: string): Step[] =>
+  scripts.map((script) => ({
+    title: `${name}: ${script}`,
+    execute: () => runFile('scripts/run-all.ts', [script, '--only', name]),
+  }));
+
+const steps: Step[] = !only ? everything : only === 'static' ? staticSlice : packageSlice(only);
 
 try {
   steps.forEach((step, index) => {

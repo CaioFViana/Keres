@@ -4,7 +4,15 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, type ViewToken } from 'react-native';
+import {
+  FlatList,
+  type ListViewToken,
+  type ViewInstance,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -182,7 +190,7 @@ const ManuscriptScreen = () => {
   const setListViewportRef = useCallback(
     (node: unknown) => {
       listAnchorRef(node);
-      viewportRef.current = node as View | null;
+      viewportRef.current = node as ViewInstance | null;
     },
     [listAnchorRef, viewportRef],
   );
@@ -210,7 +218,7 @@ const ManuscriptScreen = () => {
     sectionsRef.current = sections;
   }, [sections]);
   const handleViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    ({ viewableItems }: { viewableItems: ListViewToken[] }) => {
       const current = sectionsRef.current;
       const firstScene = viewableItems
         .filter((item) => item.index != null && current[item.index]?.kind === 'scene')

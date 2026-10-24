@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { logger } from '@/src/utils/logging/logger';
 
 const STORAGE_KEY = '@keres/icon-recents';
 const MAX_RECENTS = 8;
@@ -25,7 +26,7 @@ export function useIconRecents(): { recents: string[]; remember: (icon: string) 
           // Corrupt entry reads as empty.
         }
       })
-      .catch(() => {});
+      .catch((error) => logger.debug('Reading the recent icons failed.', error));
   }, []);
   const remember = useCallback((icon: string) => {
     const next = [icon, ...recentsRef.current.filter((item) => item !== icon)].slice(
@@ -34,7 +35,9 @@ export function useIconRecents(): { recents: string[]; remember: (icon: string) 
     );
     recentsRef.current = next;
     setRecents(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch((error) =>
+      logger.debug('Saving the recent icons failed.', error),
+    );
   }, []);
   return { recents, remember };
 }

@@ -16,6 +16,7 @@ import {
 } from '@/src/utils/format/showcaseLinks';
 import { logger } from '@/src/utils/logging/logger';
 import type { ShowcaseLinkTone } from '@/src/components/features/showcase/ShowcaseLinkField';
+import { serverDisplayName } from '@/src/utils/auth/defaultServer';
 
 type Navigation = NativeStackNavigationProp<ShowcaseStackParamList, 'ShowcaseHome'>;
 
@@ -64,7 +65,7 @@ export function useShowcaseLink() {
     if (resolved.kind === 'registered') {
       return {
         text: t('showcase_link_registered', {
-          server: resolved.server.name ?? resolved.server.url,
+          server: serverDisplayName(resolved.server, t),
         }),
         tone: 'good',
       };

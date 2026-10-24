@@ -27,6 +27,9 @@ let mockListProps: {
   emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
+// One database for every render, as the real context gives.
+const mockStableDb = {};
+
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
@@ -116,7 +119,7 @@ jest.mock('@/src/components/features/list-items/NoteListItem', () => ({
     );
   },
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockStableDb }));
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,

@@ -3,10 +3,11 @@ import {
   hitTestCanvasOverlay,
   snapPointToTargets,
 } from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
-import React, { useEffect, useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import type { OverlayDrawTool } from './overlayTools';
 import { isRectDrawTool } from './overlayTools';
+import { usePanResponder } from '@/src/hooks/ui/usePanResponder';
 
 export type OverlayCatcherMode = { kind: 'draw'; tool: OverlayDrawTool } | { kind: 'select' };
 
@@ -76,75 +77,68 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
     // on each new responder config.
   });
 
-  const responder = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (event) => {
-          const at = { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY };
-          startScreen.current = at;
-          startWorld.current = callbacks.current.screenToWorld(at);
-        },
-        onPanResponderMove: (_event, gesture) => {
-          if (live.current.mode.kind !== 'draw') return;
-          if (!isRectDrawTool(live.current.mode.tool)) return;
-          const at = {
-            x: startScreen.current.x + gesture.dx,
-            y: startScreen.current.y + gesture.dy,
-          };
-          callbacks.current.onPreviewRect({
-            start: startWorld.current,
-            end: callbacks.current.screenToWorld(at),
-          });
-        },
-        onPanResponderRelease: (event, gesture) => {
-          const moved = Math.hypot(gesture.dx, gesture.dy);
-          const safeScale = live.current.scale === 0 ? 1 : live.current.scale;
-          if (moved < TAP_SLOP) {
-            callbacks.current.onPreviewRect(null);
-            const world = callbacks.current.screenToWorld({
-              x: event.nativeEvent.locationX,
-              y: event.nativeEvent.locationY,
-            });
-            if (live.current.mode.kind === 'select') {
-              const hit = hitTestCanvasOverlay(
-                world,
-                live.current.overlays ?? [],
-                HIT_SCREEN / safeScale,
-              );
-              callbacks.current.onSelectOverlay(hit?.id ?? null);
-              return;
-            }
-            if (live.current.mode.tool === 'stamp') {
-              callbacks.current.onStampPlace(world);
-              return;
-            }
-            if (!isRectDrawTool(live.current.mode.tool)) {
-              callbacks.current.onDrawTap(
-                snapPointToTargets(world, live.current.snapTargets, SNAP_SCREEN / safeScale),
-              );
-            }
-            return;
-          }
-          if (live.current.mode.kind === 'draw' && isRectDrawTool(live.current.mode.tool)) {
-            const end = callbacks.current.screenToWorld({
-              x: startScreen.current.x + gesture.dx,
-              y: startScreen.current.y + gesture.dy,
-            });
-            callbacks.current.onPreviewRect(null);
-            callbacks.current.onDrawRect(startWorld.current, end);
-            return;
-          }
-          callbacks.current.onPreviewRect(null);
-        },
-        onPanResponderTerminate: () => callbacks.current.onPreviewRect(null),
-      }),
-    // Created once: every value above is read through refs, so preview setStates (one per
-    // mousemove) never swap the responder mid-gesture. See the `live` ref above.
-    [],
-  );
+  const responder = usePanResponder({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (event) => {
+      const at = { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY };
+      startScreen.current = at;
+      startWorld.current = callbacks.current.screenToWorld(at);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      if (live.current.mode.kind !== 'draw') return;
+      if (!isRectDrawTool(live.current.mode.tool)) return;
+      const at = {
+        x: startScreen.current.x + gesture.dx,
+        y: startScreen.current.y + gesture.dy,
+      };
+      callbacks.current.onPreviewRect({
+        start: startWorld.current,
+        end: callbacks.current.screenToWorld(at),
+      });
+    },
+    onPanResponderRelease: (event, gesture) => {
+      const moved = Math.hypot(gesture.dx, gesture.dy);
+      const safeScale = live.current.scale === 0 ? 1 : live.current.scale;
+      if (moved < TAP_SLOP) {
+        callbacks.current.onPreviewRect(null);
+        const world = callbacks.current.screenToWorld({
+          x: event.nativeEvent.locationX,
+          y: event.nativeEvent.locationY,
+        });
+        if (live.current.mode.kind === 'select') {
+          const hit = hitTestCanvasOverlay(
+            world,
+            live.current.overlays ?? [],
+            HIT_SCREEN / safeScale,
+          );
+          callbacks.current.onSelectOverlay(hit?.id ?? null);
+          return;
+        }
+        if (live.current.mode.tool === 'stamp') {
+          callbacks.current.onStampPlace(world);
+          return;
+        }
+        if (!isRectDrawTool(live.current.mode.tool)) {
+          callbacks.current.onDrawTap(
+            snapPointToTargets(world, live.current.snapTargets, SNAP_SCREEN / safeScale),
+          );
+        }
+        return;
+      }
+      if (live.current.mode.kind === 'draw' && isRectDrawTool(live.current.mode.tool)) {
+        const end = callbacks.current.screenToWorld({
+          x: startScreen.current.x + gesture.dx,
+          y: startScreen.current.y + gesture.dy,
+        });
+        callbacks.current.onPreviewRect(null);
+        callbacks.current.onDrawRect(startWorld.current, end);
+        return;
+      }
+      callbacks.current.onPreviewRect(null);
+    },
+    onPanResponderTerminate: () => callbacks.current.onPreviewRect(null),
+  });
 
   return (
     <View

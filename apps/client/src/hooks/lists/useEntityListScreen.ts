@@ -16,7 +16,10 @@ import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
  * `EntityStore<TKey, TEntity, TService>` directly so TypeScript can infer the entity type
  * from the collection property - it cannot infer through a mapped type's value position.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- stores have no index signature, so only `any` accepts every concrete one
+// `any` because a store hook is an overloaded function (with and without a selector), so TypeScript cannot
+// infer the concrete store from it and falls back to this constraint: only an index signature of `any` keeps
+// the collection key (`characters`, `items`...) valid and its type flowing back to the screen.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyEntityStore = EntityStoreCore<unknown> & Record<string, any>;
 
 export interface UseEntityListScreenOptions<
@@ -174,7 +177,7 @@ export function useEntityListScreen<
 
   const handleEntityChange = useCallback(
     (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchItems();
+      if (changedStoryId === storyId) void fetchItems();
     },
     [fetchItems, storyId],
   );

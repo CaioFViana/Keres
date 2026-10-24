@@ -22,10 +22,9 @@ export function useStoryFormResources(initialStoryId?: string) {
   // mount would otherwise miss the newcomer. The installer reports each success here instead.
   const lastInstalledPackId = useShippedPacksInstallerStore((state) => state.lastInstalledPackId);
 
-  useEffect(() => {
-    storyServiceRef.current ??= createStoryService(drizzleDb);
-    packServiceRef.current ??= createPackService(drizzleDb);
-  }, [drizzleDb]);
+  // Created in the first render, not after it: no screen can look for a service that is not there yet.
+  storyServiceRef.current ??= createStoryService(drizzleDb);
+  packServiceRef.current ??= createPackService(drizzleDb);
 
   useEffect(() => {
     // Packs are offered only while creating: applying one to an existing story would mean writing its

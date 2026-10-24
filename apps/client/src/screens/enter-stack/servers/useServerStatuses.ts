@@ -5,6 +5,7 @@ import { useDrizzle } from '@/src/db';
 import { pingServer, type ServerWithStatus } from '@/src/services/servers/ServerStatusService';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { logger } from '@/src/utils/logging/logger';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /** How often the servers are read again and pinged while the screen is in front. */
 const REFRESH_INTERVAL_MS = 7000;
@@ -67,24 +68,15 @@ export function useServerStatuses(serverId?: string) {
     }
   }
 
+  const readNow = useCallback(() => {
+    if (isFocused) void loadAndPingServers().finally(() => setLoading(false));
+  }, [isFocused, loadAndPingServers]);
+  useEntityInitialLoad(readNow);
+
   useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadAndPingServers` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-    loadAndPingServers().finally(() => {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    });
-
-    const intervalId = setInterval(loadAndPingServers, REFRESH_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(intervalId);
-    };
+    if (!isFocused) return;
+    const intervalId = setInterval(() => void loadAndPingServers(), REFRESH_INTERVAL_MS);
+    return () => clearInterval(intervalId);
   }, [isFocused, loadAndPingServers]);
 
   /** Shows a new tag right away, without waiting for the next read. */

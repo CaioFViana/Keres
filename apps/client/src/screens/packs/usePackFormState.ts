@@ -6,6 +6,7 @@ import type { StorySelect } from '@/src/db/schema';
 import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { logger } from '@/src/utils/logging/logger';
+import { fireAndLog } from '@/src/utils/logging/fireAndLog';
 
 const ALL_OFF: PackSelectionType = {
   customAttributes: false,
@@ -40,33 +41,36 @@ export function usePackFormState({
   const isEditing = !!initialPackId;
 
   useEffect(() => {
-    (async () => {
-      if (!initialPackId) {
-        setLoading(false);
-        return;
-      }
-      try {
-        if (!packServiceRef.current) {
+    fireAndLog(
+      (async () => {
+        if (!initialPackId) {
           setLoading(false);
           return;
         }
-        const pack = (await packServiceRef.current.listPacks()).find(
-          (entry) => entry.id === initialPackId,
-        );
-        if (pack) {
-          setName(pack.name);
-          setDescription(pack.description ?? '');
-          setLanguage(pack.language ?? '');
-          setAuthorName(pack.authorName ?? '');
-          setSourceStoryId(pack.sourceStoryId);
+        try {
+          if (!packServiceRef.current) {
+            setLoading(false);
+            return;
+          }
+          const pack = (await packServiceRef.current.listPacks()).find(
+            (entry) => entry.id === initialPackId,
+          );
+          if (pack) {
+            setName(pack.name);
+            setDescription(pack.description ?? '');
+            setLanguage(pack.language ?? '');
+            setAuthorName(pack.authorName ?? '');
+            setSourceStoryId(pack.sourceStoryId);
+          }
+        } catch (error) {
+          logger.error('PackFormScreen: failed to load.', error);
+          showNotification(t('packs_load_failed'), 'error');
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        logger.error('PackFormScreen: failed to load.', error);
-        showNotification(t('packs_load_failed'), 'error');
-      } finally {
-        setLoading(false);
-      }
-    })();
+      })(),
+      'usePackFormState',
+    );
   }, [initialPackId, packServiceRef, showNotification, t]);
 
   /**

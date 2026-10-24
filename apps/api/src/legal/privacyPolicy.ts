@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { AgeVerificationMode } from '@keres/shared';
+import { type AgeVerificationMode, KERES_OFFICIAL_HOST } from '@keres/shared';
 
 /**
  * The server's privacy policy, served at `GET /api/keres-privacy`.
@@ -57,7 +57,7 @@ const en: PrivacyPolicyText = {
   who: {
     heading: '1. Who we are',
     paragraphs: [
-      'This server is operated by the Keres team (keres.me). Questions about privacy, your data or these terms: use the contact form on keres.me.',
+      `This server is operated by the Keres team (${KERES_OFFICIAL_HOST}). Questions about privacy, your data or these terms: use the contact form on ${KERES_OFFICIAL_HOST}.`,
       'The Keres app works with any server. Every other server is its own data controller with its own policy; we answer only for this one.',
     ],
   },
@@ -136,13 +136,13 @@ const en: PrivacyPolicyText = {
     required: {
       heading: '7. Your rights',
       paragraphs: [
-        'Confirm, access, correct, export, anonymize, block, limit or delete your data, and ask who we shared it with: use the contact form on keres.me. Deleting the account and exporting your data are also available inside the app, in the server details. The export includes your access records and the history of your age verification, but not your stories, which are already on your device. Deletion has the legal exceptions of the previous section.',
+        `Confirm, access, correct, export, anonymize, block, limit or delete your data, and ask who we shared it with: use the contact form on ${KERES_OFFICIAL_HOST}. Deleting the account and exporting your data are also available inside the app, in the server details. The export includes your access records and the history of your age verification, but not your stories, which are already on your device. Deletion has the legal exceptions of the previous section.`,
       ],
     },
     manual: {
       heading: '7. Your rights',
       paragraphs: [
-        'Confirm, access, correct, export, anonymize, block, limit or delete your data, and ask who we shared it with: use the contact form on keres.me. Deleting the account and exporting your data are also available inside the app, in the server details. The export includes your access records, your verification mark and your adults-only display choice, but not your stories, which are already on your device. Deletion has the legal exceptions of the previous section.',
+        `Confirm, access, correct, export, anonymize, block, limit or delete your data, and ask who we shared it with: use the contact form on ${KERES_OFFICIAL_HOST}. Deleting the account and exporting your data are also available inside the app, in the server details. The export includes your access records, your verification mark and your adults-only display choice, but not your stories, which are already on your device. Deletion has the legal exceptions of the previous section.`,
       ],
     },
   },
@@ -189,7 +189,7 @@ const pt: PrivacyPolicyText = {
   who: {
     heading: '1. Quem somos',
     paragraphs: [
-      'Este servidor é operado pela equipe Keres (keres.me). Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato em keres.me.',
+      `Este servidor é operado pela equipe Keres (${KERES_OFFICIAL_HOST}). Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato em ${KERES_OFFICIAL_HOST}.`,
       'O aplicativo Keres funciona com qualquer servidor. Cada outro servidor é seu próprio controlador de dados, com sua própria política; respondemos somente por este.',
     ],
   },
@@ -268,13 +268,13 @@ const pt: PrivacyPolicyText = {
     required: {
       heading: '7. Seus direitos',
       paragraphs: [
-        'Confirmar, acessar, corrigir, exportar, anonimizar, bloquear, limitar ou excluir seus dados, e saber com quem os compartilhamos: use o formulário de contato em keres.me. Excluir a conta e exportar seus dados também estão disponíveis dentro do aplicativo, nos detalhes do servidor. A exportação inclui seus registros de acesso e o histórico da verificação de idade, mas não suas histórias, que já estão no seu aparelho. A exclusão tem as exceções legais da seção anterior.',
+        `Confirmar, acessar, corrigir, exportar, anonimizar, bloquear, limitar ou excluir seus dados, e saber com quem os compartilhamos: use o formulário de contato em ${KERES_OFFICIAL_HOST}. Excluir a conta e exportar seus dados também estão disponíveis dentro do aplicativo, nos detalhes do servidor. A exportação inclui seus registros de acesso e o histórico da verificação de idade, mas não suas histórias, que já estão no seu aparelho. A exclusão tem as exceções legais da seção anterior.`,
       ],
     },
     manual: {
       heading: '7. Seus direitos',
       paragraphs: [
-        'Confirmar, acessar, corrigir, exportar, anonimizar, bloquear, limitar ou excluir seus dados, e saber com quem os compartilhamos: use o formulário de contato em keres.me. Excluir a conta e exportar seus dados também estão disponíveis dentro do aplicativo, nos detalhes do servidor. A exportação inclui seus registros de acesso, sua marca de verificação e sua escolha de exibição de conteúdo +18, mas não suas histórias, que já estão no seu aparelho. A exclusão tem as exceções legais da seção anterior.',
+        `Confirmar, acessar, corrigir, exportar, anonimizar, bloquear, limitar ou excluir seus dados, e saber com quem os compartilhamos: use o formulário de contato em ${KERES_OFFICIAL_HOST}. Excluir a conta e exportar seus dados também estão disponíveis dentro do aplicativo, nos detalhes do servidor. A exportação inclui seus registros de acesso, sua marca de verificação e sua escolha de exibição de conteúdo +18, mas não suas histórias, que já estão no seu aparelho. A exclusão tem as exceções legais da seção anterior.`,
       ],
     },
   },

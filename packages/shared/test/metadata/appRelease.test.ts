@@ -1,11 +1,28 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   APP_RELEASE,
   KERES_LICENSE,
+  KERES_OFFICIAL_HOST,
+  KERES_OFFICIAL_URL,
   KERES_REPOSITORY_URL,
   THIRD_PARTY_CREDITS,
 } from '../../metadata/AppRelease';
 import { KERES_ICONS } from '../../metadata/keresIcons';
+
+const SITE_LINKS = join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  'apps',
+  'site',
+  'src',
+  'content',
+  'links.ts',
+);
 
 describe('appRelease', () => {
   it('identifies the release with a non-empty version, name and English phrase', () => {
@@ -41,5 +58,18 @@ describe('appRelease', () => {
     const credited = new Set(credit!.authors.map((author) => author.name));
     const vendored = new Set(KERES_ICONS.map((entry) => entry.author));
     expect(credited).toEqual(vendored);
+  });
+
+  it('pins the official server to keres.me and derives its URL from the host', () => {
+    expect(KERES_OFFICIAL_HOST).toBe('keres.me');
+    expect(KERES_OFFICIAL_URL).toBe('https://keres.me');
+    expect(KERES_OFFICIAL_URL).toBe(`https://${KERES_OFFICIAL_HOST}`);
+  });
+
+  it('matches the copy the marketing site keeps in apps/site/src/content/links.ts', () => {
+    const siteSource = readFileSync(SITE_LINKS, 'utf8');
+    expect(siteSource).toContain(`export const KERES_OFFICIAL_URL = '${KERES_OFFICIAL_URL}';`);
+    const match = /export const KERES_OFFICIAL_URL = '([^']+)';/.exec(siteSource);
+    expect(match?.[1]).toBe(KERES_OFFICIAL_URL);
   });
 });

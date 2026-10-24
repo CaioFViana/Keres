@@ -1,6 +1,7 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment ./test/helpers/jsdomEnvironment.js
  */
+import { setJsdomUrl } from '@/test/helpers/jsdomLocation';
 import {
   readShowcaseRequest,
   resetShowcaseRequestCacheForTests,
@@ -8,22 +9,16 @@ import {
 } from '@/src/services/showcase/showcaseRequest';
 
 describe('showcaseRequest', () => {
-  const originalLocation = window.location;
+  const originalUrl = window.location.href;
 
   afterEach(() => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: originalLocation,
-    });
+    setJsdomUrl(originalUrl);
     resetShowcaseRequestCacheForTests();
   });
 
   function setSearch(search: string) {
     resetShowcaseRequestCacheForTests();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...originalLocation, search },
-    });
+    setJsdomUrl(`${originalUrl.split('?')[0]}${search}`);
   }
 
   it('reads focusName from the capture URL', () => {

@@ -1,6 +1,7 @@
 import type { ChatMessage, SharedStory } from '@keres/shared';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import type { ServerSelect } from '@/src/db/schemas/servers';
+import { useLoadedResource } from '@/src/hooks/lists/useLoadedResource';
 import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
 import { messageApi } from '@/src/services/api/MessageApiService';
 
@@ -13,11 +14,12 @@ export interface FriendActivity {
   loading: boolean;
 }
 
-const NOTHING: FriendActivity = {
+type FriendNews = Omit<FriendActivity, 'loading'>;
+
+const NOTHING: FriendNews = {
   sharedStories: null,
   sharedStoriesFailed: false,
   lastMessage: null,
-  loading: false,
 };
 
 /**
@@ -35,39 +37,36 @@ export function useFriendActivity(
   isFriend: boolean,
   refreshKey: unknown,
 ): FriendActivity {
-  const [activity, setActivity] = useState<FriendActivity>(NOTHING);
+  const load = useMemo(
+    () =>
+      server && friendUserId && isFriend
+        ? async (): Promise<FriendNews> => {
+            const [shared, conversations] = await Promise.allSettled([
+              friendshipApiService.getSharedStories(server, friendUserId),
+              messageApi.getConversations(server),
+            ]);
+            return {
+              sharedStories: shared.status === 'fulfilled' ? shared.value : null,
+              sharedStoriesFailed: shared.status === 'rejected',
+              lastMessage:
+                conversations.status === 'fulfilled'
+                  ? (conversations.value.find(
+                      (conversation) =>
+                        conversation.kind === 'direct' && conversation.peerUserId === friendUserId,
+                    )?.lastMessage ?? null)
+                  : null,
+            };
+          }
+        : null,
+    [server, friendUserId, isFriend],
+  );
+  const { data, loading } = useLoadedResource({
+    load,
+    initial: NOTHING,
+    refreshKey,
+    label: 'the friend activity',
+    quiet: true,
+  });
 
-  useEffect(() => {
-    if (!server || !friendUserId || !isFriend) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing what belongs to a friend who no longer applies.
-      setActivity(NOTHING);
-      return undefined;
-    }
-    let cancelled = false;
-    setActivity((current) => ({ ...current, loading: true }));
-    void (async () => {
-      const [shared, conversations] = await Promise.allSettled([
-        friendshipApiService.getSharedStories(server, friendUserId),
-        messageApi.getConversations(server),
-      ]);
-      if (cancelled) return;
-      setActivity({
-        sharedStories: shared.status === 'fulfilled' ? shared.value : null,
-        sharedStoriesFailed: shared.status === 'rejected',
-        lastMessage:
-          conversations.status === 'fulfilled'
-            ? (conversations.value.find(
-                (conversation) =>
-                  conversation.kind === 'direct' && conversation.peerUserId === friendUserId,
-              )?.lastMessage ?? null)
-            : null,
-        loading: false,
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [server, friendUserId, isFriend, refreshKey]);
-
-  return activity;
+  return useMemo(() => ({ ...data, loading }), [data, loading]);
 }
